@@ -1,6 +1,7 @@
 ﻿#include "DalsaCamera.h"
 
 #include <QDebug>
+#include <QMetaObject>
 #include <sstream>
 
 DalsaCamera::DalsaCamera(QObject* parent)
@@ -9,17 +10,22 @@ DalsaCamera::DalsaCamera(QObject* parent)
       m_Buffers(nullptr),
       m_Xfer(nullptr),
       m_View(nullptr),
-      pData(nullptr),
-      isStop(false),
-      isFreeze(false),
-      isSave(false),
-      maxFrames(0),
-      frameCount(0),
-      width(0),
-      height(0),
-      qformat(QImage::Format_Invalid) {}
+      m_pData(nullptr),
+      m_running(false),
+      m_freeze(false),
+      m_saveEnabled(false),
+      m_maxFrames(0),
+      m_frameCount(0),
+      m_width(0),
+      m_height(0),
+      m_qformat(QImage::Format_Invalid),
+      m_triggerMode(TriggerMode::Internal) {}
 
 DalsaCamera::~DalsaCamera() {
+    // stopGrab();
+
+    if (m_worker.joinable()) m_worker.join();
+
     if (m_Xfer && *m_Xfer) m_Xfer->Destroy();
     if (m_Buffers && *m_Buffers) m_Buffers->Destroy();
     if (m_View && *m_View) m_View->Destroy();
@@ -32,83 +38,127 @@ DalsaCamera::~DalsaCamera() {
 }
 
 bool DalsaCamera::initCamera(const QString& configPath) {
-    ccfPath = configPath;
+    m_ccfPath = configPath;
 
     char serverName[MAX_PATH];
     SapManager::GetServerName(0, SapManager::ResourceAcq, serverName);
     SapLocation loc(serverName, 0);
 
-    m_Acquisition = new SapAcquisition(loc, ccfPath.toStdString().c_str());
+    m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
     m_Buffers = new SapBufferWithTrash(2, m_Acquisition);
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
-    m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, m_View);
+
+    // 注意传 this 作为 context
+    m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, this);
 
     if (!*m_Acquisition && !m_Acquisition->Create()) return false;
     if (!*m_Buffers && !m_Buffers->Create()) return false;
     if (!*m_View && !m_View->Create()) return false;
-    if (m_Xfer && m_Xfer->GetPair(0)) m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
     if (!*m_Xfer && !m_Xfer->Create()) return false;
 
-    width = m_Buffers->GetWidth();
-    height = m_Buffers->GetHeight();
+    if (m_Xfer && m_Xfer->GetPair(0)) m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
 
-    SapFormat format = m_Buffers->GetFormat();
-    switch (format) {
-        case SapFormatMono8:
-            qformat = QImage::Format_Grayscale8;
-            break;
-        case SapFormatRGB888:
-            qformat = QImage::Format_RGB888;
-            break;
-        case SapFormatMono16:
-            qformat = QImage::Format_Grayscale16;
-            break;
-        default:
-            qformat = QImage::Format_Grayscale8;
-            break;
-    }
+    m_width = m_Buffers->GetWidth();
+    m_height = m_Buffers->GetHeight();
 
-    m_Buffers->GetAddress((void**)&pData);
+    m_qformat = mapSapFormatToQImage(m_Buffers->GetFormat());
+
     return true;
 }
 
 void DalsaCamera::startGrab() {
-    isStop = false;
-    if (!isRunning()) start();
-}
+    if (m_running) return;
 
-void DalsaCamera::stopGrab() { isStop = true; }
+    m_running = true;
+    m_frameCount = 0;
 
-void DalsaCamera::freezeGrab(bool freeze) { isFreeze = freeze; }
+    if (!m_Xfer) return;
 
-void DalsaCamera::saveFrames(bool enable, int maxFrames) {
-    isSave = enable;
-    this->maxFrames = maxFrames;
-}
-void DalsaCamera::run() {
-    while (!isStop) {
-        if (!isFreeze) {
-            m_Xfer->Grab();
-            QImage img(m_Buffers->GetWidth(), m_Buffers->GetHeight(), QImage::Format_Grayscale8);
-            m_Buffers->GetAddress((void**)&pData);
-            memcpy(img.bits(), pData, img.width() * img.height());
-            emit newImageReady(img);
-
-            if (isSave) {
-                std::stringstream ss;
-                ss << "D:\\test\\bmp\\" << frameCount << ".bmp";
-                m_Buffers->Save(ss.str().c_str(), "-format bmp");
-                frameCount++;
-                if (frameCount >= maxFrames) isSave = false;
+    // 根据触发模式，初始化 Xfer 的触发类型
+    switch (m_triggerMode) {
+        case TriggerMode::Internal:
+            // 内触发 → 设置硬件内部连续采集
+            if (m_Xfer->GetPair(0)) {
+                m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
             }
-        }
-        QThread::usleep(1000);
+            break;
+
+        case TriggerMode::External:
+            break;
+
+        case TriggerMode::AutoFromCCF:
+            // 自动 → 按 CCF 文件里配置的触发模式
+            break;
     }
+
+    // 启动采集（无论内/外/CCF）
+    if (!m_Xfer->IsGrabbing()) {
+        m_Xfer->Grab();
+    }
+}
+
+void DalsaCamera::stopGrab() {
+    m_running = false;
+    if (m_Xfer) m_Xfer->Abort();
+    if (m_worker.joinable()) m_worker.join();
     emit grabFinished();
 }
-void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
-    // if (data) {
-    //     QImage img((uchar*)data, width, height, QImage::Format_Grayscale8);
-    //     emit newImageReady(img);
-    // }
+
+void DalsaCamera::freezeGrab(bool freeze) { m_freeze = freeze; }
+
+void DalsaCamera::saveFrames(bool enable, int maxFrames) {
+    m_saveEnabled = enable;
+    m_maxFrames = maxFrames;
+    m_frameCount = 0;
 }
+// 将 Sapera 图像格式映射到 QImage 格式
+QImage::Format DalsaCamera::mapSapFormatToQImage(SapFormat fmt) const {
+    switch (fmt) {
+        case SapFormatMono8:
+            return QImage::Format_Grayscale8;
+        case SapFormatRGB888:
+            return QImage::Format_RGB888;
+        case SapFormatMono16:
+            return QImage::Format_Grayscale16;
+        default:
+            return QImage::Format_Grayscale8;
+    }
+}
+
+// =================== 回调部分 ===================
+void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
+    if (!pInfo) return;
+
+    auto* cam = reinterpret_cast<DalsaCamera*>(pInfo->GetContext());
+    if (!cam) return;
+
+    int bufferIndex = pInfo->GetPairIndex();
+    void* data = nullptr;
+
+    if (cam->m_Buffers && bufferIndex >= 0) {
+        cam->m_Buffers->GetAddress(bufferIndex, &data);
+    }
+
+    if (!data) return;
+
+    int bpp = (cam->m_qformat == QImage::Format_RGB888) ? 3 : ((cam->m_qformat == QImage::Format_Grayscale16) ? 2 : 1);
+
+    QImage img((uchar*)data, cam->m_width, cam->m_height, cam->m_width * bpp, cam->m_qformat);
+
+    QImage copy = img.copy();
+
+    QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(QImage, copy));
+
+    // 保存逻辑
+    if (cam->m_saveEnabled) {
+        std::stringstream ss;
+        ss << "D:\\test\\bmp\\" << cam->m_frameCount << ".bmp";
+        cam->m_Buffers->Save(ss.str().c_str(), "-format bmp");
+        cam->m_frameCount++;
+        if (cam->m_maxFrames > 0 && cam->m_frameCount >= cam->m_maxFrames) {
+            cam->m_saveEnabled = false;
+        }
+    }
+}
+
+void DalsaCamera::handleImageFromCallback(const QImage& img) { emit newImageReady(img); }

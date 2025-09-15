@@ -9,19 +9,19 @@
 #include "src/cameraFactory/AbstractCameraFactory.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
-class Widget;
+class CISWidget;
 }
 QT_END_NAMESPACE
 
-class Widget : public QWidget {
+class CISWidget : public QWidget {
     Q_OBJECT
 
 public:
-    Widget(QWidget* parent = nullptr);
-    ~Widget();
+    CISWidget(QWidget* parent = nullptr);
+    ~CISWidget();
 
 private:
-    Ui::Widget* ui;
+    Ui::CISWidget* ui;
     QImage* resultImage;
     QPainter* painter;
     AbstractCamera* camera = nullptr;
@@ -31,6 +31,6 @@ private:
     void initUIConnections();
     void initCamera();
 private slots:
-    void onNewImage(const QImage& img);
+    // void onNewImage(const QImage& img);
 };
 #endif  // CISCAMERAIMAGE_H

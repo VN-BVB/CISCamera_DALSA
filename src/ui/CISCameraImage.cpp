@@ -1,14 +1,7 @@
 #include "CISCameraImage.h"
+
 #include "ui_CISCameraImage.h"
 
-Widget::Widget(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::Widget)
-{
-    ui->setupUi(this);
-}
+CISWidget::CISWidget(QWidget *parent) : QWidget(parent), ui(new Ui::CISWidget) { ui->setupUi(this); }
 
-Widget::~Widget()
-{
-    delete ui;
-}
+CISWidget::~CISWidget() { delete ui; }
