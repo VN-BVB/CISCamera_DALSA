@@ -18,7 +18,7 @@
 
 QT_BEGIN_NAMESPACE
 
-class Ui_Widget
+class Ui_CISWidget
 {
 public:
     QGridLayout *gridLayout_2;
@@ -32,46 +32,46 @@ public:
     QPushButton *pushButton_6;
     QLabel *label_2;
 
-    void setupUi(QWidget *Widget)
+    void setupUi(QWidget *CISWidget)
     {
-        if (Widget->objectName().isEmpty())
-            Widget->setObjectName(QString::fromUtf8("Widget"));
-        Widget->resize(800, 600);
-        gridLayout_2 = new QGridLayout(Widget);
+        if (CISWidget->objectName().isEmpty())
+            CISWidget->setObjectName(QString::fromUtf8("CISWidget"));
+        CISWidget->resize(800, 600);
+        gridLayout_2 = new QGridLayout(CISWidget);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
-        label = new QLabel(Widget);
+        label = new QLabel(CISWidget);
         label->setObjectName(QString::fromUtf8("label"));
 
         gridLayout_2->addWidget(label, 0, 0, 1, 1);
 
         gridLayout = new QGridLayout();
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
-        btnStart = new QPushButton(Widget);
+        btnStart = new QPushButton(CISWidget);
         btnStart->setObjectName(QString::fromUtf8("btnStart"));
 
         gridLayout->addWidget(btnStart, 0, 0, 1, 1);
 
-        pushButton_3 = new QPushButton(Widget);
+        pushButton_3 = new QPushButton(CISWidget);
         pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
 
         gridLayout->addWidget(pushButton_3, 0, 1, 1, 1);
 
-        pushButton_2 = new QPushButton(Widget);
+        pushButton_2 = new QPushButton(CISWidget);
         pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
 
         gridLayout->addWidget(pushButton_2, 1, 0, 1, 1);
 
-        pushButton_4 = new QPushButton(Widget);
+        pushButton_4 = new QPushButton(CISWidget);
         pushButton_4->setObjectName(QString::fromUtf8("pushButton_4"));
 
         gridLayout->addWidget(pushButton_4, 1, 1, 1, 1);
 
-        pushButton_5 = new QPushButton(Widget);
+        pushButton_5 = new QPushButton(CISWidget);
         pushButton_5->setObjectName(QString::fromUtf8("pushButton_5"));
 
         gridLayout->addWidget(pushButton_5, 2, 0, 1, 1);
 
-        pushButton_6 = new QPushButton(Widget);
+        pushButton_6 = new QPushButton(CISWidget);
         pushButton_6->setObjectName(QString::fromUtf8("pushButton_6"));
 
         gridLayout->addWidget(pushButton_6, 2, 1, 1, 1);
@@ -79,34 +79,34 @@ public:
 
         gridLayout_2->addLayout(gridLayout, 0, 1, 1, 1);
 
-        label_2 = new QLabel(Widget);
+        label_2 = new QLabel(CISWidget);
         label_2->setObjectName(QString::fromUtf8("label_2"));
 
         gridLayout_2->addWidget(label_2, 1, 0, 1, 2);
 
 
-        retranslateUi(Widget);
+        retranslateUi(CISWidget);
 
-        QMetaObject::connectSlotsByName(Widget);
+        QMetaObject::connectSlotsByName(CISWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *Widget)
+    void retranslateUi(QWidget *CISWidget)
     {
-        Widget->setWindowTitle(QCoreApplication::translate("Widget", "Widget", nullptr));
-        label->setText(QCoreApplication::translate("Widget", "TextLabel", nullptr));
-        btnStart->setText(QCoreApplication::translate("Widget", "\345\274\200\345\247\213\351\207\207\351\233\206", nullptr));
-        pushButton_3->setText(QCoreApplication::translate("Widget", "\347\273\223\346\235\237\351\207\207\351\233\206", nullptr));
-        pushButton_2->setText(QCoreApplication::translate("Widget", "\346\232\202\345\201\234\351\207\207\351\233\206", nullptr));
-        pushButton_4->setText(QCoreApplication::translate("Widget", "\347\273\247\347\273\255\351\207\207\351\233\206", nullptr));
-        pushButton_5->setText(QCoreApplication::translate("Widget", "PushButton", nullptr));
-        pushButton_6->setText(QCoreApplication::translate("Widget", "PushButton", nullptr));
-        label_2->setText(QCoreApplication::translate("Widget", "TextLabel", nullptr));
+        CISWidget->setWindowTitle(QCoreApplication::translate("CISWidget", "Widget", nullptr));
+        label->setText(QCoreApplication::translate("CISWidget", "TextLabel", nullptr));
+        btnStart->setText(QCoreApplication::translate("CISWidget", "\345\274\200\345\247\213\351\207\207\351\233\206", nullptr));
+        pushButton_3->setText(QCoreApplication::translate("CISWidget", "\347\273\223\346\235\237\351\207\207\351\233\206", nullptr));
+        pushButton_2->setText(QCoreApplication::translate("CISWidget", "\346\232\202\345\201\234\351\207\207\351\233\206", nullptr));
+        pushButton_4->setText(QCoreApplication::translate("CISWidget", "\347\273\247\347\273\255\351\207\207\351\233\206", nullptr));
+        pushButton_5->setText(QCoreApplication::translate("CISWidget", "\346\213\274\346\216\245\345\233\276\345\203\217", nullptr));
+        pushButton_6->setText(QCoreApplication::translate("CISWidget", "\344\277\235\345\255\230\345\233\276\345\203\217", nullptr));
+        label_2->setText(QCoreApplication::translate("CISWidget", "TextLabel", nullptr));
     } // retranslateUi
 
 };
 
 namespace Ui {
-    class CISWidget: public Ui_Widget {};
+    class CISWidget: public Ui_CISWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE
