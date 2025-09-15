@@ -1,13 +1,11 @@
 ﻿#include "AbstractCameraFactory.h"
 
-AbstractCameraFactory::AbstractCameraFactory(QObject *parent) { (void)parent; }
-
-AbstractCameraFactory::~AbstractCameraFactory() {}
-
-std::shared_ptr<AbstractCamera> AbstractCameraFactory::createCamera(CameraType type) {
+std::shared_ptr<AbstractCamera> AbstractCameraFactory::createCamera(CameraType type, QObject* parent) {
     switch (type) {
         case CameraType::DALSA:
-            return std::make_shared<DalsaCamera>();
+            return std::make_shared<DalsaCamera>(parent);
+        // case CameraType::OTHER:
+        //     return std::make_shared<OtherCamera>(parent);
         default:
             return nullptr;
     }

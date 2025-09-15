@@ -8,15 +8,16 @@
 
 enum class CameraType {
     DALSA,
-    // 以后可增加其他相机类型
+    // 可扩展其他相机类型
 };
 
 class AbstractCameraFactory {
 public:
-    AbstractCameraFactory(QObject* parent = nullptr);
-    ~AbstractCameraFactory();
+    AbstractCameraFactory() = delete;  // 工厂不需要实例化
+    ~AbstractCameraFactory() = delete;
 
-    static std::shared_ptr<AbstractCamera> createCamera(CameraType type);
+    // 静态方法创建相机实例
+    static std::shared_ptr<AbstractCamera> createCamera(CameraType type, QObject* parent = nullptr);
 };
 
 #endif  // ABSTRACTCAMERAFACTORY_H
