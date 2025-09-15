@@ -22,9 +22,12 @@ public:
 
 private:
     Ui::CISWidget* ui;
-    QImage* resultImage;
-    QPainter* painter;
-    AbstractCamera* camera = nullptr;
+
+    QThread* cameraThread;
+
+    std::shared_ptr<AbstractCamera> CISCamera;
+
+    QImage resultImage;
     int offset_x = 0;
     bool isSplice = false;
 
@@ -32,5 +35,6 @@ private:
     void initCamera();
 private slots:
     // void onNewImage(const QImage& img);
+    void on_btnStart_clicked();
 };
 #endif  // CISCAMERAIMAGE_H
