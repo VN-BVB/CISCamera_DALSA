@@ -21,7 +21,8 @@ void CISWidget::initCamera() {
     // 将相机对象移动到独立线程
     CISCamera->moveToThread(cameraThread);
     cameraThread->start();
-    QMetaObject::invokeMethod(CISCamera.get(), [=]() { CISCamera->initCamera("xxx.ccf"); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        CISCamera.get(), [=]() { CISCamera->initCamera("./data/CISConfig/V_Cameralink_Default_Default.ccf"); }, Qt::QueuedConnection);
 }
 void CISWidget::initUIConnections() {
     qRegisterMetaType<cv::Mat>("cv::Mat");
