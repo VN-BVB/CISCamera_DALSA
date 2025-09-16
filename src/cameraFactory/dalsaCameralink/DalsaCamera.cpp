@@ -141,15 +141,25 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 
     if (!data) return;
 
-    int bpp = (cam->m_qformat == QImage::Format_RGB888) ? 3 : ((cam->m_qformat == QImage::Format_Grayscale16) ? 2 : 1);
+    cv::Mat mat;
 
-    QImage img((uchar*)data, cam->m_width, cam->m_height, cam->m_width * bpp, cam->m_qformat);
+    // 按照相机数据格式转换成 cv::Mat
+    if (cam->m_qformat == QImage::Format_RGB888) {
+        // OpenCV 默认是 BGR，这里如果要保持颜色一致，需要后续 cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data).clone();
+    } else if (cam->m_qformat == QImage::Format_Grayscale8) {
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data).clone();
+    } else if (cam->m_qformat == QImage::Format_Grayscale16) {
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data).clone();
+    } else {
+        std::cout << "none mode for converting to img " << std::endl;
+        // 不支持的格式
+        return;
+    }
 
-    QImage copy = img.copy();
+    QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
 
-    QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(QImage, copy));
-
-    // 保存逻辑
+    // 保存逻辑（依然用 SapBuffer 保存，避免 OpenCV 再写一次大图）
     if (cam->m_saveEnabled) {
         std::stringstream ss;
         ss << "D:\\test\\bmp\\" << cam->m_frameCount << ".bmp";
@@ -161,4 +171,5 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     }
 }
 
-void DalsaCamera::handleImageFromCallback(const QImage& img) { emit newImageReady(img); }
+// =================== 槽函数 ===================
+void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) { emit newImageReady(mat); }

@@ -17,7 +17,7 @@ public:
     ~AbstractCameraFactory() = delete;
 
     // 静态方法创建相机实例
-    static std::shared_ptr<AbstractCamera> createCamera(CameraType type, QObject* parent = nullptr);
+    static std::shared_ptr<AbstractCamera> createCamera(CameraType type);
 };
 
 #endif  // ABSTRACTCAMERAFACTORY_H

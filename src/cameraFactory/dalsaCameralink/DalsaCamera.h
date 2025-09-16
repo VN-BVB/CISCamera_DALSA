@@ -19,8 +19,8 @@ public:
     explicit DalsaCamera(QObject* parent = nullptr);
     ~DalsaCamera();
 
-    // AbstractCamera interface
     bool initCamera(const QString& configPath) override;
+public slots:
     void startGrab() override;
     void stopGrab() override;
     void freezeGrab(bool freeze) override;
@@ -31,7 +31,7 @@ public:
 
 signals:
     // 由 AbstractCamera 声明（重复声明不会冲突，但不是必需）
-    void newImageReady(const QImage& image);
+    void newImageReady(const cv::Mat& image);
     void grabFinished();
 
 private:
@@ -39,7 +39,7 @@ private:
     static void XferCallBack(SapXferCallbackInfo* pInfo);
 
     // 实例方法，安全在 Qt 主线程或通过 invokeMethod 调用
-    Q_SLOT void handleImageFromCallback(const QImage& img);
+    Q_SLOT void handleImageFromCallback(const cv::Mat& img);
 
     // helpers
     QImage::Format mapSapFormatToQImage(SapFormat fmt) const;
