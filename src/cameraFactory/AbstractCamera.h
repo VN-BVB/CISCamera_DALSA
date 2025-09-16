@@ -1,13 +1,15 @@
 ﻿#ifndef ABSTRACTCAMERA_H
 #define ABSTRACTCAMERA_H
-
+// clang-format off
+#include <plog/Log.h>
 #include <QImage>
 #include <QObject>
 #include <QString>
-#include <iostream>。
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <iostream>
+// clang-format off
 class AbstractCamera : public QObject {
     Q_OBJECT
 public:

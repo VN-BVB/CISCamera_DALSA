@@ -40,15 +40,15 @@ QImage openGLImageWidget::matToQImage(const cv::Mat &mat) {
 
     switch (mat.type()) {
         case CV_8UC1: {
-            QImage img(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_Grayscale8);
+            QImage img(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8);
             return img.copy();
         }
         case CV_8UC3: {
-            QImage img(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_RGB888);
+            QImage img(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_RGB888);
             return img.rgbSwapped().copy();  // OpenCV 是 BGR
         }
         case CV_8UC4: {
-            QImage img(mat.data, mat.cols, mat.rows, mat.step, QImage::Format_ARGB32);
+            QImage img(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_ARGB32);
             return img.copy();
         }
         default:

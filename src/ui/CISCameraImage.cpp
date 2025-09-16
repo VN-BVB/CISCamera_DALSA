@@ -31,6 +31,8 @@ void CISWidget::initUIConnections() {
 
 void CISWidget::onNewImage(const cv::Mat& img) {
     ui->imgLive->setOpenCVImage(img);
+    cv::imshow("img_test", img);
+    cv::waitKey(1);
     // 如果启用拼接模式
     if (ui->ckbSplice->isChecked()) {
         if (resultMat.empty()) {

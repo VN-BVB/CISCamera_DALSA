@@ -35,30 +35,73 @@ DalsaCamera::~DalsaCamera() {
     delete m_View;
     delete m_Acquisition;
 }
-
 bool DalsaCamera::initCamera(const QString& configPath) {
+    PLOGD << "DALSA采集卡初始化中...";
     m_ccfPath = configPath;
 
     char serverName[MAX_PATH];
-    SapManager::GetServerName(0, SapManager::ResourceAcq, serverName);
+    if (!SapManager::GetServerName(0, SapManager::ResourceAcq, serverName)) {
+        PLOGE << "SapManager::GetServerName 获取失败";
+        return false;
+    }
+    PLOGD << "ServerName = " << serverName;
+
     SapLocation loc(serverName, 0);
 
     m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
     m_Buffers = new SapBufferWithTrash(2, m_Acquisition);
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
-
     // 注意传 this 作为 context
     m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, this);
 
-    if (!*m_Acquisition && !m_Acquisition->Create()) return false;
-    if (!*m_Buffers && !m_Buffers->Create()) return false;
-    // if (!*m_View && !m_View->Create()) return false;
-    if (!*m_Xfer && !m_Xfer->Create()) return false;
+    // ---- Acquisition ----
+    if (!*m_Acquisition) {
+        PLOGD << "Acquisition 对象未创建，尝试 Create()...";
+        if (!m_Acquisition->Create()) {
+            PLOGE << "m_Acquisition->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "Acquisition 创建成功";
 
-    if (m_Xfer && m_Xfer->GetPair(0)) m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
+    // ---- Buffers ----
+    if (!*m_Buffers) {
+        PLOGD << "Buffers 对象未创建，尝试 Create()...";
+        if (!m_Buffers->Create()) {
+            PLOGE << "m_Buffers->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "Buffers 创建成功";
+    // ---- View ---- (可选)
+    /*
+    if (!*m_View) {
+        PLOGD << "View 对象未创建，尝试 Create()...";
+        if (!m_View->Create()) {
+            PLOGE << "m_View->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "View 创建成功";
+    */
+    // ---- Xfer ----
+    if (!*m_Xfer) {
+        PLOGD << "Xfer 对象未创建，尝试 Create()...";
+        if (!m_Xfer->Create()) {
+            PLOGE << "m_Xfer->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "Xfer 创建成功";
+
+    if (m_Xfer && m_Xfer->GetPair(0)) {
+        m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
+        PLOGD << "XferPair 设置为 CycleNextWithTrash";
+    }
 
     m_width = m_Buffers->GetWidth();
     m_height = m_Buffers->GetHeight();
+    PLOGD << "DALSA采集卡初始化完成, 分辨率 = " << m_width << " x " << m_height;
 
     return true;
 }
@@ -139,8 +182,6 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
         // 不支持的格式
         return;
     }
-    cv::imshow("camera", mat);
-    cv::waitKey(1);
 
     QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
 

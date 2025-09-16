@@ -1,3 +1,4 @@
+﻿
 #include <QApplication>
 
 #include "src/ui/CISCameraImage.h"
