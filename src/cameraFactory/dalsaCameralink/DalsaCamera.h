@@ -41,9 +41,6 @@ private:
     // 实例方法，安全在 Qt 主线程或通过 invokeMethod 调用
     Q_SLOT void handleImageFromCallback(const cv::Mat& img);
 
-    // helpers
-    QImage::Format mapSapFormatToQImage(SapFormat fmt) const;
-
 private:
     // Sapera objects
     SapAcquisition* m_Acquisition;
@@ -52,7 +49,7 @@ private:
     SapView* m_View;
     BYTE* m_pData;
 
-    // state
+    // 状态
     std::atomic<bool> m_running;
     std::atomic<bool> m_freeze;
     std::atomic<bool> m_saveEnabled;
@@ -66,7 +63,6 @@ private:
     // image params (read from CCF / buffers)
     int m_width;
     int m_height;
-    QImage::Format m_qformat;
     QString m_ccfPath;
 
     // trigger mode

@@ -18,7 +18,6 @@ DalsaCamera::DalsaCamera(QObject* parent)
       m_frameCount(0),
       m_width(0),
       m_height(0),
-      m_qformat(QImage::Format_Invalid),
       m_triggerMode(TriggerMode::Internal) {}
 
 DalsaCamera::~DalsaCamera() {
@@ -28,7 +27,7 @@ DalsaCamera::~DalsaCamera() {
 
     if (m_Xfer && *m_Xfer) m_Xfer->Destroy();
     if (m_Buffers && *m_Buffers) m_Buffers->Destroy();
-    if (m_View && *m_View) m_View->Destroy();
+    // if (m_View && *m_View) m_View->Destroy();
     if (m_Acquisition && *m_Acquisition) m_Acquisition->Destroy();
 
     delete m_Xfer;
@@ -53,15 +52,13 @@ bool DalsaCamera::initCamera(const QString& configPath) {
 
     if (!*m_Acquisition && !m_Acquisition->Create()) return false;
     if (!*m_Buffers && !m_Buffers->Create()) return false;
-    if (!*m_View && !m_View->Create()) return false;
+    // if (!*m_View && !m_View->Create()) return false;
     if (!*m_Xfer && !m_Xfer->Create()) return false;
 
     if (m_Xfer && m_Xfer->GetPair(0)) m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
 
     m_width = m_Buffers->GetWidth();
     m_height = m_Buffers->GetHeight();
-
-    m_qformat = mapSapFormatToQImage(m_Buffers->GetFormat());
 
     return true;
 }
@@ -111,19 +108,6 @@ void DalsaCamera::saveFrames(bool enable, int maxFrames) {
     m_maxFrames = maxFrames;
     m_frameCount = 0;
 }
-// 将 Sapera 图像格式映射到 QImage 格式
-QImage::Format DalsaCamera::mapSapFormatToQImage(SapFormat fmt) const {
-    switch (fmt) {
-        case SapFormatMono8:
-            return QImage::Format_Grayscale8;
-        case SapFormatRGB888:
-            return QImage::Format_RGB888;
-        case SapFormatMono16:
-            return QImage::Format_Grayscale16;
-        default:
-            return QImage::Format_Grayscale8;
-    }
-}
 
 // =================== 回调部分 ===================
 void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
@@ -144,18 +128,19 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     cv::Mat mat;
 
     // 按照相机数据格式转换成 cv::Mat
-    if (cam->m_qformat == QImage::Format_RGB888) {
-        // OpenCV 默认是 BGR，这里如果要保持颜色一致，需要后续 cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+    if (cam->m_Buffers->GetFormat() == SapFormatRGB888) {
         mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data).clone();
-    } else if (cam->m_qformat == QImage::Format_Grayscale8) {
+    } else if (cam->m_Buffers->GetFormat() == SapFormatMono8) {
         mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data).clone();
-    } else if (cam->m_qformat == QImage::Format_Grayscale16) {
+    } else if (cam->m_Buffers->GetFormat() == SapFormatMono16) {
         mat = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data).clone();
     } else {
         std::cout << "none mode for converting to img " << std::endl;
         // 不支持的格式
         return;
     }
+    cv::imshow("camera", mat);
+    cv::waitKey(1);
 
     QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
 
