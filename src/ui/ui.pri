@@ -4,6 +4,7 @@
 
 SOURCES += \
     $$PWD/CISCameraImage.cpp \
+<<<<<<< HEAD
     $$PWD/imageviewwindow.cpp \
     $$PWD/interactiveview.cpp
 HEADERS += \
@@ -14,3 +15,13 @@ HEADERS += \
 FORMS += \
     $$PWD/CISCameraImage.ui \
     $$PWD/imageviewwindow.ui
+=======
+    $$PWD/imageWidget/openGLImageWidget.cpp
+HEADERS += \
+    $$PWD/CISCameraImage.h \
+    $$PWD/imageWidget/openGLImageWidget.h
+
+FORMS += \
+    $$PWD/CISCameraImage.ui
+
+>>>>>>> origin/CISCameraExploit

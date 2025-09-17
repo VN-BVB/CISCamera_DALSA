@@ -10,19 +10,32 @@
     <height>600</height>
    </rect>
   </property>
+  <property name="baseSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>Widget</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="1">
     <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <widget class="QPushButton" name="btnFreeze">
+       <property name="text">
+        <string>暂停采集</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="ckbSave">
+       <property name="text">
+        <string>保存图像</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="0">
       <widget class="QPushButton" name="btnStart">
        <property name="text">
@@ -30,52 +43,76 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="pushButton_3">
-       <property name="text">
-        <string>结束采集</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="text">
-        <string>暂停采集</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="1">
-      <widget class="QPushButton" name="pushButton_4">
+      <widget class="QPushButton" name="btnContinue">
        <property name="text">
         <string>继续采集</string>
        </property>
       </widget>
      </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="btnStop">
+       <property name="text">
+        <string>结束采集</string>
+       </property>
+      </widget>
+     </item>
      <item row="2" column="0">
-      <widget class="QPushButton" name="pushButton_5">
+      <widget class="QCheckBox" name="ckbSplice">
        <property name="text">
         <string>拼接图像</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QPushButton" name="pushButton_6">
-       <property name="text">
-        <string>保存图像</string>
-       </property>
-      </widget>
-     </item>
     </layout>
    </item>
+   <item row="0" column="0">
+    <widget class="openGLImageWidget" name="imgLive">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="0" colspan="2">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>TextLabel</string>
+    <widget class="openGLImageWidget" name="imgSplice">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>openGLImageWidget</class>
+   <extends>QOpenGLWidget</extends>
+   <header location="global">src/ui/imageWidget/openGLImageWidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -19,30 +19,27 @@ public:
     explicit DalsaCamera(QObject* parent = nullptr);
     ~DalsaCamera();
 
-    // AbstractCamera interface
     bool initCamera(const QString& configPath) override;
+public slots:
     void startGrab() override;
     void stopGrab() override;
     void freezeGrab(bool freeze) override;
-    void saveFrames(bool enable, int maxFrames = 0) override;
+    void saveFrames(bool enable, int maxFrames = 1) override;
 
     // 可选：覆盖 CCF 的触发模式
     void setTriggerMode(TriggerMode mode) { m_triggerMode = mode; }
 
 signals:
     // 由 AbstractCamera 声明（重复声明不会冲突，但不是必需）
-    void newImageReady(const QImage& image);
-    void grabFinished();
+    // void newImageReady(const cv::Mat& image);
+    // void grabFinished();
 
 private:
     // Sapera 用的静态回调（传入 context）
     static void XferCallBack(SapXferCallbackInfo* pInfo);
 
     // 实例方法，安全在 Qt 主线程或通过 invokeMethod 调用
-    Q_SLOT void handleImageFromCallback(const QImage& img);
-
-    // helpers
-    QImage::Format mapSapFormatToQImage(SapFormat fmt) const;
+    Q_SLOT void handleImageFromCallback(const cv::Mat& img);
 
 private:
     // Sapera objects
@@ -52,7 +49,7 @@ private:
     SapView* m_View;
     BYTE* m_pData;
 
-    // state
+    // 状态
     std::atomic<bool> m_running;
     std::atomic<bool> m_freeze;
     std::atomic<bool> m_saveEnabled;
@@ -66,7 +63,6 @@ private:
     // image params (read from CCF / buffers)
     int m_width;
     int m_height;
-    QImage::Format m_qformat;
     QString m_ccfPath;
 
     // trigger mode

@@ -2,5 +2,6 @@ Makefile
 Makefile.Release
 Makefile.Debug
 /build/
+/debug/
 /release/
 /.qtc_clangd/

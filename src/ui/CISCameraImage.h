@@ -1,8 +1,9 @@
-#ifndef CISCAMERAIMAGE_H
+﻿#ifndef CISCAMERAIMAGE_H
 #define CISCAMERAIMAGE_H
 
 #include <QImage>
 #include <QPainter>
+#include <QThread>
 #include <QWidget>
 
 #include "src/cameraFactory/AbstractCamera.h"
@@ -22,15 +23,23 @@ public:
 
 private:
     Ui::CISWidget* ui;
-    QImage* resultImage;
-    QPainter* painter;
-    AbstractCamera* camera = nullptr;
+
+    QThread* cameraThread = new QThread;
+
+    std::shared_ptr<AbstractCamera> CISCamera{nullptr};
+
+    cv::Mat resultMat;
     int offset_x = 0;
-    bool isSplice = false;
 
     void initUIConnections();
     void initCamera();
 private slots:
-    // void onNewImage(const QImage& img);
+    void onNewImage(const cv::Mat& img);
+    void on_btnStart_clicked();
+    void on_btnStop_clicked();
+    void on_btnFreeze_clicked();
+    void on_btnContinue_clicked();
+    void on_ckbSplice_toggled(bool checked);
+    void on_ckbSave_toggled(bool checked);
 };
 #endif  // CISCAMERAIMAGE_H

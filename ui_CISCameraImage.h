@@ -11,10 +11,11 @@
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
+#include <src/ui/imageWidget/openGLImageWidget.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -22,67 +23,78 @@ class Ui_CISWidget
 {
 public:
     QGridLayout *gridLayout_2;
-    QLabel *label;
     QGridLayout *gridLayout;
+    QPushButton *btnFreeze;
+    QCheckBox *ckbSave;
     QPushButton *btnStart;
-    QPushButton *pushButton_3;
-    QPushButton *pushButton_2;
-    QPushButton *pushButton_4;
-    QPushButton *pushButton_5;
-    QPushButton *pushButton_6;
-    QLabel *label_2;
+    QPushButton *btnContinue;
+    QPushButton *btnStop;
+    QCheckBox *ckbSplice;
+    openGLImageWidget *imgLive;
+    openGLImageWidget *imgSplice;
 
     void setupUi(QWidget *CISWidget)
     {
         if (CISWidget->objectName().isEmpty())
             CISWidget->setObjectName(QString::fromUtf8("CISWidget"));
         CISWidget->resize(800, 600);
+        CISWidget->setBaseSize(QSize(0, 0));
         gridLayout_2 = new QGridLayout(CISWidget);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
-        label = new QLabel(CISWidget);
-        label->setObjectName(QString::fromUtf8("label"));
-
-        gridLayout_2->addWidget(label, 0, 0, 1, 1);
-
         gridLayout = new QGridLayout();
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
+        btnFreeze = new QPushButton(CISWidget);
+        btnFreeze->setObjectName(QString::fromUtf8("btnFreeze"));
+
+        gridLayout->addWidget(btnFreeze, 1, 0, 1, 1);
+
+        ckbSave = new QCheckBox(CISWidget);
+        ckbSave->setObjectName(QString::fromUtf8("ckbSave"));
+
+        gridLayout->addWidget(ckbSave, 2, 1, 1, 1);
+
         btnStart = new QPushButton(CISWidget);
         btnStart->setObjectName(QString::fromUtf8("btnStart"));
 
         gridLayout->addWidget(btnStart, 0, 0, 1, 1);
 
-        pushButton_3 = new QPushButton(CISWidget);
-        pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
+        btnContinue = new QPushButton(CISWidget);
+        btnContinue->setObjectName(QString::fromUtf8("btnContinue"));
 
-        gridLayout->addWidget(pushButton_3, 0, 1, 1, 1);
+        gridLayout->addWidget(btnContinue, 1, 1, 1, 1);
 
-        pushButton_2 = new QPushButton(CISWidget);
-        pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
+        btnStop = new QPushButton(CISWidget);
+        btnStop->setObjectName(QString::fromUtf8("btnStop"));
 
-        gridLayout->addWidget(pushButton_2, 1, 0, 1, 1);
+        gridLayout->addWidget(btnStop, 0, 1, 1, 1);
 
-        pushButton_4 = new QPushButton(CISWidget);
-        pushButton_4->setObjectName(QString::fromUtf8("pushButton_4"));
+        ckbSplice = new QCheckBox(CISWidget);
+        ckbSplice->setObjectName(QString::fromUtf8("ckbSplice"));
 
-        gridLayout->addWidget(pushButton_4, 1, 1, 1, 1);
-
-        pushButton_5 = new QPushButton(CISWidget);
-        pushButton_5->setObjectName(QString::fromUtf8("pushButton_5"));
-
-        gridLayout->addWidget(pushButton_5, 2, 0, 1, 1);
-
-        pushButton_6 = new QPushButton(CISWidget);
-        pushButton_6->setObjectName(QString::fromUtf8("pushButton_6"));
-
-        gridLayout->addWidget(pushButton_6, 2, 1, 1, 1);
+        gridLayout->addWidget(ckbSplice, 2, 0, 1, 1);
 
 
         gridLayout_2->addLayout(gridLayout, 0, 1, 1, 1);
 
-        label_2 = new QLabel(CISWidget);
-        label_2->setObjectName(QString::fromUtf8("label_2"));
+        imgLive = new openGLImageWidget(CISWidget);
+        imgLive->setObjectName(QString::fromUtf8("imgLive"));
+        QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(imgLive->sizePolicy().hasHeightForWidth());
+        imgLive->setSizePolicy(sizePolicy);
+        imgLive->setMaximumSize(QSize(16777215, 16777215));
+        imgLive->setSizeIncrement(QSize(0, 0));
+        imgLive->setBaseSize(QSize(0, 0));
 
-        gridLayout_2->addWidget(label_2, 1, 0, 1, 2);
+        gridLayout_2->addWidget(imgLive, 0, 0, 1, 1);
+
+        imgSplice = new openGLImageWidget(CISWidget);
+        imgSplice->setObjectName(QString::fromUtf8("imgSplice"));
+        sizePolicy.setHeightForWidth(imgSplice->sizePolicy().hasHeightForWidth());
+        imgSplice->setSizePolicy(sizePolicy);
+
+        gridLayout_2->addWidget(imgSplice, 1, 0, 1, 2);
 
 
         retranslateUi(CISWidget);
@@ -93,14 +105,12 @@ public:
     void retranslateUi(QWidget *CISWidget)
     {
         CISWidget->setWindowTitle(QCoreApplication::translate("CISWidget", "Widget", nullptr));
-        label->setText(QCoreApplication::translate("CISWidget", "TextLabel", nullptr));
+        btnFreeze->setText(QCoreApplication::translate("CISWidget", "\346\232\202\345\201\234\351\207\207\351\233\206", nullptr));
+        ckbSave->setText(QCoreApplication::translate("CISWidget", "\344\277\235\345\255\230\345\233\276\345\203\217", nullptr));
         btnStart->setText(QCoreApplication::translate("CISWidget", "\345\274\200\345\247\213\351\207\207\351\233\206", nullptr));
-        pushButton_3->setText(QCoreApplication::translate("CISWidget", "\347\273\223\346\235\237\351\207\207\351\233\206", nullptr));
-        pushButton_2->setText(QCoreApplication::translate("CISWidget", "\346\232\202\345\201\234\351\207\207\351\233\206", nullptr));
-        pushButton_4->setText(QCoreApplication::translate("CISWidget", "\347\273\247\347\273\255\351\207\207\351\233\206", nullptr));
-        pushButton_5->setText(QCoreApplication::translate("CISWidget", "\346\213\274\346\216\245\345\233\276\345\203\217", nullptr));
-        pushButton_6->setText(QCoreApplication::translate("CISWidget", "\344\277\235\345\255\230\345\233\276\345\203\217", nullptr));
-        label_2->setText(QCoreApplication::translate("CISWidget", "TextLabel", nullptr));
+        btnContinue->setText(QCoreApplication::translate("CISWidget", "\347\273\247\347\273\255\351\207\207\351\233\206", nullptr));
+        btnStop->setText(QCoreApplication::translate("CISWidget", "\347\273\223\346\235\237\351\207\207\351\233\206", nullptr));
+        ckbSplice->setText(QCoreApplication::translate("CISWidget", "\346\213\274\346\216\245\345\233\276\345\203\217", nullptr));
     } // retranslateUi
 
 };

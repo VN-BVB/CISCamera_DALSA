@@ -18,7 +18,6 @@ DalsaCamera::DalsaCamera(QObject* parent)
       m_frameCount(0),
       m_width(0),
       m_height(0),
-      m_qformat(QImage::Format_Invalid),
       m_triggerMode(TriggerMode::Internal) {}
 
 DalsaCamera::~DalsaCamera() {
@@ -28,7 +27,7 @@ DalsaCamera::~DalsaCamera() {
 
     if (m_Xfer && *m_Xfer) m_Xfer->Destroy();
     if (m_Buffers && *m_Buffers) m_Buffers->Destroy();
-    if (m_View && *m_View) m_View->Destroy();
+    // if (m_View && *m_View) m_View->Destroy();
     if (m_Acquisition && *m_Acquisition) m_Acquisition->Destroy();
 
     delete m_Xfer;
@@ -36,40 +35,84 @@ DalsaCamera::~DalsaCamera() {
     delete m_View;
     delete m_Acquisition;
 }
-
 bool DalsaCamera::initCamera(const QString& configPath) {
+    PLOGD << "DALSA采集卡初始化中...";
     m_ccfPath = configPath;
 
     char serverName[MAX_PATH];
-    SapManager::GetServerName(0, SapManager::ResourceAcq, serverName);
+    if (!SapManager::GetServerName(0, SapManager::ResourceAcq, serverName)) {
+        PLOGE << "SapManager::GetServerName 获取失败";
+        return false;
+    }
+    PLOGD << "ServerName = " << serverName;
+
     SapLocation loc(serverName, 0);
 
     m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
     m_Buffers = new SapBufferWithTrash(2, m_Acquisition);
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
-
     // 注意传 this 作为 context
     m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, this);
 
-    if (!*m_Acquisition && !m_Acquisition->Create()) return false;
-    if (!*m_Buffers && !m_Buffers->Create()) return false;
-    if (!*m_View && !m_View->Create()) return false;
-    if (!*m_Xfer && !m_Xfer->Create()) return false;
+    // ---- Acquisition ----
+    if (!*m_Acquisition) {
+        PLOGD << "Acquisition 对象未创建，尝试 Create()...";
+        if (!m_Acquisition->Create()) {
+            PLOGE << "m_Acquisition->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "Acquisition 创建成功";
 
-    if (m_Xfer && m_Xfer->GetPair(0)) m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
+    // ---- Buffers ----
+    if (!*m_Buffers) {
+        PLOGD << "Buffers 对象未创建，尝试 Create()...";
+        if (!m_Buffers->Create()) {
+            PLOGE << "m_Buffers->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "Buffers 创建成功";
+    // ---- View ---- (可选)
+    /*
+    if (!*m_View) {
+        PLOGD << "View 对象未创建，尝试 Create()...";
+        if (!m_View->Create()) {
+            PLOGE << "m_View->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "View 创建成功";
+    */
+    // ---- Xfer ----
+    if (!*m_Xfer) {
+        PLOGD << "Xfer 对象未创建，尝试 Create()...";
+        if (!m_Xfer->Create()) {
+            PLOGE << "m_Xfer->Create() 失败";
+            return false;
+        }
+    }
+    PLOGD << "Xfer 创建成功";
+
+    if (m_Xfer && m_Xfer->GetPair(0)) {
+        m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
+        PLOGD << "XferPair 设置为 CycleNextWithTrash";
+    }
 
     m_width = m_Buffers->GetWidth();
     m_height = m_Buffers->GetHeight();
-
-    m_qformat = mapSapFormatToQImage(m_Buffers->GetFormat());
+    PLOGD << "DALSA采集卡初始化完成, 分辨率 = " << m_width << " x " << m_height;
 
     return true;
 }
 
 void DalsaCamera::startGrab() {
-    if (m_running) return;
+    if (m_running) {
+        return;
+    }
 
     m_running = true;
+    m_freeze = false;
     m_frameCount = 0;
 
     if (!m_Xfer) return;
@@ -101,28 +144,28 @@ void DalsaCamera::stopGrab() {
     m_running = false;
     if (m_Xfer) m_Xfer->Abort();
     if (m_worker.joinable()) m_worker.join();
+    m_frameCount = 0;
     emit grabFinished();
 }
 
-void DalsaCamera::freezeGrab(bool freeze) { m_freeze = freeze; }
+void DalsaCamera::freezeGrab(bool freeze) {
+    m_freeze = freeze;
+    if (m_Xfer) {
+        if (freeze) {
+            m_Xfer->Freeze();  // 停采集
+            PLOGD << "采集已冻结";
+        } else {
+            m_Xfer->Grab();  // 继续采集
+            PLOGD << "采集继续";
+        }
+    }
+    m_frameCount = 0;
+}
 
 void DalsaCamera::saveFrames(bool enable, int maxFrames) {
     m_saveEnabled = enable;
     m_maxFrames = maxFrames;
     m_frameCount = 0;
-}
-// 将 Sapera 图像格式映射到 QImage 格式
-QImage::Format DalsaCamera::mapSapFormatToQImage(SapFormat fmt) const {
-    switch (fmt) {
-        case SapFormatMono8:
-            return QImage::Format_Grayscale8;
-        case SapFormatRGB888:
-            return QImage::Format_RGB888;
-        case SapFormatMono16:
-            return QImage::Format_Grayscale16;
-        default:
-            return QImage::Format_Grayscale8;
-    }
 }
 
 // =================== 回调部分 ===================
@@ -131,6 +174,9 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 
     auto* cam = reinterpret_cast<DalsaCamera*>(pInfo->GetContext());
     if (!cam) return;
+    if (cam->m_freeze) {
+        return;
+    }
 
     int bufferIndex = pInfo->GetPairIndex();
     void* data = nullptr;
@@ -141,15 +187,25 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 
     if (!data) return;
 
-    int bpp = (cam->m_qformat == QImage::Format_RGB888) ? 3 : ((cam->m_qformat == QImage::Format_Grayscale16) ? 2 : 1);
+    static cv::Mat mat;
+    // 按照相机数据格式转换成 cv::Mat
+    if (cam->m_Buffers->GetFormat() == SapFormatRGB888) {
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data);
+    } else if (cam->m_Buffers->GetFormat() == SapFormatMono8) {
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data);
+    } else if (cam->m_Buffers->GetFormat() == SapFormatMono16) {
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data);
+    } else {
+        std::cout << "none mode for converting to img " << std::endl;
+        // 不支持的格式
+        return;
+    }
+    // cv::imshow("aaaa", mat);
+    // cv::waitKey(1);
 
-    QImage img((uchar*)data, cam->m_width, cam->m_height, cam->m_width * bpp, cam->m_qformat);
+    QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
 
-    QImage copy = img.copy();
-
-    QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(QImage, copy));
-
-    // 保存逻辑
+    // 保存逻辑（依然用 SapBuffer 保存，避免 OpenCV 再写一次大图）
     if (cam->m_saveEnabled) {
         std::stringstream ss;
         ss << "D:\\test\\bmp\\" << cam->m_frameCount << ".bmp";
@@ -159,6 +215,11 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
             cam->m_saveEnabled = false;
         }
     }
+    cam->m_frameCount++;
 }
 
-void DalsaCamera::handleImageFromCallback(const QImage& img) { emit newImageReady(img); }
+// =================== 槽函数 ===================
+void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) {
+    // PLOGD << "发送图像帧";
+    emit newImageReady(mat.clone());
+}
