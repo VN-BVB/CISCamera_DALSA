@@ -31,8 +31,8 @@ public slots:
 
 signals:
     // 由 AbstractCamera 声明（重复声明不会冲突，但不是必需）
-    void newImageReady(const cv::Mat& image);
-    void grabFinished();
+    // void newImageReady(const cv::Mat& image);
+    // void grabFinished();
 
 private:
     // Sapera 用的静态回调（传入 context）

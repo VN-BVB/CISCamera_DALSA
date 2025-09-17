@@ -107,9 +107,12 @@ bool DalsaCamera::initCamera(const QString& configPath) {
 }
 
 void DalsaCamera::startGrab() {
-    if (m_running) return;
+    if (m_running) {
+        return;
+    }
 
     m_running = true;
+    m_freeze = false;
     m_frameCount = 0;
 
     if (!m_Xfer) return;
@@ -141,10 +144,23 @@ void DalsaCamera::stopGrab() {
     m_running = false;
     if (m_Xfer) m_Xfer->Abort();
     if (m_worker.joinable()) m_worker.join();
+    m_frameCount = 0;
     emit grabFinished();
 }
 
-void DalsaCamera::freezeGrab(bool freeze) { m_freeze = freeze; }
+void DalsaCamera::freezeGrab(bool freeze) {
+    m_freeze = freeze;
+    if (m_Xfer) {
+        if (freeze) {
+            m_Xfer->Freeze();  // 停采集
+            PLOGD << "采集已冻结";
+        } else {
+            m_Xfer->Grab();  // 继续采集
+            PLOGD << "采集继续";
+        }
+    }
+    m_frameCount = 0;
+}
 
 void DalsaCamera::saveFrames(bool enable, int maxFrames) {
     m_saveEnabled = enable;
@@ -158,6 +174,9 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 
     auto* cam = reinterpret_cast<DalsaCamera*>(pInfo->GetContext());
     if (!cam) return;
+    if (cam->m_freeze) {
+        return;
+    }
 
     int bufferIndex = pInfo->GetPairIndex();
     void* data = nullptr;
@@ -168,20 +187,21 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 
     if (!data) return;
 
-    cv::Mat mat;
-
+    static cv::Mat mat;
     // 按照相机数据格式转换成 cv::Mat
     if (cam->m_Buffers->GetFormat() == SapFormatRGB888) {
-        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data).clone();
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data);
     } else if (cam->m_Buffers->GetFormat() == SapFormatMono8) {
-        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data).clone();
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data);
     } else if (cam->m_Buffers->GetFormat() == SapFormatMono16) {
-        mat = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data).clone();
+        mat = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data);
     } else {
         std::cout << "none mode for converting to img " << std::endl;
         // 不支持的格式
         return;
     }
+    // cv::imshow("aaaa", mat);
+    // cv::waitKey(1);
 
     QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
 
@@ -195,7 +215,11 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
             cam->m_saveEnabled = false;
         }
     }
+    cam->m_frameCount++;
 }
 
 // =================== 槽函数 ===================
-void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) { emit newImageReady(mat); }
+void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) {
+    // PLOGD << "发送图像帧";
+    emit newImageReady(mat.clone());
+}
