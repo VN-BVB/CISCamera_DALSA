@@ -13,6 +13,9 @@ SOURCES += \
 # HEADERS += \
 # FORMS += \
 
+INCLUDEPATH += src
+INCLUDEPATH += src/ui
+
 
 include(./src/src.pri)
 include(./3rdParty/3rdPartyLi.pri)

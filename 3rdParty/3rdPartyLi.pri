@@ -13,6 +13,7 @@ LIBS += -L"C:/Program Files/Teledyne DALSA/Sapera/Lib/Win64" \
         -lSapClassBasic \
         -lcorapi
 # ------------------OpenCV库-------------------
-INCLUDEPATH += D:/ProgramData/opencv/build/include/
-INCLUDEPATH += D:/ProgramData/opencv/build/include/opencv2/
-LIBS += -LD:/ProgramData/opencv/build/x64/vc15/lib/ -lopencv_world440
+INCLUDEPATH += D:/apps/Opencv/opencv/build/include/
+INCLUDEPATH += D:/apps/Opencv/opencv/build/include/opencv2/
+LIBS += -LD:/apps/Opencv/opencv/build/x64/vc16/lib/ -lopencv_world4100
+
