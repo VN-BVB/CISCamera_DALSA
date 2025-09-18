@@ -23,7 +23,7 @@ public slots:
     virtual void saveFrames(bool enable, int maxFrames = 0) = 0;
 
 signals:
-    void newImageReady(const cv::Mat& image);  // 输出 Qt 图像
+    void sendNewImageReady(const cv::Mat& image);  // 输出 Qt 图像
     void grabFinished();
 };
 

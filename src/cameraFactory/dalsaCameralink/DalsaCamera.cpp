@@ -221,5 +221,5 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 // =================== 槽函数 ===================
 void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) {
     // PLOGD << "发送图像帧";
-    emit newImageReady(mat.clone());
+    emit sendNewImageReady(mat.clone());
 }

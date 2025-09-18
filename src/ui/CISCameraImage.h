@@ -34,7 +34,7 @@ private:
     void initUIConnections();
     void initCamera();
 private slots:
-    void onNewImage(const cv::Mat& img);
+    void whenGetNewImage(const cv::Mat& img);
     void on_btnStart_clicked();
     void on_btnStop_clicked();
     void on_btnFreeze_clicked();

@@ -26,10 +26,10 @@ void CISWidget::initCamera() {
 }
 void CISWidget::initUIConnections() {
     qRegisterMetaType<cv::Mat>("cv::Mat");
-    connect(CISCamera.get(), &AbstractCamera::newImageReady, this, &CISWidget::onNewImage, Qt::QueuedConnection);
+    connect(CISCamera.get(), &AbstractCamera::sendNewImageReady, this, &CISWidget::whenGetNewImage, Qt::QueuedConnection);
 }
 
-void CISWidget::onNewImage(const cv::Mat& img) {
+void CISWidget::whenGetNewImage(const cv::Mat& img) {
     ui->imgLive->setOpenCVImage(img);
     // 如果启用拼接模式
     if (ui->ckbSplice->isChecked()) {
