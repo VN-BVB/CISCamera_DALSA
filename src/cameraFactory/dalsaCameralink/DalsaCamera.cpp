@@ -18,7 +18,7 @@ DalsaCamera::DalsaCamera(QObject* parent)
       m_frameCount(0),
       m_width(0),
       m_height(0),
-      m_triggerMode(TriggerMode::Internal) {}
+      m_triggerMode(TriggerMode::External) {}
 
 DalsaCamera::~DalsaCamera() {
     // stopGrab();
@@ -167,7 +167,22 @@ void DalsaCamera::saveFrames(bool enable, int maxFrames) {
     m_maxFrames = maxFrames;
     m_frameCount = 0;
 }
+// 触发一次采集
+bool DalsaCamera::softwareTrigger() {
+    if (!m_Acquisition) {
+        PLOGE << "Acquisition 未初始化";
+        return false;
+    }
+    // 注意：要在 CCF 配置里设置好 External Trigger Source = Software
+    // 否则这个调用不会真正触发
+    if (!m_Acquisition->SoftwareTrigger(SapAcquisition::SoftwareTriggerExtFrame)) {
+        PLOGE << "SoftwareTrigger 调用失败";
+        return false;
+    }
 
+    PLOGD << "SoftwareTrigger 触发成功";
+    return true;
+}
 // =================== 回调部分 ===================
 void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     if (!pInfo) return;
@@ -218,7 +233,7 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     cam->m_frameCount++;
 }
 
-// =================== 槽函数 ===================
+// =================== 信号 ===================
 void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) {
     // PLOGD << "发送图像帧";
     emit sendNewImageReady(mat.clone());
