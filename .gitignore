@@ -6,3 +6,5 @@ Makefile.Debug
 /release/
 /.qtc_clangd/
 *.pro.user
+msvc_make.bat
+*.stash
