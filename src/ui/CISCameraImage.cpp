@@ -26,6 +26,7 @@ void CISWidget::initCamera() {
 }
 void CISWidget::initUIConnections() {
     qRegisterMetaType<cv::Mat>("cv::Mat");
+    qRegisterMetaType<DalsaCamera::TriggerMode>("DalsaCamera::TriggerMode");
     connect(CISCamera.get(), &AbstractCamera::sendNewImageReady, this, &CISWidget::whenGetNewImage, Qt::QueuedConnection);
 }
 
@@ -91,3 +92,20 @@ void CISWidget::on_ckbSave_toggled(bool checked) {
         QMetaObject::invokeMethod(CISCamera.get(), "saveFrames", Q_ARG(bool, checked));
     }
 }
+
+void CISWidget::on_comboBox_currentTextChanged(const QString& arg1) {
+    QString s = arg1.trimmed();  // 去掉首尾空格
+    if (s == "内触发") {
+        PLOGD << "内触发";
+        QMetaObject::invokeMethod(CISCamera.get(), "setTriggerMode", Qt::QueuedConnection,
+                                  Q_ARG(DalsaCamera::TriggerMode, DalsaCamera::TriggerMode::Internal));
+    } else if (s == "外触发") {
+        PLOGD << "外触发";
+        QMetaObject::invokeMethod(CISCamera.get(), "setTriggerMode", Qt::QueuedConnection,
+                                  Q_ARG(DalsaCamera::TriggerMode, DalsaCamera::TriggerMode::External));
+    } else {
+        PLOGD << "未匹配：" << s;
+    }
+}
+
+void CISWidget::on_btnSoftWareTrigger_clicked() { QMetaObject::invokeMethod(CISCamera.get(), "softwareTrigger"); }

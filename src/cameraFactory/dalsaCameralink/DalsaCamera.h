@@ -20,12 +20,13 @@ public:
     ~DalsaCamera();
 
     bool initCamera(const QString& configPath) override;
+
 public slots:
     void startGrab() override;
     void stopGrab() override;
     void freezeGrab(bool freeze) override;
     void saveFrames(bool enable, int maxFrames = 1) override;
-
+    bool softwareTrigger();
     // 可选：覆盖 CCF 的触发模式
     void setTriggerMode(TriggerMode mode) { m_triggerMode = mode; }
 

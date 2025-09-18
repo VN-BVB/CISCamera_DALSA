@@ -41,5 +41,7 @@ private slots:
     void on_btnContinue_clicked();
     void on_ckbSplice_toggled(bool checked);
     void on_ckbSave_toggled(bool checked);
+    void on_comboBox_currentTextChanged(const QString& arg1);
+    void on_btnSoftWareTrigger_clicked();
 };
 #endif  // CISCAMERAIMAGE_H
