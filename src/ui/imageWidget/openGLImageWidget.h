@@ -13,7 +13,7 @@ class openGLImageWidget : public QOpenGLWidget {
 public:
     explicit openGLImageWidget(QWidget *parent = nullptr);
     void setOpenCVImage(const cv::Mat &mat);
-
+    void setQImage(const QImage &Qimg);
     void wheelEvent(QWheelEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;

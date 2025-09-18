@@ -34,6 +34,29 @@ void openGLImageWidget::setOpenCVImage(const cv::Mat &mat) {
 
     update();  // 触发重绘
 }
+void openGLImageWidget::setQImage(const QImage &Qimg) {
+    QMutexLocker locker(&mutex_);
+    image_ = Qimg;
+
+    if (!image_.isNull()) {
+        // 获取窗口和图片的尺寸
+        QSize widgetSize = size();
+        QSize imageSize = image_.size();
+
+        // 计算按比例适配窗口的缩放因子
+        double scaleX = static_cast<double>(widgetSize.width()) / imageSize.width();
+        double scaleY = static_cast<double>(widgetSize.height()) / imageSize.height();
+        scaleFactor_ = std::min(scaleX, scaleY);  // 保持原始比例铺满窗口
+
+        // 居中显示
+        double displayWidth = imageSize.width() * scaleFactor_;
+        double displayHeight = imageSize.height() * scaleFactor_;
+        offset_.setX((widgetSize.width() - displayWidth) / 2.0);
+        offset_.setY((widgetSize.height() - displayHeight) / 2.0);
+    }
+
+    update();  // 触发重绘
+}
 
 QImage openGLImageWidget::matToQImage(const cv::Mat &mat) {
     if (mat.empty()) return QImage();
