@@ -5,3 +5,4 @@ Makefile.Debug
 /debug/
 /release/
 /.qtc_clangd/
+*.pro.user
