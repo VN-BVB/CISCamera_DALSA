@@ -1,5 +1,5 @@
 /********************************************************************************
-** Form generated from reading UI file 'imageviewwindow.ui'
+** Form generated from reading UI file 'ImageViewWindow.ui'
 **
 ** Created by: Qt User Interface Compiler version 5.15.2
 **
@@ -13,7 +13,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
-#include <interactiveview.h>
+#include <src/ui/imageWidget/interactiveView.h>
 
 QT_BEGIN_NAMESPACE
 

@@ -4,18 +4,20 @@
 
 SOURCES += \
     $$PWD/CISCameraImage.cpp \
-    $$PWD/imageviewwindow.cpp \
-    $$PWD/interactiveview.cpp  \
+    $$PWD/ImageViewWindow.cpp \
+    $$PWD/imageWidget/interactiveView.cpp \
     $$PWD/imageWidget/openGLImageWidget.cpp
+
+
 HEADERS += \
     $$PWD/CISCameraImage.h \
-    $$PWD/imageviewwindow.h \
-    $$PWD/interactiveview.h  \
+    $$PWD/ImageViewWindow.h \
+    $$PWD/imageWidget/interactiveView.h \
     $$PWD/imageWidget/openGLImageWidget.h
 
 FORMS += \
     $$PWD/CISCameraImage.ui \
-    $$PWD/imageviewwindow.ui
+    $$PWD/ImageViewWindow.ui
     $$PWD/imageWidget/openGLImageWidget.cpp
 
 

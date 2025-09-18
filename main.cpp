@@ -6,7 +6,7 @@
 #include <QApplication>
 
 #include "src/ui/CISCameraImage.h"
-#include "src/ui/imageviewwindow.h"
+#include "src/ui/ImageViewWindow.h"
 
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {

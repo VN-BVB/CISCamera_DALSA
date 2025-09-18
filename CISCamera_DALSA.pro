@@ -13,8 +13,6 @@ SOURCES += \
 # HEADERS += \
 # FORMS += \
 
-INCLUDEPATH += src
-INCLUDEPATH += src/ui
 
 
 include(./src/src.pri)

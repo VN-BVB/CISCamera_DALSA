@@ -1,4 +1,4 @@
-﻿#ifndef IMAGEVIEWWINDOW_H
+#ifndef IMAGEVIEWWINDOW_H
 #define IMAGEVIEWWINDOW_H
 
 #include <QWidget>

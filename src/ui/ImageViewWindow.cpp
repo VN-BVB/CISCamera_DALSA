@@ -1,5 +1,5 @@
-﻿#include "imageviewwindow.h"
-#include "ui_imageviewwindow.h"
+﻿#include "ImageViewWindow.h"
+#include "ui_ImageViewWindow.h"
 
 #include <QFileDialog>
 #include <QDebug>

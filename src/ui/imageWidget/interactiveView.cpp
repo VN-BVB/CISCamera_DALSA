@@ -1,7 +1,7 @@
 ﻿#include <QWheelEvent>
 #include <QKeyEvent>
 #include <QGraphicsItem>
-#include "interactiveview.h"
+#include "interactiveView.h"
 
 #define VIEW_CENTER viewport()->rect().center()
 #define VIEW_WIDTH viewport()->rect().width()
