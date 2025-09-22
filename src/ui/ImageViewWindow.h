@@ -2,6 +2,7 @@
 #define IMAGEVIEWWINDOW_H
 
 #include <QWidget>
+#include <QGraphicsView>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -29,11 +30,13 @@ signals:
 private slots:
     void on_pb_open_clicked();
     void handleImageRead(cv::Mat image);
-    void handleImageProcessed(cv::Mat processedImage);
+    void handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour);
     void handleError(const QString &error);
 
 
 private:
+    void drawSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour);
+
     Ui::ImageViewWindow *ui;
     QThread readThread;
     QThread processThread;

@@ -3,6 +3,8 @@
 
 #include <QFileDialog>
 #include <QDebug>
+#include <QGraphicsPathItem>
+#include <QPainterPath>
 
 ImageViewWindow::ImageViewWindow(QWidget *parent)
     : QWidget(parent), 
@@ -12,6 +14,7 @@ ImageViewWindow::ImageViewWindow(QWidget *parent)
 {
     ui->setupUi(this);
     qRegisterMetaType<cv::Mat>("cv::Mat");
+    qRegisterMetaType<std::vector<cv::Point2f>>("std::vector<cv::Point2f>");
 
     // 读取线程
     readWorker->moveToThread(&readThread);
@@ -41,6 +44,36 @@ ImageViewWindow::~ImageViewWindow()
     delete ui;
 }
 
+// 绘制亚像素轮廓线
+void ImageViewWindow::drawSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour) {
+    if (subpixelContour.empty())
+        return;
+
+    // 创建路径并移动到第一个点
+    QPainterPath path;
+    path.moveTo(subpixelContour[0].x, subpixelContour[0].y);
+
+    for (size_t i = 1; i < subpixelContour.size(); ++i)
+    {
+        path.lineTo(subpixelContour[i].x, subpixelContour[i].y);
+    }
+
+    // 闭合路径（如果是闭合轮廓）
+    if (subpixelContour.size() > 2)
+    {
+        path.lineTo(subpixelContour[0].x, subpixelContour[0].y);
+    }
+
+    // 创建路径项并设置样式
+    QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
+    QPen pen(Qt::red);
+    pen.setWidth(0.5);
+    pathItem->setPen(pen);
+    pathItem->setZValue(10); // 确保在最上层显示
+
+    scene->addItem(pathItem);
+}
+
 void ImageViewWindow::on_pb_open_clicked()
 {
     QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
@@ -55,7 +88,7 @@ void ImageViewWindow::handleImageRead(cv::Mat image)
     emit startImageProcess(image);
 }
 
-void ImageViewWindow::handleImageProcessed(cv::Mat processedImage)
+void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour)
 {
     // 在主线程中显示图像
     QImage qimg;
@@ -72,6 +105,7 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage)
     }
 
     QGraphicsScene *scene = new QGraphicsScene(this);
+    drawSubpixelContour(scene, subpixelContour);
     QPixmap pixmap = QPixmap::fromImage(qimg);
     scene->addPixmap(pixmap);
     ui->gv_image->setScene(scene);

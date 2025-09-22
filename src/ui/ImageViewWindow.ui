@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>725</width>
+    <height>557</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,23 +16,23 @@
   <widget class="QPushButton" name="pb_open">
    <property name="geometry">
     <rect>
-     <x>160</x>
-     <y>250</y>
-     <width>80</width>
-     <height>18</height>
+     <x>210</x>
+     <y>510</y>
+     <width>361</width>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>PushButton</string>
+    <string>打开图像</string>
    </property>
   </widget>
   <widget class="InteractiveView" name="gv_image">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>80</x>
      <y>20</y>
-     <width>256</width>
-     <height>192</height>
+     <width>581</width>
+     <height>451</height>
     </rect>
    </property>
   </widget>

@@ -27,13 +27,13 @@ public:
     {
         if (ImageViewWindow->objectName().isEmpty())
             ImageViewWindow->setObjectName(QString::fromUtf8("ImageViewWindow"));
-        ImageViewWindow->resize(400, 300);
+        ImageViewWindow->resize(725, 557);
         pb_open = new QPushButton(ImageViewWindow);
         pb_open->setObjectName(QString::fromUtf8("pb_open"));
-        pb_open->setGeometry(QRect(160, 250, 80, 18));
+        pb_open->setGeometry(QRect(210, 510, 361, 31));
         gv_image = new InteractiveView(ImageViewWindow);
         gv_image->setObjectName(QString::fromUtf8("gv_image"));
-        gv_image->setGeometry(QRect(60, 20, 256, 192));
+        gv_image->setGeometry(QRect(80, 20, 581, 451));
 
         retranslateUi(ImageViewWindow);
 
@@ -43,7 +43,7 @@ public:
     void retranslateUi(QWidget *ImageViewWindow)
     {
         ImageViewWindow->setWindowTitle(QCoreApplication::translate("ImageViewWindow", "Form", nullptr));
-        pb_open->setText(QCoreApplication::translate("ImageViewWindow", "PushButton", nullptr));
+        pb_open->setText(QCoreApplication::translate("ImageViewWindow", "\346\211\223\345\274\200\345\233\276\345\203\217", nullptr));
     } // retranslateUi
 
 };

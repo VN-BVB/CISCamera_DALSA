@@ -3,15 +3,6 @@
 
 #include <QGraphicsView>
 
-/*
-使用前向声明，比直接包含头文件（#include <QWheelEvent>）效率高，优化编译效率
-为什么可以这样：
-    因为当只使用类的指针或引用时，编译器只需要知道类的存在，不需要知道类的完整定义
-    只有在调用类的成员函数或访问成员变量时才需要完整定义
-这种做法是常见的最佳实践：
-    头文件：使用前向声明，最小化包含关系
-    源文件：包含完整头文件，使用类的完整功能
-*/
 class QWheelEvent;
 class QKeyEvent;
 
@@ -42,7 +33,7 @@ protected:
 public Q_SLOTS:
     void zoomIn();                 // 放大
     void zoomOut();                // 缩小
-    void zoom(float scaleFactor);  // 缩放 - scaleFactor：缩放的比例因子
+    void zoom(float scaleFactor);  // 缩放
     void translate(QPointF delta); // 平移
 
 private:

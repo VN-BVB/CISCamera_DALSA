@@ -16,8 +16,15 @@ public slots:
     void processImage(cv::Mat image);
 
 signals:
-    void imageProcessed(cv::Mat processedImage);
+    void imageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour);
     void errorOccurred(const QString &error);
+
+private:
+    cv::Point2f zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius);
+    std::vector<cv::Point2f> getSubpixelContourZernike(const cv::Mat &src,
+                                                       const std::vector<cv::Point> &contour);
+
+    std::vector<cv::Point2f> m_subpixelContour;
 };
 
 #endif // IMAGEPROCESSWORKER_H
