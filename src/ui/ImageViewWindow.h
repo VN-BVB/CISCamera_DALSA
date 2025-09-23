@@ -8,8 +8,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <QThread>
 
-#include "src/weldMeasurement/ImagereadWorker.h"
-#include "src/weldMeasurement/ImageProcessWorker.h"
+#include "src/jointDetection/ImagereadWorker.h"
+#include "src/jointDetection/ImageProcessWorker.h"
 
 namespace Ui {
 class ImageViewWindow;

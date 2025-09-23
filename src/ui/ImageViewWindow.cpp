@@ -76,7 +76,8 @@ void ImageViewWindow::drawSubpixelContour(QGraphicsScene *scene, const std::vect
 
 void ImageViewWindow::on_pb_open_clicked()
 {
-    QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
+    // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
+    QString path = "E:/work/车门门环焊接/背光20250529/背光20250529/822-1200-50us-2(背光).bmp";
     if(path.isEmpty())
         return;
 
