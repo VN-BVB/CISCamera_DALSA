@@ -15,6 +15,7 @@ ImageViewWindow::ImageViewWindow(QWidget *parent)
     ui->setupUi(this);
     qRegisterMetaType<cv::Mat>("cv::Mat");
     qRegisterMetaType<std::vector<cv::Point2f>>("std::vector<cv::Point2f>");
+    qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point>>");
 
     // 读取线程
     readWorker->moveToThread(&readThread);
@@ -44,36 +45,70 @@ ImageViewWindow::~ImageViewWindow()
     delete ui;
 }
 
-// 绘制亚像素轮廓线
-void ImageViewWindow::drawSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour) {
-    if (subpixelContour.empty())
+// 统一的轮廓绘制接口 - 亚像素
+void ImageViewWindow::drawContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &contour, bool isSubpixel) {
+    if (contour.empty())
         return;
 
-    // 创建路径并移动到第一个点
     QPainterPath path;
-    path.moveTo(subpixelContour[0].x, subpixelContour[0].y);
+    path.moveTo(contour[0].x, contour[0].y);
 
-    for (size_t i = 1; i < subpixelContour.size(); ++i)
-    {
-        path.lineTo(subpixelContour[i].x, subpixelContour[i].y);
+    for (size_t i = 1; i < contour.size(); ++i) {
+        path.lineTo(contour[i].x, contour[i].y);
     }
 
     // 闭合路径（如果是闭合轮廓）
-    if (subpixelContour.size() > 2)
-    {
-        path.lineTo(subpixelContour[0].x, subpixelContour[0].y);
-    }
+    // if (contour.size() > 2) {
+    //     path.lineTo(contour[0].x, contour[0].y);
+    // }
 
-    // 创建路径项并设置样式
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
-    QPen pen(Qt::red);
-    pen.setWidth(0.5);
+    QPen pen(isSubpixel ? Qt::red : Qt::green); // 亚像素用红色，像素级用绿色
+    pen.setWidthF(0.1);
+    pen.setStyle(isSubpixel ? Qt::SolidLine : Qt::DashLine);
     pathItem->setPen(pen);
-    pathItem->setZValue(10); // 确保在最上层显示
+    pathItem->setZValue(10);
 
     scene->addItem(pathItem);
 }
 
+// 统一的轮廓绘制接口 - 像素级
+void ImageViewWindow::drawContour(QGraphicsScene *scene, const std::vector<cv::Point> &contour, bool isSubpixel) {
+    if (contour.empty())
+        return;
+
+    QPainterPath path;
+    path.moveTo(contour[0].x, contour[0].y);
+
+    for (size_t i = 1; i < contour.size(); ++i) {
+        path.lineTo(contour[i].x, contour[i].y);
+    }
+
+    // 闭合路径（如果是闭合轮廓）
+    // if (contour.size() > 2) {
+    //     path.lineTo(contour[0].x, contour[0].y);
+    // }
+
+    QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
+    QPen pen(isSubpixel ? Qt::red : Qt::green); // 亚像素用红色，像素级用绿色
+    pen.setWidthF(0.1);
+    pen.setStyle(isSubpixel ? Qt::SolidLine : Qt::DashLine);
+    pathItem->setPen(pen);
+    pathItem->setZValue(10);
+
+    scene->addItem(pathItem);
+}
+
+
+// 绘制亚像素轮廓线
+void ImageViewWindow::drawSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour) {
+    drawContour(scene, subpixelContour, true);
+}
+
+// 新增像素级绘制方法
+void ImageViewWindow::drawPixelContour(QGraphicsScene *scene, const std::vector<cv::Point> &pixelContour) {
+    drawContour(scene, pixelContour, false);
+}
 void ImageViewWindow::on_pb_open_clicked()
 {
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
@@ -89,7 +124,8 @@ void ImageViewWindow::handleImageRead(cv::Mat image)
     emit startImageProcess(image);
 }
 
-void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour)
+void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
+                                           std::vector<std::vector<cv::Point>> pixelContour)
 {
     // 在主线程中显示图像
     QImage qimg;
@@ -107,6 +143,7 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<c
 
     QGraphicsScene *scene = new QGraphicsScene(this);
     drawSubpixelContour(scene, subpixelContour);
+    drawPixelContour(scene, pixelContour[0]);
     QPixmap pixmap = QPixmap::fromImage(qimg);
     scene->addPixmap(pixmap);
     ui->gv_image->setScene(scene);

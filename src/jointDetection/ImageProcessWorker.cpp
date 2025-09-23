@@ -91,6 +91,7 @@ void ImageProcessWorker::processImage(cv::Mat image) {
         }
 
         // 提取亚像素轮廓
+        // @TODO:将m_subpixelContour改成数组
         m_subpixelContour = getSubpixelContourZernike(cropped_img, filtered_contours[0]);
 
         if (filtered_contours.empty())
@@ -99,7 +100,7 @@ void ImageProcessWorker::processImage(cv::Mat image) {
             return;
         }
 
-        emit imageProcessed(cropped_img, m_subpixelContour);
+        emit imageProcessed(cropped_img, m_subpixelContour, filtered_contours);
     }
     catch (const cv::Exception& e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());

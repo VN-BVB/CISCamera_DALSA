@@ -16,7 +16,8 @@ public slots:
     void processImage(cv::Mat image);
 
 signals:
-    void imageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour);
+    void imageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
+                        std::vector<std::vector<cv::Point>> pixelContour);
     void errorOccurred(const QString &error);
 
 private:

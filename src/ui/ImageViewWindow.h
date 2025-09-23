@@ -30,12 +30,17 @@ signals:
 private slots:
     void on_pb_open_clicked();
     void handleImageRead(cv::Mat image);
-    void handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour);
+    void handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
+                              std::vector<std::vector<cv::Point>> pixelContour);
     void handleError(const QString &error);
 
 
 private:
+    // @TODO：绘制轮廓接口优化，可以创建一个轮廓绘制类，类中继承GraphicsItem，设置轮廓属性，线条属性等信息
     void drawSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour);
+    void drawPixelContour(QGraphicsScene *scene, const std::vector<cv::Point> &pixelContour);
+    void drawContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &contour, bool isSubpixel = true);
+    void drawContour(QGraphicsScene *scene, const std::vector<cv::Point> &contour, bool isSubpixel = false);
 
     Ui::ImageViewWindow *ui;
     QThread readThread;
