@@ -134,8 +134,9 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<c
     }
 
     QGraphicsScene *scene = new QGraphicsScene(this);
+    // TODO:将绘制亚像素边缘的线的点的x，y都加0.5
     drawSubpixelContour(scene, subpixelContour);
-    // drawPixelContour(scene, pixelContour[0]);
+    drawPixelContour(scene, pixelContour[0]);
     QPixmap pixmap = QPixmap::fromImage(qimg);
     scene->addPixmap(pixmap);
     ui->gv_image->setScene(scene);
