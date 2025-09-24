@@ -5,6 +5,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "edgeDetection/CannyDevernay.h"
+
 
 class ImageProcessWorker : public QObject
 {
@@ -17,7 +19,8 @@ public slots:
 
 signals:
     void imageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
-                        std::vector<std::vector<cv::Point>> pixelContour);
+                        std::vector<std::vector<cv::Point>> pixelContour); // openCV的亚像素坐标
+    void imageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves);
     void errorOccurred(const QString &error);
 
 private:

@@ -29,6 +29,7 @@ ImageViewWindow::ImageViewWindow(QWidget *parent)
     connect(&processThread, &QThread::finished, processWorker, &QObject::deleteLater);
     connect(this, &ImageViewWindow::startImageProcess, processWorker, &ImageProcessWorker::processImage);
     connect(processWorker, &ImageProcessWorker::imageProcessed, this, &ImageViewWindow::handleImageProcessed);
+    connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &ImageViewWindow::handleImageProcessedCannyDevenay);
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &ImageViewWindow::handleError);
 
     // 启动线程
@@ -57,11 +58,6 @@ void ImageViewWindow::drawContour(QGraphicsScene *scene, const std::vector<cv::P
         path.lineTo(contour[i].x, contour[i].y);
     }
 
-    // 闭合路径（如果是闭合轮廓）
-    // if (contour.size() > 2) {
-    //     path.lineTo(contour[0].x, contour[0].y);
-    // }
-
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
     QPen pen(isSubpixel ? Qt::red : Qt::green); // 亚像素用红色，像素级用绿色
     pen.setWidthF(0.1);
@@ -83,11 +79,6 @@ void ImageViewWindow::drawContour(QGraphicsScene *scene, const std::vector<cv::P
     for (size_t i = 1; i < contour.size(); ++i) {
         path.lineTo(contour[i].x, contour[i].y);
     }
-
-    // 闭合路径（如果是闭合轮廓）
-    // if (contour.size() > 2) {
-    //     path.lineTo(contour[0].x, contour[0].y);
-    // }
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
     QPen pen(isSubpixel ? Qt::red : Qt::green); // 亚像素用红色，像素级用绿色
@@ -124,6 +115,7 @@ void ImageViewWindow::handleImageRead(cv::Mat image)
     emit startImageProcess(image);
 }
 
+// Zernike矩对应槽函数
 void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
                                            std::vector<std::vector<cv::Point>> pixelContour)
 {
@@ -143,10 +135,38 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<c
 
     QGraphicsScene *scene = new QGraphicsScene(this);
     drawSubpixelContour(scene, subpixelContour);
-    drawPixelContour(scene, pixelContour[0]);
+    // drawPixelContour(scene, pixelContour[0]);
     QPixmap pixmap = QPixmap::fromImage(qimg);
     scene->addPixmap(pixmap);
     ui->gv_image->setScene(scene);
+    ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+}
+
+// CannyDevenay算法对应槽函数
+void ImageViewWindow::handleImageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves)
+{
+    // 在主线程中显示图像
+    QImage qimg;
+    if (processedImage.type() == CV_8UC1)
+    {
+        qimg = QImage(processedImage.data, processedImage.cols, processedImage.rows,
+                      processedImage.step, QImage::Format_Grayscale8);
+    }
+    else
+    {
+        cv::Mat img_rgb;
+        cv::cvtColor(processedImage, img_rgb, cv::COLOR_BGR2RGB);
+        qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
+    }
+
+    QGraphicsScene *scene = new QGraphicsScene(this);
+    std::vector<cv::Point2f> subpixelContour = edgeCurves[0].points;
+    drawSubpixelContour(scene, subpixelContour);
+    // drawPixelContour(scene, pixelContour[0]);
+    QPixmap pixmap = QPixmap::fromImage(qimg);
+    scene->addPixmap(pixmap);
+    ui->gv_image->setScene(scene);
+
     ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
 

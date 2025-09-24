@@ -14,20 +14,116 @@ cv::Point2f ImageProcessWorker::zernikeSubpixel(const cv::Mat &gray, const cv::P
     roi &= cv::Rect(0, 0, gray.cols, gray.rows);
     cv::Mat roiImg = gray(roi);
 
-    // 计算Zernike矩（简化实现，实际需根据论文公式计算）
-    // 此处为示例，实际应用需实现完整的Zernike多项式计算
-    double m00 = cv::moments(roiImg).m00;
-    double m10 = cv::moments(roiImg).m10;
-    double m01 = cv::moments(roiImg).m01;
+    // 定义Zernike矩模板（7x7）
+    cv::Mat M00 = (cv::Mat_<double>(7, 7) << 0, 0.0287, 0.0686, 0.0807, 0.0686, 0.0287, 0,
+                   0.0287, 0.0815, 0.0816, 0.0816, 0.0816, 0.0815, 0.0287,
+                   0.0686, 0.0816, 0.0816, 0.0816, 0.0816, 0.0816, 0.0686,
+                   0.0807, 0.0816, 0.0816, 0.0816, 0.0816, 0.0816, 0.0807,
+                   0.0686, 0.0816, 0.0816, 0.0816, 0.0816, 0.0816, 0.0686,
+                   0.0287, 0.0815, 0.0816, 0.0816, 0.0816, 0.0815, 0.0287,
+                   0, 0.0287, 0.0686, 0.0807, 0.0686, 0.0287, 0);
 
-    if (m00 < 1e-6)
-        return edgePoint;
+    cv::Mat M11R = (cv::Mat_<double>(7, 7) << 0, -0.015, -0.019, 0, 0.019, 0.015, 0,
+                    -0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224,
+                    -0.0573, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0573,
+                    -0.069, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.069,
+                    -0.0573, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0573,
+                    -0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224,
+                    0, -0.015, -0.019, 0, 0.019, 0.015, 0);
 
-    // 亚像素偏移计算（基于Zernike矩特性）
-    float dx = (m10 / m00) - radius;
-    float dy = (m01 / m00) - radius;
+    cv::Mat M11I = (cv::Mat_<double>(7, 7) << 0, -0.0224, -0.0573, -0.069, -0.0573, -0.0224, 0,
+                    -0.015, -0.0466, -0.0466, -0.0466, -0.0466, -0.0466, -0.015,
+                    -0.019, -0.0233, -0.0233, -0.0233, -0.0233, -0.0233, -0.019,
+                    0, 0, 0, 0, 0, 0, 0,
+                    0.019, 0.0233, 0.0233, 0.0233, 0.0233, 0.0233, 0.019,
+                    0.015, 0.0466, 0.0466, 0.0466, 0.0466, 0.0466, 0.015,
+                    0, 0.0224, 0.0573, 0.069, 0.0573, 0.0224, 0);
 
-    return cv::Point2f(edgePoint.x + dx, edgePoint.y + dy);
+    cv::Mat M20 = (cv::Mat_<double>(7, 7) << 0, 0.0225, 0.0394, 0.0396, 0.0394, 0.0225, 0,
+                   0.0225, 0.0271, -0.0128, -0.0261, -0.0128, 0.0271, 0.0225,
+                   0.0394, -0.0128, -0.0528, -0.0661, -0.0528, -0.0128, 0.0394,
+                   0.0396, -0.0261, -0.0661, -0.0794, -0.0661, -0.0261, 0.0396,
+                   0.0394, -0.0128, -0.0528, -0.0661, -0.0528, -0.0128, 0.0394,
+                   0.0225, 0.0271, -0.0128, -0.0261, -0.0128, 0.0271, 0.0225,
+                   0, 0.0225, 0.0394, 0.0396, 0.0394, 0.0225, 0);
+
+    cv::Mat M31R = (cv::Mat_<double>(7, 7) << 0, -0.0103, -0.0073, 0, 0.0073, 0.0103, 0,
+                    -0.0153, -0.0018, 0.0162, 0, -0.0162, 0.0018, 0.0153,
+                    -0.0223, 0.0324, 0.0333, 0, -0.0333, -0.0324, 0.0223,
+                    -0.0190, 0.0438, 0.0390, 0, -0.0390, -0.0438, 0.0190,
+                    -0.0223, 0.0324, 0.0333, 0, -0.0333, -0.0324, 0.0223,
+                    -0.0153, -0.0018, 0.0162, 0, -0.0162, 0.0018, 0.0153,
+                    0, -0.0103, -0.0073, 0, 0.0073, 0.0103, 0);
+
+    cv::Mat M31I = (cv::Mat_<double>(7, 7) << 0, -0.0153, -0.0223, -0.019, -0.0223, -0.0153, 0,
+                    -0.0103, -0.0018, 0.0324, 0.0438, 0.0324, -0.0018, -0.0103,
+                    -0.0073, 0.0162, 0.0333, 0.039, 0.0333, 0.0162, -0.0073,
+                    0, 0, 0, 0, 0, 0, 0,
+                    0.0073, -0.0162, -0.0333, -0.039, -0.0333, -0.0162, 0.0073,
+                    0.0103, 0.0018, -0.0324, -0.0438, -0.0324, 0.0018, 0.0103,
+                    0, 0.0153, 0.0223, 0.0190, 0.0223, 0.0153, 0);
+
+    cv::Mat M40 = (cv::Mat_<double>(7, 7) << 0, 0.013, 0.0056, -0.0018, 0.0056, 0.013, 0,
+                   0.0130, -0.0186, -0.0323, -0.0239, -0.0323, -0.0186, 0.0130,
+                   0.0056, -0.0323, 0.0125, 0.0406, 0.0125, -0.0323, 0.0056,
+                   -0.0018, -0.0239, 0.0406, 0.0751, 0.0406, -0.0239, -0.0018,
+                   0.0056, -0.0323, 0.0125, 0.0406, 0.0125, -0.0323, 0.0056,
+                   0.0130, -0.0186, -0.0323, -0.0239, -0.0323, -0.0186, 0.0130,
+                   0, 0.013, 0.0056, -0.0018, 0.0056, 0.013, 0);
+
+    // 计算Zernike矩
+    cv::Mat roiImgFloat;
+    roiImg.convertTo(roiImgFloat, CV_64F);
+
+    cv::Mat ZerImgM00, ZerImgM11R, ZerImgM11I, ZerImgM20, ZerImgM31R, ZerImgM31I, ZerImgM40;
+    cv::filter2D(roiImgFloat, ZerImgM00, CV_64F, M00);
+    cv::filter2D(roiImgFloat, ZerImgM11R, CV_64F, M11R);
+    cv::filter2D(roiImgFloat, ZerImgM11I, CV_64F, M11I);
+    cv::filter2D(roiImgFloat, ZerImgM20, CV_64F, M20);
+    cv::filter2D(roiImgFloat, ZerImgM31R, CV_64F, M31R);
+    cv::filter2D(roiImgFloat, ZerImgM31I, CV_64F, M31I);
+    cv::filter2D(roiImgFloat, ZerImgM40, CV_64F, M40);
+
+    // 获取中心点值
+    int center_x = radius;
+    int center_y = radius;
+
+    double z00 = ZerImgM00.at<double>(center_y, center_x);
+    double z11r = ZerImgM11R.at<double>(center_y, center_x);
+    double z11i = ZerImgM11I.at<double>(center_y, center_x);
+    double z20 = ZerImgM20.at<double>(center_y, center_x);
+    double z31r = ZerImgM31R.at<double>(center_y, center_x);
+    double z31i = ZerImgM31I.at<double>(center_y, center_x);
+    double z40 = ZerImgM40.at<double>(center_y, center_x);
+
+    // 计算角度和长度参数
+    double theta = std::atan2(z31i, z31r);
+    double rotated_z11 = std::sin(theta) * z11i + std::cos(theta) * z11r;
+    double rotated_z31 = std::sin(theta) * z31i + std::cos(theta) * z31r;
+
+    double l_method1 = std::sqrt((5 * z40 + 3 * z20) / (8 * z20));
+    double l_method2 = std::sqrt((5 * rotated_z31 + rotated_z11) / (6 * rotated_z11));
+
+    double l = (l_method1 + l_method2) / 2;
+    double k = 3 * rotated_z11 / (2 * std::pow(1 - l_method2 * l_method2, 1.5));
+
+    // 阈值参数
+    double k_value = 20.0;
+    double l_value = std::sqrt(2.0) / 7.0; // sqrt(2)/g_N, g_N=7
+    double absl = std::abs(l_method2 - l_method1);
+
+    // @TODO:排查Zernike矩亚像素不计算偏移的问题
+    k_value = 0.0;
+    absl = -100000;
+    // 根据条件计算亚像素偏移
+    if (k >= k_value && absl <= l_value)
+    {
+        float dx = 7.0 * l * std::cos(theta) / 2.0; // g_N=7
+        float dy = 7.0 * l * std::sin(theta) / 2.0;
+        return cv::Point2f(edgePoint.x + dx, edgePoint.y + dy);
+    }
+
+    return edgePoint; // 不满足条件时返回原坐标
 }
 
 std::vector<cv::Point2f> ImageProcessWorker::getSubpixelContourZernike(const cv::Mat &src,
@@ -63,7 +159,14 @@ void ImageProcessWorker::processImage(cv::Mat image) {
     try {
         cv::Mat cropped_img = image(cv::Rect(16000, 16000, 1900, 1900));
         cv::imwrite("D:/Cpp_Project/WeldseamMeasurement/tests/image/cropped_img.bmp", cropped_img);
+
+        // CannyDevernay算法
+        // CannyDevernay CDEdgeDetector;
+        // std::vector<Point2fCurve> edgeCurves = CDEdgeDetector.detectEdges(image);
+        // qDebug() << "Detected " << edgeCurves.size() << " edge curves";
         
+
+        // zernike矩法
         cv::Mat edge;
         cv::Canny(cropped_img, edge, 20, 40);
 
@@ -101,6 +204,7 @@ void ImageProcessWorker::processImage(cv::Mat image) {
         }
 
         emit imageProcessed(cropped_img, m_subpixelContour, filtered_contours);
+        // emit imageProcessedCannyDevenay(cropped_img, edgeCurves);
     }
     catch (const cv::Exception& e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());

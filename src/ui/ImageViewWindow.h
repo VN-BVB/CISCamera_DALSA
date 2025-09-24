@@ -10,6 +10,7 @@
 
 #include "src/jointDetection/ImagereadWorker.h"
 #include "src/jointDetection/ImageProcessWorker.h"
+#include "src/jointDetection/edgeDetection/CannyDevernay.h"
 
 namespace Ui {
 class ImageViewWindow;
@@ -32,6 +33,7 @@ private slots:
     void handleImageRead(cv::Mat image);
     void handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
                               std::vector<std::vector<cv::Point>> pixelContour);
+    void handleImageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
 
 

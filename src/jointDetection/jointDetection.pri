@@ -5,3 +5,6 @@ HEADERS += \
 SOURCES += \
     $$PWD/ImageProcessWorker.cpp \
     $$PWD/ImageReadWorker.cpp
+
+include( ./edgeDetection/edgeDetection.pri )
+

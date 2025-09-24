@@ -27,13 +27,13 @@ public:
     {
         if (ImageViewWindow->objectName().isEmpty())
             ImageViewWindow->setObjectName(QString::fromUtf8("ImageViewWindow"));
-        ImageViewWindow->resize(725, 557);
+        ImageViewWindow->resize(1500, 1000);
         pb_open = new QPushButton(ImageViewWindow);
         pb_open->setObjectName(QString::fromUtf8("pb_open"));
-        pb_open->setGeometry(QRect(210, 510, 361, 31));
+        pb_open->setGeometry(QRect(210, 890, 1000, 41));
         gv_image = new InteractiveView(ImageViewWindow);
         gv_image->setObjectName(QString::fromUtf8("gv_image"));
-        gv_image->setGeometry(QRect(80, 20, 581, 451));
+        gv_image->setGeometry(QRect(80, 60, 1300, 800));
 
         retranslateUi(ImageViewWindow);
 
