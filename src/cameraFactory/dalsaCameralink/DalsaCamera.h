@@ -45,6 +45,7 @@ private:
 private:
     // Sapera objects
     SapAcquisition* m_Acquisition;
+    SapAcqDevice* m_pAcqDevice;
     SapBufferWithTrash* m_Buffers;
     SapTransfer* m_Xfer;
     SapView* m_View;

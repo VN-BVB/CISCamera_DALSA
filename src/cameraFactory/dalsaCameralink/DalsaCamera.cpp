@@ -47,12 +47,11 @@ bool DalsaCamera::initCamera(const QString& configPath) {
     PLOGD << "ServerName = " << serverName;
 
     SapLocation loc(serverName, 0);
-
     m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
     m_Buffers = new SapBufferWithTrash(2, m_Acquisition);
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
-    // 注意传 this 作为 context
     m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, this);
+    m_pAcqDevice = new SapAcqDevice(loc);
 
     // ---- Acquisition ----
     if (!*m_Acquisition) {
@@ -93,6 +92,16 @@ bool DalsaCamera::initCamera(const QString& configPath) {
         }
     }
     PLOGD << "Xfer 创建成功";
+    // ---- AcqDevice ----
+    // if (m_pAcqDevice && !*m_pAcqDevice) {
+    //     if (!m_pAcqDevice->Create()) {
+    //         PLOGE << "m_pAcqDevice->Create() 失败";
+    //         delete m_pAcqDevice;
+    //         m_pAcqDevice = nullptr;
+    //     } else {
+    //         PLOGD << "AcqDevice 创建成功";
+    //     }
+    // }
 
     if (m_Xfer && m_Xfer->GetPair(0)) {
         m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
@@ -121,6 +130,7 @@ void DalsaCamera::startGrab() {
     switch (m_triggerMode) {
         case TriggerMode::Internal:
             // 内触发 → 设置硬件内部连续采集
+
             if (m_Xfer->GetPair(0)) {
                 m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
             }
