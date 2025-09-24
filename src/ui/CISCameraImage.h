@@ -34,12 +34,14 @@ private:
     void initUIConnections();
     void initCamera();
 private slots:
-    void onNewImage(const cv::Mat& img);
+    void whenGetNewImage(const cv::Mat& img);
     void on_btnStart_clicked();
     void on_btnStop_clicked();
     void on_btnFreeze_clicked();
     void on_btnContinue_clicked();
     void on_ckbSplice_toggled(bool checked);
     void on_ckbSave_toggled(bool checked);
+    void on_comboBox_currentTextChanged(const QString& arg1);
+    void on_btnSoftWareTrigger_clicked();
 };
 #endif  // CISCAMERAIMAGE_H

@@ -18,7 +18,7 @@ DalsaCamera::DalsaCamera(QObject* parent)
       m_frameCount(0),
       m_width(0),
       m_height(0),
-      m_triggerMode(TriggerMode::Internal) {}
+      m_triggerMode(TriggerMode::External) {}
 
 DalsaCamera::~DalsaCamera() {
     // stopGrab();
@@ -47,12 +47,11 @@ bool DalsaCamera::initCamera(const QString& configPath) {
     PLOGD << "ServerName = " << serverName;
 
     SapLocation loc(serverName, 0);
-
     m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
     m_Buffers = new SapBufferWithTrash(2, m_Acquisition);
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
-    // 注意传 this 作为 context
     m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, this);
+    m_pAcqDevice = new SapAcqDevice(loc);
 
     // ---- Acquisition ----
     if (!*m_Acquisition) {
@@ -93,6 +92,16 @@ bool DalsaCamera::initCamera(const QString& configPath) {
         }
     }
     PLOGD << "Xfer 创建成功";
+    // ---- AcqDevice ----
+    // if (m_pAcqDevice && !*m_pAcqDevice) {
+    //     if (!m_pAcqDevice->Create()) {
+    //         PLOGE << "m_pAcqDevice->Create() 失败";
+    //         delete m_pAcqDevice;
+    //         m_pAcqDevice = nullptr;
+    //     } else {
+    //         PLOGD << "AcqDevice 创建成功";
+    //     }
+    // }
 
     if (m_Xfer && m_Xfer->GetPair(0)) {
         m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
@@ -121,6 +130,7 @@ void DalsaCamera::startGrab() {
     switch (m_triggerMode) {
         case TriggerMode::Internal:
             // 内触发 → 设置硬件内部连续采集
+
             if (m_Xfer->GetPair(0)) {
                 m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
             }
@@ -167,7 +177,22 @@ void DalsaCamera::saveFrames(bool enable, int maxFrames) {
     m_maxFrames = maxFrames;
     m_frameCount = 0;
 }
+// 触发一次采集
+bool DalsaCamera::softwareTrigger() {
+    if (!m_Acquisition) {
+        PLOGE << "Acquisition 未初始化";
+        return false;
+    }
+    // 注意：要在 CCF 配置里设置好 External Trigger Source = Software
+    // 否则这个调用不会真正触发
+    if (!m_Acquisition->SoftwareTrigger(SapAcquisition::SoftwareTriggerExtFrame)) {
+        PLOGE << "SoftwareTrigger 调用失败";
+        return false;
+    }
 
+    PLOGD << "SoftwareTrigger 触发成功";
+    return true;
+}
 // =================== 回调部分 ===================
 void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     if (!pInfo) return;
@@ -218,8 +243,8 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     cam->m_frameCount++;
 }
 
-// =================== 槽函数 ===================
+// =================== 信号 ===================
 void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) {
     // PLOGD << "发送图像帧";
-    emit newImageReady(mat.clone());
+    emit sendNewImageReady(mat.clone());
 }
