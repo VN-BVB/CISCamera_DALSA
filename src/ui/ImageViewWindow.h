@@ -38,7 +38,7 @@ private slots:
 
 
 private:
-    // @TODO：绘制轮廓接口优化，可以创建一个轮廓绘制类，类中继承GraphicsItem，设置轮廓属性，线条属性等信息
+    // @TODO：绘制轮廓接口优化，可以创建一个轮廓绘制类，类继承GraphicsItem，设置轮廓属性，线条属性等信息
     void drawSingleSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour);
     void drawSinglePixelContour(QGraphicsScene *scene, const std::vector<cv::Point> &pixelContour);
     void drawSubpixelContours(QGraphicsScene *scene, const std::vector<std::vector<cv::Point2f>> &subpixelContour);
@@ -52,6 +52,7 @@ private:
     ImageReadWorker *readWorker;
     ImageProcessWorker *processWorker;
 
+    // @TODO:使用日志记录每个步骤处理时间
     std::chrono::high_resolution_clock::time_point startTime;   // 图像处理开始时间
 };
 
