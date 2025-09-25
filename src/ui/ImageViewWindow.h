@@ -51,6 +51,8 @@ private:
     QThread processThread;
     ImageReadWorker *readWorker;
     ImageProcessWorker *processWorker;
+
+    std::chrono::high_resolution_clock::time_point startTime;   // 图像处理开始时间
 };
 
 #endif // IMAGEVIEWWINDOW_H
