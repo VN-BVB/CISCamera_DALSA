@@ -18,7 +18,7 @@ public slots:
     void processImage(cv::Mat image);
 
 signals:
-    void imageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
+    void imageProcessed(cv::Mat processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
                         std::vector<std::vector<cv::Point>> pixelContour); // openCV的亚像素坐标
     void imageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves);
     void errorOccurred(const QString &error);
@@ -29,7 +29,7 @@ private:
     std::vector<cv::Point2f> getSubpixelContourZernike(const cv::Mat &src,
                                                        const std::vector<cv::Point> &contour);
 
-    std::vector<cv::Point2f> m_subpixelContour;
+    std::vector<std::vector<cv::Point2f>> m_subpixelContours;
 };
 
 #endif // IMAGEPROCESSWORKER_H

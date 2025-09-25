@@ -16,6 +16,7 @@ ImageViewWindow::ImageViewWindow(QWidget *parent)
     qRegisterMetaType<cv::Mat>("cv::Mat");
     qRegisterMetaType<std::vector<cv::Point2f>>("std::vector<cv::Point2f>");
     qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point>>");
+    qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point2f>>");
 
     // 读取线程
     readWorker->moveToThread(&readThread);
@@ -91,15 +92,30 @@ void ImageViewWindow::drawContour(QGraphicsScene *scene, const std::vector<cv::P
 }
 
 
-// 绘制亚像素轮廓线
-void ImageViewWindow::drawSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour) {
+// 绘制单条亚像素级轮廓线
+void ImageViewWindow::drawSingleSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour) {
     drawContour(scene, subpixelContour, true);
 }
 
-// 像素级轮廓绘制方法
-void ImageViewWindow::drawPixelContour(QGraphicsScene *scene, const std::vector<cv::Point> &pixelContour) {
+// 绘制单条像素级轮廓线
+void ImageViewWindow::drawSinglePixelContour(QGraphicsScene *scene, const std::vector<cv::Point> &pixelContour) {
     drawContour(scene, pixelContour, false);
 }
+
+// 绘制所有亚像素轮廓线
+void ImageViewWindow::drawSubpixelContours(QGraphicsScene *scene, const std::vector<std::vector<cv::Point2f>> &subpixelContours) {
+    for (auto subpixelContour : subpixelContours) {
+        drawContour(scene, subpixelContour, true);
+    }
+}
+
+// 绘制所有像素轮廓线
+void ImageViewWindow::drawPixelContours(QGraphicsScene *scene, const std::vector<std::vector<cv::Point>> &pixelContours) {
+    for (auto pixelContour : pixelContours) {
+        drawContour(scene, pixelContour, false);
+    }
+}
+
 void ImageViewWindow::on_pb_open_clicked()
 {
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
@@ -116,8 +132,8 @@ void ImageViewWindow::handleImageRead(cv::Mat image)
 }
 
 // Zernike矩对应槽函数
-void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<cv::Point2f> subpixelContour,
-                                           std::vector<std::vector<cv::Point>> pixelContour)
+void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
+                                           std::vector<std::vector<cv::Point>> pixelContours)
 {
     // 在主线程中显示图像
     QImage qimg;
@@ -134,9 +150,10 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<c
     }
 
     QGraphicsScene *scene = new QGraphicsScene(this);
-    // TODO:将绘制亚像素边缘的线的点的x，y都加0.5
-    drawSubpixelContour(scene, subpixelContour);
-    drawPixelContour(scene, pixelContour[0]);
+    // drawSingleSubpixelContour(scene, subpixelContour);
+    // drawPixelContour(scene, pixelContour[0]);
+    drawSubpixelContours(scene, subpixelContours);
+    drawPixelContours(scene, pixelContours);
     QPixmap pixmap = QPixmap::fromImage(qimg);
     scene->addPixmap(pixmap);
     ui->gv_image->setScene(scene);
@@ -162,7 +179,7 @@ void ImageViewWindow::handleImageProcessedCannyDevenay(cv::Mat processedImage, s
 
     QGraphicsScene *scene = new QGraphicsScene(this);
     std::vector<cv::Point2f> subpixelContour = edgeCurves[0].points;
-    drawSubpixelContour(scene, subpixelContour);
+    drawSingleSubpixelContour(scene, subpixelContour);
     // drawPixelContour(scene, pixelContour[0]);
     QPixmap pixmap = QPixmap::fromImage(qimg);
     scene->addPixmap(pixmap);

@@ -322,7 +322,7 @@ void ImageProcessWorker::processImage(cv::Mat image) {
         cv::findContours(edge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
         // 过滤轮廓
-        std::vector<std::vector<cv::Point>> filtered_contours;
+        std::vector<std::vector<cv::Point>> filteredContours;
         for (auto &contour : contours)
         {
             if (contour.empty())
@@ -336,21 +336,22 @@ void ImageProcessWorker::processImage(cv::Mat image) {
                 bbox.width > 10 &&  // 最小宽度
                 (bbox.height * 1.0 / bbox.width < 3.0))
             { // 宽高比限制
-                filtered_contours.push_back(contour);
+                filteredContours.push_back(contour);
             }
         }
-
-        // 提取亚像素轮廓,zernike矩法
-        // @TODO:将m_subpixelContour改成数组
-        m_subpixelContour = getSubpixelContourZernike(grayImage, filtered_contours[0]);
-
-        if (filtered_contours.empty())
+        if (filteredContours.empty())
         {
             qDebug() << "未找到合适的轮廓";
             return;
         }
 
-        emit imageProcessed(croppedImg, m_subpixelContour, filtered_contours);
+        // 提取亚像素轮廓,zernike矩法
+        for (auto contour : filteredContours) {
+            std::vector<cv::Point2f> subpixelContour = getSubpixelContourZernike(grayImage, contour);
+            m_subpixelContours.push_back(subpixelContour);
+        }
+
+        emit imageProcessed(croppedImg, m_subpixelContours, filteredContours);
         // emit imageProcessedCannyDevenay(cropped_img, edgeCurves);
     }
     catch (const cv::Exception& e) {
