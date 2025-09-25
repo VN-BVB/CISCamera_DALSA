@@ -52,10 +52,10 @@ void ImageViewWindow::drawContour(QGraphicsScene *scene, const std::vector<cv::P
         return;
 
     QPainterPath path;
-    path.moveTo(contour[0].x, contour[0].y);
+    path.moveTo(contour[0].x + 0.5, contour[0].y + 0.5);    // 坐标增加(0.5,0.5)，以像素块中心为像素整数坐标，而不是左上角
 
     for (size_t i = 1; i < contour.size(); ++i) {
-        path.lineTo(contour[i].x, contour[i].y);
+        path.lineTo(contour[i].x + 0.5, contour[i].y + 0.5);
     }
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
@@ -74,10 +74,10 @@ void ImageViewWindow::drawContour(QGraphicsScene *scene, const std::vector<cv::P
         return;
 
     QPainterPath path;
-    path.moveTo(contour[0].x, contour[0].y);
+    path.moveTo(contour[0].x + 0.5, contour[0].y + 0.5);    // 坐标增加(0.5,0.5)，以像素块中心为像素整数坐标，而不是左上角
 
     for (size_t i = 1; i < contour.size(); ++i) {
-        path.lineTo(contour[i].x, contour[i].y);
+        path.lineTo(contour[i].x + 0.5, contour[i].y + 0.5);
     }
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
@@ -96,7 +96,7 @@ void ImageViewWindow::drawSubpixelContour(QGraphicsScene *scene, const std::vect
     drawContour(scene, subpixelContour, true);
 }
 
-// 新增像素级绘制方法
+// 像素级轮廓绘制方法
 void ImageViewWindow::drawPixelContour(QGraphicsScene *scene, const std::vector<cv::Point> &pixelContour) {
     drawContour(scene, pixelContour, false);
 }
