@@ -14,6 +14,7 @@ SOURCES += \
 HEADERS += \
     $$PWD/CISCameraImage.h \
     $$PWD/ImageViewWindow.h \
+    $$PWD/imageWidget/interactiveGlobal.h \
     $$PWD/imageWidget/interactiveImageItem.h \
     $$PWD/imageWidget/interactiveScene.h \
     $$PWD/imageWidget/interactiveView.h \

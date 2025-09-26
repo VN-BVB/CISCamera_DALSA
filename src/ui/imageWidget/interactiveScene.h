@@ -5,7 +5,7 @@
 
 class InteractiveView;
 class InteractiveImageItem;
-class InteracitveScenePrivate;
+class InteractiveScenePrivate;
 class InteractiveScene : public QGraphicsScene
 {
     Q_OBJECT
@@ -22,18 +22,18 @@ public:
     // 获取显示的图像
     QPixmap getDisplayImage();
     // 获取显示的图像的尺寸
-    QSize getDisplayImageSize();
+    QSize getDisplayImageSize() const;
 
 public slots:
     // 显示图像
-    bool displayImage(const QImage &image, bool bAutoFit = false);
+    bool whenDisplayImage(const QImage &image, bool bAutoFit = false);
     // 清除图像
-    void clearImage();
+    void whenClearImage();
     // 显示文本
-    void addDisplayText(const QString &text, const QPointF &pt=QPointF(0,0), const double &size=1,
+    void whenAddDisplayText(const QString &text, const QPointF &pt=QPointF(0,0), const double &size=1,
                         const QColor &color=QColor(Qt::green), const bool &clear=false);
     // 清除文本
-    void clearDisplayText();
+    void whenClearDisplayText();
 protected:
     // 设置显示图像图元
     void setDisplayImageItem(InteractiveImageItem* imageItem);
@@ -54,9 +54,9 @@ protected:
     // 图像显示图元
     InteractiveImageItem *m_displayImageItem = nullptr;
 protected:
-    const QScopedPointer<InteracitveScenePrivate> d_ptr;    // Qt的智能指针
+    const QScopedPointer<InteractiveScenePrivate> d_ptr;    // Qt的智能指针
 private:
-    Q_DECLARE_PRIVATE(InteracitveScene) // PIMPL设计模式，将类的实现细节隐藏在一个单独的私有类中，隐藏实现细节，加快编译速度
+    Q_DECLARE_PRIVATE(InteractiveScene) // PIMPL设计模式，将类的实现细节隐藏在一个单独的私有类中，隐藏实现细节，加快编译速度
 };
 
 #endif // INTERACTIVESCENE_H
