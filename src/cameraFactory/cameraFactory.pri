@@ -1,11 +1,11 @@
 SOURCES += \
-    $$PWD/AbstractCamera.cpp \
-    $$PWD/AbstractCameraFactory.cpp \
-    $$PWD/dalsaCameraLink/DalsaCamera.cpp
+    $$PWD/abstract_camera.cpp \
+    $$PWD/abstract_camera_factory.cpp \
+    $$PWD/dalsaCameraLink/dalsa_camera.cpp
 
 HEADERS += \
-    $$PWD/AbstractCamera.h \
-    $$PWD/AbstractCameraFactory.h \
-    $$PWD/dalsaCameraLink/DalsaCamera.h
+    $$PWD/abstract_camera.h \
+    $$PWD/abstract_camera_factory.h \
+    $$PWD/dalsaCameraLink/dalsa_camera.h
 
 # FORMS += \

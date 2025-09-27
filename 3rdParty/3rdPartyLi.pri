@@ -17,5 +17,9 @@ INCLUDEPATH += D:/ProgramData/opencv/build/include/
 INCLUDEPATH += D:/ProgramData/opencv/build/include/opencv2/
 LIBS += -LD:/ProgramData/opencv/build/x64/vc15/lib/ -lopencv_world440
 
-# ------------------PLOG库-------------------
+# ------------------PLOG库---------------------
 INCLUDEPATH += ./3rdParty/plog/include
+# ------------------LIBMODBUS库------------------
+INCLUDEPATH +=./3rdparty/libmodbus/include
+LIBS +=./3rdparty/libmodbus/X64/*.lib
+

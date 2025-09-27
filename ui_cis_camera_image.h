@@ -1,13 +1,13 @@
 /********************************************************************************
-** Form generated from reading UI file 'CISCameraImage.ui'
+** Form generated from reading UI file 'cis_camera_image.ui'
 **
 ** Created by: Qt User Interface Compiler version 5.14.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef UI_CISCAMERAIMAGE_H
-#define UI_CISCAMERAIMAGE_H
+#ifndef UI_CIS_CAMERA_IMAGE_H
+#define UI_CIS_CAMERA_IMAGE_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -17,7 +17,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
-#include <src/ui/imageWidget/openGLImageWidget.h>
+#include <src/ui/utils/imageWidget/openGLImageWidget.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -162,4 +162,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // UI_CISCAMERAIMAGE_H
+#endif // UI_CIS_CAMERA_IMAGE_H

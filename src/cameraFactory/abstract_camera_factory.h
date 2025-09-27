@@ -1,16 +1,15 @@
-﻿#ifndef ABSTRACTCAMERAFACTORY_H
-#define ABSTRACTCAMERAFACTORY_H
+﻿#ifndef ABSTRACT_CAMERA_FACTORY_H
+#define ABSTRACT_CAMERA_FACTORY_H
 
 #include <memory>
 
-#include "AbstractCamera.h"
-#include "dalsaCameraLink/DalsaCamera.h"
+#include "abstract_camera.h"
+#include "dalsaCameraLink/dalsa_camera.h"
 
 enum class CameraType {
     DALSA,
     // 可扩展其他相机类型
 };
-
 class AbstractCameraFactory {
 public:
     AbstractCameraFactory() = delete;  // 工厂不需要实例化
@@ -20,4 +19,4 @@ public:
     static std::shared_ptr<AbstractCamera> createCamera(CameraType type);
 };
 
-#endif  // ABSTRACTCAMERAFACTORY_H
+#endif  // ABSTRACT_CAMERA_FACTORY_H

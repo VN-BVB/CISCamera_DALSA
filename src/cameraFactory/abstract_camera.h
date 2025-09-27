@@ -1,5 +1,5 @@
-﻿#ifndef ABSTRACTCAMERA_H
-#define ABSTRACTCAMERA_H
+#ifndef ABSTRACT_CAMERA_H
+#define ABSTRACT_CAMERA_H
 // clang-format off
 #include <plog/Log.h>
 #include <QImage>
@@ -27,4 +27,4 @@ signals:
     void grabFinished();
 };
 
-#endif  // ABSTRACTCAMERA_H
+#endif  // ABSTRACT_CAMERA_H

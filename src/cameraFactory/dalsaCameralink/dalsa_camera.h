@@ -1,5 +1,5 @@
-﻿#ifndef DALSACAMERA_H
-#define DALSACAMERA_H
+﻿#ifndef DALSA_CAMERA_H
+#define DALSA_CAMERA_H
 
 #include <SapClassBasic.h>
 
@@ -9,7 +9,7 @@
 #include <mutex>
 #include <thread>
 
-#include "../AbstractCamera.h"
+#include "../abstract_camera.h"
 
 class DalsaCamera : public AbstractCamera {
     Q_OBJECT
@@ -71,4 +71,4 @@ private:
     TriggerMode m_triggerMode;
 };
 
-#endif  // DALSACAMERA_H
+#endif  // DALSA_CAMERA_H

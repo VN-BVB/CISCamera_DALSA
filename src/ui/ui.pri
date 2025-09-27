@@ -3,12 +3,13 @@
 # PRECOMPILED_HEADER = src/ui/stable.h
 
 SOURCES += \
-    $$PWD/CISCameraImage.cpp \
-    $$PWD/imageWidget/openGLImageWidget.cpp
+    $$PWD/cis_camera_image.cpp \
+    $$PWD/utils/imageWidget/openGLImageWidget.cpp
 HEADERS += \
-    $$PWD/CISCameraImage.h \
-    $$PWD/imageWidget/openGLImageWidget.h
+    $$PWD/cis_camera_image.h \
+    $$PWD/utils/stateLight/StateLight.h \
+    $$PWD/utils/imageWidget/openGLImageWidget.h
 
 FORMS += \
-    $$PWD/CISCameraImage.ui
+    $$PWD/cis_camera_image.ui
 

@@ -1,4 +1,4 @@
-﻿#include "AbstractCameraFactory.h"
+﻿#include "abstract_camera_factory.h"
 
 std::shared_ptr<AbstractCamera> AbstractCameraFactory::createCamera(CameraType type) {
     switch (type) {

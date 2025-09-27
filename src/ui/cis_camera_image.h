@@ -1,13 +1,13 @@
-﻿#ifndef CISCAMERAIMAGE_H
-#define CISCAMERAIMAGE_H
+#ifndef CIS_CAMERA_IMAGE_H
+#define CIS_CAMERA_IMAGE_H
 
 #include <QImage>
 #include <QPainter>
 #include <QThread>
 #include <QWidget>
 
-#include "src/cameraFactory/AbstractCamera.h"
-#include "src/cameraFactory/AbstractCameraFactory.h"
+#include "src/cameraFactory/abstract_camera.h"
+#include "src/cameraFactory/abstract_camera_factory.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class CISWidget;
@@ -44,4 +44,4 @@ private slots:
     void on_comboBox_currentTextChanged(const QString& arg1);
     void on_btnSoftWareTrigger_clicked();
 };
-#endif  // CISCAMERAIMAGE_H
+#endif  // CIS_CAMERA_IMAGE_H

@@ -186,7 +186,7 @@
   <customwidget>
    <class>openGLImageWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header location="global">src/ui/imageWidget/openGLImageWidget.h</header>
+   <header location="global">src/ui/utils/imageWidget/openGLImageWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -1,4 +1,4 @@
-﻿#include "AbstractCamera.h"
+﻿#include "abstract_camera.h"
 
 AbstractCamera::AbstractCamera(QObject *parent) { (void)parent; }
 

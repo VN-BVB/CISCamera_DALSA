@@ -1,4 +1,4 @@
-﻿#include "DalsaCamera.h"
+﻿#include "dalsa_camera.h"
 
 #include <QDebug>
 #include <QMetaObject>
