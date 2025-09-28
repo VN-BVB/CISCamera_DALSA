@@ -5,6 +5,7 @@
 SOURCES += \
     $$PWD/cis_camera_image.cpp \
     $$PWD/utils/imageWidget/openGLImageWidget.cpp
+
 HEADERS += \
     $$PWD/cis_camera_image.h \
     $$PWD/utils/stateLight/StateLight.h \

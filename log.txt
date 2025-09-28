@@ -1,0 +1,7 @@
+﻿2025-09-28 16:55:06.597 DEBUG [11104] [ExternalExeRunner::addDllDirToPath@22] PATH updated with: D:/Code/CISCamera_DALSA/data/CISConfig/externExE
+2025-09-28 16:55:06.598 ERROR [11104] [ExternalExeRunner::handleError@77] Process error: 0
+2025-09-28 16:55:06.598 ERROR [11104] [ExternalExeRunner::start@36] Failed to start exe: D:/Code/CISCamera_DALSA/data/CISConfig/externExE/mytool.exe
+2025-09-28 16:55:53.173 DEBUG [11696] [ExternalExeRunner::addDllDirToPath@22] PATH updated with: D:/Code/CISCamera_DALSA/data/CISConfig/externExE
+2025-09-28 16:55:53.302 DEBUG [11696] [ExternalExeRunner::start@40] Exe started: D:/Code/CISCamera_DALSA/data/CISConfig/externExE/ConfigCIS.exe
+2025-09-28 16:55:53.303 DEBUG [11696] [ExternalExeRunner::writeInput@58] Input written: some command
+2025-09-28 16:55:55.646 DEBUG [11696] [ExternalExeRunner::handleFinished@82] Process finished. ExitCode=0 Status=NormalExit
