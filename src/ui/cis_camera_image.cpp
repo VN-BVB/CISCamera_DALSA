@@ -1,7 +1,7 @@
 ﻿#include "cis_camera_image.h"
 
 #include "ui_cis_camera_image.h"
-
+#define ENABLE_SLAVE_CAMERA
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     ui->setupUi(this);
     initCamera();
@@ -9,103 +9,136 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
 }
 
 CISWidget::~CISWidget() {
-    if (CISCamera) {
-        CISCamera->stopGrab();
+    if (masterCISCamera) {
+        masterCISCamera->stopGrab();
     }
+#ifdef ENABLE_SLAVE_CAMERA
+    if (slaveCISCamera) {
+        slaveCISCamera->stopGrab();
+    }
+#endif
     delete ui;
 }
-void CISWidget::initCamera() {
-    // 使用工厂模式创建相机对象
-    CISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
 
-    // 将相机对象移动到独立线程
-    CISCamera->moveToThread(cameraThread);
-    cameraThread->start();
+void CISWidget::initCamera() {
+    // Master Camera
+    masterCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
+    masterCISCamera->moveToThread(cameraThreadMaster);
+    cameraThreadMaster->start();
     QMetaObject::invokeMethod(
-        CISCamera.get(), [=]() { CISCamera->initCamera("./data/CISConfig/V_Cameralink_Default_Default.ccf"); }, Qt::QueuedConnection);
+        masterCISCamera.get(), [=]() { masterCISCamera->initCamera("./data/CISConfig/MasterInternal.ccf"); }, Qt::QueuedConnection);
+
+#ifdef ENABLE_SLAVE_CAMERA
+    // Slave Camera
+    slaveCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
+    slaveCISCamera->moveToThread(cameraThreadSlave);
+    cameraThreadSlave->start();
+    QMetaObject::invokeMethod(
+        slaveCISCamera.get(), [=]() { slaveCISCamera->initCamera("./data/CISConfig/SlaveInternal.ccf"); }, Qt::QueuedConnection);
+#endif
+
+    // 外部配置程序
+    configCISCamera = std::make_shared<ExternalExeRunner>();
+    configCISCamera->moveToThread(cameraThreadConfig);
+    cameraThreadConfig->start();
 }
+
 void CISWidget::initUIConnections() {
     qRegisterMetaType<cv::Mat>("cv::Mat");
-    qRegisterMetaType<DalsaCamera::TriggerMode>("DalsaCamera::TriggerMode");
-    connect(CISCamera.get(), &AbstractCamera::sendNewImageReady, this, &CISWidget::whenGetNewImage, Qt::QueuedConnection);
+
+    connect(masterCISCamera.get(), &AbstractCamera::sendNewImageReady, this, &CISWidget::whenGetNewImage, Qt::QueuedConnection);
+
+#ifdef ENABLE_SLAVE_CAMERA
+    connect(
+        masterCISCamera.get(), &AbstractCamera::sendNewImageReady, this,
+        [=](const cv::Mat& img) {
+            masterImg = img.clone();
+            masterReady = true;
+            tryStitchImages();
+        },
+        Qt::QueuedConnection);
+
+    connect(
+        slaveCISCamera.get(), &AbstractCamera::sendNewImageReady, this,
+        [=](const cv::Mat& img) {
+            slaveImg = img.clone();
+            slaveReady = true;
+            tryStitchImages();
+        },
+        Qt::QueuedConnection);
+#endif
 }
 
-void CISWidget::whenGetNewImage(const cv::Mat& img) {
-    ui->imgLive->setOpenCVImage(img);
-    // 如果启用拼接模式
-    if (ui->ckbSplice->isChecked()) {
-        if (resultMat.empty()) {
-            resultMat = cv::Mat::zeros(img.cols, img.rows * 10, img.type());
-            offset_x = 0;
-        }
-        //  90 度
-        cv::Mat rotated;
-        cv::rotate(img, rotated, cv::ROTATE_90_CLOCKWISE);
+void CISWidget::whenGetNewImage(const cv::Mat& img) { ui->imgLive->setOpenCVImage(img); }
 
-        if (offset_x + rotated.cols <= resultMat.cols) {
-            rotated.copyTo(resultMat(cv::Rect(offset_x, 0, rotated.cols, rotated.rows)));
-            offset_x += rotated.cols;
-        } else {
-            resultMat = cv::Mat::zeros(img.cols, img.rows * 10, img.type());
-            offset_x = 0;
-            rotated.copyTo(resultMat(cv::Rect(offset_x, 0, rotated.cols, rotated.rows)));
-            offset_x += rotated.cols;
-        }
+#ifdef ENABLE_SLAVE_CAMERA
+void CISWidget::tryStitchImages() {
+    if (ui->ckbSplice->isChecked() && masterReady && slaveReady) {
+        cv::hconcat(masterImg, slaveImg, resultMat);
         ui->imgSplice->setOpenCVImage(resultMat);
+        masterReady = false;
+        slaveReady = false;
     }
 }
+#endif
 
 void CISWidget::on_btnStart_clicked() {
-    if (CISCamera) {
-        QMetaObject::invokeMethod(CISCamera.get(), "startGrab");
-    }
+    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "startGrab");
+#ifdef ENABLE_SLAVE_CAMERA
+    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "startGrab");
+#endif
 }
 
 void CISWidget::on_btnStop_clicked() {
-    if (CISCamera) {
-        QMetaObject::invokeMethod(CISCamera.get(), "stopGrab");
-    }
+    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "stopGrab");
+#ifdef ENABLE_SLAVE_CAMERA
+    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "stopGrab");
+#endif
 }
 
 void CISWidget::on_btnFreeze_clicked() {
-    if (CISCamera) {
-        QMetaObject::invokeMethod(CISCamera.get(), "freezeGrab", Q_ARG(bool, true));
-    }
+    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "freezeGrab", Q_ARG(bool, true));
+#ifdef ENABLE_SLAVE_CAMERA
+    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "freezeGrab", Q_ARG(bool, true));
+#endif
 }
 
 void CISWidget::on_btnContinue_clicked() {
-    if (CISCamera) {
-        QMetaObject::invokeMethod(CISCamera.get(), "freezeGrab", Q_ARG(bool, false));
-    }
-}
-void CISWidget::on_ckbSplice_toggled(bool checked) {
-    if (!checked) {
-        resultMat = cv::Mat::zeros(1, 1, CV_8UC3);
-
-        ui->imgSplice->setOpenCVImage(resultMat);
-        offset_x = 0;
-    }
+    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "freezeGrab", Q_ARG(bool, false));
+#ifdef ENABLE_SLAVE_CAMERA
+    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "freezeGrab", Q_ARG(bool, false));
+#endif
 }
 
 void CISWidget::on_ckbSave_toggled(bool checked) {
-    if (CISCamera) {
-        QMetaObject::invokeMethod(CISCamera.get(), "saveFrames", Q_ARG(bool, checked));
+    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "saveFrames", Q_ARG(bool, checked));
+#ifdef ENABLE_SLAVE_CAMERA
+    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "saveFrames", Q_ARG(bool, checked));
+#endif
+}
+
+void CISWidget::on_btnSoftWareTrigger_clicked() {
+    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
+#ifdef ENABLE_SLAVE_CAMERA
+    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
+#endif
+}
+
+void CISWidget::on_ckbSplice_toggled(bool checked) {
+    if (!checked) {
+        resultMat = cv::Mat::zeros(1, 1, CV_8UC3);
     }
 }
 
-void CISWidget::on_comboBox_currentTextChanged(const QString& arg1) {
-    QString s = arg1.trimmed();  // 去掉首尾空格
-    if (s == "内触发") {
-        PLOGD << "内触发";
-        QMetaObject::invokeMethod(CISCamera.get(), "setTriggerMode", Qt::QueuedConnection,
-                                  Q_ARG(DalsaCamera::TriggerMode, DalsaCamera::TriggerMode::Internal));
-    } else if (s == "外触发") {
-        PLOGD << "外触发";
-        QMetaObject::invokeMethod(CISCamera.get(), "setTriggerMode", Qt::QueuedConnection,
-                                  Q_ARG(DalsaCamera::TriggerMode, DalsaCamera::TriggerMode::External));
-    } else {
-        PLOGD << "未匹配：" << s;
+void CISWidget::on_btnCISConfig_clicked() {
+    if (configCISCamera) {
+        QMetaObject::invokeMethod(
+            configCISCamera.get(),
+            [=]() {
+                configCISCamera->addDllDirToPath("./data/CISConfig/externExE");
+                configCISCamera->start("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"});
+                configCISCamera->writeInput("some command");
+            },
+            Qt::QueuedConnection);
     }
 }
-
-void CISWidget::on_btnSoftWareTrigger_clicked() { QMetaObject::invokeMethod(CISCamera.get(), "softwareTrigger"); }

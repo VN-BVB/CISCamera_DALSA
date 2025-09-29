@@ -5,9 +5,11 @@
 #include <QPainter>
 #include <QThread>
 #include <QWidget>
+#include <memory>
 
 #include "src/cameraFactory/abstract_camera.h"
 #include "src/cameraFactory/abstract_camera_factory.h"
+#include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class CISWidget;
@@ -24,13 +26,19 @@ public:
 private:
     Ui::CISWidget* ui;
 
-    QThread* cameraThread = new QThread;
+    QThread* cameraThreadMaster = new QThread;
+    QThread* cameraThreadSlave = new QThread;
+    QThread* cameraThreadConfig = new QThread;
 
-    std::shared_ptr<AbstractCamera> CISCamera{nullptr};
+    std::shared_ptr<AbstractCamera> masterCISCamera{nullptr};
+    std::shared_ptr<AbstractCamera> slaveCISCamera{nullptr};
+    std::shared_ptr<ExternalExeRunner> configCISCamera{nullptr};
 
-    cv::Mat resultMat;
-    int offset_x = 0;
+    cv::Mat masterImg, slaveImg, resultMat;
+    bool masterReady = false;
+    bool slaveReady = false;
 
+    void tryStitchImages();
     void initUIConnections();
     void initCamera();
 private slots:
@@ -41,7 +49,7 @@ private slots:
     void on_btnContinue_clicked();
     void on_ckbSplice_toggled(bool checked);
     void on_ckbSave_toggled(bool checked);
-    void on_comboBox_currentTextChanged(const QString& arg1);
     void on_btnSoftWareTrigger_clicked();
+    void on_btnCISConfig_clicked();
 };
 #endif  // CIS_CAMERA_IMAGE_H
