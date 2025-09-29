@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include <QDir>
+#include <QFileInfoList>
+#include <QLibrary>
 #include <QObject>
 #include <QProcess>
 #include <QProcessEnvironment>

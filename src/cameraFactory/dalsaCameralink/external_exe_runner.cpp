@@ -30,10 +30,37 @@ bool ExternalExeRunner::start(const QString &exePath, const QStringList &args) {
 
     process->setProgram(exePath);
     process->setArguments(args);
+
+    QObject::connect(process, &QProcess::errorOccurred, [exePath](QProcess::ProcessError err) {
+        QString errMsg;
+        switch (err) {
+            case QProcess::FailedToStart:
+                errMsg = "FailedToStart (program not found, missing permission, or dependent DLL missing)";
+                break;
+            case QProcess::Crashed:
+                errMsg = "Crashed (started but exited unexpectedly)";
+                break;
+            case QProcess::Timedout:
+                errMsg = "Timedout (waited too long)";
+                break;
+            case QProcess::WriteError:
+                errMsg = "WriteError (could not write to process)";
+                break;
+            case QProcess::ReadError:
+                errMsg = "ReadError (could not read from process)";
+                break;
+            default:
+                errMsg = "UnknownError";
+                break;
+        }
+        PLOGE << "Process error (" << exePath.toStdString() << "): " << errMsg.toStdString();
+    });
+
     process->start();
 
     if (!process->waitForStarted(5000)) {
-        PLOGE << "Failed to start exe: " << exePath.toStdString();
+        PLOGE << "waitForStarted timeout. Exe: " << exePath.toStdString();
+        PLOGE << "Native error string: " << process->errorString().toStdString();
         return false;
     }
 
