@@ -41929,6 +41929,7 @@
 2025/09/29;16:47:43.075;DEBUG;43068;0000000000000000;ExternalExeRunner::start@67;"Exe started: ./data/CISConfig/externExE/ConfigCIS.exe"
 2025/09/29;16:47:43.075;DEBUG;43068;0000000000000000;ExternalExeRunner::writeInput@85;"Input written: some command"
 2025/09/29;16:47:51.234;DEBUG;43068;0000000000000000;ExternalExeRunner::handleFinished@109;"Process finished. ExitCode=0 Status=NormalExit"
+<<<<<<< HEAD
 2025/09/29;16:53:24.569;ERROR;11012;0000000000000000;ExternalExeRunner::handleError@104;"Process error: 0"
 2025/09/29;16:53:24.569;ERROR;11012;0000000000000000;ExternalExeRunner::start::<lambda_e63c438f93e688c80a569e0c73f4dd66>::operator ()@56;"Process error (./data/CISConfig/externExE/ConfigCIS.exe): FailedToStart (program not found, missing permission, or dependent DLL missing)"
 2025/09/29;16:53:24.569;ERROR;11012;0000000000000000;ExternalExeRunner::start@62;"waitForStarted timeout. Exe: ./data/CISConfig/externExE/ConfigCIS.exe"
@@ -42022,3 +42023,5 @@
 2025/09/29;21:31:11.201;DEBUG;4220;0000000000000000;ExternalExeRunner::start@67;"Exe started: ./data/CISConfig/externExE/ConfigCIS.exe"
 2025/09/29;21:31:11.201;DEBUG;4220;0000000000000000;ExternalExeRunner::writeInput@85;"Input written: some command"
 2025/09/29;21:31:15.338;DEBUG;4220;0000000000000000;ExternalExeRunner::handleFinished@109;"Process finished. ExitCode=0 Status=NormalExit"
+=======
+>>>>>>> 22de205286e019ec27250f7f38d276a94c3c21f8
