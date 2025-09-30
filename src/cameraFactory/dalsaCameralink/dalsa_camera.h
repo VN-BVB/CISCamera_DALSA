@@ -19,7 +19,7 @@ public:
     explicit DalsaCamera(QObject* parent = nullptr);
     ~DalsaCamera();
 
-    bool initCamera(const QString& configPath) override;
+    bool initCamera(const QString& configPath, int resourceIndex = 0) override;
 
 public slots:
     void startGrab() override;
@@ -50,6 +50,7 @@ private:
     SapTransfer* m_Xfer;
     SapView* m_View;
     BYTE* m_pData;
+    int resourceIndex;
 
     // 状态
     std::atomic<bool> m_running;

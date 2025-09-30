@@ -35,7 +35,7 @@ DalsaCamera::~DalsaCamera() {
     delete m_View;
     delete m_Acquisition;
 }
-bool DalsaCamera::initCamera(const QString& configPath) {
+bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
     PLOGD << "DALSA采集卡初始化中...";
     m_ccfPath = configPath;
 
@@ -46,7 +46,7 @@ bool DalsaCamera::initCamera(const QString& configPath) {
     }
     PLOGD << "ServerName = " << serverName;
 
-    SapLocation loc(serverName, 0);
+    SapLocation loc(serverName, resourceIndex);
     m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
     m_Buffers = new SapBufferWithTrash(2, m_Acquisition);
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
@@ -112,6 +112,14 @@ bool DalsaCamera::initCamera(const QString& configPath) {
     m_height = m_Buffers->GetHeight();
     PLOGD << "DALSA采集卡初始化完成, 分辨率 = " << m_width << " x " << m_height;
 
+    int serverCount = SapManager::GetServerCount();
+    for (int i = 0; i < serverCount; i++) {
+        char name[CORSERVER_MAX_STRLEN] = {0};
+        if (SapManager::GetServerName(i, name, sizeof(name))) {
+            int resCount = SapManager::GetResourceCount(i, SapManager::ResourceAcq);
+            PLOGD << "Server[" << i << "] = " << name << ", ResourceCount = " << resCount;
+        }
+    }
     return true;
 }
 
@@ -143,7 +151,7 @@ void DalsaCamera::startGrab() {
             // 自动 → 按 CCF 文件里配置的触发模式
             break;
     }
-
+    PLOGD << "相机开始采集图像";
     // 启动采集（无论内/外/CCF）
     if (!m_Xfer->IsGrabbing()) {
         m_Xfer->Grab();
@@ -155,6 +163,7 @@ void DalsaCamera::stopGrab() {
     if (m_Xfer) m_Xfer->Abort();
     if (m_worker.joinable()) m_worker.join();
     m_frameCount = 0;
+    PLOGD << " 相机停止采集图像";
     emit grabFinished();
 }
 

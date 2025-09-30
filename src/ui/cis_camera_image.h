@@ -39,7 +39,7 @@ private:
     bool slaveReady = false;
 
     void tryStitchImages();
-    void initUIConnections();
+    void initCamera2UIConnections();
     void initCamera();
 private slots:
     void whenGetNewImage(const cv::Mat& img);

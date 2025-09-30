@@ -15,7 +15,7 @@ class AbstractCamera : public QObject {
 public:
     explicit AbstractCamera(QObject* parent = nullptr);
     virtual ~AbstractCamera();
-    virtual bool initCamera(const QString& configPath) = 0;
+    virtual bool initCamera(const QString& configPath,int resourceIndex = 0) = 0;
 public slots:
     virtual void startGrab() = 0;
     virtual void stopGrab() = 0;
