@@ -42025,3 +42025,7 @@
 2025/09/29;21:31:15.338;DEBUG;4220;0000000000000000;ExternalExeRunner::handleFinished@109;"Process finished. ExitCode=0 Status=NormalExit"
 =======
 >>>>>>> 22de205286e019ec27250f7f38d276a94c3c21f8
+2025/10/07;15:41:53.148;DEBUG;32736;0000000000000000;DalsaCamera::initCamera@39;"DALSA采集卡初始化中..."
+2025/10/07;15:41:53.148;DEBUG;26608;0000000000000000;DalsaCamera::initCamera@39;"DALSA采集卡初始化中..."
+2025/10/07;15:42:01.137;ERROR;26608;0000000000000000;DalsaCamera::initCamera@44;"SapManager::GetServerName 获取失败"
+2025/10/07;15:42:01.138;ERROR;32736;0000000000000000;DalsaCamera::initCamera@44;"SapManager::GetServerName 获取失败"

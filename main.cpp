@@ -5,12 +5,14 @@
 
 #include <QApplication>
 
+#include "src/crashHandler/CrashHandler.h"
 #include "src/ui/cis_camera_image.h"
 
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-    initPlog();
+    CrashHandler::Init(L"data/debug");  // 初始化Mini转储
+    initPlog();                         // 初始化日志类
     CISWidget w;
     w.show();
     return a.exec();
