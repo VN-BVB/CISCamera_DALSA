@@ -44,11 +44,11 @@ bool InteractiveScene::whenDisplayImage(const QImage &image, bool bAutoFit)
     emit sendUpdateDisplayImage(image);
     auto bRet =  m_displayImageItem->displayImage(image);
     if (!bRet) return false;
-    m_parentView->updateDispayFit();    // 更新父视图图像合适尺寸
+    m_parentView->whenUpdateDisplayFit();    // 更新父视图图像合适尺寸
     if (bAutoFit)
     {
 
-        m_parentView->zoomToDisplayFit();
+        m_parentView->whenZoomToDisplayFit();
     }
     return true;
 }

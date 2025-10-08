@@ -1,10 +1,17 @@
 ﻿#ifndef INTERACTIVE_VIEW_H
 #define INTERACTIVE_VIEW_H
 
+#include "interactiveGlobal.h"
 #include <QGraphicsView>
+
+const double ViewMaxZoomCoeff_Default = 50;
+const double ViewMinZoomCoeff_Default = 0.1;
 
 class QWheelEvent;
 class QKeyEvent;
+class InteractiveScene;
+class InteractiveImageItem;
+class InteractiveViewPrivatel;
 
 class InteractiveView : public QGraphicsView
 {
@@ -36,6 +43,16 @@ public Q_SLOTS:
     void zoom(float scaleFactor);  // 缩放
     void translate(QPointF delta); // 平移
 
+public slots:
+    // 更新缩放自适应显示大小参数
+    void whenUpdateDisplayFit();
+    // 缩放到自适应显示
+    void whenZoomToDisplayFit();
+
+protected:
+    // 进行缩放
+    void zoomByValue(const double &val);
+
 private:
     Qt::MouseButton m_translateButton; // 平移按钮
     qreal m_translateSpeed;            // 平移速度
@@ -43,6 +60,20 @@ private:
     bool m_bMouseTranslate;            // 平移标识
     QPoint m_lastMousePos;             // 鼠标最后按下的位置
     qreal m_scale;                     // 缩放值
+
+protected: //view控件状态
+    // 当前缩放值
+    double m_rZoomValue = 1;
+    // 缩放至适合比例
+    double m_rZoomFit = 1;
+    // 自适应缩放时的适合图像X坐标
+    double m_rFitPixX = 0;
+    // 自适应缩放时的适合图像Y坐标
+    double m_rFitPixY = 0;
+
+protected:
+    // 显示的场景
+    InteractiveScene *m_scene;
 };
 
 #endif // INTERACTIVE_VIEW_H

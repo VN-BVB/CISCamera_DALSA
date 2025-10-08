@@ -1,7 +1,10 @@
 ﻿#include <QWheelEvent>
 #include <QKeyEvent>
 #include <QGraphicsItem>
+#include <QScrollBar>
 #include "interactiveView.h"
+#include "interactiveScene.h"
+#include "interactiveImageItem.h"
 
 #define VIEW_CENTER viewport()->rect().center()
 #define VIEW_WIDTH viewport()->rect().width()
@@ -224,3 +227,87 @@ void InteractiveView::translate(QPointF delta)
         setTransformationAnchor(QGraphicsView::AnchorViewCenter);
     }
 }
+
+void InteractiveView::whenUpdateDisplayFit()
+{
+    int imageWidth = m_scene->getDisplayImageSize().width();
+    int imageHeight = m_scene->getDisplayImageSize().height();
+    if (this->width() < 1 || imageWidth < 1)
+    {
+        return;
+    }
+    // 图像自适应方法
+    double winWidth = this->width();
+    double winHeight = this->height();
+    double scaleWidth = (imageWidth + 1) / winWidth;    // 加1确保后续流程正确，防止除零错误、比较错误等
+    double scaleHeight = (imageHeight + 1) / winHeight;
+    double row1, column1;
+    double s = 0;
+    if (scaleWidth >= scaleHeight)
+    {
+        row1= -(1) * ((winHeight * scaleWidth) - imageHeight) / 2;
+        column1 = 0  ;
+        s = 1 / scaleWidth;
+    }
+    else
+    {
+        row1= 0;
+        column1 = -(1.0) * ((winWidth * scaleHeight) - imageWidth) / 2 ;
+        s=1/scaleHeight;
+    }
+
+    if (m_rZoomFit != s || m_rFitPixX != column1 * s)
+    {
+        m_rZoomFit = s;
+        m_rFitPixX = column1 * s;
+        m_rFitPixY = row1 * s;
+        whenZoomToDisplayFit();
+    }
+}
+
+void InteractiveView::whenZoomToDisplayFit()
+{
+    zoomByValue(m_rZoomFit);
+    QScrollBar *pHbar = this->horizontalScrollBar();
+    pHbar->setSliderPosition(m_rFitPixX);
+    QScrollBar *pVbar = this->verticalScrollBar();
+    pVbar->setSliderPosition(m_rFitPixY);
+}
+
+void InteractiveView::zoomByValue(const double &val)
+{
+    double tmp = val / m_rZoomValue;
+    // 绝对缩放
+    m_rZoomValue *= tmp;
+    // 相对于上一次缩放
+    this->scale(tmp, tmp);  // 在x，y方向应用相同的缩放因子
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
