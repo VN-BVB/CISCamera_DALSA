@@ -1,6 +1,7 @@
 ﻿#include "ImageViewWindow.h"
 #include "ui_ImageViewWindow.h"
 #include "src/ui/imageWidget/interactiveScene.h"
+#include "src/ui/imageWidget/interactiveDisplayManager.h"
 
 #include <QFileDialog>
 #include <QDebug>
@@ -152,19 +153,26 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<s
         qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
     }
 
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    // drawSingleSubpixelContour(scene, subpixelContour);
-    // drawPixelContour(scene, pixelContour[0]);
-    drawSubpixelContours(scene, subpixelContours);
-    drawPixelContours(scene, pixelContours);
-    QPixmap pixmap = QPixmap::fromImage(qimg);
-    scene->addPixmap(pixmap);
-    ui->gv_image->setScene(scene);
-    ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+    // QGraphicsScene *scene = new QGraphicsScene(this);
+    // // drawSingleSubpixelContour(scene, subpixelContour);
+    // // drawPixelContour(scene, pixelContour[0]);
+    // drawSubpixelContours(scene, subpixelContours);
+    // drawPixelContours(scene, pixelContours);
+    // QPixmap pixmap = QPixmap::fromImage(qimg);
+    // scene->addPixmap(pixmap);
+    // ui->gv_image->setScene(scene);
+    // ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
+    ui->gv_image->displayImage(qimg, true);
+    InteractiveDisplayManager* displayMgr = ui->gv_image->getDisplayManager();
+    if (displayMgr)
+    {
+        InteractiveScene* scene = displayMgr->displayScene();
+        scene->whenDrawSubpixelContours(subpixelContours);
+        scene->whenDrawPixelContours(pixelContours);
+    }
 
-
-    auto endTime = std::chrono::high_resolution_clock::now(); // 添加时间测量
+    auto endTime = std::chrono::high_resolution_clock::now();
     // 计算并输出时间差
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     qDebug() << "Total processing time: " << duration.count() << " ms";
@@ -187,15 +195,15 @@ void ImageViewWindow::handleImageProcessedCannyDevenay(cv::Mat processedImage, s
         qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
     }
 
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    std::vector<cv::Point2f> subpixelContour = edgeCurves[0].points;
-    drawSingleSubpixelContour(scene, subpixelContour);
-    // drawPixelContour(scene, pixelContour[0]);
-    QPixmap pixmap = QPixmap::fromImage(qimg);
-    scene->addPixmap(pixmap);
-    ui->gv_image->setScene(scene);
+    // QGraphicsScene *scene = new QGraphicsScene(this);
+    // std::vector<cv::Point2f> subpixelContour = edgeCurves[0].points;
+    // drawSingleSubpixelContour(scene, subpixelContour);
+    // // drawPixelContour(scene, pixelContour[0]);
+    // QPixmap pixmap = QPixmap::fromImage(qimg);
+    // scene->addPixmap(pixmap);
+    // ui->gv_image->setScene(scene);
+    // ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
-    ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
 
 void ImageViewWindow::handleError(const QString &error)

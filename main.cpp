@@ -13,9 +13,14 @@ void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     initPlog();
+    // ImageViewWindow w;
+    // w.show();
+
     test_FrmVisionDisplay w;
     w.show();
-    QImage image("C:/Users/Zhang/Pictures/头像.png");
+    // QImage image("C:/Users/Zhang/Pictures/头像.png");
+
+    QImage image("C:/Users/Zhang/Pictures/pix.png");
     w.displayImage(image);
     return a.exec();
 }

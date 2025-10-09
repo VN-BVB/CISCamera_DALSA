@@ -13,7 +13,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
-#include <src/ui/imageWidget/interactiveView.h>
+#include <src/ui/imageWidget/frmVisionDisplay.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -21,7 +21,7 @@ class Ui_ImageViewWindow
 {
 public:
     QPushButton *pb_open;
-    InteractiveView *gv_image;
+    FrmVisionDisplay *gv_image;
 
     void setupUi(QWidget *ImageViewWindow)
     {
@@ -31,7 +31,7 @@ public:
         pb_open = new QPushButton(ImageViewWindow);
         pb_open->setObjectName(QString::fromUtf8("pb_open"));
         pb_open->setGeometry(QRect(210, 890, 1000, 41));
-        gv_image = new InteractiveView(ImageViewWindow);
+        gv_image = new FrmVisionDisplay(ImageViewWindow);
         gv_image->setObjectName(QString::fromUtf8("gv_image"));
         gv_image->setGeometry(QRect(80, 60, 1300, 800));
 

@@ -61,19 +61,18 @@ InteractiveView::InteractiveView(QWidget *parent)
     // 去掉滚动条
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setCursor(Qt::PointingHandCursor);
-    setRenderHint(QPainter::Antialiasing);
+    setCursor(Qt::PointingHandCursor);  // 设置鼠标光标为手型指针
+    setRenderHint(QPainter::Antialiasing);  // 启用抗锯齿渲染
 
-    setSceneRect(INT_MIN / 2, INT_MIN / 2, INT_MAX, INT_MAX);
-    centerOn(0, 0);
+    setSceneRect(INT_MIN / 2, INT_MIN / 2, INT_MAX, INT_MAX);   // 设置场景矩形
+    centerOn(0, 10000); // 将视图中心对准场景的（0， 0）点
 
     //设置View属性
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-    setDragMode(QGraphicsView::RubberBandDrag);
-    setRenderHints(QPainter::Antialiasing|QPainter::SmoothPixmapTransform);
-    setMouseTracking(true);
-    setCacheMode(QGraphicsView::CacheBackground);
-
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);   // 设置窗口更新模式为完全更新
+    setDragMode(QGraphicsView::RubberBandDrag); // 设置拖拽模式为橡皮筋选择模式
+    setRenderHints(QPainter::Antialiasing|QPainter::SmoothPixmapTransform); // 设置渲染提示的组合
+    setMouseTracking(true); // 启用鼠标跟踪
+    setCacheMode(QGraphicsView::CacheBackground);   // 设置缓存模式为背景缓存，缓存视图的背景，提高重绘性能（在设置视图背景时有效，此项目没有设置黑白格等背景）
 }
 
 // 平移速度
@@ -294,14 +293,14 @@ void InteractiveView::whenUpdateDisplayFit()
     if (scaleWidth >= scaleHeight)
     {
         row1= -(1) * ((winHeight * scaleWidth) - imageHeight) / 2;
-        column1 = 0  ;
+        column1 = 0;
         s = 1 / scaleWidth;
     }
     else
     {
         row1= 0;
         column1 = -(1.0) * ((winWidth * scaleHeight) - imageWidth) / 2 ;
-        s=1/scaleHeight;
+        s=1 / scaleHeight;
     }
 
     if (m_rZoomFit != s || m_rFitPixX != column1 * s)
@@ -313,6 +312,9 @@ void InteractiveView::whenUpdateDisplayFit()
     }
 }
 
+/*
+ 将图像缩放到合适视图的大小，并调整显示位置
+*/
 void InteractiveView::whenZoomToDisplayFit()
 {
     zoomByValue(m_rZoomFit);
@@ -320,6 +322,7 @@ void InteractiveView::whenZoomToDisplayFit()
     pHbar->setSliderPosition(m_rFitPixX);
     QScrollBar *pVbar = this->verticalScrollBar();
     pVbar->setSliderPosition(m_rFitPixY);
+    // centerOn(m_scene->getDisplayImageItem()->getDisplayImageCenter());
 }
 
 void InteractiveView::zoomByValue(const double &val)

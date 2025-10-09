@@ -42,7 +42,7 @@ public: // 公共接口
     // 获取场景
     InteractiveScene* getScene() {return m_scene;}
 
-protected:
+protected:  // 视窗事件
     // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
     void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE; // Q_DECL_OVERRIDE宏标记重写基类的虚函数， 可以换成override
     // 平移

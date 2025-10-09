@@ -32,6 +32,11 @@ void FrmVisionDisplay::initFrm()
     }
 }
 
+InteractiveDisplayManager* FrmVisionDisplay::getDisplayManager()
+{
+    return m_displayMgr;
+}
+
 void FrmVisionDisplay::displayImage(const QImage &image, bool autoFit)
 {
     if (!m_displayMgr) return;
@@ -41,21 +46,6 @@ void FrmVisionDisplay::displayImage(const QImage &image, bool autoFit)
         scene->whenDisplayImage(image, autoFit);
     }
 }
-
-// @TODO:在界面中实现这个窗口，然后利用这个窗口显示图像
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

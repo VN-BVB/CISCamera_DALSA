@@ -13,8 +13,11 @@ public:
     ~FrmVisionDisplay();
     Q_DISABLE_COPY(FrmVisionDisplay)
 
+    InteractiveDisplayManager* getDisplayManager();
+
 public slots:
     void displayImage(const QImage &image, bool autoFit = true);
+
 
 protected:
     void initFrm() override;

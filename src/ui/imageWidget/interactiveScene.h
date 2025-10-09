@@ -2,6 +2,9 @@
 #define INTERACTIVESCENE_H
 
 #include <QGraphicsScene>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 class InteractiveView;
 class InteractiveImageItem;
@@ -34,6 +37,20 @@ public slots:
                         const QColor &color=QColor(Qt::green), const bool &clear=false);
     // 清除文本
     void whenClearDisplayText();
+
+public slots:
+    // 绘制单条亚像素轮廓
+    void whenDrawSingleSubpixelContour(const std::vector<cv::Point2f> &subpixelContour);
+    // 绘制单条像素轮廓
+    void whenDrawSinglePixelContour(const std::vector<cv::Point> &pixelContour);
+    // 绘制多条亚像素轮廓
+    void whenDrawSubpixelContours(const std::vector<std::vector<cv::Point2f>> &subpixelContours);
+    // 绘制多条像素轮廓
+    void whenDrawPixelContours(const std::vector<std::vector<cv::Point>> &pixelContours);
+    // 清除轮廓
+    void whenClearContours();
+    // @TODO:实现轮廓绘制，并修复图像没有显示在中间的bug
+
 protected:
     // 设置显示图像图元
     void setDisplayImageItem(InteractiveImageItem* imageItem);

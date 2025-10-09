@@ -26,7 +26,7 @@
     <string>打开图像</string>
    </property>
   </widget>
-  <widget class="InteractiveView" name="gv_image">
+  <widget class="FrmVisionDisplay" name="gv_image">
    <property name="geometry">
     <rect>
      <x>80</x>
@@ -39,9 +39,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>InteractiveView</class>
+   <class>FrmVisionDisplay</class>
    <extends>QGraphicsView</extends>
-   <header location="global">src/ui/imageWidget/interactiveView.h</header>
+   <header location="global">src/ui/imageWidget/frmVisionDisplay.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
