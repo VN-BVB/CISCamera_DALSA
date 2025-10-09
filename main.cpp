@@ -7,13 +7,16 @@
 
 #include "src/ui/CISCameraImage.h"
 #include "src/ui/ImageViewWindow.h"
+#include "src/ui/test_frmVisionDisplay.h"
 
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     initPlog();
-    ImageViewWindow w;
+    test_FrmVisionDisplay w;
     w.show();
+    QImage image("C:/Users/Zhang/Pictures/头像.png");
+    w.displayImage(image);
     return a.exec();
 }
 // 初始化日志类

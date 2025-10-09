@@ -11,11 +11,13 @@ class QWheelEvent;
 class QKeyEvent;
 class InteractiveScene;
 class InteractiveImageItem;
-class InteractiveViewPrivatel;
+class InteractiveViewPrivate;
 
 class InteractiveView : public QGraphicsView
 {
     Q_OBJECT
+
+    friend class InteractiveScene;
 public:
     explicit InteractiveView(QWidget *parent = 0);
 
@@ -26,6 +28,19 @@ public:
     // 缩放的增量
     void setZoomDelta(qreal delta);
     qreal zoomDelta() const;
+
+    // 最大缩放系数
+    double maxZoomCoeff() const;
+    // 设置最大缩放系数
+    void setMaxZoomCoeff(const double &coeff);
+    // 最小缩放系数
+    double minZoomCoeff() const;
+    // 设置最小缩放系数
+    void setMinZoomCoeff(const double &coeff);
+
+public: // 公共接口
+    // 获取场景
+    InteractiveScene* getScene() {return m_scene;}
 
 protected:
     // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
@@ -74,6 +89,11 @@ protected: //view控件状态
 protected:
     // 显示的场景
     InteractiveScene *m_scene;
+
+protected:
+    const QScopedPointer<InteractiveViewPrivate> d_ptr;
+private:
+    Q_DECLARE_PRIVATE(InteractiveView)
 };
 
 #endif // INTERACTIVE_VIEW_H

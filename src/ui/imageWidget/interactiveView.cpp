@@ -6,6 +6,44 @@
 #include "interactiveScene.h"
 #include "interactiveImageItem.h"
 
+/*******************************/
+//* [InteractiveViewPrivate]
+/*******************************/
+#define Background_Pix_Size 32
+class InteractiveViewPrivate
+{
+    Q_DISABLE_COPY(InteractiveViewPrivate)
+    Q_DECLARE_PUBLIC(InteractiveView)
+
+public:
+    InteractiveViewPrivate(InteractiveView *q):q_ptr(q)
+    {
+        resizeToFif=true;
+        doubleClickToFit=true;
+
+        maxZoomCoeff=ViewMaxZoomCoeff_Default;
+        minZoomCoeff=ViewMinZoomCoeff_Default;
+    }
+    virtual ~InteractiveViewPrivate(){}
+
+public:
+    void init();
+    void updateBackground();
+public:
+    InteractiveView              *const q_ptr;
+
+    bool                        resizeToFif;//是否重置尺寸缩放至合适大小
+    bool                        doubleClickToFit;//是否双击缩放至合适大小
+
+    double                      maxZoomCoeff;//最大缩放系数
+    double                      minZoomCoeff;//最大缩放系数
+};
+
+
+
+/*******************************/
+//* [InteractiveView]
+/*******************************/
 #define VIEW_CENTER viewport()->rect().center()
 #define VIEW_WIDTH viewport()->rect().width()
 #define VIEW_HEIGHT viewport()->rect().height()
@@ -16,7 +54,9 @@ InteractiveView::InteractiveView(QWidget *parent)
     m_scale(1.0),
     m_zoomDelta(0.1),
     m_translateSpeed(0.5),
-    m_bMouseTranslate(false)
+    m_bMouseTranslate(false),
+    d_ptr(new InteractiveViewPrivate(this)),
+    m_scene(new InteractiveScene(this))
 {
     // 去掉滚动条
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -26,6 +66,14 @@ InteractiveView::InteractiveView(QWidget *parent)
 
     setSceneRect(INT_MIN / 2, INT_MIN / 2, INT_MAX, INT_MAX);
     centerOn(0, 0);
+
+    //设置View属性
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    setDragMode(QGraphicsView::RubberBandDrag);
+    setRenderHints(QPainter::Antialiasing|QPainter::SmoothPixmapTransform);
+    setMouseTracking(true);
+    setCacheMode(QGraphicsView::CacheBackground);
+
 }
 
 // 平移速度
@@ -283,7 +331,28 @@ void InteractiveView::zoomByValue(const double &val)
     this->scale(tmp, tmp);  // 在x，y方向应用相同的缩放因子
 }
 
+double InteractiveView::maxZoomCoeff() const
+{
+    Q_D(const InteractiveView);
+    return d->maxZoomCoeff;
+}
 
+void InteractiveView::setMaxZoomCoeff(const double &coeff)
+{
+    Q_D(InteractiveView);
+    d->maxZoomCoeff=coeff;
+}
+
+double InteractiveView::minZoomCoeff() const
+{
+    Q_D(const InteractiveView);
+    return d->minZoomCoeff;
+}
+void InteractiveView::setMinZoomCoeff(const double &coeff)
+{
+    Q_D(InteractiveView);
+    d->minZoomCoeff=coeff;
+}
 
 
 
