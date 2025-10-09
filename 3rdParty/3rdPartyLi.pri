@@ -15,7 +15,7 @@ LIBS += -L"C:/Program Files/Teledyne DALSA/Sapera/Lib/Win64" \
 # ------------------OpenCV库-------------------
 INCLUDEPATH += D:/ProgramData/opencv/build/include/
 INCLUDEPATH += D:/ProgramData/opencv/build/include/opencv2/
-LIBS += -LD:/ProgramData/opencv/build/x64/vc15/lib/ -lopencv_world440
+LIBS += -LD:/ProgramData/opencv/build/x64/vc16/lib/ -lopencv_world4100
 
 # ------------------PLOG库---------------------
 INCLUDEPATH += ./3rdParty/plog/include

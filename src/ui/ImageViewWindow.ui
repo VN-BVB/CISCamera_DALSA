@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ImageViewWindow</class>
+ <widget class="QWidget" name="ImageViewWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1500</width>
+    <height>1000</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QPushButton" name="pb_open">
+   <property name="geometry">
+    <rect>
+     <x>210</x>
+     <y>890</y>
+     <width>1000</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>打开图像</string>
+   </property>
+  </widget>
+  <widget class="FrmVisionDisplay" name="gv_image">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>60</y>
+     <width>1300</width>
+     <height>800</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FrmVisionDisplay</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">src/ui/imageWidget/frmVisionDisplay.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

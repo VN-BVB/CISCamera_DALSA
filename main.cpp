@@ -5,16 +5,34 @@
 
 #include <QApplication>
 
+<<<<<<< HEAD
 #include "src/crashHandler/CrashHandler.h"
 #include "src/ui/cis_camera_image.h"
+=======
+#include "src/ui/CISCameraImage.h"
+#include "src/ui/ImageViewWindow.h"
+#include "src/ui/test_frmVisionDisplay.h"
+>>>>>>> origin/jointDetection
 
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
+<<<<<<< HEAD
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     initPlog();                         // 初始化日志类
     CISWidget w;
+=======
+    initPlog();
+    // ImageViewWindow w;
+    // w.show();
+
+    test_FrmVisionDisplay w;
+>>>>>>> origin/jointDetection
     w.show();
+    // QImage image("C:/Users/Zhang/Pictures/头像.png");
+
+    QImage image("C:/Users/Zhang/Pictures/pix.png");
+    w.displayImage(image);
     return a.exec();
 }
 // 初始化日志类
