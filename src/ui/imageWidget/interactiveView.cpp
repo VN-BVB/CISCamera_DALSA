@@ -9,7 +9,6 @@
 /*******************************/
 //* [InteractiveViewPrivate]
 /*******************************/
-#define Background_Pix_Size 32
 class InteractiveViewPrivate
 {
     Q_DISABLE_COPY(InteractiveViewPrivate)
@@ -65,7 +64,7 @@ InteractiveView::InteractiveView(QWidget *parent)
     setRenderHint(QPainter::Antialiasing);  // 启用抗锯齿渲染
 
     setSceneRect(INT_MIN / 2, INT_MIN / 2, INT_MAX, INT_MAX);   // 设置场景矩形
-    centerOn(0, 10000); // 将视图中心对准场景的（0， 0）点
+    centerOn(0, 0); // 将视图中心对准场景的（0， 0）点
 
     //设置View属性
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);   // 设置窗口更新模式为完全更新
@@ -204,8 +203,7 @@ void InteractiveView::zoom(float scaleFactor)
 {
     // 防止过小或过大
     qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-    if (factor < 0.07 || factor > 500)
-        return;
+    if (factor < 0.07 || factor > 500) return;
 
     scale(scaleFactor, scaleFactor);
     m_scale *= scaleFactor;
@@ -293,6 +291,7 @@ void InteractiveView::whenUpdateDisplayFit()
     if (scaleWidth >= scaleHeight)
     {
         row1= -(1) * ((winHeight * scaleWidth) - imageHeight) / 2;
+        // row1 = 0;
         column1 = 0;
         s = 1 / scaleWidth;
     }
@@ -300,8 +299,10 @@ void InteractiveView::whenUpdateDisplayFit()
     {
         row1= 0;
         column1 = -(1.0) * ((winWidth * scaleHeight) - imageWidth) / 2 ;
+        // column1 = 0;
         s=1 / scaleHeight;
     }
+
 
     if (m_rZoomFit != s || m_rFitPixX != column1 * s)
     {

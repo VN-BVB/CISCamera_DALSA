@@ -37,16 +37,7 @@ private slots:
     void handleImageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
 
-
 private:
-    // @TODO：绘制轮廓接口优化，可以创建一个轮廓绘制类，类继承GraphicsItem，设置轮廓属性，线条属性等信息
-    void drawSingleSubpixelContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &subpixelContour);
-    void drawSinglePixelContour(QGraphicsScene *scene, const std::vector<cv::Point> &pixelContour);
-    void drawSubpixelContours(QGraphicsScene *scene, const std::vector<std::vector<cv::Point2f>> &subpixelContour);
-    void drawPixelContours(QGraphicsScene *scene, const std::vector<std::vector<cv::Point>> &pixelContours);
-    void drawContour(QGraphicsScene *scene, const std::vector<cv::Point2f> &contour, bool isSubpixel = true);
-    void drawContour(QGraphicsScene *scene, const std::vector<cv::Point> &contour, bool isSubpixel = false);
-
     Ui::ImageViewWindow *ui;
     QThread readThread;
     QThread processThread;

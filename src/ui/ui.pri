@@ -11,8 +11,7 @@ SOURCES += \
     $$PWD/imageWidget/interactiveImageItem.cpp \
     $$PWD/imageWidget/interactiveScene.cpp \
     $$PWD/imageWidget/interactiveView.cpp \
-    $$PWD/imageWidget/openGLImageWidget.cpp \
-    $$PWD/test_frmVisionDisplay.cpp
+    $$PWD/imageWidget/openGLImageWidget.cpp
 
 
 HEADERS += \
@@ -25,13 +24,11 @@ HEADERS += \
     $$PWD/imageWidget/interactiveImageItem.h \
     $$PWD/imageWidget/interactiveScene.h \
     $$PWD/imageWidget/interactiveView.h \
-    $$PWD/imageWidget/openGLImageWidget.h \
-    $$PWD/test_frmVisionDisplay.h
+    $$PWD/imageWidget/openGLImageWidget.h
 
 FORMS += \
     $$PWD/CISCameraImage.ui \
-    $$PWD/ImageViewWindow.ui \
-    $$PWD/test_frmVisionDisplay.ui
+    $$PWD/ImageViewWindow.ui
     $$PWD/imageWidget/openGLImageWidget.cpp
 
 

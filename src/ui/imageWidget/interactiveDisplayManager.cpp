@@ -51,7 +51,8 @@ void InteractiveDisplayManager::init()
 void InteractiveDisplayManager::initView()
 {
     m_displayView = new InteractiveView();
-    m_displayView->setSceneRect(-DisplayViewSceneSize/2,-DisplayViewSceneSize/2,DisplayViewSceneSize,DisplayViewSceneSize);
+    // m_displayView->setSceneRect(-DisplayViewSceneSize/2,-DisplayViewSceneSize/2,DisplayViewSceneSize,DisplayViewSceneSize);
+    m_displayView->setSceneRect(0,0,3000,3000);
     m_displayView->setMinZoomCoeff(ViewMinZoomCoeff_Default * 10);
     m_displayView->setMaxZoomCoeff(ViewMaxZoomCoeff_Default * 5);
 

@@ -93,6 +93,7 @@ void InteractiveScene::setDisplayImageItem(InteractiveImageItem* imageItem)
         }
     }
     this->addItem(imageItem);
+    m_parentView->setScene(this);
     if (m_displayImageItem != imageItem)
     {
         m_displayImageItem = imageItem;
