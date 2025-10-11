@@ -3,7 +3,7 @@
 # PRECOMPILED_HEADER = src/ui/stable.h
 
 SOURCES += \
-    $$PWD/CISCameraImage.cpp \
+    $$PWD/cis_camera_image.cpp \
     $$PWD/ImageViewWindow.cpp \
     $$PWD/imageWidget/baseWidget.cpp \
     $$PWD/imageWidget/frmVisionDisplay.cpp \
@@ -11,11 +11,12 @@ SOURCES += \
     $$PWD/imageWidget/interactiveImageItem.cpp \
     $$PWD/imageWidget/interactiveScene.cpp \
     $$PWD/imageWidget/interactiveView.cpp \
-    $$PWD/imageWidget/openGLImageWidget.cpp
+    $$PWD/utils/imageWidget/openGLImageWidget.cpp
+
 
 
 HEADERS += \
-    $$PWD/CISCameraImage.h \
+    $$PWD/cis_camera_image.h \
     $$PWD/ImageViewWindow.h \
     $$PWD/imageWidget/baseWidget.h \
     $$PWD/imageWidget/frmVisionDisplay.h \
@@ -24,10 +25,11 @@ HEADERS += \
     $$PWD/imageWidget/interactiveImageItem.h \
     $$PWD/imageWidget/interactiveScene.h \
     $$PWD/imageWidget/interactiveView.h \
-    $$PWD/imageWidget/openGLImageWidget.h
+    $$PWD/utils/stateLight/StateLight.h \
+    $$PWD/utils/imageWidget/openGLImageWidget.h
 
 FORMS += \
-    $$PWD/CISCameraImage.ui \
+    $$PWD/cis_camera_image.ui \
     $$PWD/ImageViewWindow.ui
     $$PWD/imageWidget/openGLImageWidget.cpp
 

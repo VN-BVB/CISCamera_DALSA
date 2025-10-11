@@ -1,5 +1,5 @@
-﻿#ifndef ABSTRACTCAMERA_H
-#define ABSTRACTCAMERA_H
+#ifndef ABSTRACT_CAMERA_H
+#define ABSTRACT_CAMERA_H
 // clang-format off
 #include <plog/Log.h>
 #include <QImage>
@@ -15,7 +15,7 @@ class AbstractCamera : public QObject {
 public:
     explicit AbstractCamera(QObject* parent = nullptr);
     virtual ~AbstractCamera();
-    virtual bool initCamera(const QString& configPath) = 0;
+    virtual bool initCamera(const QString& configPath,int resourceIndex = 0) = 0;
 public slots:
     virtual void startGrab() = 0;
     virtual void stopGrab() = 0;
@@ -27,4 +27,4 @@ signals:
     void grabFinished();
 };
 
-#endif  // ABSTRACTCAMERA_H
+#endif  // ABSTRACT_CAMERA_H

@@ -5,14 +5,16 @@
 
 #include <QApplication>
 
-#include "src/ui/CISCameraImage.h"
+#include "src/crashHandler/CrashHandler.h"
+#include "src/ui/cis_camera_image.h"
 #include "src/ui/ImageViewWindow.h"
 #include "src/ui/test_frmVisionDisplay.h"
 
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-    initPlog();
+    CrashHandler::Init(L"data/debug");  // 初始化Mini转储
+    initPlog();                         // 初始化日志类
     ImageViewWindow w;
     w.show();
     return a.exec();

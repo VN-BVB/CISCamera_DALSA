@@ -1,5 +1,5 @@
-﻿#ifndef DALSACAMERA_H
-#define DALSACAMERA_H
+﻿#ifndef DALSA_CAMERA_H
+#define DALSA_CAMERA_H
 
 #include <SapClassBasic.h>
 
@@ -9,7 +9,7 @@
 #include <mutex>
 #include <thread>
 
-#include "../AbstractCamera.h"
+#include "../abstract_camera.h"
 
 class DalsaCamera : public AbstractCamera {
     Q_OBJECT
@@ -19,7 +19,7 @@ public:
     explicit DalsaCamera(QObject* parent = nullptr);
     ~DalsaCamera();
 
-    bool initCamera(const QString& configPath) override;
+    bool initCamera(const QString& configPath, int resourceIndex = 0) override;
 
 public slots:
     void startGrab() override;
@@ -50,6 +50,7 @@ private:
     SapTransfer* m_Xfer;
     SapView* m_View;
     BYTE* m_pData;
+    int resourceIndex;
 
     // 状态
     std::atomic<bool> m_running;
@@ -71,4 +72,4 @@ private:
     TriggerMode m_triggerMode;
 };
 
-#endif  // DALSACAMERA_H
+#endif  // DALSA_CAMERA_H
