@@ -1,7 +1,7 @@
 ﻿#include "ImageViewWindow.h"
 #include "ui_ImageViewWindow.h"
-#include "src/ui/imageWidget/interactiveScene.h"
-#include "src/ui/imageWidget/interactiveDisplayManager.h"
+#include "src/ui/utils/imageWidget/interactiveScene.h"
+#include "src/ui/utils/imageWidget/interactiveDisplayManager.h"
 
 #include <QFileDialog>
 #include <QDebug>

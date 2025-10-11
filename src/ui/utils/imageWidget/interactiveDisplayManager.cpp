@@ -1,5 +1,5 @@
 ﻿#include "interactiveDisplayManager.h"
-#include "src/ui/imageWidget/interactiveView.h"
+#include "src/ui/utils/imageWidget/interactiveView.h"
 #include "interactiveScene.h"
 #include "interactiveImageItem.h"
 

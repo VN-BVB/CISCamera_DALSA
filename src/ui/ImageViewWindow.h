@@ -11,7 +11,7 @@
 #include "src/jointDetection/ImagereadWorker.h"
 #include "src/jointDetection/ImageProcessWorker.h"
 #include "src/jointDetection/edgeDetection/CannyDevernay.h"
-#include "src/ui/imageWidget/frmVisionDisplay.h"
+#include "src/ui/utils/imageWidget/frmVisionDisplay.h"
 
 namespace Ui {
 class ImageViewWindow;

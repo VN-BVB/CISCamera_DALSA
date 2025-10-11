@@ -13,7 +13,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
-#include <src/ui/imageWidget/frmVisionDisplay.h>
+#include <src/ui/utils/imageWidget/frmVisionDisplay.h>
 
 QT_BEGIN_NAMESPACE
 

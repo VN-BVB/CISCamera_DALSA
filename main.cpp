@@ -8,7 +8,6 @@
 #include "src/crashHandler/CrashHandler.h"
 #include "src/ui/cis_camera_image.h"
 #include "src/ui/ImageViewWindow.h"
-#include "src/ui/test_frmVisionDisplay.h"
 
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
