@@ -92,6 +92,7 @@ void InteractiveScene::setDisplayImageItem(InteractiveImageItem* imageItem)
             this->removeItem(item);
         }
     }
+    imageItem->setPos(-0.5, -0.5);  // 向左上角位移半个像素，使像素中心对准场景坐标系中的坐标，因为图元坐标系以像素块中心而不是以像素块左上角为像素坐标，
     this->addItem(imageItem);
     m_parentView->setScene(this);
     if (m_displayImageItem != imageItem)
@@ -118,10 +119,10 @@ void InteractiveScene::whenDrawSingleSubpixelContour(const std::vector<cv::Point
         return;
 
     QPainterPath path;
-    path.moveTo(subpixelContour[0].x + 0.5, subpixelContour[0].y + 0.5);    // 坐标增加(0.5,0.5)，以像素块中心为像素整数坐标，而不是左上角
+    path.moveTo(subpixelContour[0].x, subpixelContour[0].y);    // 坐标增加(0.5,0.5)，以像素块中心为像素整数坐标，而不是左上角
 
     for (size_t i = 1; i < subpixelContour.size(); ++i) {
-        path.lineTo(subpixelContour[i].x + 0.5, subpixelContour[i].y + 0.5);
+        path.lineTo(subpixelContour[i].x, subpixelContour[i].y);
     }
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
@@ -140,10 +141,10 @@ void InteractiveScene::whenDrawSinglePixelContour(const std::vector<cv::Point> &
         return;
 
     QPainterPath path;
-    path.moveTo(pixelContour[0].x + 0.5, pixelContour[0].y + 0.5);    // 坐标增加(0.5,0.5)，以像素块中心为像素整数坐标，而不是左上角
+    path.moveTo(pixelContour[0].x, pixelContour[0].y);    // 坐标增加(0.5,0.5)，以像素块中心为像素整数坐标，而不是左上角
 
     for (size_t i = 1; i < pixelContour.size(); ++i) {
-        path.lineTo(pixelContour[i].x + 0.5, pixelContour[i].y + 0.5);
+        path.lineTo(pixelContour[i].x, pixelContour[i].y);
     }
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);

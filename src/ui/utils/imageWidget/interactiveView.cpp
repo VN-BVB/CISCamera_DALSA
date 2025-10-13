@@ -244,22 +244,22 @@ void InteractiveView::translate(QPointF delta)
 
     bool canTranslate = true;
     // 检查边界,是否已经达到视窗边缘
-    if (scene_bounds.left() >= newViewRect.left() && delta.x() > 0)
-    {
-        canTranslate = false;
-    }
-    if (scene_bounds.right() <= newViewRect.right() && delta.x() < 0)
-    {
-        canTranslate = false;
-    }
-    if (scene_bounds.top() >= newViewRect.top() && delta.y() > 0)
-    {
-        canTranslate = false;
-    }
-    if (scene_bounds.bottom() <= newViewRect.bottom() && delta.y() < 0)
-    {
-        canTranslate = false;
-    }
+    // if (scene_bounds.left() >= newViewRect.left() && delta.x() > 0)
+    // {
+    //     canTranslate = false;
+    // }
+    // if (scene_bounds.right() <= newViewRect.right() && delta.x() < 0)
+    // {
+    //     canTranslate = false;
+    // }
+    // if (scene_bounds.top() >= newViewRect.top() && delta.y() > 0)
+    // {
+    //     canTranslate = false;
+    // }
+    // if (scene_bounds.bottom() <= newViewRect.bottom() && delta.y() < 0)
+    // {
+    //     canTranslate = false;
+    // }
 
     if (canTranslate)
     {

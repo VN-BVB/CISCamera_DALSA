@@ -133,8 +133,26 @@ void InteractiveImageItem::paint(QPainter *painter, const QStyleOptionGraphicsIt
 // 处理鼠标在图元上的悬停事件
 void InteractiveImageItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 {
-    QPointF pos = event->pos();
-    emit this->sendHoverImagePosition(pos.toPoint());
+    QPointF scenePos = event->scenePos();     // 返回场景坐标系中的坐标，与海康与halcon的效果相同，若是返回图元坐标系中的坐标，则鼠标通过像素块中心时才会产生坐标变化
+    QPointF itemPos = mapFromScene(scenePos); // 转换为图元坐标系
+
+    // 检查坐标是否在图像范围内
+    QPixmap pix = pixmap();
+    if (!pix.isNull())
+    {
+        QRectF imageRect = boundingRect();
+        if (imageRect.contains(itemPos))
+        {
+            // 坐标在图像范围内，发送信号
+            emit this->sendHoverImagePosition(scenePos.toPoint());
+        }
+        else
+        {
+            // 坐标超出图像范围，发送离开信号
+            emit this->sendHoverLeave();
+        }
+    }
+
     return QGraphicsPixmapItem::hoverMoveEvent(event);
 }
 

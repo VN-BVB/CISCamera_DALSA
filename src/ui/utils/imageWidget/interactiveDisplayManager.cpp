@@ -1,4 +1,4 @@
-﻿#include "interactiveDisplayManager.h"
+#include "interactiveDisplayManager.h"
 #include "src/ui/utils/imageWidget/interactiveView.h"
 #include "interactiveScene.h"
 #include "interactiveImageItem.h"
@@ -52,7 +52,7 @@ void InteractiveDisplayManager::initView()
 {
     m_displayView = new InteractiveView();
     // m_displayView->setSceneRect(-DisplayViewSceneSize/2,-DisplayViewSceneSize/2,DisplayViewSceneSize,DisplayViewSceneSize);
-    m_displayView->setSceneRect(0,0,3000,3000);
+    // m_displayView->setSceneRect(0,0,3000,3000);
     m_displayView->setMinZoomCoeff(ViewMinZoomCoeff_Default * 10);
     m_displayView->setMaxZoomCoeff(ViewMaxZoomCoeff_Default * 5);
 
@@ -96,7 +96,7 @@ void InteractiveDisplayManager::initView()
     {
         int nR, nG, nB;
         imageItem->pixmap().toImage().pixelColor(pt.x(), pt.y()).getRgb(&nR, &nG, &nB);
-        QString info = QString("X:%1 Y:%2 | [R:%3 G:%4 B:%4")
+        QString info = QString("X:%1 Y:%2 | [R:%3 G:%4 B:%5]")
                            .arg(QString::number((int)pt.x()), 4, ' ')
                            .arg(QString::number((int)pt.y()),4,' ')
                            .arg(QString::number(nR),3,' ')

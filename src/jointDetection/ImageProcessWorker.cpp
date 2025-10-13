@@ -1,4 +1,4 @@
-﻿#include "ImageProcessWorker.h"
+#include "ImageProcessWorker.h"
 #include <QDebug>
 
 ImageProcessWorker::ImageProcessWorker(QObject *parent)
@@ -129,6 +129,11 @@ ImageProcessWorker::ImageProcessWorker(QObject *parent)
 // 原始Zernike亚像素偏移计算辅助函数
 cv::Point2f ImageProcessWorker::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius)
 {
+    // 检查边缘点是否在图像范围内
+    if (edgePoint.x < 0 || edgePoint.x >= gray.cols || edgePoint.y < 0 || edgePoint.y >= gray.rows) {
+        return edgePoint;
+    }
+
     // 提取边缘点邻域
     cv::Rect roi(cv::Point(std::max(0, int(edgePoint.x - radius)), std::max(0, int(edgePoint.y - radius))),
                  cv::Size(2 * radius + 1, 2 * radius + 1));
@@ -293,9 +298,9 @@ double ImageProcessWorker::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage)
 
 void ImageProcessWorker::processImage(cv::Mat image) {
     try {
-        cv::Mat croppedImg = image(cv::Rect(16000, 16000, 1900, 1900));
-        cv::imwrite("D:/Cpp_Project/WeldseamMeasurement/tests/image/cropped_img.bmp", croppedImg);
-
+        // cv::Mat croppedImg = image(cv::Rect(16000, 16000, 1900, 1900));
+        // cv::imwrite("D:/Cpp_Project/WeldseamMeasurement/tests/image/cropped_img.bmp", croppedImg);
+        cv::Mat croppedImg = image; // 直接读裁剪后的图，不用再裁剪
         // CannyDevernay算法
         // CannyDevernay CDEdgeDetector;
         // std::vector<Point2fCurve> edgeCurves = CDEdgeDetector.detectEdges(image);
@@ -307,7 +312,7 @@ void ImageProcessWorker::processImage(cv::Mat image) {
         } else {
             grayImage = croppedImg.clone();
         }
-        cv::GaussianBlur(grayImage, grayImage, cv::Size(3, 3), 0, 0);
+        cv::GaussianBlur(grayImage, grayImage, cv::Size(7, 7), 0, 0);
 
         // 双阈值处理--根据Otsu算出的阈值确定为高阈值，取高阈值的一半记为低阈值
         double TH = adaptiveCannyThresholdByOtsu(croppedImg);
@@ -315,7 +320,6 @@ void ImageProcessWorker::processImage(cv::Mat image) {
 
         cv::Mat edge;
         cv::Canny(grayImage, edge, TL, TH);
-        // cv::Canny(grayImage, edge, 55, 110);
 
         // 提取轮廓
         std::vector<std::vector<cv::Point>> contours;
@@ -331,10 +335,10 @@ void ImageProcessWorker::processImage(cv::Mat image) {
             cv::Rect bbox = cv::boundingRect(contour);
 
             // 根据长度和宽高比过滤小噪声
-            if (length > 100 &&     // 最小轮廓长度
+            if (length > 1000 /*&&     // 最小轮廓长度
                 bbox.height > 10 && // 最小高度
                 bbox.width > 10 &&  // 最小宽度
-                (bbox.height * 1.0 / bbox.width < 3.0))
+                (bbox.height * 1.0 / bbox.width < 3.0)*/)
             { // 宽高比限制
                 filteredContours.push_back(contour);
             }

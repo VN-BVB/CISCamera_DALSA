@@ -1,4 +1,4 @@
-﻿#include "ImageViewWindow.h"
+#include "ImageViewWindow.h"
 #include "ui_ImageViewWindow.h"
 #include "src/ui/utils/imageWidget/interactiveScene.h"
 #include "src/ui/utils/imageWidget/interactiveDisplayManager.h"
@@ -54,7 +54,7 @@ void ImageViewWindow::on_pb_open_clicked()
     startTime = std::chrono::high_resolution_clock::now();
 
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
-    QString path = "E:/work/车门门环拼接/image/背光20250529/背光20250529/822-1200-50us-2(背光).bmp";
+    QString path = "E:/work/车门门环拼接/image/test/frontLight/0d20mm.bmp";
     if(path.isEmpty())
         return;
 
@@ -83,16 +83,6 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<s
         cv::cvtColor(processedImage, img_rgb, cv::COLOR_BGR2RGB);
         qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
     }
-
-    // QGraphicsScene *scene = new QGraphicsScene(this);
-    // // drawSingleSubpixelContour(scene, subpixelContour);
-    // // drawPixelContour(scene, pixelContour[0]);
-    // drawSubpixelContours(scene, subpixelContours);
-    // drawPixelContours(scene, pixelContours);
-    // QPixmap pixmap = QPixmap::fromImage(qimg);
-    // scene->addPixmap(pixmap);
-    // ui->gv_image->setScene(scene);
-    // ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
     ui->gv_image->displayImage(qimg, true);
     InteractiveDisplayManager* displayMgr = ui->gv_image->getDisplayManager();
@@ -126,37 +116,9 @@ void ImageViewWindow::handleImageProcessedCannyDevenay(cv::Mat processedImage, s
         qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
     }
 
-    // QGraphicsScene *scene = new QGraphicsScene(this);
-    // std::vector<cv::Point2f> subpixelContour = edgeCurves[0].points;
-    // drawSingleSubpixelContour(scene, subpixelContour);
-    // // drawPixelContour(scene, pixelContour[0]);
-    // QPixmap pixmap = QPixmap::fromImage(qimg);
-    // scene->addPixmap(pixmap);
-    // ui->gv_image->setScene(scene);
-    // ui->gv_image->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
-
 }
 
 void ImageViewWindow::handleError(const QString &error)
 {
     qDebug() << "错误:" << error;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
