@@ -4,7 +4,10 @@
 #include <plog/Log.h>
 
 #include <QApplication>
-
+// clang-format off
+#include <winsock2.h>
+#include <windows.h>
+// clang-format on
 #include "src/crashHandler/CrashHandler.h"
 #include "src/ui/cis_camera_image.h"
 

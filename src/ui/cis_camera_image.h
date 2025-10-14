@@ -1,4 +1,4 @@
-#ifndef CIS_CAMERA_IMAGE_H
+﻿#ifndef CIS_CAMERA_IMAGE_H
 #define CIS_CAMERA_IMAGE_H
 
 #include <QImage>
@@ -6,10 +6,14 @@
 #include <QThread>
 #include <QWidget>
 #include <memory>
-
+// clang-format off
+#include <winsock2.h>
+#include <windows.h>
+// clang-format on
 #include "src/cameraFactory/abstract_camera.h"
 #include "src/cameraFactory/abstract_camera_factory.h"
 #include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
+#include "src/rail/rail_widget.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class CISWidget;
