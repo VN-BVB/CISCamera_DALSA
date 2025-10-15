@@ -116,3 +116,7 @@ void RailWidget::on_btn_X_JogReverse_released() { emit sendWriteCoils(X_JogRever
 
 // 地轨速度改变
 void RailWidget::on_edit_X_AbsSpeed_textChanged(const QString &arg1) { rail->vel = arg1.toFloat(); }
+
+void RailWidget::on_btn_contectRail_clicked() { connectRail(); }
+
+void RailWidget::on_btn_discontectRail_clicked() { disconnectRail(); }
