@@ -55,6 +55,10 @@ private slots:
     void on_btn_chk_Rest_clicked();
     void on_edit_X_AbsSpeed_textChanged(const QString &arg1);
 
+    void on_btn_contectRail_clicked();
+
+    void on_btn_discontectRail_clicked();
+
 private:
     Ui::RailWidget *ui;
 
