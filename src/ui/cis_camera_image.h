@@ -1,6 +1,7 @@
 ﻿#ifndef CIS_CAMERA_IMAGE_H
 #define CIS_CAMERA_IMAGE_H
 
+#include <QDateTime>
 #include <QImage>
 #include <QPainter>
 #include <QThread>
@@ -43,24 +44,25 @@ private:
     bool slaveReady = false;
     const double startPos = 380.0;
     const double endPos = 720.0;
-    const double speed = 30.0;
+    const double speed = 29.97;
 
     void tryStitchImages();
     void initCamera2UIConnections();
     void initCamera();
     void initUIControls();
+    void initregisterMetaType();
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();
 private slots:
-    void whenGetNewImage(const cv::Mat& img);
+    void whenGetNewImage(std::shared_ptr<cv::Mat> matPt);
     void on_btnStart_clicked();
     void on_btnStop_clicked();
     void on_btnFreeze_clicked();
     void on_btnContinue_clicked();
     void on_ckbSplice_toggled(bool checked);
-    void on_ckbSave_toggled(bool checked);
     void on_btnSoftWareTrigger_clicked();
     void on_btnCISConfig_clicked();
+    void on_btnSave_clicked();
 };
 #endif  // CIS_CAMERA_IMAGE_H

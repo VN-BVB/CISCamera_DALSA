@@ -40,8 +40,8 @@ public:
     QPushButton *btnStop;
     QPushButton *btnFreeze;
     QPushButton *btnContinue;
-    QCheckBox *ckbSave;
     QPushButton *btnStart;
+    QPushButton *btnSave;
     QTextEdit *textEdit;
     QWidget *tab_2;
     QGridLayout *gridLayout_3;
@@ -144,14 +144,6 @@ public:
 
         gridLayout->addWidget(btnContinue, 1, 1, 1, 1);
 
-        ckbSave = new QCheckBox(tab);
-        ckbSave->setObjectName(QString::fromUtf8("ckbSave"));
-        sizePolicy2.setHeightForWidth(ckbSave->sizePolicy().hasHeightForWidth());
-        ckbSave->setSizePolicy(sizePolicy2);
-        ckbSave->setFont(font);
-
-        gridLayout->addWidget(ckbSave, 4, 1, 1, 1);
-
         btnStart = new QPushButton(tab);
         btnStart->setObjectName(QString::fromUtf8("btnStart"));
         sizePolicy2.setHeightForWidth(btnStart->sizePolicy().hasHeightForWidth());
@@ -159,6 +151,14 @@ public:
         btnStart->setFont(font);
 
         gridLayout->addWidget(btnStart, 0, 0, 1, 1);
+
+        btnSave = new QPushButton(tab);
+        btnSave->setObjectName(QString::fromUtf8("btnSave"));
+        sizePolicy2.setHeightForWidth(btnSave->sizePolicy().hasHeightForWidth());
+        btnSave->setSizePolicy(sizePolicy2);
+        btnSave->setFont(font);
+
+        gridLayout->addWidget(btnSave, 4, 1, 1, 1);
 
 
         horizontalLayout->addLayout(gridLayout);
@@ -194,7 +194,7 @@ public:
 
         retranslateUi(CISWidget);
 
-        tabWidget->setCurrentIndex(1);
+        tabWidget->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(CISWidget);
@@ -209,8 +209,8 @@ public:
         btnStop->setText(QCoreApplication::translate("CISWidget", "\347\273\223\346\235\237\351\207\207\351\233\206", nullptr));
         btnFreeze->setText(QCoreApplication::translate("CISWidget", "\346\232\202\345\201\234\351\207\207\351\233\206", nullptr));
         btnContinue->setText(QCoreApplication::translate("CISWidget", "\347\273\247\347\273\255\351\207\207\351\233\206", nullptr));
-        ckbSave->setText(QCoreApplication::translate("CISWidget", "\344\277\235\345\255\230\345\233\276\345\203\217", nullptr));
         btnStart->setText(QCoreApplication::translate("CISWidget", "\345\274\200\345\247\213\351\207\207\351\233\206", nullptr));
+        btnSave->setText(QCoreApplication::translate("CISWidget", "\344\277\235\345\255\230\345\233\276\345\203\217", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab), QCoreApplication::translate("CISWidget", "\347\233\270\346\234\272\346\265\213\350\257\225\345\212\237\350\203\275", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_2), QCoreApplication::translate("CISWidget", "\350\275\250\351\201\223\350\277\220\345\212\250\345\212\237\350\203\275", nullptr));
     } // retranslateUi

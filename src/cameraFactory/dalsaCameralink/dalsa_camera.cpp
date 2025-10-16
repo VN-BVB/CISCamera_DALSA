@@ -249,14 +249,15 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 
     if (!data) return;
 
-    static cv::Mat mat;
+    // static cv::Mat mat;
+    auto matPtr = std::make_shared<cv::Mat>();
     // 按照相机数据格式转换成 cv::Mat
     if (cam->m_Buffers->GetFormat() == SapFormatRGB888) {
-        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data);
+        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data);
     } else if (cam->m_Buffers->GetFormat() == SapFormatMono8) {
-        mat = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data);
+        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data);
     } else if (cam->m_Buffers->GetFormat() == SapFormatMono16) {
-        mat = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data);
+        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data);
     } else {
         std::cout << "none mode for converting to img " << std::endl;
         // 不支持的格式
@@ -265,7 +266,8 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     // cv::imshow("aaaa", mat);
     // cv::waitKey(1);
 
-    QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
+    // QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
+    QMetaObject::invokeMethod(cam, [cam, matPtr]() { cam->handleImageFromCallback(matPtr); }, Qt::QueuedConnection);
 
     // 保存逻辑（依然用 SapBuffer 保存，避免 OpenCV 再写一次大图）
     if (cam->m_saveEnabled) {
@@ -281,8 +283,8 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
 }
 
 // =================== 信号 ===================
-void DalsaCamera::handleImageFromCallback(const cv::Mat& mat) {
+void DalsaCamera::handleImageFromCallback(std::shared_ptr<cv::Mat> matPtr) {
     // PLOGD << "发送图像帧";
     emit sendText(QString(u8"相机%1发送图像帧").arg(cameraIndex));
-    emit sendNewImageReady(mat.clone());
+    emit sendNewImageReady(matPtr);
 }
