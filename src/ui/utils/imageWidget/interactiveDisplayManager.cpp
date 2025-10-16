@@ -53,8 +53,8 @@ void InteractiveDisplayManager::initView()
     m_displayView = new InteractiveView();
     // m_displayView->setSceneRect(-DisplayViewSceneSize/2,-DisplayViewSceneSize/2,DisplayViewSceneSize,DisplayViewSceneSize);
     // m_displayView->setSceneRect(0,0,3000,3000);
-    m_displayView->setMinZoomCoeff(ViewMinZoomCoeff_Default * 10);
-    m_displayView->setMaxZoomCoeff(ViewMaxZoomCoeff_Default * 5);
+    m_displayView->setMinZoomCoeff(ViewMinZoomCoeff_Default);
+    m_displayView->setMaxZoomCoeff(ViewMaxZoomCoeff_Default);
 
     auto lyView = new QVBoxLayout(m_displayView);
     lyView->setContentsMargins(0, 0, 0, 0); // 设置无边距

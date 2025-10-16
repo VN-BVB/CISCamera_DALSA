@@ -1,6 +1,9 @@
-﻿#ifndef FRMVISIONDISPLAY_H
+#ifndef FRMVISIONDISPLAY_H
 #define FRMVISIONDISPLAY_H
+
 #include "baseWidget.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
 
 class InteractiveDisplayManager;
 
@@ -17,6 +20,7 @@ public:
 
 public slots:
     void displayImage(const QImage &image, bool autoFit = true);
+    void displayImage(const cv::Mat &image, bool autoFit = true);
 
 
 protected:

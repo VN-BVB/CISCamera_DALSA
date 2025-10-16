@@ -1,4 +1,4 @@
-﻿#include "frmVisionDisplay.h"
+#include "frmVisionDisplay.h"
 #include "interactiveDisplayManager.h"
 #include "interactiveView.h"
 #include "interactiveScene.h"
@@ -46,6 +46,36 @@ void FrmVisionDisplay::displayImage(const QImage &image, bool autoFit)
         scene->whenDisplayImage(image, autoFit);
     }
 }
+
+
+void FrmVisionDisplay::displayImage(const cv::Mat &image, bool autoFit)
+{
+    QImage qimg;
+    if (image.type() == CV_8UC1)
+    {
+        qimg = QImage(image.data, image.cols, image.rows,
+                      image.step, QImage::Format_Grayscale8);
+    }
+    else
+    {
+        cv::Mat img_rgb;
+        cv::cvtColor(image, img_rgb, cv::COLOR_BGR2RGB);
+        qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
+    }
+    if (!m_displayMgr) return;
+    InteractiveScene* scene = m_displayMgr->displayScene();
+    if (scene)
+    {
+        scene->whenDisplayImage(qimg, autoFit);
+    }
+}
+
+
+
+
+
+
+
 
 
 

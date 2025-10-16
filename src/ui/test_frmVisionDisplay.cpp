@@ -29,20 +29,8 @@ test_FrmVisionDisplay::~test_FrmVisionDisplay()
 void test_FrmVisionDisplay::displayImage(const QString &imagePath)
 {
     cv::Mat image = cv::imread(imagePath.toStdString(), cv::IMREAD_GRAYSCALE);
-    QImage qimg;
-    if (image.type() == CV_8UC1)
-    {
-        qimg = QImage(image.data, image.cols, image.rows,
-                      image.step, QImage::Format_Grayscale8);
-    }
-    else
-    {
-        cv::Mat img_rgb;
-        cv::cvtColor(image, img_rgb, cv::COLOR_BGR2RGB);
-        qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
-    }
     if (m_frmDisplay)
     {
-        m_frmDisplay->displayImage(qimg, true);
+        m_frmDisplay->displayImage(image, true);
     }
 }

@@ -1,4 +1,4 @@
-﻿#include <QWheelEvent>
+#include <QWheelEvent>
 #include <QKeyEvent>
 #include <QGraphicsItem>
 #include <QScrollBar>
@@ -50,7 +50,6 @@ public:
 InteractiveView::InteractiveView(QWidget *parent)
     : QGraphicsView(parent),
     m_translateButton(Qt::LeftButton),
-    m_scale(1.0),
     m_zoomDelta(0.1),
     m_translateSpeed(0.5),
     m_bMouseTranslate(false),
@@ -74,6 +73,43 @@ InteractiveView::InteractiveView(QWidget *parent)
     setCacheMode(QGraphicsView::CacheBackground);   // 设置缓存模式为背景缓存，缓存视图的背景，提高重绘性能（在设置视图背景时有效，此项目没有设置黑白格等背景）
 }
 
+// 缩放的增量
+void InteractiveView::setZoomDelta(qreal delta)
+{
+    // 建议增量范围
+    Q_ASSERT_X(delta >= 0.0 && delta <= 1.0,
+               "interactive_view::setZoomDelta", "Delta should be in range [0.0, 1.0].");
+    m_zoomDelta = delta;
+}
+
+qreal InteractiveView::zoomDelta() const
+{
+    return m_zoomDelta;
+}
+
+double InteractiveView::maxZoomCoeff() const
+{
+    Q_D(const InteractiveView);
+    return d->maxZoomCoeff;
+}
+
+void InteractiveView::setMaxZoomCoeff(const double &coeff)
+{
+    Q_D(InteractiveView);
+    d->maxZoomCoeff=coeff;
+}
+
+double InteractiveView::minZoomCoeff() const
+{
+    Q_D(const InteractiveView);
+    return d->minZoomCoeff;
+}
+void InteractiveView::setMinZoomCoeff(const double &coeff)
+{
+    Q_D(InteractiveView);
+    d->minZoomCoeff=coeff;
+}
+
 // 平移速度
 void InteractiveView::setTranslateSpeed(qreal speed)
 {
@@ -88,19 +124,6 @@ qreal InteractiveView::translateSpeed() const
     return m_translateSpeed;
 }
 
-// 缩放的增量
-void InteractiveView::setZoomDelta(qreal delta)
-{
-    // 建议增量范围
-    Q_ASSERT_X(delta >= 0.0 && delta <= 1.0,
-               "interactive_view::setZoomDelta", "Delta should be in range [0.0, 1.0].");
-    m_zoomDelta = delta;
-}
-
-qreal InteractiveView::zoomDelta() const
-{
-    return m_zoomDelta;
-}
 
 // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
 void InteractiveView::keyPressEvent(QKeyEvent *event)
@@ -120,10 +143,10 @@ void InteractiveView::keyPressEvent(QKeyEvent *event)
         translate(QPointF(2, 0)); // 右移
         break;
     case Qt::Key_Plus: // 放大
-        zoomIn();
+        zoomUp();
         break;
     case Qt::Key_Minus: // 缩小
-        zoomOut();
+        zoomDown();
         break;
     case Qt::Key_Space: // 逆时针旋转
         rotate(-5);
@@ -155,15 +178,9 @@ void InteractiveView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == m_translateButton)
     {
-        // // 当光标底下没有 item 时，才能移动
-        // QPointF point = mapToScene(event->pos());
-        // if (scene()->itemAt(point, transform()) == NULL)
-        // {
-        //     m_bMouseTranslate = true;
-        //     m_lastMousePos = event->pos();
-        // }
         m_bMouseTranslate = true;
         m_lastMousePos = event->pos();
+        setCursor(Qt::ClosedHandCursor); // 按下时显示闭合的手型
     }
 
     QGraphicsView::mousePressEvent(event);
@@ -172,48 +189,87 @@ void InteractiveView::mousePressEvent(QMouseEvent *event)
 void InteractiveView::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == m_translateButton)
+    {
         m_bMouseTranslate = false;
+        setCursor(Qt::OpenHandCursor); // 释放时显示打开的手型
+    }
 
     QGraphicsView::mouseReleaseEvent(event);
+}
+
+void InteractiveView::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    Q_D(InteractiveView);
+    if(d->doubleClickToFit)
+    {
+        whenZoomToDisplayFit();
+    }
+    QGraphicsView::mouseDoubleClickEvent(event);
 }
 
 // 放大/缩小
 void InteractiveView::wheelEvent(QWheelEvent *event)
 {
-    // 滚轮的滚动量
-    QPoint scrollAmount = event->angleDelta();
-    // 正值表示滚轮远离使用者（放大），负值表示朝向使用者（缩小）
-    scrollAmount.y() > 0 ? zoomIn() : zoomOut();
+    Q_D(InteractiveView);
+    int deltaY = event->angleDelta().y();
+    if((deltaY > 0)&&(m_rZoomValue >= d->maxZoomCoeff))//最大放大
+    {
+        return;
+    }
+    else if ((deltaY< 0)&&(m_rZoomValue <= d->minZoomCoeff))//最小缩小
+    {
+        return;
+    }
+    else
+    {
+        double tmp = m_rZoomValue;
+        if (deltaY > 0)
+        {
+            tmp *= 1.1;
+        } else {
+            tmp *= 0.9;
+        }
+        zoomByValue(tmp);
+    }
 }
 
 // 放大
-void InteractiveView::zoomIn()
+void InteractiveView::zoomUp()
 {
-    zoom(1 + m_zoomDelta);
+    Q_D(InteractiveView);
+    if(m_rZoomValue >= d->maxZoomCoeff)//最大放大
+    {
+        return;
+    }
+    else
+    {
+        double tmp=m_rZoomValue;
+        tmp*= (1 + m_zoomDelta);//每次放大10%
+        zoomByValue(tmp);
+    }
 }
 
 // 缩小
-void InteractiveView::zoomOut()
+void InteractiveView::zoomDown()
 {
-    zoom(1 - m_zoomDelta);
-}
-
-// 缩放 - scaleFactor：缩放的比例因子
-void InteractiveView::zoom(float scaleFactor)
-{
-    // 防止过小或过大
-    qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-    if (factor < 0.07 || factor > 500) return;
-
-    scale(scaleFactor, scaleFactor);
-    m_scale *= scaleFactor;
+    Q_D(InteractiveView);
+    if(m_rZoomValue <= d->minZoomCoeff)//最小缩小
+    {
+        return;
+    }
+    else
+    {
+        double tmp=m_rZoomValue;
+        tmp*= (1- m_zoomDelta);//每次缩小10%
+        zoomByValue(tmp);
+    }
 }
 
 // 平移
 void InteractiveView::translate(QPointF delta)
 {
     // 根据当前 zoom 缩放平移数
-    delta *= m_scale;
+    delta *= m_rZoomValue;
     delta *= m_translateSpeed;
 
     // 获取当前场景中的所有items的边界矩形
@@ -242,24 +298,7 @@ void InteractiveView::translate(QPointF delta)
     QRectF newViewRect = viewRect.translated(-delta);
 
 
-    bool canTranslate = true;
-    // 检查边界,是否已经达到视窗边缘
-    // if (scene_bounds.left() >= newViewRect.left() && delta.x() > 0)
-    // {
-    //     canTranslate = false;
-    // }
-    // if (scene_bounds.right() <= newViewRect.right() && delta.x() < 0)
-    // {
-    //     canTranslate = false;
-    // }
-    // if (scene_bounds.top() >= newViewRect.top() && delta.y() > 0)
-    // {
-    //     canTranslate = false;
-    // }
-    // if (scene_bounds.bottom() <= newViewRect.bottom() && delta.y() < 0)
-    // {
-    //     canTranslate = false;
-    // }
+    bool canTranslate = true;   //  可以增加检查是否有图元到达边界，到达边界后不允许再移动
 
     if (canTranslate)
     {
@@ -335,28 +374,6 @@ void InteractiveView::zoomByValue(const double &val)
     this->scale(tmp, tmp);  // 在x，y方向应用相同的缩放因子
 }
 
-double InteractiveView::maxZoomCoeff() const
-{
-    Q_D(const InteractiveView);
-    return d->maxZoomCoeff;
-}
-
-void InteractiveView::setMaxZoomCoeff(const double &coeff)
-{
-    Q_D(InteractiveView);
-    d->maxZoomCoeff=coeff;
-}
-
-double InteractiveView::minZoomCoeff() const
-{
-    Q_D(const InteractiveView);
-    return d->minZoomCoeff;
-}
-void InteractiveView::setMinZoomCoeff(const double &coeff)
-{
-    Q_D(InteractiveView);
-    d->minZoomCoeff=coeff;
-}
 
 
 
