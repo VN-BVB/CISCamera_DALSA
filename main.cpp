@@ -9,8 +9,8 @@
 #include <windows.h>
 // clang-format on
 #include "src/crashHandler/CrashHandler.h"
+#include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/ui/ImageViewWindow.h"
-#include "src/ui/cis_camera_image.h"
 #include "src/ui/test_frmVisionDisplay.h"
 
 void initPlog();  // 初始化日志类
