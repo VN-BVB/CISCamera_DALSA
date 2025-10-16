@@ -47581,3 +47581,7 @@
 2025/10/15;21:52:59.502;DEBUG;11672;0000000000000000;ExternalExeRunner::handleFinished@109;"Process finished. ExitCode=0 Status=NormalExit"
 2025/10/15;21:53:01.096;DEBUG;12368;0000000000000000;DalsaCamera::stopGrab@188;" 相机停止采集图像"
 2025/10/15;21:53:01.100;DEBUG;12368;0000000000000000;DalsaCamera::stopGrab@188;" 相机停止采集图像"
+2025/10/16;19:34:49.345;DEBUG;47100;0000000000000000;DalsaCamera::initCamera@38;"DALSA采集卡初始化中..."
+2025/10/16;19:34:57.259;ERROR;47100;0000000000000000;DalsaCamera::initCamera@45;"SapManager::GetServerName 获取失败"
+2025/10/16;19:34:57.259;ERROR;47100;0000000000000000;CISWidget::initCamera::<lambda_d2660af604313847b1b979e8ccaf3917>::operator ()@30;"Master 初始化失败"
+2025/10/16;19:34:59.888;DEBUG;35892;0000000000000000;DalsaCamera::stopGrab@188;" 相机停止采集图像"
