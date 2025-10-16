@@ -5,6 +5,7 @@
 SOURCES += \
     $$PWD/cis_camera_image.cpp \
     $$PWD/ImageViewWindow.cpp \
+    $$PWD/test_frmVisionDisplay.cpp \
     $$PWD/utils/imageWidget/baseWidget.cpp \
     $$PWD/utils/imageWidget/frmVisionDisplay.cpp \
     $$PWD/utils/imageWidget/interactiveDisplayManager.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
 HEADERS += \
     $$PWD/cis_camera_image.h \
     $$PWD/ImageViewWindow.h \
+    $$PWD/test_frmVisionDisplay.h \
     $$PWD/utils/imageWidget/baseWidget.h \
     $$PWD/utils/imageWidget/frmVisionDisplay.h \
     $$PWD/utils/imageWidget/interactiveDisplayManager.h \
@@ -30,7 +32,8 @@ HEADERS += \
 
 FORMS += \
     $$PWD/cis_camera_image.ui \
-    $$PWD/ImageViewWindow.ui
+    $$PWD/ImageViewWindow.ui \
+    $$PWD/test_frmVisionDisplay.ui
     $$PWD/utils/imageWidget/openGLImageWidget.cpp
 
 

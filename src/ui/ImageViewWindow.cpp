@@ -54,7 +54,7 @@ void ImageViewWindow::on_pb_open_clicked()
     startTime = std::chrono::high_resolution_clock::now();
 
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
-    QString path = "E:/work/车门门环拼接/image/test/frontLight/0d20mm.bmp";
+    QString path = "E:/work/车门门环拼接/image/背光20250529/背光20250529/822-1200-50us-2(背光).bmp";
     if(path.isEmpty())
         return;
 

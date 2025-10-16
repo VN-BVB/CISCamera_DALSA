@@ -155,6 +155,18 @@ void InteractiveScene::whenDrawSinglePixelContour(const std::vector<cv::Point> &
     pathItem->setZValue(10);
 
     this->addItem(pathItem);
+
+    // 将轮廓坐标处的像素化成橙色
+    for (const auto &point : pixelContour)
+    {
+        // 创建橙色矩形标记每个像素位置
+        QGraphicsRectItem *pixelMarker = new QGraphicsRectItem(
+            point.x - 0.4, point.y - 0.4, 0.8, 0.8);
+        pixelMarker->setBrush(QBrush(QColor(255, 165, 0))); // 橙色填充
+        pixelMarker->setPen(QPen(Qt::NoPen));               // 无边框
+        pixelMarker->setZValue(11);                         // 比轮廓线更高，确保显示在上层
+        this->addItem(pixelMarker);
+    }
 }
 
 void InteractiveScene::whenDrawSubpixelContours(const std::vector<std::vector<cv::Point2f>> &subpixelContours)

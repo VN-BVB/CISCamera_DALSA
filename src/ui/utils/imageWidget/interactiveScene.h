@@ -49,7 +49,6 @@ public slots:
     void whenDrawPixelContours(const std::vector<std::vector<cv::Point>> &pixelContours);
     // 清除轮廓
     void whenClearContours();
-    // @TODO:实现轮廓绘制，并修复图像没有显示在中间的bug
 
 protected:
     // 设置显示图像图元

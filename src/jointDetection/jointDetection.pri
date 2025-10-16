@@ -6,5 +6,6 @@ SOURCES += \
     $$PWD/ImageProcessWorker.cpp \
     $$PWD/ImageReadWorker.cpp
 
-include( ./edgeDetection/edgeDetection.pri )
+include(./edgeDetection/edgeDetection.pri)
+include(./contourSegment/contourSegment.pri)
 

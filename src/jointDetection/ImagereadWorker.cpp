@@ -1,4 +1,4 @@
-﻿#include "ImageReadWorker.h"
+#include "ImageReadWorker.h"
 
 ImageReadWorker::ImageReadWorker(QObject *parent)
     : QObject{parent}
