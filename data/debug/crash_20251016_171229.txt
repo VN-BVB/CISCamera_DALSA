@@ -1,0 +1,22 @@
+Crash time: 2025-10-16 17:12:29
+Exception code: 0xc000070a
+Exception type: Unknown Exception
+Exception address: 0x7ffbb1fc233d
+Thread ID: 6268
+
+Crash function: TpDbgDumpHeapUsage
+
+Call Stack:
+#0  TpDbgDumpHeapUsage
+#1  memset
+#2  TpSetWaitEx
+#3  RtlRegisterWait
+#4  RegisterWaitForSingleObject
+#5  QWinEventNotifier::isEnabled
+#6  QEventDispatcherWin32::activateEventNotifiers
+#7  QEventDispatcherWin32::processEvents
+#8  QEventLoop::exec
+#9  QThread::exec
+#10  QThread::start
+#11  BaseThreadInitThunk
+#12  RtlUserThreadStart
