@@ -343,7 +343,7 @@ public:
         label_13->setText(QCoreApplication::translate("RailWidget", "\345\275\223\345\211\215\351\200\237\345\272\246", nullptr));
         label_17->setText(QCoreApplication::translate("RailWidget", "\350\275\264\347\212\266\346\200\201", nullptr));
         label_16->setText(QCoreApplication::translate("RailWidget", "\350\277\220\345\212\250\347\212\266\346\200\201", nullptr));
-        edit_X_AbsSpeed->setText(QCoreApplication::translate("RailWidget", "150", nullptr));
+        edit_X_AbsSpeed->setText(QCoreApplication::translate("RailWidget", "30", nullptr));
         label_14->setText(QCoreApplication::translate("RailWidget", "\345\275\223\345\211\215\344\275\215\347\275\256", nullptr));
         edit_X_AbsPosition->setText(QCoreApplication::translate("RailWidget", "5", nullptr));
         label_X_CurrentSpeed->setText(QString());

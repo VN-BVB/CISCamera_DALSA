@@ -25,6 +25,7 @@ public slots:
 signals:
     void sendNewImageReady(const cv::Mat& image);  // 输出 Qt 图像
     void grabFinished();
+    void sendText(const QString& message);
 };
 
 #endif  // ABSTRACT_CAMERA_H

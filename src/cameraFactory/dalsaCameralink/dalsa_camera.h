@@ -50,7 +50,7 @@ private:
     SapTransfer* m_Xfer;
     SapView* m_View;
     BYTE* m_pData;
-    int resourceIndex;
+    int cameraIndex;
 
     // 状态
     std::atomic<bool> m_running;

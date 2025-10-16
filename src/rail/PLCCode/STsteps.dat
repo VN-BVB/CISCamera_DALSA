@@ -78,12 +78,12 @@
 		<strCaption>运动参数设置</strCaption>
 		<strInst>_FC_运动参数设置</strInst>
 		<strTrueInst>运动参数设置</strTrueInst>
-		<offSetLine>42</offSetLine>
+		<offSetLine>41</offSetLine>
 		<startNum>1</startNum>
 		<endNum>0</endNum>
 		<endNumOffSet>1</endNumOffSet>
 		<orgLine>1</orgLine>
 		<uFileID>7</uFileID>
-		<InvalidLine>7,15,23,26,34,42,45,48</InvalidLine>
+		<InvalidLine>7,15,23,26,34,41,42,43,44,47</InvalidLine>
 		</Node>
 	</root>

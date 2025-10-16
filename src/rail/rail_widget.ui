@@ -252,7 +252,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </size>
        </property>
        <property name="text">
-        <string>150</string>
+        <string>30</string>
        </property>
       </widget>
      </item>

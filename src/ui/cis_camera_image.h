@@ -41,10 +41,17 @@ private:
     cv::Mat masterImg, slaveImg, resultMat;
     bool masterReady = false;
     bool slaveReady = false;
+    const double startPos = 380.0;
+    const double endPos = 720.0;
+    const double speed = 30.0;
 
     void tryStitchImages();
     void initCamera2UIConnections();
     void initCamera();
+    void initUIControls();
+public slots:
+    void whenAppendMessageLog(const QString& message);
+    void whenMoveToStartFinished();
 private slots:
     void whenGetNewImage(const cv::Mat& img);
     void on_btnStart_clicked();

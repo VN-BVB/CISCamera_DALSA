@@ -5,6 +5,7 @@
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     ui->setupUi(this);
     initCamera();
+    initUIControls();
 }
 
 CISWidget::~CISWidget() {
@@ -22,22 +23,27 @@ CISWidget::~CISWidget() {
 void CISWidget::initCamera() {
     // // 单独开一个线程来串行初始化，避免阻塞主线程
     QThread* initThread = QThread::create([this]() {
+        whenAppendMessageLog(QString(u8"DALSA采集卡初始化中"));
         // Master
         masterCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
         if (!masterCISCamera->initCamera("./data/CISConfig/MasterInternal.ccf", 0)) {
             PLOGE << "Master 初始化失败";
+            whenAppendMessageLog(QString(u8"Master 初始化失败"));
             return;
         } else {
             PLOGD << "Master 初始化成功";
+            whenAppendMessageLog(QString(u8"Master 初始化成功"));
         }
 
         // Slave
         slaveCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
         if (!slaveCISCamera->initCamera("./data/CISConfig/SlaveInternal.ccf", 1)) {
             PLOGE << "Slave 初始化失败";
+            whenAppendMessageLog(QString(u8"Slave 初始化失败"));
             return;
         } else {
             PLOGD << "Slave 初始化成功";
+            whenAppendMessageLog(QString(u8"Slave 初始化成功"));
         }
 
         // --- 初始化完成后，再切换到采集线程 ---
@@ -53,17 +59,16 @@ void CISWidget::initCamera() {
         cameraThreadConfig->start();
 
         PLOGD << "相机配置初始化完成";
+        whenAppendMessageLog(QString(u8"相机配置初始化完成"));
         initCamera2UIConnections();
     });
 
     initThread->start();
 }
-
 void CISWidget::initCamera2UIConnections() {
     qRegisterMetaType<cv::Mat>("cv::Mat");
 
     connect(slaveCISCamera.get(), &AbstractCamera::sendNewImageReady, this, &CISWidget::whenGetNewImage, Qt::QueuedConnection);
-
 #ifdef ENABLE_SLAVE_CAMERA
     connect(
         masterCISCamera.get(), &AbstractCamera::sendNewImageReady, this,
@@ -83,14 +88,18 @@ void CISWidget::initCamera2UIConnections() {
         },
         Qt::QueuedConnection);
 #endif
+    connect(masterCISCamera.get(), &AbstractCamera::sendText, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
+    connect(slaveCISCamera.get(), &AbstractCamera::sendText, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
 }
-
+void CISWidget::initUIControls() { ui->btnSoftWareTrigger->setEnabled(false); }
 void CISWidget::whenGetNewImage(const cv::Mat& img) { ui->imgLive->setOpenCVImage(img); }
+// 在信息框推送信息
+void CISWidget::whenAppendMessageLog(const QString& message) { ui->textEdit->append(message); }
 
 #ifdef ENABLE_SLAVE_CAMERA
 void CISWidget::tryStitchImages() {
     PLOGD << "进入拼接函数";
-
+    whenAppendMessageLog(QString(u8"进入拼接函数"));
     PLOGD << "ckbSplice checked = " << ui->ckbSplice->isChecked();
     PLOGD << "masterReady = " << masterReady << ", slaveReady = " << slaveReady;
     PLOGD << "masterImg size = " << masterImg.cols << "x" << masterImg.rows << ", empty = " << masterImg.empty();
@@ -100,15 +109,18 @@ void CISWidget::tryStitchImages() {
         try {
             cv::hconcat(masterImg, slaveImg, resultMat);
             PLOGD << "拼接成功, resultMat size = " << resultMat.cols << "x" << resultMat.rows;
+            whenAppendMessageLog(QString(u8"拼接成功, resultMat size = %1 x %2").arg(resultMat.cols).arg(resultMat.rows));
             ui->imgSplice->setOpenCVImage(resultMat);
 
             masterReady = false;
             slaveReady = false;
         } catch (const cv::Exception& e) {
             PLOGE << "拼接失败: " << e.what();
+            whenAppendMessageLog(QString(u8"拼接失败: %1").arg(e.what()));
         }
     } else {
         PLOGD << "条件未满足，未执行拼接";
+        whenAppendMessageLog(QString(u8"条件未满足，未执行拼接"));
     }
 }
 
@@ -127,6 +139,7 @@ void CISWidget::on_btnStart_clicked() {
         PLOGE << "slaveCISCamera is null!";
     }
 #endif
+    ui->btnSoftWareTrigger->setEnabled(true);
 }
 
 void CISWidget::on_btnStop_clicked() {
@@ -134,6 +147,7 @@ void CISWidget::on_btnStop_clicked() {
 #ifdef ENABLE_SLAVE_CAMERA
     if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "stopGrab");
 #endif
+    ui->btnSoftWareTrigger->setEnabled(false);
 }
 
 void CISWidget::on_btnFreeze_clicked() {
@@ -156,12 +170,36 @@ void CISWidget::on_ckbSave_toggled(bool checked) {
     if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "saveFrames", Q_ARG(bool, checked));
 #endif
 }
-
+// 软件触发
 void CISWidget::on_btnSoftWareTrigger_clicked() {
+    double currentPos = ui->railWidget->getCurrentXPosition();
+    // 如果当前未在380附近，则先运动到380
+    if (std::abs(currentPos - startPos) > 1.0) {
+        connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+        ui->railWidget->setEditAbsPosition(QString::number(startPos));
+        ui->railWidget->setEditSpeed(QString::number(speed));
+        ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
+    } else {
+        // 已在起点，直接开始扫描
+        whenMoveToStartFinished();
+    }
+}
+void CISWidget::whenMoveToStartFinished() {
+    disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+
+    // 启动相机采集（软件触发）
     if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
 #ifdef ENABLE_SLAVE_CAMERA
     if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
 #endif
+    ui->railWidget->setEditAbsPosition(QString::number(endPos));
+    ui->railWidget->setEditSpeed(QString::number(speed));
+    ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
+    connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+        // 手动断开这个信号，确保只触发一次
+        disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, nullptr, nullptr);
+        on_btnStop_clicked();
+    });
 }
 
 void CISWidget::on_ckbSplice_toggled(bool checked) {

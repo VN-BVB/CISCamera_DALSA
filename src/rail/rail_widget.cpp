@@ -38,6 +38,8 @@ void RailWidget::setEditAbsPosition(QString position) { ui->edit_X_AbsPosition->
 
 // 设置速度框
 void RailWidget::setEditSpeed(QString speed) { ui->edit_X_AbsSpeed->setText(speed); }
+// 获取当前位置
+double RailWidget::getCurrentXPosition() const { return ui->label_X_CurrentPosition->text().toDouble(); }
 
 // 在信息框推送信息
 void RailWidget::whenAppendCalibrationLog(const QString message) { ui->textEdit->append(message); }
@@ -84,6 +86,10 @@ void RailWidget::disconnectRail() {
 
 // 绝对位置运动按钮
 void RailWidget::on_btn_X_AbsPositionCommand_clicked() {
+    if (rail->mobusDisconnect) {
+        whenAppendCalibrationLog(QString(u8"轨道未连接"));
+        return;
+    }
     emit sendMove2AbsPosition(ui->edit_X_AbsSpeed->text().toFloat(), ui->edit_X_AbsPosition->text().toFloat());
 }
 

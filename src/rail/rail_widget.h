@@ -24,6 +24,7 @@ public:
     void updateSpeedUI(float speed);
     void setEditAbsPosition(QString position);
     void setEditSpeed(QString speed);
+    double getCurrentXPosition() const;
 
 signals:
     void sendConnectToPLC(QString ip, int port);
@@ -67,6 +68,6 @@ private:
     QString ip = "192.168.100.88";
     int port = 502;
 
-    friend class RailWeldingMainWindow;
+    friend class CISWidget;
 };
 #endif  // RAIL_WIDGET_H
