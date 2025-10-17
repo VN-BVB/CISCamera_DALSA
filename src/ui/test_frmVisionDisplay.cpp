@@ -34,3 +34,4 @@ void test_FrmVisionDisplay::displayImage(const QString &imagePath)
         m_frmDisplay->displayImage(image, true);
     }
 }
+
