@@ -16,6 +16,7 @@ ImageViewWindow::ImageViewWindow(QWidget *parent)
 {
     ui->setupUi(this);
     qRegisterMetaType<cv::Mat>("cv::Mat");
+    qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
     qRegisterMetaType<std::vector<cv::Point2f>>("std::vector<cv::Point2f>");
     qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point>>");
     qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point2f>>");
@@ -61,30 +62,17 @@ void ImageViewWindow::on_pb_open_clicked()
     emit startImageRead(path);
 }
 
-void ImageViewWindow::handleImageRead(cv::Mat image)
+void ImageViewWindow::handleImageRead(std::shared_ptr<cv::Mat> image)
 {
     emit startImageProcess(image);
 }
 
 // Zernike矩对应槽函数
-void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
+void ImageViewWindow::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
                                            std::vector<std::vector<cv::Point>> pixelContours)
 {
     // 在主线程中显示图像
-    QImage qimg;
-    if (processedImage.type() == CV_8UC1)
-    {
-        qimg = QImage(processedImage.data, processedImage.cols, processedImage.rows,
-                      processedImage.step, QImage::Format_Grayscale8);
-    }
-    else
-    {
-        cv::Mat img_rgb;
-        cv::cvtColor(processedImage, img_rgb, cv::COLOR_BGR2RGB);
-        qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
-    }
-
-    ui->gv_image->displayImage(qimg, true);
+    ui->gv_image->displayImage(*processedImage, true);
     InteractiveDisplayManager* displayMgr = ui->gv_image->getDisplayManager();
     if (displayMgr)
     {
@@ -100,21 +88,8 @@ void ImageViewWindow::handleImageProcessed(cv::Mat processedImage, std::vector<s
 }
 
 // CannyDevenay算法对应槽函数
-void ImageViewWindow::handleImageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves)
+void ImageViewWindow::handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves)
 {
-    // 在主线程中显示图像
-    QImage qimg;
-    if (processedImage.type() == CV_8UC1)
-    {
-        qimg = QImage(processedImage.data, processedImage.cols, processedImage.rows,
-                      processedImage.step, QImage::Format_Grayscale8);
-    }
-    else
-    {
-        cv::Mat img_rgb;
-        cv::cvtColor(processedImage, img_rgb, cv::COLOR_BGR2RGB);
-        qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows, img_rgb.step, QImage::Format_RGB888);
-    }
 
 }
 

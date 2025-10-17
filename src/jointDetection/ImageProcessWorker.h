@@ -15,12 +15,12 @@ public:
     explicit ImageProcessWorker(QObject *parent = nullptr);
 
 public slots:
-    void processImage(cv::Mat image);
+    void processImage(std::shared_ptr<cv::Mat> image);
 
 signals:
-    void imageProcessed(cv::Mat processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
+    void imageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
                         std::vector<std::vector<cv::Point>> pixelContour); // openCV的亚像素坐标
-    void imageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves);
+    void imageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void errorOccurred(const QString &error);
 
 private:

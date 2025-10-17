@@ -297,13 +297,13 @@ double ImageProcessWorker::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage)
     return TH;
 }
 
-void ImageProcessWorker::processImage(cv::Mat image) {
+void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
     try {
 
         ImageTools imageTools;
         // cv::Mat croppedImg = image(cv::Rect(16000, 16000, 1900, 1900));
         // cv::imwrite("D:/Cpp_Project/WeldseamMeasurement/tests/image/cropped_img.bmp", croppedImg);
-        cv::Mat croppedImg = image; // 直接读裁剪后的图，不用再裁剪
+        cv::Mat croppedImg = *image; // 直接读裁剪后的图，不用再裁剪
 
         cv::Mat grayImage;
         if (croppedImg.channels() > 1){
@@ -383,8 +383,8 @@ void ImageProcessWorker::processImage(cv::Mat image) {
         // 3、轮廓分割时，存在会将端点单拎出来形成线段的小bug
         // 4、直线拟合的精度问题，要考虑是不是直接进行样条曲线拟合
 
-
-        emit imageProcessed(croppedImg, m_subpixelContours, filteredContours);
+        auto resultImage = std::make_shared<cv::Mat>(croppedImg);
+        emit imageProcessed(resultImage, m_subpixelContours, filteredContours);
         // emit imageProcessedCannyDevenay(cropped_img, edgeCurves);
     }
     catch (const cv::Exception& e) {

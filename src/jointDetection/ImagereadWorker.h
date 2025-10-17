@@ -1,4 +1,4 @@
-﻿#ifndef IMAGEREADWORKER_H
+#ifndef IMAGEREADWORKER_H
 #define IMAGEREADWORKER_H
 
 #include <QObject>
@@ -16,7 +16,7 @@ public slots:
     void readImage(const QString &path);
 
 signals:
-    void imageRead(cv::Mat image);
+    void imageRead(std::shared_ptr<cv::Mat> image);
     void errorOccurred(const QString &error);
 };
 

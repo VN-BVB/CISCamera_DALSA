@@ -15,8 +15,12 @@ int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     initPlog();                         // 初始化日志类
-    ImageViewWindow w;
-    w.show();
+    // ImageViewWindow w;
+    // w.show();
+    test_FrmVisionDisplay t;
+    t.show();
+    QString imagePath = "E:/work/车门门环拼接/image/背光20250529/背光20250529/822-1200-50us-2(背光).bmp";
+    t.displayImage(imagePath);
 
     return a.exec();
 }

@@ -29,9 +29,10 @@ test_FrmVisionDisplay::~test_FrmVisionDisplay()
 void test_FrmVisionDisplay::displayImage(const QString &imagePath)
 {
     cv::Mat image = cv::imread(imagePath.toStdString(), cv::IMREAD_GRAYSCALE);
+    auto smartPtrImage = std::make_shared<cv::Mat>(image);
     if (m_frmDisplay)
     {
-        m_frmDisplay->displayImage(image, true);
+        m_frmDisplay->displayImage(smartPtrImage, true);
     }
 }
 

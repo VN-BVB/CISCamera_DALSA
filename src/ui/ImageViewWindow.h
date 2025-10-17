@@ -1,4 +1,4 @@
-﻿#ifndef IMAGEVIEWWINDOW_H
+#ifndef IMAGEVIEWWINDOW_H
 #define IMAGEVIEWWINDOW_H
 
 #include <QWidget>
@@ -27,14 +27,14 @@ public:
 
 signals:
     void startImageRead(const QString &path);
-    void startImageProcess(cv::Mat image);
+    void startImageProcess(std::shared_ptr<cv::Mat> image);
 
 private slots:
     void on_pb_open_clicked();
-    void handleImageRead(cv::Mat image);
-    void handleImageProcessed(cv::Mat processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
+    void handleImageRead(std::shared_ptr<cv::Mat> image);
+    void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
                               std::vector<std::vector<cv::Point>> pixelContour);
-    void handleImageProcessedCannyDevenay(cv::Mat processedImage, std::vector<Point2fCurve> edgeCurves);
+    void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
 
 private:

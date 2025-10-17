@@ -1,0 +1,22 @@
+Crash time: 2025-10-17 11:33:00
+Exception code: 0xe06d7363
+Exception type: Unknown Exception
+Exception address: 0x7ff910d07f7a
+Thread ID: 11092
+
+Crash function: RaiseException
+
+Call Stack:
+#0  RaiseException
+#1  CxxThrowException
+#2  cv::error
+#3  cv::error
+#4  cv::ImageCollection::size
+#5  cv::imread
+#6  cv::imread
+#7  test_FrmVisionDisplay::displayImage [d:\qt_project\ciscamera_dalsa\src\ui\test_frmvisiondisplay.cpp:31]
+#8  main [d:\qt_project\ciscamera_dalsa\main.cpp:25]
+#9  WinMain
+#10  __scrt_common_main_seh [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288]
+#11  BaseThreadInitThunk
+#12  RtlUserThreadStart
