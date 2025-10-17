@@ -51,7 +51,7 @@ private:
     bool slaveReady = false;
     const double startPos = 380.0;
     const double endPos = 720.0;
-    const double speed = 29.97;
+    const double speed = 30.0;
     void initCamera();
     void initCamera2UIConnections();
     void initUIControls();
