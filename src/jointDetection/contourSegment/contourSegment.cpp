@@ -22,9 +22,6 @@ std::string ContourSegment::getOpeningDirection()
     int avgX = sumX / m_contour.size();
     int avgY = sumY / m_contour.size();
 
-    // 搜索步长（可以根据轮廓大小调整）
-    float searchStep = 5000.0f;
-
     // 检查四个方向是否存在轮廓点
     bool hasUp = false, hasDown = false, hasLeft = false, hasRight = false;
 
@@ -77,11 +74,11 @@ void ContourSegment::lineRansac(const std::vector<cv::Point> &points,
 
     cv::RNG rng;// 创建随机数生成器
     double bestScore = -1.;
-    int n = points.size();  // 获取点集大小
+    auto n = points.size();  // 获取点集大小
     for(int iter = 0; iter < iterations; iter++){
         // 随机选择两个不同的点
-        int i1 = rng.uniform(0, n-1);
-        int i2 = rng.uniform(0, n-1);
+        auto i1 = rng.uniform(0, n-1);
+        auto i2 = rng.uniform(0, n-1);
         if (i1 == i2)
             continue;
 

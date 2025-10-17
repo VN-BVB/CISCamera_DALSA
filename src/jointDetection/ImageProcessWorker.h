@@ -24,7 +24,7 @@ signals:
     void errorOccurred(const QString &error);
 
 private:
-    double ImageProcessWorker::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage);
+    double adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage);
     cv::Point2f zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius);
     std::vector<cv::Point2f> getSubpixelContourZernike(const cv::Mat &src,
                                                        const std::vector<cv::Point> &contour);

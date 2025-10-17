@@ -1,4 +1,4 @@
-﻿#include "cameraImage_processor.h".h "
+#include "cameraImage_processor.h"
 
 CameraImageProcessor::CameraImageProcessor(QObject* parent) : QObject(parent) {}
 
