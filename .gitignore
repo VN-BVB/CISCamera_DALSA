@@ -8,3 +8,6 @@ Makefile.Debug
 *.pro.user
 ./msvc_make.bat
 *.stash
+data/debug/
+data/CISCamera_Image/
+*.pro.user.*
