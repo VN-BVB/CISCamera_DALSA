@@ -35,8 +35,15 @@ public:
     ~CISWidget();
 
 private:
-    Ui::CISWidget* ui;
+    void initCamera();
+    void initCamera2UIConnections();
+    void initUIControls();
+    void initregisterMetaType();
+    void initCameraImageProcessor();
+    void initCISCameraConfig();
 
+    void tryStitchImages();
+    Ui::CISWidget* ui;
     QThread* cameraThreadMaster = new QThread;
     QThread* cameraThreadSlave = new QThread;
     QThread* cameraThreadConfig = new QThread;
@@ -52,12 +59,6 @@ private:
     const double startPos = 380.0;
     const double endPos = 720.0;
     const double speed = 30.0;
-    void initCamera();
-    void initCamera2UIConnections();
-    void initUIControls();
-    void initregisterMetaType();
-    void initCameraImageProcessor();
-    void tryStitchImages();
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();

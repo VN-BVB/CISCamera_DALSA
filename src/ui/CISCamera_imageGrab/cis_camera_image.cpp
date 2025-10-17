@@ -4,10 +4,12 @@
 #define ENABLE_SLAVE_CAMERA
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     ui->setupUi(this);
+
     initregisterMetaType();
     initUIControls();
-    initCamera();
+    initCISCameraConfig();
     initCameraImageProcessor();
+    initCamera();
 }
 
 CISWidget::~CISWidget() {
@@ -25,6 +27,7 @@ CISWidget::~CISWidget() {
     }
     delete ui;
 }
+
 void CISWidget::initUIControls() {
     ui->btnSoftWareTrigger->setEnabled(true);
     ui->ckbSplice->setChecked(true);
@@ -34,15 +37,17 @@ void CISWidget::initregisterMetaType() {
     qRegisterMetaType<cv::Mat>("cv::Mat");
     qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
 }
+// 外部配置程序
+void CISWidget::initCISCameraConfig() {
+    configCISCamera = std::make_shared<ExternalExeRunner>();
+    configCISCamera->moveToThread(cameraThreadConfig);
+    cameraThreadConfig->start();
+    connect(configCISCamera.get(), &ExternalExeRunner::sendMessage2UI, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
+}
 
 void CISWidget::initCamera() {
     // // 单独开一个线程来串行初始化，避免阻塞主线程
     QThread* initThread = QThread::create([this]() {
-        // 外部配置程序
-        configCISCamera = std::make_shared<ExternalExeRunner>();
-        configCISCamera->moveToThread(cameraThreadConfig);
-        cameraThreadConfig->start();
-
         whenAppendMessageLog(QString(u8"DALSA采集卡初始化中"));
         // Master
         masterCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
@@ -121,14 +126,11 @@ void CISWidget::initCameraImageProcessor() {
             }
         },
         Qt::QueuedConnection);
-
     connect(imageProcessor.get(), &CameraImageProcessor::text, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
-
     connect(imageProcessor.get(), &CameraImageProcessor::error, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
-
     connect(
-        imageProcessor.get(), &CameraImageProcessor::saved, this,
-        [this](const QString& p) { whenAppendMessageLog(u8"保存完成：" + p); }, Qt::QueuedConnection);
+        imageProcessor.get(), &CameraImageProcessor::saved, this, [this](const QString& p) { whenAppendMessageLog(u8"保存完成：" + p); },
+        Qt::QueuedConnection);
 }
 
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
@@ -139,18 +141,16 @@ void CISWidget::tryStitchImages() {
     if (ui->ckbSplice->isChecked() && masterReady && slaveReady) {
         masterReady = slaveReady = false;
 
-        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection,
-                                  Q_ARG(std::shared_ptr<cv::Mat>, masterImg), Q_ARG(std::shared_ptr<cv::Mat>, slaveImg),
-                                  Q_ARG(bool, true)  // 或 ui->ckbSplice->isChecked()
+        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection, Q_ARG(std::shared_ptr<cv::Mat>, masterImg),
+                                  Q_ARG(std::shared_ptr<cv::Mat>, slaveImg), Q_ARG(bool, true)  // 或 ui->ckbSplice->isChecked()
         );
     }
 }
 void CISWidget::on_btnSave_clicked() {
     if (ui->ckbSplice->isChecked()) {
-        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection,
-                                  Q_ARG(QString, "./data/CISCamera_Image"), Q_ARG(QString, "Splice"),
-                                  Q_ARG(QString, ".exr"),  // 需要更高精度可改 ".tif" / ".exr"
-                                  Q_ARG(bool, false)       // 是否同时保存主/从
+        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection, Q_ARG(QString, "./data/CISCamera_Image"),
+                                  Q_ARG(QString, "Splice"), Q_ARG(QString, ".exr"),  // 需要更高精度可改 ".tif" / ".exr"
+                                  Q_ARG(bool, false)                                 // 是否同时保存主/从
         );
     } else {
         bool checked = true;
@@ -238,15 +238,15 @@ void CISWidget::on_ckbSplice_toggled(bool checked) {
 }
 
 void CISWidget::on_btnCISConfig_clicked() {
-    if (configCISCamera) {
-        QMetaObject::invokeMethod(
-            configCISCamera.get(),
-            [=]() {
-                configCISCamera->addDllDirToPath("./data/CISConfig/externExE");
-                // 获取父控件窗口句柄（用于嵌入）
-                WId parentWinId = ui->cisConfigHost->winId();
-                configCISCamera->startEmbedded("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"}, parentWinId);
-            },
-            Qt::QueuedConnection);
-    }
+    if (!configCISCamera) return;
+
+    QMetaObject::invokeMethod(
+        configCISCamera.get(),
+        [this]() {
+            configCISCamera->addDllDirToPath("./data/CISConfig/externExE");
+
+            configCISCamera->startEmbedded("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"}, ui->cisConfigHost->winId());
+            configCISCamera->writeInput("some command");
+        },
+        Qt::QueuedConnection);
 }
