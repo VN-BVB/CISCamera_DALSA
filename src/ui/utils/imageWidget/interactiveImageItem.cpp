@@ -1,4 +1,4 @@
-﻿#include "interactiveImageItem.h"
+#include "interactiveImageItem.h"
 #include <QPen>
 #include <QPainter>
 #include <QGraphicsSceneHoverEvent>
@@ -79,7 +79,11 @@ void InteractiveImageItem::clearImage()
 }
 
 // 添加显示文本
-void InteractiveImageItem::addDisplayText(const QString &text,const QPointF &pt,const double &size, const QColor &color,const bool &clear)
+void InteractiveImageItem::addDisplayText(const QString &text,
+                                          const QPointF &pt,
+                                          const double &size,
+                                          const QColor &color,
+                                          const bool &clear)
 {
     Q_D(InteractiveImageItem);  // 使用Qt的PIMPL宏获取指向私有实现类的指针
     if (clear)

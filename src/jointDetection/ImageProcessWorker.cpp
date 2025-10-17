@@ -1,5 +1,6 @@
-﻿#include "ImageProcessWorker.h"
-
+#include "ImageProcessWorker.h"
+#include "contourSegment/contourSegment.h"
+#include "imageTools.h"
 #include <QDebug>
 
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent} {}
@@ -265,6 +266,7 @@ double ImageProcessWorker::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage)
     return TH;
 }
 
+<<<<<<< HEAD
 #include <cmath>  // 用于std::abs
 #include <unordered_set>
 
@@ -289,14 +291,23 @@ struct PointHash {
 using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
 
 void ImageProcessWorker::processImage(cv::Mat image) {
+=======
+void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
+>>>>>>> origin/jointDetection
     try {
+
+        ImageTools imageTools;
         // cv::Mat croppedImg = image(cv::Rect(16000, 16000, 1900, 1900));
         // cv::imwrite("D:/Cpp_Project/WeldseamMeasurement/tests/image/cropped_img.bmp", croppedImg);
+<<<<<<< HEAD
         cv::Mat croppedImg = image;  // 直接读裁剪后的图，不用再裁剪
         // CannyDevernay算法
         // CannyDevernay CDEdgeDetector;
         // std::vector<Point2fCurve> edgeCurves = CDEdgeDetector.detectEdges(image);
         // qDebug() << "Detected " << edgeCurves.size() << " edge curves";
+=======
+        cv::Mat croppedImg = *image; // 直接读裁剪后的图，不用再裁剪
+>>>>>>> origin/jointDetection
 
         cv::Mat grayImage;
         if (croppedImg.channels() > 1) {
@@ -312,6 +323,7 @@ void ImageProcessWorker::processImage(cv::Mat image) {
 
         cv::Mat edge;
         cv::Canny(grayImage, edge, TL, TH);
+<<<<<<< HEAD
         cv::imwrite("E:/work/车门门环拼接/image/test/cropped_img_edge.bmp", edge);
         // edge.at<uchar>(78, 1359) = 0;
         // 或者设置一个小区域为黑色
@@ -425,9 +437,32 @@ void ImageProcessWorker::processImage(cv::Mat image) {
                 }
             }
         }
+=======
+        cv::imwrite("E:/work/车门门环拼接/image/test/cropped_img_edge.bmp",  edge);
+
+        // 提取轮廓
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(edge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); // 轮廓近似方法设为保存所有点，也可以选择只保存端点，具体见源码注释
+        std::vector<std::vector<cv::Point>> filteredContours;
+        filteredContours = imageTools.filterContours(contours);
+        // 轮廓点去重
+        filteredContours = imageTools.removeDuplicateContourPoints(filteredContours);
+
+        // 判断轮廓开口方向
+        ContourSegment cs{filteredContours[0]};
+        std::string direction = cs.getOpeningDirection();
+
+        // 轮廓点分类
+        std::vector<std::vector<cv::Point>> segments;
+        std::vector<cv::Vec4f> lines;
+        double threshold =8;
+        int maxIterations = 100;
+        cs.sequentialRansac3Times(filteredContours[0], segments, lines, threshold, maxIterations);
+        imageTools.drawColorfulContoursAndSave(edge, segments, "E:/work/车门门环拼接/image/test/coloredSegmentsImage.bmp");
+>>>>>>> origin/jointDetection
 
         // 提取亚像素轮廓,zernike矩法
-        for (auto contour : filteredContours) {
+        for (auto &contour : filteredContours) {
             std::vector<cv::Point2f> subpixelContour = getSubpixelContourZernike(grayImage, contour);
             m_subpixelContours.push_back(subpixelContour);
         }
@@ -468,13 +503,19 @@ void ImageProcessWorker::processImage(cv::Mat image) {
         // 3、轮廓分割时，存在会将端点单拎出来形成线段的小bug
         // 4、直线拟合的精度问题，要考虑是不是直接进行样条曲线拟合
 
+<<<<<<< HEAD
         emit imageProcessed(croppedImg, m_subpixelContours, filteredContours);
+=======
+        auto resultImage = std::make_shared<cv::Mat>(croppedImg);
+        emit imageProcessed(resultImage, m_subpixelContours, filteredContours);
+>>>>>>> origin/jointDetection
         // emit imageProcessedCannyDevenay(cropped_img, edgeCurves);
     } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());
     }
 }
 
+<<<<<<< HEAD
 // 根据多边形拟合点分割轮廓
 std::vector<std::vector<cv::Point2f>> ImageProcessWorker::segmentContourByApproxPoints(const std::vector<cv::Point2f> &contour,
                                                                                        const std::vector<cv::Point2f> &approxPoints) {
@@ -547,6 +588,8 @@ std::vector<std::vector<cv::Point2f>> ImageProcessWorker::segmentContourByApprox
     return segmentedContours;
 }
 
+=======
+>>>>>>> origin/jointDetection
 // 直线拟合函数
 cv::Vec4f ImageProcessWorker::fitLineToPoints(const std::vector<cv::Point2f> &points) {
     if (points.empty()) {

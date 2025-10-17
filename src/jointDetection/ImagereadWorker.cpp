@@ -9,8 +9,10 @@ void ImageReadWorker::readImage(const QString &path) {
             emit errorOccurred("无法加载图像");
             return;
         }
-        emit imageRead(img);
-    } catch (const std::exception &e) {
-        emit errorOccurred(QString(u8"读取图像出错：") + e.what());
+        auto imagePtr = std::make_shared<cv::Mat>(img);
+        emit imageRead(imagePtr);
+    } 
+    catch(const std::exception& e){
+        emit errorOccurred(QString("读取图像出错：") + e.what());
     }
 }
