@@ -38,6 +38,11 @@ void CISWidget::initregisterMetaType() {
 void CISWidget::initCamera() {
     // // 单独开一个线程来串行初始化，避免阻塞主线程
     QThread* initThread = QThread::create([this]() {
+        // 外部配置程序
+        configCISCamera = std::make_shared<ExternalExeRunner>();
+        configCISCamera->moveToThread(cameraThreadConfig);
+        cameraThreadConfig->start();
+
         whenAppendMessageLog(QString(u8"DALSA采集卡初始化中"));
         // Master
         masterCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
@@ -67,11 +72,6 @@ void CISWidget::initCamera() {
 
         slaveCISCamera->moveToThread(cameraThreadSlave);
         cameraThreadSlave->start();
-
-        // 外部配置程序
-        configCISCamera = std::make_shared<ExternalExeRunner>();
-        configCISCamera->moveToThread(cameraThreadConfig);
-        cameraThreadConfig->start();
 
         PLOGD << "相机配置初始化完成";
         whenAppendMessageLog(QString(u8"相机配置初始化完成"));
@@ -117,7 +117,7 @@ void CISWidget::initCameraImageProcessor() {
         imageProcessor.get(), &CameraImageProcessor::imageReady, this,
         [this](std::shared_ptr<cv::Mat> result) {
             if (result && !result->empty()) {
-                ui->imgSplice2->displayImage(result, true);
+                ui->imgSplice->displayImage(result, true);
             }
         },
         Qt::QueuedConnection);
@@ -127,8 +127,8 @@ void CISWidget::initCameraImageProcessor() {
     connect(imageProcessor.get(), &CameraImageProcessor::error, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
 
     connect(
-        imageProcessor.get(), &CameraImageProcessor::saved, this, [this](const QString& p) { whenAppendMessageLog(u8"保存完成：" + p); },
-        Qt::QueuedConnection);
+        imageProcessor.get(), &CameraImageProcessor::saved, this,
+        [this](const QString& p) { whenAppendMessageLog(u8"保存完成：" + p); }, Qt::QueuedConnection);
 }
 
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
@@ -139,16 +139,18 @@ void CISWidget::tryStitchImages() {
     if (ui->ckbSplice->isChecked() && masterReady && slaveReady) {
         masterReady = slaveReady = false;
 
-        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection, Q_ARG(std::shared_ptr<cv::Mat>, masterImg),
-                                  Q_ARG(std::shared_ptr<cv::Mat>, slaveImg), Q_ARG(bool, true)  // 或 ui->ckbSplice->isChecked()
+        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection,
+                                  Q_ARG(std::shared_ptr<cv::Mat>, masterImg), Q_ARG(std::shared_ptr<cv::Mat>, slaveImg),
+                                  Q_ARG(bool, true)  // 或 ui->ckbSplice->isChecked()
         );
     }
 }
 void CISWidget::on_btnSave_clicked() {
     if (ui->ckbSplice->isChecked()) {
-        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection, Q_ARG(QString, "./data/CISCamera_Image"),
-                                  Q_ARG(QString, "Splice"), Q_ARG(QString, ".exr"),  // 需要更高精度可改 ".tif" / ".exr"
-                                  Q_ARG(bool, false)                                 // 是否同时保存主/从
+        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection,
+                                  Q_ARG(QString, "./data/CISCamera_Image"), Q_ARG(QString, "Splice"),
+                                  Q_ARG(QString, ".exr"),  // 需要更高精度可改 ".tif" / ".exr"
+                                  Q_ARG(bool, false)       // 是否同时保存主/从
         );
     } else {
         bool checked = true;
