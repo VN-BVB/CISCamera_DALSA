@@ -1,4 +1,4 @@
-﻿#include "cameraImage_processor.h".h "
+﻿#include "cameraImage_processor.h "
 
 CameraImageProcessor::CameraImageProcessor(QObject* parent) : QObject(parent) {}
 
@@ -145,6 +145,7 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
 bool CameraImageProcessor::imwriteSmart(const QString& path, const cv::Mat& img, QString& err) {
     std::vector<int> params;
     const QString lower = path.toLower();
+    cv::Mat img_to_save = img;  // 默认使用原图
 
     if (lower.endsWith(".png")) {
         params = {cv::IMWRITE_PNG_COMPRESSION, 1};  // 轻压缩，快
@@ -156,11 +157,17 @@ bool CameraImageProcessor::imwriteSmart(const QString& path, const cv::Mat& img,
     } else if (lower.endsWith(".bmp")) {
         // BMP 无参数
     } else if (lower.endsWith(".exr")) {
-        // OpenEXR：半浮点/无损；OpenCV 默认可写
+        // OpenEXR 只支持 CV_16U / CV_32F，不支持 CV_8U
+        if (img.depth() == CV_8U) {
+            img.convertTo(img_to_save, CV_32F, 1.0 / 255.0);
+        } else if (img.depth() == CV_16U) {
+            img.convertTo(img_to_save, CV_32F, 1.0 / 65535.0);
+        }
+        // 不设置压缩参数时，OpenEXR 默认使用 ZIP 无损压缩
     }
 
     try {
-        return cv::imwrite(path.toStdString(), img, params);
+        return cv::imwrite(path.toStdString(), img_to_save, params);
     } catch (const cv::Exception& e) {
         err = QString::fromUtf8(e.what());
         return false;
