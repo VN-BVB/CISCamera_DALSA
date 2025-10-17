@@ -3,9 +3,7 @@
 #include "imageTools.h"
 #include <QDebug>
 
-ImageProcessWorker::ImageProcessWorker(QObject *parent)
-    : QObject{parent}
-{}
+ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent} {}
 
 // // 改进Zernike亚像素偏移计算辅助函数
 // cv::Point2f ImageProcessWorker::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius)
@@ -129,43 +127,31 @@ ImageProcessWorker::ImageProcessWorker(QObject *parent)
 // }
 
 // 原始Zernike亚像素偏移计算辅助函数
-cv::Point2f ImageProcessWorker::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius)
-{
+cv::Point2f ImageProcessWorker::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius) {
     // 检查边缘点是否在图像范围内
     if (edgePoint.x < 0 || edgePoint.x >= gray.cols || edgePoint.y < 0 || edgePoint.y >= gray.rows) {
         return edgePoint;
     }
 
     // 提取边缘点邻域
-    cv::Rect roi(cv::Point(std::max(0, int(edgePoint.x - radius)), std::max(0, int(edgePoint.y - radius))),
-                 cv::Size(2 * radius + 1, 2 * radius + 1));
+    cv::Rect roi(cv::Point(std::max(0, int(edgePoint.x - radius)), std::max(0, int(edgePoint.y - radius))), cv::Size(2 * radius + 1, 2 * radius + 1));
     roi &= cv::Rect(0, 0, gray.cols, gray.rows);
     cv::Mat roiImg = gray(roi);
 
     // 三个矩模板
-    cv::Mat M11R = (cv::Mat_<double>(7, 7) << 0, -0.0150, -0.0190, 0, 0.0190, 0.0150, 0,
-                    -0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224,
-                    -0.0573, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0573,
-                    -0.0690, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0690,
-                    -0.0573, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0573,
-                    -0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224,
-                    0, -0.0150, -0.0190, 0, 0.0190, 0.0150, 0);
+    cv::Mat M11R =
+        (cv::Mat_<double>(7, 7) << 0, -0.0150, -0.0190, 0, 0.0190, 0.0150, 0, -0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224, -0.0573, -0.0466,
+         -0.0233, 0, 0.0233, 0.0466, 0.0573, -0.0690, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0690, -0.0573, -0.0466, -0.0233, 0, 0.0233, 0.0466,
+         0.0573, -0.0224, -0.0466, -0.0233, 0, 0.0233, 0.0466, 0.0224, 0, -0.0150, -0.0190, 0, 0.0190, 0.0150, 0);
 
-    cv::Mat M11I = (cv::Mat_<double>(7, 7) << 0, -0.0224, -0.0573, -0.0690, -0.0573, -0.0224, 0,
-                    -0.0150, -0.0466, -0.0466, -0.0466, -0.0466, -0.0466, -0.0150,
-                    -0.0190, -0.0233, -0.0233, -0.0233, -0.0233, -0.0233, -0.0190,
-                    0, 0, 0, 0, 0, 0, 0,
-                    0.0190, 0.0233, 0.0233, 0.0233, 0.0233, 0.0233, 0.0190,
-                    0.0150, 0.0466, 0.0466, 0.0466, 0.0466, 0.0466, 0.0150,
-                    0, 0.0224, 0.0573, 0.0690, 0.0573, 0.0224, 0);
+    cv::Mat M11I = (cv::Mat_<double>(7, 7) << 0, -0.0224, -0.0573, -0.0690, -0.0573, -0.0224, 0, -0.0150, -0.0466, -0.0466, -0.0466, -0.0466, -0.0466,
+                    -0.0150, -0.0190, -0.0233, -0.0233, -0.0233, -0.0233, -0.0233, -0.0190, 0, 0, 0, 0, 0, 0, 0, 0.0190, 0.0233, 0.0233, 0.0233,
+                    0.0233, 0.0233, 0.0190, 0.0150, 0.0466, 0.0466, 0.0466, 0.0466, 0.0466, 0.0150, 0, 0.0224, 0.0573, 0.0690, 0.0573, 0.0224, 0);
 
-    cv::Mat M20 = (cv::Mat_<double>(7, 7) << 0, 0.0224, 0.0394, 0.0396, 0.0394, 0.0224, 0,
-                   0.0224, 0.0272, -0.0128, -0.0261, -0.0128, 0.0272, 0.0224,
-                   0.0394, -0.0128, -0.0528, -0.0661, -0.0528, -0.0128, 0.0394,
-                   0.0396, -0.0261, -0.0661, -0.0794, -0.0661, -0.0261, 0.0396,
-                   0.0394, -0.0128, -0.0528, -0.0661, -0.0528, -0.0128, 0.0394,
-                   0.0224, 0.0272, -0.0128, -0.0261, -0.0128, 0.0272, 0.0224,
-                   0, 0.0224, 0.0394, 0.0396, 0.0394, 0.0224, 0);
+    cv::Mat M20 =
+        (cv::Mat_<double>(7, 7) << 0, 0.0224, 0.0394, 0.0396, 0.0394, 0.0224, 0, 0.0224, 0.0272, -0.0128, -0.0261, -0.0128, 0.0272, 0.0224, 0.0394,
+         -0.0128, -0.0528, -0.0661, -0.0528, -0.0128, 0.0394, 0.0396, -0.0261, -0.0661, -0.0794, -0.0661, -0.0261, 0.0396, 0.0394, -0.0128, -0.0528,
+         -0.0661, -0.0528, -0.0128, 0.0394, 0.0224, 0.0272, -0.0128, -0.0261, -0.0128, 0.0272, 0.0224, 0, 0.0224, 0.0394, 0.0396, 0.0394, 0.0224, 0);
 
     // 计算Zernike矩
     cv::Mat roiImgFloat;
@@ -197,27 +183,21 @@ cv::Point2f ImageProcessWorker::zernikeSubpixel(const cv::Mat &gray, const cv::P
     double K = 1.5 * z11p / std::pow(1 - L * L, 1.5);
 
     // 边缘检测条件
-    if (std::abs(L) < 0.14 && std::abs(K) > 40)
-    {
+    if (std::abs(L) < 0.14 && std::abs(K) > 40) {
         // 计算亚像素偏移
         float dx = (7.0 / 2.0) * L * std::cos(phi);
         float dy = (7.0 / 2.0) * L * std::sin(phi);
         return cv::Point2f(edgePoint.x + dx, edgePoint.y + dy);
     }
 
-    return edgePoint; // 不满足条件时返回原坐标
+    return edgePoint;  // 不满足条件时返回原坐标
 }
 
-std::vector<cv::Point2f> ImageProcessWorker::getSubpixelContourZernike(const cv::Mat &src,
-                                                   const std::vector<cv::Point> &contour)
-{
+std::vector<cv::Point2f> ImageProcessWorker::getSubpixelContourZernike(const cv::Mat &src, const std::vector<cv::Point> &contour) {
     cv::Mat gray;
-    if (src.channels() > 1)
-    {
+    if (src.channels() > 1) {
         cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
-    }
-    else
-    {
+    } else {
         gray = src.clone();
     }
 
@@ -225,21 +205,20 @@ std::vector<cv::Point2f> ImageProcessWorker::getSubpixelContourZernike(const cv:
     cv::GaussianBlur(gray, gray, cv::Size(3, 3), 1.0);
 
     std::vector<cv::Point2f> subpixelContour;
-    for (const auto &p : contour)
-    {
+    for (const auto &p : contour) {
         // 使用Zernike矩法计算亚像素坐标
         cv::Point2f subpixel = zernikeSubpixel(gray, p, 3);
         subpixelContour.push_back(subpixel);
     }
 
-    std::cout << "Zernike矩法提取亚像素坐标完成" << std::endl;
+    std::cout << u8"Zernike矩法提取亚像素坐标完成" << std::endl;
     return subpixelContour;
 }
 
 // Otsu算法自适应计算Canny阈值
 double ImageProcessWorker::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage) {
     cv::Mat grayImage;
-    if (srcImage.channels() > 1){
+    if (srcImage.channels() > 1) {
         cv::cvtColor(srcImage, grayImage, cv::COLOR_BGR2GRAY);
     } else {
         grayImage = srcImage.clone();
@@ -250,42 +229,32 @@ double ImageProcessWorker::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage)
 
     cv::Sobel(grayImage, gx, CV_32F, 1, 0, 3);
     cv::Sobel(grayImage, gy, CV_32F, 0, 1, 3);
-    //计算梯度幅值和梯度的方向（角度）
+    // 计算梯度幅值和梯度的方向（角度）
     cv::cartToPolar(gx, gy, mag, angle, true);
-    //定义全黑非极大值抑制图像
+    // 定义全黑非极大值抑制图像
     cv::Mat Non_maxImage = cv::Mat::zeros(grayImage.size(), CV_32FC1);
     int height = grayImage.rows;
     int width = grayImage.cols;
-    //获得非极大值抑制图像
-    for (int i = 1; i < height - 1; ++i)
-    {
-        for (int j = 1; j < width - 1; ++j)
-        {
+    // 获得非极大值抑制图像
+    for (int i = 1; i < height - 1; ++i) {
+        for (int j = 1; j < width - 1; ++j) {
             float g_angle = angle.at<float>(i, j);
             float K_mag = mag.at<float>(i, j);
-            //梯度方向在垂直方向
-            if ((g_angle <= 112.5 && g_angle > 67.5) || (g_angle <= 292.5 && g_angle > 247.5))
-            {
-                if (K_mag >= mag.at<float>(i - 1, j) && K_mag >= mag.at<float>(i + 1, j))
-                    Non_maxImage.at<float>(i, j) = K_mag;
+            // 梯度方向在垂直方向
+            if ((g_angle <= 112.5 && g_angle > 67.5) || (g_angle <= 292.5 && g_angle > 247.5)) {
+                if (K_mag >= mag.at<float>(i - 1, j) && K_mag >= mag.at<float>(i + 1, j)) Non_maxImage.at<float>(i, j) = K_mag;
             }
-            //梯度方向在水平方向
-            else if (g_angle <= 22.5 || g_angle > 337.5 || (g_angle <= 202.5 && g_angle > 157.5))
-            {
-                if (K_mag >= mag.at<float>(i, j - 1) && K_mag >= mag.at<float>(i, j + 1))
-                    Non_maxImage.at<float>(i, j) = K_mag;
+            // 梯度方向在水平方向
+            else if (g_angle <= 22.5 || g_angle > 337.5 || (g_angle <= 202.5 && g_angle > 157.5)) {
+                if (K_mag >= mag.at<float>(i, j - 1) && K_mag >= mag.at<float>(i, j + 1)) Non_maxImage.at<float>(i, j) = K_mag;
             }
-            //梯度方向在+45方向
-            else if ((g_angle <= 67.5 && g_angle > 22.5) || (g_angle <= 247.5 && g_angle > 202.5))
-            {
-                if (K_mag >= mag.at<float>(i - 1, j - 1) && K_mag >= mag.at<float>(i + 1, j + 1))
-                    Non_maxImage.at<float>(i, j) = K_mag;
+            // 梯度方向在+45方向
+            else if ((g_angle <= 67.5 && g_angle > 22.5) || (g_angle <= 247.5 && g_angle > 202.5)) {
+                if (K_mag >= mag.at<float>(i - 1, j - 1) && K_mag >= mag.at<float>(i + 1, j + 1)) Non_maxImage.at<float>(i, j) = K_mag;
             }
-            //梯度方向在-45方向
-            else if ((g_angle <= 337.5 && g_angle > 292.5) || (g_angle <= 157.5 && g_angle > 112.5))
-            {
-                if (K_mag >= mag.at<float>(i + 1, j - 1) && K_mag >= mag.at<float>(i - 1, j + 1))
-                    Non_maxImage.at<float>(i, j) = K_mag;
+            // 梯度方向在-45方向
+            else if ((g_angle <= 337.5 && g_angle > 292.5) || (g_angle <= 157.5 && g_angle > 112.5)) {
+                if (K_mag >= mag.at<float>(i + 1, j - 1) && K_mag >= mag.at<float>(i - 1, j + 1)) Non_maxImage.at<float>(i, j) = K_mag;
             }
         }
     }
@@ -297,16 +266,51 @@ double ImageProcessWorker::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage)
     return TH;
 }
 
+<<<<<<< HEAD
+#include <cmath>  // 用于std::abs
+#include <unordered_set>
+
+// 自定义判等器（KeyEqual）：定义何时两个点被视为“相同”
+struct PointEqual {
+    bool operator()(const cv::Point2f &a, const cv::Point2f &b) const {
+        // 设置一个允许的误差范围，例如 1e-5
+        const float epsilon = 1e-5f;
+        return std::abs(a.x - b.x) < epsilon && std::abs(a.y - b.y) < epsilon;
+    }
+};
+
+// 自定义哈希器（Hash）：为点生成一个唯一的哈希值
+struct PointHash {
+    std::size_t operator()(const cv::Point2f &p) const {
+        // 一个简单的哈希组合方式，你可以根据需要优化
+        return std::hash<float>()(p.x) ^ (std::hash<float>()(p.y) << 1);
+    }
+};
+
+// 使用自定义的哈希和判等类型定义 unordered_set
+using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
+
+void ImageProcessWorker::processImage(cv::Mat image) {
+=======
 void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
+>>>>>>> origin/jointDetection
     try {
 
         ImageTools imageTools;
         // cv::Mat croppedImg = image(cv::Rect(16000, 16000, 1900, 1900));
         // cv::imwrite("D:/Cpp_Project/WeldseamMeasurement/tests/image/cropped_img.bmp", croppedImg);
+<<<<<<< HEAD
+        cv::Mat croppedImg = image;  // 直接读裁剪后的图，不用再裁剪
+        // CannyDevernay算法
+        // CannyDevernay CDEdgeDetector;
+        // std::vector<Point2fCurve> edgeCurves = CDEdgeDetector.detectEdges(image);
+        // qDebug() << "Detected " << edgeCurves.size() << " edge curves";
+=======
         cv::Mat croppedImg = *image; // 直接读裁剪后的图，不用再裁剪
+>>>>>>> origin/jointDetection
 
         cv::Mat grayImage;
-        if (croppedImg.channels() > 1){
+        if (croppedImg.channels() > 1) {
             cv::cvtColor(croppedImg, grayImage, cv::COLOR_BGR2GRAY);
         } else {
             grayImage = croppedImg.clone();
@@ -315,10 +319,125 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
 
         // 双阈值处理--根据Otsu算出的阈值确定为高阈值，取高阈值的一半记为低阈值
         double TH = this->adaptiveCannyThresholdByOtsu(croppedImg);
-        unsigned  TL = TH * 0.5;
+        unsigned TL = TH * 0.5;
 
         cv::Mat edge;
         cv::Canny(grayImage, edge, TL, TH);
+<<<<<<< HEAD
+        cv::imwrite("E:/work/车门门环拼接/image/test/cropped_img_edge.bmp", edge);
+        // edge.at<uchar>(78, 1359) = 0;
+        // 或者设置一个小区域为黑色
+        // for (int i = 0; i < 1592; i++) {
+        //     int j = 1899;
+        //     edge.at<uchar>(i, j) = 255;
+        // }
+        // for (int j = 1022; j < 1899; j++) {
+        //     int i = 0;
+        //     edge.at<uchar>(i, j) = 255;
+        // }
+        // cv::imwrite("E:/work/车门门环拼接/image/test/cropped_img_edge_white.bmp",  edge);
+
+        // 提取轮廓
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(edge, contours, cv::RETR_EXTERNAL,
+                         cv::CHAIN_APPROX_NONE);  // 轮廓近似方法设为保存所有点，也可以选择只保存端点，具体见源码注释
+
+        // 轮廓点去重
+        // std::vector<std::vector<cv::Point>> unique_contours;
+        // for (auto contour : contours)
+        // {
+        //     // 用于记录已出现点的集合
+        //     PointSet seen;
+        //     std::vector<cv::Point> unique_points;
+
+        //     for (const auto& point : contour) {
+        //         // 尝试将点插入集合。如果插入成功，说明是第一次出现。
+        //         if (seen.insert(point).second) {
+        //             unique_points.push_back(point);
+        //         }
+        //     }
+        //     unique_contours.push_back(unique_points);
+        // }
+        // contours = unique_contours;
+        std::vector<std::vector<cv::Point2f>> approxContours(contours.size());
+        double perimeter = cv::arcLength(contours[0], true);
+        double epsilon = perimeter * 0.02;
+        cv::approxPolyDP(contours[0], approxContours[0], epsilon, false);
+
+        // 过滤轮廓
+        std::vector<std::vector<cv::Point>> filteredContours;
+        for (auto &contour : contours) {
+            if (contour.empty()) continue;
+            double length = cv::arcLength(contour, false);
+            cv::Rect bbox = cv::boundingRect(contour);
+
+            // 根据长度和宽高比过滤小噪声
+            if (length > 1000 /*&&     // 最小轮廓长度
+                bbox.height > 10 && // 最小高度
+                bbox.width > 10 &&  // 最小宽度
+                (bbox.height * 1.0 / bbox.width < 3.0)*/)
+            { // 宽高比限制
+                filteredContours.push_back(contour);
+            }
+        }
+        if (filteredContours.empty()) {
+            qDebug() << "未找到合适的轮廓";
+            return;
+        }
+
+        // 角点检测 - 使用Harris角点检测
+        std::vector<cv::Point2f> cornerPoints;
+        // 创建与edge相同大小的黑色图像
+        cv::Mat contourImage = cv::Mat::zeros(edge.size(), CV_8UC1);
+        // 将所有过滤后的轮廓以纯白色绘制到图像上
+        for (auto &contour : filteredContours) {
+            for (auto &point : contour) {
+                if (point.x >= 0 && point.x < contourImage.cols && point.y >= 0 && point.y < contourImage.rows) {
+                    contourImage.at<uchar>(point.y, point.x) = 255;
+                }
+            }
+        }
+        // 保存轮廓图像用于调试
+        cv::imwrite("E:/work/车门门环拼接/image/test/contour_image.bmp", contourImage);
+
+        // 使用Harris角点检测
+        cv::Mat dst = cv::Mat::zeros(contourImage.size(), CV_32FC1);
+        cv::cornerHarris(contourImage, dst, 3, 5, 0.02);
+
+        // 归一化处理
+        cv::Mat dst_norm, dst_norm_scaled;
+        cv::normalize(dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
+        cv::convertScaleAbs(dst_norm, dst_norm_scaled);
+
+        cv::imwrite("E:/work/车门门环拼接/image/test/Harris_dst.bmp", dst_norm);
+
+        // 提取角点
+        for (int i = 0; i < dst_norm.rows; i++) {
+            for (int j = 0; j < dst_norm.cols; j++) {
+                // 提高阈值到180，只检测强角点
+                if ((int)dst_norm.at<float>(i, j) > 150) {
+                    cv::Point2f candidatePoint(j, i);
+
+                    // 检查角点是否在原始轮廓上或附近
+                    bool isOnContour = false;
+                    for (auto &contour : filteredContours) {
+                        // 检查角点是否在轮廓点的3像素范围内
+                        for (auto &contourPoint : contour) {
+                            if (candidatePoint.x == contourPoint.x && candidatePoint.y == contourPoint.y) {
+                                isOnContour = true;
+                                break;
+                            }
+                        }
+                        if (isOnContour) break;
+                    }
+
+                    if (isOnContour) {
+                        cornerPoints.push_back(candidatePoint);
+                    }
+                }
+            }
+        }
+=======
         cv::imwrite("E:/work/车门门环拼接/image/test/cropped_img_edge.bmp",  edge);
 
         // 提取轮廓
@@ -340,6 +459,7 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         int maxIterations = 100;
         cs.sequentialRansac3Times(filteredContours[0], segments, lines, threshold, maxIterations);
         imageTools.drawColorfulContoursAndSave(edge, segments, "E:/work/车门门环拼接/image/test/coloredSegmentsImage.bmp");
+>>>>>>> origin/jointDetection
 
         // 提取亚像素轮廓,zernike矩法
         for (auto &contour : filteredContours) {
@@ -383,18 +503,95 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         // 3、轮廓分割时，存在会将端点单拎出来形成线段的小bug
         // 4、直线拟合的精度问题，要考虑是不是直接进行样条曲线拟合
 
+<<<<<<< HEAD
+        emit imageProcessed(croppedImg, m_subpixelContours, filteredContours);
+=======
         auto resultImage = std::make_shared<cv::Mat>(croppedImg);
         emit imageProcessed(resultImage, m_subpixelContours, filteredContours);
+>>>>>>> origin/jointDetection
         // emit imageProcessedCannyDevenay(cropped_img, edgeCurves);
-    }
-    catch (const cv::Exception& e) {
+    } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());
     }
 }
 
+<<<<<<< HEAD
+// 根据多边形拟合点分割轮廓
+std::vector<std::vector<cv::Point2f>> ImageProcessWorker::segmentContourByApproxPoints(const std::vector<cv::Point2f> &contour,
+                                                                                       const std::vector<cv::Point2f> &approxPoints) {
+    std::vector<std::vector<cv::Point2f>> segmentedContours;
+
+    if (contour.empty() || approxPoints.empty()) {
+        return segmentedContours;
+    }
+
+    // 如果只有一个拟合点，返回整个轮廓
+    if (approxPoints.size() == 1) {
+        segmentedContours.push_back(contour);
+        return segmentedContours;
+    }
+
+    // 为每个拟合点在原始轮廓中找到最近的点
+    std::vector<int> approxIndices;
+    for (const auto &approxPoint : approxPoints) {
+        int bestIndex = 0;
+        double minDist = std::numeric_limits<double>::max();
+
+        for (int i = 0; i < contour.size(); ++i) {
+            double dist = cv::norm(contour[i] - cv::Point2f(approxPoint.x, approxPoint.y));
+            if (dist < minDist) {
+                minDist = dist;
+                bestIndex = i;
+            }
+        }
+        approxIndices.push_back(bestIndex);
+    }
+
+    // 对索引进行排序，确保按轮廓顺序分割
+    std::sort(approxIndices.begin(), approxIndices.end());
+
+    // 根据拟合点索引分割轮廓
+    // 对于闭合轮廓，我们只需要在拟合点之间分割，不需要包含起点到终点的段
+    for (int i = 0; i < approxIndices.size() - 1; ++i) {
+        int startIdx = approxIndices[i];
+        int endIdx = approxIndices[i + 1];
+
+        // 确保索引有效
+        if (startIdx >= 0 && endIdx >= 0 && startIdx < contour.size() && endIdx < contour.size()) {
+            std::vector<cv::Point2f> segment;
+            for (int j = startIdx; j <= endIdx; ++j) {
+                segment.push_back(contour[j]);
+            }
+
+            // 确保段不为空
+            if (!segment.empty()) {
+                segmentedContours.push_back(segment);
+            }
+        }
+    }
+
+    // 处理最后一个段（从最后一个拟合点到轮廓结束）
+    if (approxIndices.size() > 1) {
+        int lastStartIdx = approxIndices.back();
+        if (lastStartIdx >= 0 && lastStartIdx < contour.size()) {
+            std::vector<cv::Point2f> lastSegment;
+            for (int j = lastStartIdx; j < contour.size(); ++j) {
+                lastSegment.push_back(contour[j]);
+            }
+
+            if (!lastSegment.empty()) {
+                segmentedContours.push_back(lastSegment);
+            }
+        }
+    }
+
+    return segmentedContours;
+}
+
+=======
+>>>>>>> origin/jointDetection
 // 直线拟合函数
-cv::Vec4f ImageProcessWorker::fitLineToPoints(const std::vector<cv::Point2f>& points)
-{
+cv::Vec4f ImageProcessWorker::fitLineToPoints(const std::vector<cv::Point2f> &points) {
     if (points.empty()) {
         return cv::Vec4f(0, 0, 0, 0);
     }
@@ -409,8 +606,7 @@ cv::Vec4f ImageProcessWorker::fitLineToPoints(const std::vector<cv::Point2f>& po
 }
 
 // 计算两条直线的交点
-cv::Point2f ImageProcessWorker::calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2)
-{
+cv::Point2f ImageProcessWorker::calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2) {
     // 提取直线参数
     float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
     float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
@@ -447,6 +643,3 @@ cv::Point2f ImageProcessWorker::calculateLineIntersection(const cv::Vec4f& line1
 
     return cv::Point2f(intersectX, intersectY);
 }
-
-
-

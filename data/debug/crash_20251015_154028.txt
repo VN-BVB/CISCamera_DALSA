@@ -1,0 +1,5 @@
+Crash time: 2025-10-15 15:40:28
+Exception code: 0xc000070a
+Exception type: Unknown Exception
+Exception address: 0x7ffc3c62233d
+Thread ID: 4148

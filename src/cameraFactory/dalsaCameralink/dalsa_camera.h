@@ -40,7 +40,7 @@ private:
     static void XferCallBack(SapXferCallbackInfo* pInfo);
 
     // 实例方法，安全在 Qt 主线程或通过 invokeMethod 调用
-    Q_SLOT void handleImageFromCallback(const cv::Mat& img);
+    Q_SLOT void handleImageFromCallback(std::shared_ptr<cv::Mat> matPtr);
 
 private:
     // Sapera objects
@@ -50,7 +50,7 @@ private:
     SapTransfer* m_Xfer;
     SapView* m_View;
     BYTE* m_pData;
-    int resourceIndex;
+    int cameraIndex;
 
     // 状态
     std::atomic<bool> m_running;

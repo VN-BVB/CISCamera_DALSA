@@ -1,0 +1,46 @@
+Crash time: 2025-10-15 17:11:13
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ffe6cc86ae0
+Thread ID: 9720
+
+Crash function: QTextEngine::shapeTextWithHarfbuzzNG
+
+Call Stack:
+#0  QTextEngine::shapeTextWithHarfbuzzNG
+#1  QTextEngine::shapeText
+#2  QTextEngine::shape
+#3  QTextLine::layout_helper
+#4  QTextLine::setLineWidth
+#5  QTextDocumentLayout::idealWidth
+#6  QTextDocumentLayout::layoutFinished
+#7  QTextDocumentLayout::layoutFinished
+#8  QTextDocumentLayout::layoutFinished
+#9  QTextDocumentLayout::doLayout
+#10  QTextDocumentLayout::documentChanged
+#11  QTextDocumentPrivate::finishEdit
+#12  QWidgetTextControl::append
+#13  QTextEdit::append
+#14  CISWidget::whenAppendMessageLog [d:\code\ciscamera_dalsa\src\ui\cis_camera_image.cpp:96]
+#15  <lambda_d2d3203327b03d6ab0c48144f814fe72>::operator() [d:\code\ciscamera_dalsa\src\ui\cis_camera_image.cpp:34]
+#16  std::_Invoker_functor::_Call<<lambda_d2d3203327b03d6ab0c48144f814fe72> > [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\type_traits:16707566]
+#17  std::invoke<<lambda_d2d3203327b03d6ab0c48144f814fe72> > [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\type_traits:16707566]
+#18  <lambda_b61c259e213f4864b6eb421c6f5514c2>::operator()<> [d:\programdata\qt\qt5.14.2\5.14.2\msvc2017_64\include\qtcore\qthread.h:181]
+#19  std::_Invoker_functor::_Call<<lambda_b61c259e213f4864b6eb421c6f5514c2> > [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\type_traits:16707566]
+#20  std::invoke<<lambda_b61c259e213f4864b6eb421c6f5514c2> > [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\type_traits:16707566]
+#21  std::_Invoke_stored_explicit<<lambda_b61c259e213f4864b6eb421c6f5514c2>,0> [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\mutex:623]
+#22  std::_Invoke_stored<<lambda_b61c259e213f4864b6eb421c6f5514c2> > [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\mutex:631]
+#23  std::_Fake_no_copy_callable_adapter<<lambda_b61c259e213f4864b6eb421c6f5514c2> >::operator() [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\future:1797]
+#24  std::_Invoker_functor::_Call<std::_Fake_no_copy_callable_adapter<<lambda_b61c259e213f4864b6eb421c6f5514c2> > &> [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\type_traits:16707566]
+#25  std::invoke<std::_Fake_no_copy_callable_adapter<<lambda_b61c259e213f4864b6eb421c6f5514c2> > &> [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\type_traits:16707566]
+#26  std::_Invoker_ret<void,1>::_Call<std::_Fake_no_copy_callable_adapter<<lambda_b61c259e213f4864b6eb421c6f5514c2> > &> [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\type_traits:15732480]
+#27  std::_Func_impl_no_alloc<std::_Fake_no_copy_callable_adapter<<lambda_b61c259e213f4864b6eb421c6f5514c2> >,void>::_Do_call [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\functional:15732480]
+#28  std::_Func_class<void>::operator() [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\functional:15732480]
+#29  std::_Packaged_state<void __cdecl(void)>::_Call_immediate [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\future:704]
+#30  std::_Deferred_async_state<void>::_Run_deferred_function [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\future:787]
+#31  std::_Associated_state<int>::_Maybe_run_deferred_function [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\future:424]
+#32  std::_Associated_state<int>::_Get_value [d:\programdata\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.16.27023\include\future:311]
+#33  QThread::run
+#34  QThread::start
+#35  BaseThreadInitThunk
+#36  RtlUserThreadStart

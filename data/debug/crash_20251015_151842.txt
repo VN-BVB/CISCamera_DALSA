@@ -1,0 +1,9 @@
+Crash time: 2025-10-15 15:18:42
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ffbfce98965
+Thread ID: 13888
+
+Call Stack:
+#0  [Unknown Symbol]
+#1  [Unknown Symbol]

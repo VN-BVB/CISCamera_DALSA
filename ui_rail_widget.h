@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'rail_widget.ui'
 **
-** Created by: Qt User Interface Compiler version 5.15.2
+** Created by: Qt User Interface Compiler version 5.14.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -54,6 +54,8 @@ public:
     QWidget *widget_2;
     QGridLayout *gridLayout_5;
     QPushButton *btn_chk_Rest;
+    QPushButton *btn_contectRail;
+    QPushButton *btn_discontectRail;
     QHBoxLayout *horizontalLayout;
     QCheckBox *chk_ServoEnable;
     QCheckBox *chk_Stop;
@@ -264,7 +266,17 @@ public:
         btn_chk_Rest->setObjectName(QString::fromUtf8("btn_chk_Rest"));
         btn_chk_Rest->setMinimumSize(QSize(0, 40));
 
-        gridLayout_5->addWidget(btn_chk_Rest, 0, 0, 1, 2);
+        gridLayout_5->addWidget(btn_chk_Rest, 1, 0, 1, 2);
+
+        btn_contectRail = new QPushButton(widget_2);
+        btn_contectRail->setObjectName(QString::fromUtf8("btn_contectRail"));
+
+        gridLayout_5->addWidget(btn_contectRail, 0, 0, 1, 1);
+
+        btn_discontectRail = new QPushButton(widget_2);
+        btn_discontectRail->setObjectName(QString::fromUtf8("btn_discontectRail"));
+
+        gridLayout_5->addWidget(btn_discontectRail, 0, 1, 1, 1);
 
 
         verticalLayout_2->addWidget(widget_2);
@@ -331,7 +343,7 @@ public:
         label_13->setText(QCoreApplication::translate("RailWidget", "\345\275\223\345\211\215\351\200\237\345\272\246", nullptr));
         label_17->setText(QCoreApplication::translate("RailWidget", "\350\275\264\347\212\266\346\200\201", nullptr));
         label_16->setText(QCoreApplication::translate("RailWidget", "\350\277\220\345\212\250\347\212\266\346\200\201", nullptr));
-        edit_X_AbsSpeed->setText(QCoreApplication::translate("RailWidget", "150", nullptr));
+        edit_X_AbsSpeed->setText(QCoreApplication::translate("RailWidget", "30", nullptr));
         label_14->setText(QCoreApplication::translate("RailWidget", "\345\275\223\345\211\215\344\275\215\347\275\256", nullptr));
         edit_X_AbsPosition->setText(QCoreApplication::translate("RailWidget", "5", nullptr));
         label_X_CurrentSpeed->setText(QString());
@@ -344,6 +356,8 @@ public:
 "</style></head><body style=\" font-family:'Microsoft YaHei UI'; font-size:10pt; font-weight:700; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">\346\226\255\345\274\200\350\277\236\346\216\245</p></body></html>", nullptr));
         btn_chk_Rest->setText(QCoreApplication::translate("RailWidget", "\345\244\215\344\275\215", nullptr));
+        btn_contectRail->setText(QCoreApplication::translate("RailWidget", "\350\277\236\346\216\245\345\234\260\350\275\250", nullptr));
+        btn_discontectRail->setText(QCoreApplication::translate("RailWidget", "\346\226\255\345\274\200\345\234\260\350\275\250", nullptr));
         chk_ServoEnable->setText(QCoreApplication::translate("RailWidget", "\344\274\272\346\234\215\344\275\277\350\203\275", nullptr));
         chk_Stop->setText(QCoreApplication::translate("RailWidget", "\345\201\234\346\255\242\350\277\220\345\212\250", nullptr));
         chk_ImmediateStop->setText(QCoreApplication::translate("RailWidget", "\346\200\245\345\201\234", nullptr));

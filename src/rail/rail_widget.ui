@@ -252,7 +252,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </size>
        </property>
        <property name="text">
-        <string>150</string>
+        <string>30</string>
        </property>
       </widget>
      </item>
@@ -399,7 +399,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </size>
        </property>
        <layout class="QGridLayout" name="gridLayout_5">
-        <item row="0" column="0" colspan="2">
+        <item row="1" column="0" colspan="2">
          <widget class="QPushButton" name="btn_chk_Rest">
           <property name="minimumSize">
            <size>
@@ -409,6 +409,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <property name="text">
            <string>复位</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QPushButton" name="btn_contectRail">
+          <property name="text">
+           <string>连接地轨</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="btn_discontectRail">
+          <property name="text">
+           <string>断开地轨</string>
           </property>
          </widget>
         </item>

@@ -1,12 +1,15 @@
-#include <plog/Init.h>
+﻿#include <plog/Init.h>
 #include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Initializers/RollingFileInitializer.h>
 #include <plog/Log.h>
 
 #include <QApplication>
-
+// clang-format off
+#include <winsock2.h>
+#include <windows.h>
+// clang-format on
 #include "src/crashHandler/CrashHandler.h"
-#include "src/ui/cis_camera_image.h"
+#include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/ui/ImageViewWindow.h"
 // #include "src/ui/test_frmVisionDisplay.h"
 #include "src/test/test_frmVisionDisplay.h"
@@ -16,12 +19,12 @@ int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     initPlog();                         // 初始化日志类
-    // ImageViewWindow w;
-    // w.show();
-    test_FrmVisionDisplay t;
-    t.show();
+    CISWidget w;
+    w.show();
+    test_FrmVisionDisplay test_window;
+    test_window.show();
     QString imagePath = "E:/work/车门门环拼接/image/背光20250529/背光20250529/822-1200-50us-2(背光).bmp";
-    t.displayImage(imagePath);
+    test_window.displayImage(imagePath);
 
     return a.exec();
 }

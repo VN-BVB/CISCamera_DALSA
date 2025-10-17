@@ -19,7 +19,7 @@ Rail::~Rail() {
 }
 
 void Rail::connectPLC(const QString ip, int port) {
-    emit sendText(QString("Modbus 状态: 正在连接..."));
+    emit sendText(QString(u8"Modbus 状态: 正在连接..."));
     // QNetworkProxy::setApplicationProxy(QNetworkProxy::NoProxy);
     previousCoilStatuses = QVector<bool>(32, false);
     if (mobusDisconnect) {
@@ -36,13 +36,13 @@ void Rail::connectPLC(const QString ip, int port) {
     // 创建新的 Modbus TCP 上下文
     modbusTcp = modbus_new_tcp(ip.toStdString().c_str(), port);
     if (modbusTcp == nullptr) {
-        emit sendText(QString("Modbus 状态: 创建 Modbus TCP 对象失败！"));
+        emit sendText(QString(u8"Modbus 状态: 创建 Modbus TCP 对象失败！"));
         return;
     }
 
     // 设置响应超时时间（秒、微秒）
     if (modbus_set_response_timeout(modbusTcp, 0, 200 * 1000) == -1) {
-        emit sendText(QString("Modbus 状态: 设置超时时间失败！"));
+        emit sendText(QString(u8"Modbus 状态: 设置超时时间失败！"));
         modbus_free(modbusTcp);
         modbusTcp = nullptr;
         return;
@@ -51,14 +51,14 @@ void Rail::connectPLC(const QString ip, int port) {
     // 建立连接
     if (modbus_connect(modbusTcp) == -1) {
         QString errorStr = QString::fromLocal8Bit(modbus_strerror(errno));
-        emit sendText(QString("Modbus 状态: 连接失败：%1").arg(errorStr));
+        emit sendText(QString(u8"Modbus 状态: 连接失败：%1").arg(errorStr));
         emit sendRailStatus(MY_COLOR::RED);
         modbus_free(modbusTcp);
         modbusTcp = nullptr;
         return;
     } else {
         mobusDisconnect = 0;
-        emit sendText(QString("Modbus 状态:协议连接成功，等待使能完成。"));
+        emit sendText(QString(u8"Modbus 状态:协议连接成功，等待使能完成。"));
         writeCoils(X_ServoEnable, {true});
         // readStateTimer->start(111);
         readRealTimer->start(100);
@@ -89,7 +89,7 @@ void Rail::disonnectPLC() {
     }
     // 设置断开标志
     mobusDisconnect = 1;
-    emit sendText(QString("Modbus 状态: 断开连接"));
+    emit sendText(QString(u8"Modbus 状态: 断开连接"));
     // 停止定时器
     // if (readStateTimer->isActive()) {
     //     readStateTimer->stop();
