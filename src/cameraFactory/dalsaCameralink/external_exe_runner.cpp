@@ -22,7 +22,7 @@ void ExternalExeRunner::addDllDirToPath(const QString &dllDir) {
     PLOGD << "PATH updated with: " << absPath.toStdString();
 }
 
-bool ExternalExeRunner::start(const QString &exePath, const QStringList &args) {
+bool ExternalExeRunner::startEmbedded(const QString &exePath, const QStringList &args, WId parentWinId) {
     if (process->state() != QProcess::NotRunning) {
         PLOGE << "Process already running.";
         return false;
@@ -30,41 +30,41 @@ bool ExternalExeRunner::start(const QString &exePath, const QStringList &args) {
 
     process->setProgram(exePath);
     process->setArguments(args);
-
-    QObject::connect(process, &QProcess::errorOccurred, [exePath](QProcess::ProcessError err) {
-        QString errMsg;
-        switch (err) {
-            case QProcess::FailedToStart:
-                errMsg = "FailedToStart (program not found, missing permission, or dependent DLL missing)";
-                break;
-            case QProcess::Crashed:
-                errMsg = "Crashed (started but exited unexpectedly)";
-                break;
-            case QProcess::Timedout:
-                errMsg = "Timedout (waited too long)";
-                break;
-            case QProcess::WriteError:
-                errMsg = "WriteError (could not write to process)";
-                break;
-            case QProcess::ReadError:
-                errMsg = "ReadError (could not read from process)";
-                break;
-            default:
-                errMsg = "UnknownError";
-                break;
-        }
-        PLOGE << "Process error (" << exePath.toStdString() << "): " << errMsg.toStdString();
-    });
-
     process->start();
 
     if (!process->waitForStarted(5000)) {
-        PLOGE << "waitForStarted timeout. Exe: " << exePath.toStdString();
-        PLOGE << "Native error string: " << process->errorString().toStdString();
+        PLOGE << "Failed to start process.";
         return false;
     }
 
-    PLOGD << "Exe started: " << exePath.toStdString();
+    // 获取进程PID
+    qint64 pid = process->processId();
+    PLOGD << "Started PID=" << pid;
+
+    // 等待窗口创建（可能需要延时）
+    HWND hwnd = nullptr;
+    for (int i = 0; i < 30; ++i) {
+        hwnd = this->findWindowByPid(pid);
+        if (hwnd) break;
+        QThread::msleep(200);
+    }
+
+    if (hwnd) {
+        PLOGD << "Embedding HWND=" << hwnd;
+        // 设置父窗口（嵌入Qt控件中）
+        SetParent(hwnd, (HWND)parentWinId);
+        // 调整样式（去掉标题栏）
+        LONG style = GetWindowLong(hwnd, GWL_STYLE);
+        style &= ~(WS_CAPTION | WS_THICKFRAME);
+        SetWindowLong(hwnd, GWL_STYLE, style);
+        // 调整位置
+        RECT rc;
+        GetClientRect((HWND)parentWinId, &rc);
+        SetWindowPos(hwnd, HWND_TOP, 0, 0, rc.right, rc.bottom, SWP_SHOWWINDOW);
+    } else {
+        PLOGE << "Cannot find window for process PID=" << pid;
+    }
+
     return true;
 }
 
@@ -106,6 +106,18 @@ void ExternalExeRunner::handleError(QProcess::ProcessError error) {
 }
 
 void ExternalExeRunner::handleFinished(int exitCode, QProcess::ExitStatus status) {
-    PLOGD << "Process finished. ExitCode=" << exitCode << " Status=" << (status == QProcess::NormalExit ? "NormalExit" : "CrashExit");
+    PLOGD << "Process finished. ExitCode=" << exitCode
+          << " Status=" << (status == QProcess::NormalExit ? "NormalExit" : "CrashExit");
     emit sendMessage2UI(QString("Process finished. ExitCode=%1").arg(exitCode));
+}
+// 辅助函数：根据PID找到顶层窗口句柄
+HWND ExternalExeRunner::findWindowByPid(DWORD pid) {
+    HWND hwnd = GetTopWindow(nullptr);
+    while (hwnd) {
+        DWORD windowPid;
+        GetWindowThreadProcessId(hwnd, &windowPid);
+        if (windowPid == pid && IsWindowVisible(hwnd)) return hwnd;
+        hwnd = GetNextWindow(hwnd, GW_HWNDNEXT);
+    }
+    return nullptr;
 }

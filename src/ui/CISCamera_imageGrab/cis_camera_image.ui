@@ -21,18 +21,36 @@
   </property>
   <layout class="QGridLayout" name="gridLayout_4">
    <item row="0" column="1">
-    <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1" columnstretch="1,1">
-     <item row="1" column="0" colspan="2">
-      <widget class="FrmVisionDisplay" name="imgSplice">
+    <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1" columnstretch="1,1,0">
+     <item row="0" column="1">
+      <widget class="openGLImageWidget" name="imgLive">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="sizeIncrement">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="baseSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="0" column="2">
       <widget class="QTabWidget" name="tabWidget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -187,33 +205,18 @@
        </widget>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="openGLImageWidget" name="imgLive">
+     <item row="1" column="1" colspan="2">
+      <widget class="FrmVisionDisplay" name="imgSplice">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="sizeIncrement">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="baseSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
       </widget>
+     </item>
+     <item row="0" column="0" rowspan="2">
+      <widget class="QWidget" name="cisConfigHost" native="true"/>
      </item>
     </layout>
    </item>

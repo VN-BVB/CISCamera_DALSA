@@ -243,8 +243,9 @@ void CISWidget::on_btnCISConfig_clicked() {
             configCISCamera.get(),
             [=]() {
                 configCISCamera->addDllDirToPath("./data/CISConfig/externExE");
-                configCISCamera->start("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"});
-                configCISCamera->writeInput("some command");
+                // 获取父控件窗口句柄（用于嵌入）
+                WId parentWinId = ui->cisConfigHost->winId();
+                configCISCamera->startEmbedded("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"}, parentWinId);
             },
             Qt::QueuedConnection);
     }

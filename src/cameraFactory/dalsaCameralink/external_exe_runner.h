@@ -1,11 +1,18 @@
 ﻿#pragma once
 
+// clang-format off
+#include <windows.h>
+#pragma comment(lib, "User32.lib")
+#include <tlhelp32.h>
+// clang-format on
 #include <QDir>
 #include <QFileInfoList>
 #include <QLibrary>
 #include <QObject>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QThread>
+#include <QWidget>
 
 #include "plog/Log.h"
 
@@ -17,7 +24,7 @@ public:
     ~ExternalExeRunner();
 
     void addDllDirToPath(const QString &dllDir);
-    bool start(const QString &exePath, const QStringList &args = {});
+    bool startEmbedded(const QString &exePath, const QStringList &args = {}, WId parentWinId = 0);
     void stop();
     void writeInput(const QString &input);
 
@@ -32,4 +39,7 @@ private slots:
 
 private:
     QProcess *process;
+#ifdef Q_OS_WIN
+    HWND findWindowByPid(DWORD pid);
+#endif
 };
