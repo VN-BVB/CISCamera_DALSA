@@ -20,8 +20,6 @@ int main(int argc, char *argv[]) {
     initPlog();                         // 初始化日志类
     CISWidget w;
     w.show();
-    // ImageViewWindow w;
-    // w.show();
     test_FrmVisionDisplay test_window;
     test_window.show();
     QString imagePath = "E:/work/车门门环拼接/image/背光20250529/背光20250529/822-1200-50us-2(背光).bmp";

@@ -5,8 +5,9 @@
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     ui->setupUi(this);
     initregisterMetaType();
-    initCamera();
     initUIControls();
+    initCamera();
+    initCameraImageProcessor();
 }
 
 CISWidget::~CISWidget() {
@@ -18,7 +19,20 @@ CISWidget::~CISWidget() {
         slaveCISCamera->stopGrab();
     }
 #endif
+    if (processorThread) {
+        processorThread->quit();
+        processorThread->wait();
+    }
     delete ui;
+}
+void CISWidget::initUIControls() {
+    ui->btnSoftWareTrigger->setEnabled(true);
+    ui->ckbSplice->setChecked(true);
+}
+
+void CISWidget::initregisterMetaType() {
+    qRegisterMetaType<cv::Mat>("cv::Mat");
+    qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
 }
 
 void CISWidget::initCamera() {
@@ -66,13 +80,14 @@ void CISWidget::initCamera() {
 
     initThread->start();
 }
+
 void CISWidget::initCamera2UIConnections() {
     connect(slaveCISCamera.get(), &AbstractCamera::sendNewImageReady, this, &CISWidget::whenGetNewImage, Qt::QueuedConnection);
 #ifdef ENABLE_SLAVE_CAMERA
     connect(
         masterCISCamera.get(), &AbstractCamera::sendNewImageReady, this,
         [=](std::shared_ptr<cv::Mat> imgPtr) {
-            masterImg = *imgPtr;
+            masterImg = imgPtr;
             masterReady = true;
             tryStitchImages();
         },
@@ -81,7 +96,7 @@ void CISWidget::initCamera2UIConnections() {
     connect(
         slaveCISCamera.get(), &AbstractCamera::sendNewImageReady, this,
         [=](std::shared_ptr<cv::Mat> imgPtr) {
-            slaveImg = *imgPtr;
+            slaveImg = imgPtr;
             slaveReady = true;
             tryStitchImages();
         },
@@ -90,69 +105,54 @@ void CISWidget::initCamera2UIConnections() {
     connect(masterCISCamera.get(), &AbstractCamera::sendText, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
     connect(slaveCISCamera.get(), &AbstractCamera::sendText, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
 }
-void CISWidget::initUIControls() {
-    ui->btnSoftWareTrigger->setEnabled(true);
-    ui->ckbSplice->setChecked(true);
+
+void CISWidget::initCameraImageProcessor() {
+    imageProcessor = std::make_shared<CameraImageProcessor>();
+    processorThread = new QThread(this);
+    imageProcessor->moveToThread(processorThread);
+    processorThread->start();
+
+    // 信号连接
+    connect(
+        imageProcessor.get(), &CameraImageProcessor::imageReady, this,
+        [this](std::shared_ptr<cv::Mat> result) {
+            if (result && !result->empty()) {
+                ui->imgSplice->setOpenCVImage(*result);
+            }
+        },
+        Qt::QueuedConnection);
+
+    connect(imageProcessor.get(), &CameraImageProcessor::text, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
+
+    connect(imageProcessor.get(), &CameraImageProcessor::error, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
+
+    connect(
+        imageProcessor.get(), &CameraImageProcessor::saved, this,
+        [this](const QString& p) { whenAppendMessageLog(u8"保存完成：" + p); }, Qt::QueuedConnection);
 }
 
-void CISWidget::initregisterMetaType() {
-    qRegisterMetaType<cv::Mat>("cv::Mat");
-    qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
-}
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
 // 在信息框推送信息
 void CISWidget::whenAppendMessageLog(const QString& message) { ui->textEdit->append(message); }
 
-#ifdef ENABLE_SLAVE_CAMERA
 void CISWidget::tryStitchImages() {
-    PLOGD << "进入拼接函数";
-    whenAppendMessageLog(QString(u8"进入拼接函数"));
-    PLOGD << "ckbSplice checked = " << ui->ckbSplice->isChecked();
-    PLOGD << "masterReady = " << masterReady << ", slaveReady = " << slaveReady;
-    PLOGD << "masterImg size = " << masterImg.cols << "x" << masterImg.rows << ", empty = " << masterImg.empty();
-    PLOGD << "slaveImg size = " << slaveImg.cols << "x" << slaveImg.rows << ", empty = " << slaveImg.empty();
-
     if (ui->ckbSplice->isChecked() && masterReady && slaveReady) {
-        try {
-            cv::hconcat(masterImg, slaveImg, resultMat);
-            PLOGD << "拼接成功, resultMat size = " << resultMat.cols << "x" << resultMat.rows;
-            whenAppendMessageLog(QString(u8"拼接成功, resultMat size = %1 x %2").arg(resultMat.cols).arg(resultMat.rows));
-            ui->imgSplice->setOpenCVImage(resultMat);
+        masterReady = slaveReady = false;
 
-            masterReady = false;
-            slaveReady = false;
-        } catch (const cv::Exception& e) {
-            PLOGE << "拼接失败: " << e.what();
-            whenAppendMessageLog(QString(u8"拼接失败: %1").arg(e.what()));
-        }
-    } else {
-        PLOGD << "条件未满足，未执行拼接";
-        whenAppendMessageLog(QString(u8"条件未满足，未执行拼接"));
+        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection,
+                                  Q_ARG(std::shared_ptr<cv::Mat>, masterImg), Q_ARG(std::shared_ptr<cv::Mat>, slaveImg),
+                                  Q_ARG(bool, true)  // 或 ui->ckbSplice->isChecked()
+        );
     }
 }
-#endif
 void CISWidget::on_btnSave_clicked() {
-    QDir dir("./data/CISCamera_Image");
-    if (!dir.exists()) {
-        dir.mkpath(".");
-    }
-
     if (ui->ckbSplice->isChecked()) {
-        if (!resultMat.empty()) {
-            QString fileName = dir.filePath(QString("Splice_%1.png").arg(QDateTime::currentDateTime().toString("yyyyMMdd_hhmmsszzz")));
-
-            try {
-                cv::imwrite(fileName.toStdString(), resultMat);
-                whenAppendMessageLog(QString(u8"已保存拼接图像: %1").arg(fileName));
-            } catch (const cv::Exception& e) {
-                whenAppendMessageLog(QString(u8"保存拼接图像失败: %1").arg(e.what()));
-            }
-        } else {
-            whenAppendMessageLog(QString(u8"未检测到拼接图像，无法保存"));
-        }
-
+        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection,
+                                  Q_ARG(QString, "./data/CISCamera_Image"), Q_ARG(QString, "Splice"),
+                                  Q_ARG(QString, ".png"),  // 需要更高精度可改 ".tif" / ".exr"
+                                  Q_ARG(bool, false)       // 是否同时保存主/从
+        );
     } else {
-        // 未拼接状态，调用原有相机保存逻辑
         bool checked = true;
         if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "saveFrames", Q_ARG(bool, checked));
 #ifdef ENABLE_SLAVE_CAMERA
@@ -234,7 +234,6 @@ void CISWidget::whenMoveToStartFinished() {
 
 void CISWidget::on_ckbSplice_toggled(bool checked) {
     if (!checked) {
-        resultMat = cv::Mat::zeros(1, 1, CV_8UC3);
     }
 }
 

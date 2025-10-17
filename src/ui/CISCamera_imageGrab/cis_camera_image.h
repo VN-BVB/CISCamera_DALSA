@@ -11,10 +11,16 @@
 #include <winsock2.h>
 #include <windows.h>
 // clang-format on
+#include "cameraImage_processor.h"
 #include "src/cameraFactory/abstract_camera.h"
 #include "src/cameraFactory/abstract_camera_factory.h"
 #include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
 #include "src/rail/rail_widget.h"
+class RailWidget;
+class AbstractCamera;
+class ExternalExeRunner;
+class CameraImageProcessor;
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class CISWidget;
@@ -34,23 +40,24 @@ private:
     QThread* cameraThreadMaster = new QThread;
     QThread* cameraThreadSlave = new QThread;
     QThread* cameraThreadConfig = new QThread;
-
+    QThread* processorThread = nullptr;
+    std::shared_ptr<CameraImageProcessor> imageProcessor{nullptr};
     std::shared_ptr<AbstractCamera> masterCISCamera{nullptr};
     std::shared_ptr<AbstractCamera> slaveCISCamera{nullptr};
     std::shared_ptr<ExternalExeRunner> configCISCamera{nullptr};
 
-    cv::Mat masterImg, slaveImg, resultMat;
+    std::shared_ptr<cv::Mat> masterImg, slaveImg;
     bool masterReady = false;
     bool slaveReady = false;
     const double startPos = 380.0;
     const double endPos = 720.0;
     const double speed = 29.97;
-
-    void tryStitchImages();
-    void initCamera2UIConnections();
     void initCamera();
+    void initCamera2UIConnections();
     void initUIControls();
     void initregisterMetaType();
+    void initCameraImageProcessor();
+    void tryStitchImages();
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();

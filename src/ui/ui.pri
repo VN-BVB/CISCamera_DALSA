@@ -3,6 +3,7 @@
 # PRECOMPILED_HEADER = src/ui/stable.h
 
 SOURCES += \
+    $$PWD/CISCamera_imageGrab/cameraImage_processor.cpp \
     $$PWD/CISCamera_imageGrab/cis_camera_image.cpp \
     $$PWD/ImageViewWindow.cpp \
     $$PWD/test_frmVisionDisplay.cpp \
@@ -17,6 +18,7 @@ SOURCES += \
 
 
 HEADERS += \
+    $$PWD/CISCamera_imageGrab/cameraImage_processor.h \
     $$PWD/CISCamera_imageGrab/cis_camera_image.h \
     $$PWD/ImageViewWindow.h \
     $$PWD/test_frmVisionDisplay.h \
