@@ -18,8 +18,10 @@ public slots:
     void processImage(std::shared_ptr<cv::Mat> image);
 
 signals:
-    void imageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
-                        std::vector<std::vector<cv::Point>> pixelContour); // openCV的亚像素坐标
+    void imageProcessed(std::shared_ptr<cv::Mat> processedImage,
+                        std::vector<std::vector<cv::Point2f>> subpixelContours,
+                        std::vector<std::vector<cv::Point>> pixelContour,
+                        std::vector<cv::Vec4f> lines);
     void imageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void errorOccurred(const QString &error);
 
@@ -36,6 +38,9 @@ private:
     cv::Vec4f fitLineToPoints(const std::vector<cv::Point2f>& points);
     // 计算两条直线的交点
     cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2);
+    // 去除轮廓两端的一部分
+    std::vector<cv::Point2f> trimContourEnds(const std::vector<cv::Point2f>& contour, float trimRatio);
+
 
 
     std::vector<std::vector<cv::Point2f>> m_subpixelContours;

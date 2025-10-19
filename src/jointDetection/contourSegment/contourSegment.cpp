@@ -4,54 +4,12 @@ ContourSegment::ContourSegment(const std::vector<cv::Point> &contour)
     :m_contour(contour)
 {}
 
-ContourSegment::~ContourSegment()
+ContourSegment::ContourSegment(const std::vector<cv::Point2f> &contour)
+    :m_subpixelContour(contour)
 {}
 
-std::string ContourSegment::getOpeningDirection()
-{
-    if (m_contour.empty()) {
-        return "Empty contour";
-    }
-
-    // 计算轮廓点的x、y坐标平均值
-    float sumX = 0.0f, sumY = 0.0f;
-    for (const auto& point : m_contour) {
-        sumX += point.x;
-        sumY += point.y;
-    }
-    int avgX = sumX / m_contour.size();
-    int avgY = sumY / m_contour.size();
-
-    // 检查四个方向是否存在轮廓点
-    bool hasUp = false, hasDown = false, hasLeft = false, hasRight = false;
-
-    for (const auto& point : m_contour) {
-        // 检查正上方（x坐标相同，y坐标更小）
-        if (point.x == avgX && point.y < avgY) {
-            hasUp = true;
-        }
-        // 检查正下方（x坐标相同，y坐标更大）
-        if (point.x == avgX && point.y > avgY) {
-            hasDown = true;
-        }
-        // 检查正左方（y坐标相同，x坐标更小）
-        if (point.y == avgY && point.x < avgX) {
-            hasLeft = true;
-        }
-        // 检查正右方（y坐标相同，x坐标更大）
-        if (point.y == avgY && point.x > avgX) {
-            hasRight = true;
-        }
-    }
-
-    // 判断开口方向
-    if (!hasUp) return "Up";
-    if (!hasDown) return "Down";
-    if (!hasLeft) return "Left";
-    if (!hasRight) return "Right";
-
-    return "Unknown";
-}
+ContourSegment::~ContourSegment()
+{}
 
 /**
  * @brief ImageProcessing_lineDetection     直线拟合Ransac
@@ -91,6 +49,63 @@ void ContourSegment::lineRansac(const std::vector<cv::Point> &points,
         // 计算内点
         double score = 0;
         std::vector<cv::Point> inliers;
+        for(int i = 0; i< n; i++){
+            cv::Point2f v = points[i] - p1;
+            double d = v.y * dp.x - v.x * dp.y;//向量a与b叉乘/向量b的摸.||b||=1./norm(dp)
+            // 判断点到直线的距离是否小于阈值
+            if( std::fabs(d) < threshold){
+                score += 1;
+                inliers.push_back(points[i]);  // 存储内点
+            }
+        }
+
+        // 如果当前拟合得分更高，则更新最优结果
+        if(score > bestScore) {
+            line = cv::Vec4f(dp.x, dp.y, p1.x, p1.y);
+            bestScore = score;
+            inlierPoints = inliers;//更新内点
+        }
+    }
+}
+
+/**
+ * @brief ImageProcessing_lineDetection     直线拟合Ransac
+ * @param points                            输入亚像素点集
+ * @param line                              输出直线参数(vx, vy, x0, y0), (vx, vy) 为方向向量, (x0, y0) 为直线上的一个点
+ * @param inlierPoints                      输出直线内点
+ * @param threshold                         阈值
+ * @param iterations                        最大迭代次数
+ */
+void ContourSegment::lineRansac(const std::vector<cv::Point2f> &points,
+                                cv::Vec4f &line,
+                                std::vector<cv::Point2f> &inlierPoints,
+                                const double &threshold,
+                                const int &iterations)
+{
+    if(points.size() < 2){
+        std::cerr<<"Input points is empty!"<<std::endl;
+        return;
+    }
+
+    cv::RNG rng;// 创建随机数生成器
+    double bestScore = -1.;
+    auto n = points.size();  // 获取点集大小
+    for(int iter = 0; iter < iterations; iter++){
+        // 随机选择两个不同的点
+        auto i1 = rng.uniform(0, n-1);
+        auto i2 = rng.uniform(0, n-1);
+        if (i1 == i2)
+            continue;
+
+        // 直线的方向向量
+        const cv::Point2f& p1 = points[i1];
+        const cv::Point2f& p2 = points[i2];
+        cv::Point2f dp = p2-p1;
+        dp *= 1.0/cv::norm(dp);
+
+        // 计算内点
+        double score = 0;
+        std::vector<cv::Point2f> inliers;
         for(int i = 0; i< n; i++){
             cv::Point2f v = points[i] - p1;
             double d = v.y * dp.x - v.x * dp.y;//向量a与b叉乘/向量b的摸.||b||=1./norm(dp)
@@ -159,6 +174,73 @@ void ContourSegment::sequentialRansac3Times(const std::vector<cv::Point>& points
             remainingPoints.erase(
                 std::remove_if(remainingPoints.begin(), remainingPoints.end(),
                                [&currentInliers](const cv::Point& p) {
+                                   for (const auto& inlier : currentInliers) {
+                                       if (cv::norm(p - inlier) < 1e-6) { // 浮点数比较容差
+                                           return true;
+                                       }
+                                   }
+                                   return false;
+                               }),
+                remainingPoints.end()
+                );
+        }
+    }
+
+    // 如果第三次拟合后还有剩余点，直接丢弃
+    if (!remainingPoints.empty() && segments.size() == 3) {
+        remainingPoints.clear();
+    }
+}
+
+/**
+ * @brief sequentialRansac3Times 三次顺序RANSAC直线拟合
+ * @param points 输入亚像素点集
+ * @param segments 输出三段轮廓亚像素点集
+ * @param lines 输出三段直线参数
+ * @param threshold 内点距离阈值
+ * @param maxIterations 单次RANSAC最大迭代次数
+ */
+void ContourSegment::sequentialRansac3Times(const std::vector<cv::Point2f>& points,
+                                            std::vector<std::vector<cv::Point2f>>& segments,
+                                            std::vector<cv::Vec4f>& lines,
+                                            double threshold,
+                                            int maxIterations)
+{
+    // 初始化输出容器
+    segments.clear();
+    lines.clear();
+
+    // 确保有足够的点进行三次拟合
+    if (points.size() < 6) {
+        std::cerr << "Not enough points for 3 sequential RANSAC fits. Need at least 6 points." << std::endl;
+        return;
+    }
+
+    // 复制点集用于处理
+    std::vector<cv::Point2f> remainingPoints = points;
+
+    // 进行三次RANSAC拟合
+    for (int segmentIndex = 0; segmentIndex < 3; ++segmentIndex) {
+        if (remainingPoints.size() < 2) {
+            std::cerr << "Not enough remaining points for segment " << segmentIndex + 1 << std::endl;
+            break;
+        }
+
+        cv::Vec4f currentLine;
+        std::vector<cv::Point2f> currentInliers;
+
+        lineRansac(remainingPoints, currentLine, currentInliers, threshold, maxIterations);
+
+
+        // 存储结果
+        lines.push_back(currentLine);
+        segments.push_back(currentInliers);
+
+        // 从剩余点中移除当前段的内点
+        if (segmentIndex < 2) { // 前两次需要移除内点
+            remainingPoints.erase(
+                std::remove_if(remainingPoints.begin(), remainingPoints.end(),
+                               [&currentInliers](const cv::Point2f& p) {
                                    for (const auto& inlier : currentInliers) {
                                        if (cv::norm(p - inlier) < 1e-6) { // 浮点数比较容差
                                            return true;

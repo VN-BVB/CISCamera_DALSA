@@ -19,7 +19,8 @@ ImageViewWindow::ImageViewWindow(QWidget *parent)
     qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
     qRegisterMetaType<std::vector<cv::Point2f>>("std::vector<cv::Point2f>");
     qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point>>");
-    qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point2f>>");
+    qRegisterMetaType<std::vector<std::vector<cv::Point2f>>>("std::vector<std::vector<cv::Point2f>>");
+    qRegisterMetaType<std::vector<cv::Vec4f>>("std::vector<cv::Vec4f>");
 
     // 读取线程
     readWorker->moveToThread(&readThread);
@@ -68,8 +69,10 @@ void ImageViewWindow::handleImageRead(std::shared_ptr<cv::Mat> image)
 }
 
 // Zernike矩对应槽函数
-void ImageViewWindow::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
-                                           std::vector<std::vector<cv::Point>> pixelContours)
+void ImageViewWindow::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
+                                           std::vector<std::vector<cv::Point2f>> subpixelContours,
+                                           std::vector<std::vector<cv::Point>> pixelContours,
+                                           std::vector<cv::Vec4f> lines)
 {
     // 在主线程中显示图像
     ui->gv_image->displayImage(*processedImage, true);
@@ -77,8 +80,9 @@ void ImageViewWindow::handleImageProcessed(std::shared_ptr<cv::Mat> processedIma
     if (displayMgr)
     {
         InteractiveScene* scene = displayMgr->displayScene();
-        scene->whenDrawSubpixelContours(subpixelContours);
+        // scene->whenDrawSubpixelContours(subpixelContours);
         scene->whenDrawPixelContours(pixelContours);
+        scene->whenDrawLines(lines);
     }
 
     auto endTime = std::chrono::high_resolution_clock::now();

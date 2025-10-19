@@ -1,6 +1,7 @@
 #include "ImageProcessWorker.h"
 #include "contourSegment/contourSegment.h"
 #include "imageTools.h"
+#include "contourSegment/contourCurve.h"
 #include <QDebug>
 
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent} {}
@@ -295,65 +296,69 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         cv::findContours(edge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); // 轮廓近似方法设为保存所有点，也可以选择只保存端点，具体见源码注释
         std::vector<std::vector<cv::Point>> filteredContours;
         filteredContours = imageTools.filterContours(contours);
-        // 轮廓点去重
-        filteredContours = imageTools.removeDuplicateContourPoints(filteredContours);
-
-        // 判断轮廓开口方向
-        ContourSegment cs{filteredContours[0]};
-        std::string direction = cs.getOpeningDirection();
-
-        // 轮廓点分类
-        std::vector<std::vector<cv::Point>> segments;
-        std::vector<cv::Vec4f> lines;
-        double threshold =8;
-        int maxIterations = 100;
-        cs.sequentialRansac3Times(filteredContours[0], segments, lines, threshold, maxIterations);
-        imageTools.drawColorfulContoursAndSave(edge, segments, "E:/work/车门门环拼接/image/test/coloredSegmentsImage.bmp");
-
+        ContourCurve contourCurve;
+        contourCurve.initializePixelContour(filteredContours[1]);
+        std::vector<cv::Point2f> subpixelContour = getSubpixelContourZernike(grayImage, contourCurve.getPixelContour());
+        contourCurve.initializeSubpixelContour(subpixelContour);
         // 提取亚像素轮廓,zernike矩法
-        for (auto &contour : filteredContours) {
+        for (auto &contour : contourCurve.getSegmentedPixelContours()) {
             std::vector<cv::Point2f> subpixelContour = getSubpixelContourZernike(grayImage, contour);
             m_subpixelContours.push_back(subpixelContour);
         }
+        imageTools.drawColorfulContoursAndSave(edge,
+                                               contourCurve.getSegmentedPixelContours(),
+                                               "E:/work/车门门环拼接/image/test/coloredSegmentsImage.bmp");
 
-        // std::vector<std::vector<cv::Point2f>> approxContours(m_subpixelContours.size());
-        // double perimeter = cv::arcLength(m_subpixelContours[1], true);
-        // double epsilon = perimeter * 0.02;
-        // cv::approxPolyDP(m_subpixelContours[1], approxContours[1], epsilon, false);
 
-        // // 根据多边形拟合得到的点将轮廓分为多段
-        // std::vector<std::vector<cv::Point2f>> segmentedContours =
-        //     segmentContourByApproxPoints(m_subpixelContours[1], approxContours[1]);
-        // m_segmentedContours.push_back(segmentedContours);
-        // // 对前两段轮廓进行直线拟合并计算交点
-        // if (m_segmentedContours.size() > 0 && m_segmentedContours[0].size() >= 2) {
-        //     // 获取前两段轮廓
-        //     std::vector<cv::Point2f> segment1 = m_segmentedContours[0][0];
-        //     std::vector<cv::Point2f> segment2 = m_segmentedContours[0][1];
 
-        //     // 对两段轮廓分别进行直线拟合
-        //     cv::Vec4f line1 = fitLineToPoints(segment1);
-        //     cv::Vec4f line2 = fitLineToPoints(segment2);
+        // 对前两段轮廓进行直线拟合并计算交点
+        std::vector<cv::Vec4f> fitlines;
+        if (m_subpixelContours.size() > 0 && m_subpixelContours[0].size() >= 2) {
+            // 获取前两段轮廓
+            std::vector<cv::Point2f> segment1 = m_subpixelContours[0];
+            std::vector<cv::Point2f> segment2 = m_subpixelContours[1];
+            std::vector<cv::Point2f> segment3 = m_subpixelContours[2];
+            // 取segment1前面一部分
+            int startIndex = 50;
+            int endIndex = 300;
+            std::vector<cv::Point2f> trimmedContour1;
+            for (int i = startIndex; i < endIndex; ++i) {
+                trimmedContour1.push_back(segment1[i]);
+            }
+            // 取segment1后面一部分
+            startIndex = 2900;
+            endIndex = 3250;
+            std::vector<cv::Point2f> trimmedContour2;
+            for (int i = startIndex; i < endIndex; ++i) {
+                trimmedContour2.push_back(segment1[i]);
+            }
+            // segment1 = trimContourEnds(segment1, 0.1f);
 
-        //     // 计算两条直线的交点
-        //     m_intersectionPoint = calculateLineIntersection(line1, line2);
+            // 对两段轮廓分别进行直线拟合
+            cv::Vec4f line1 = fitLineToPoints(trimmedContour1);
+            fitlines.push_back(line1);
+            cv::Vec4f line2 = fitLineToPoints(segment2);
+            fitlines.push_back(line2);
+            cv::Vec4f line3 = fitLineToPoints(segment3);
+            fitlines.push_back(line3);
+            cv::Vec4f line4 = fitLineToPoints(trimmedContour2);
+            fitlines.push_back(line4);
 
-        //     qDebug() << "直线1参数: vx=" << line1[0] << ", vy=" << line1[1]
-        //              << ", x0=" << line1[2] << ", y0=" << line1[3];
-        //     qDebug() << "直线2参数: vx=" << line2[0] << ", vy=" << line2[1]
-        //              << ", x0=" << line2[2] << ", y0=" << line2[3];
-        //     qDebug() << "交点坐标: (" << m_intersectionPoint.x << ", " << m_intersectionPoint.y << ")";
-        // } else {
-        //     qDebug() << "轮廓段数量不足，无法进行直线拟合和交点计算";
-        // }
-        // @TODO:现在通过肥肠粗暴的手法求出交点，存在一下问题需要解决：
-        // 1、find_contours函数会进行来回扫描，或许可能需要重新设计轮廓连接和查找方法
-        // 2、多边形拟合只进行线段拟合，没有进行圆或椭圆拟合
-        // 3、轮廓分割时，存在会将端点单拎出来形成线段的小bug
-        // 4、直线拟合的精度问题，要考虑是不是直接进行样条曲线拟合
+            // 计算两条直线的交点
+            m_intersectionPoint = calculateLineIntersection(line1, line2);
+
+            qDebug() << "直线1参数: vx=" << line1[0] << ", vy=" << line1[1]
+                     << ", x0=" << line1[2] << ", y0=" << line1[3];
+            qDebug() << "直线2参数: vx=" << line2[0] << ", vy=" << line2[1]
+                     << ", x0=" << line2[2] << ", y0=" << line2[3];
+            qDebug() << "交点坐标: (" << m_intersectionPoint.x << ", " << m_intersectionPoint.y << ")";
+        } else {
+            qDebug() << "轮廓段数量不足，无法进行直线拟合和交点计算";
+        }
+        // @TODO:将轮廓存入contour类中，再拟合轮廓，最后在图上画出角点和拟合直线
 
         auto resultImage = std::make_shared<cv::Mat>(croppedImg);
-        emit imageProcessed(resultImage, m_subpixelContours, filteredContours);
+        emit imageProcessed(resultImage, m_subpixelContours, filteredContours, fitlines);
         // emit imageProcessedCannyDevenay(cropped_img, edgeCurves);
     } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());
@@ -412,4 +417,33 @@ cv::Point2f ImageProcessWorker::calculateLineIntersection(const cv::Vec4f &line1
     float intersectY = y01 + t1 * vy1;
 
     return cv::Point2f(intersectX, intersectY);
+}
+
+// 去除轮廓两端的一部分
+std::vector<cv::Point2f> ImageProcessWorker::trimContourEnds(const std::vector<cv::Point2f>& contour, float trimRatio) {
+    std::vector<cv::Point2f> trimmedContour;
+
+    if (contour.empty() || trimRatio <= 0.0f || trimRatio >= 0.5f) {
+        // 如果轮廓为空或trimRatio不在有效范围内，返回原始轮廓
+        return contour;
+    }
+
+    // 计算需要去除的点数
+    int totalPoints = static_cast<int>(contour.size());
+    int pointsToRemove = static_cast<int>(totalPoints * trimRatio);
+
+    if (pointsToRemove * 2 >= totalPoints) {
+        // 如果要去除的点数过多，返回空轮廓
+        return trimmedContour;
+    }
+
+    // 保留中间部分，去除两端
+    int startIndex = pointsToRemove;
+    int endIndex = totalPoints - pointsToRemove;
+
+    for (int i = startIndex; i < endIndex; ++i) {
+        trimmedContour.push_back(contour[i]);
+    }
+
+    return trimmedContour;
 }

@@ -20,6 +20,10 @@ int main(int argc, char *argv[]) {
     initPlog();                         // 初始化日志类
     ImageViewWindow w;
     w.show();
+    // test_FrmVisionDisplay t;
+    // t.show();
+    // QString imagePath = "E:/work/车门门环拼接/image/正面打光/Splice_20251017_153356916.png";
+    // t.displayImage(imagePath);
 
     return a.exec();
 }

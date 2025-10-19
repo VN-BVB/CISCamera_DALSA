@@ -32,8 +32,10 @@ signals:
 private slots:
     void on_pb_open_clicked();
     void handleImageRead(std::shared_ptr<cv::Mat> image);
-    void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
-                              std::vector<std::vector<cv::Point>> pixelContour);
+    void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
+                              std::vector<std::vector<cv::Point2f>> subpixelContours,
+                              std::vector<std::vector<cv::Point>> pixelContour,
+                              std::vector<cv::Vec4f> lines);
     void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
 

@@ -1,4 +1,4 @@
-﻿#include "interactiveScene.h"
+#include "interactiveScene.h"
 #include "interactiveView.h"
 #include "interactiveImageItem.h"
 
@@ -189,11 +189,57 @@ void InteractiveScene::whenDrawPixelContours(const std::vector<std::vector<cv::P
 
 void InteractiveScene::whenClearContours()
 {
-    // 预留，之后将所有contour变成contourItem，然后用一个数组同一管理，清除时便清空这个数组
+    // @TODO:预留，之后将所有contour变成contourItem，然后用一个数组同一管理，清除时便清空这个数组
     return;
 }
 
+void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> lines)
+{
+    if (lines.empty())
+        return;
 
+    // 使用蓝色绘制直线，与轮廓的红色和绿色区分开
+    QPen pen(Qt::blue);
+    pen.setWidthF(0.2);  // 设置线宽
+    pen.setStyle(Qt::SolidLine);  // 实线
+
+    // 获取图像尺寸来确定直线的绘制范围
+    QSize imageSize = getDisplayImageSize();
+    if (imageSize.isEmpty()) {
+        // 如果没有图像，使用默认的绘制范围
+        imageSize = QSize(1000, 1000);
+    }
+
+    for (const auto& line : lines)
+    {
+        // cv::Vec4f包含直线参数：
+        // [0]: 方向向量的x分量 (vx)
+        // [1]: 方向向量的y分量 (vy)
+        // [2]: 直线上一个点的x坐标 (x0)
+        // [3]: 直线上一个点的y坐标 (y0)
+        float vx = line[0];
+        float vy = line[1];
+        float x0 = line[2];
+        float y0 = line[3];
+
+        // 计算直线的起点和终点
+        // 使用图像边界来确定直线的绘制范围
+        float length = std::max(imageSize.width(), imageSize.height()) * 2.0f; // 足够长的直线
+
+        // 计算起点和终点
+        float x1 = x0 - length * vx;
+        float y1 = y0 - length * vy;
+        float x2 = x0 + length * vx;
+        float y2 = y0 + length * vy;
+
+        // 创建直线图元
+        QGraphicsLineItem *lineItem = new QGraphicsLineItem(x1, y1, x2, y2);
+        lineItem->setPen(pen);
+        lineItem->setZValue(10);  // 设置Z值，确保显示在图像上方
+
+        this->addItem(lineItem);
+    }
+}
 
 
 

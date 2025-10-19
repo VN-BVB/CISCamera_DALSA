@@ -1,4 +1,4 @@
-﻿#ifndef INTERACTIVESCENE_H
+#ifndef INTERACTIVESCENE_H
 #define INTERACTIVESCENE_H
 
 #include <QGraphicsScene>
@@ -49,6 +49,8 @@ public slots:
     void whenDrawPixelContours(const std::vector<std::vector<cv::Point>> &pixelContours);
     // 清除轮廓
     void whenClearContours();
+    // 绘制多条直线
+    void whenDrawLines(const std::vector<cv::Vec4f> lines);
 
 protected:
     // 设置显示图像图元
