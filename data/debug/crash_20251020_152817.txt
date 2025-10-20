@@ -1,0 +1,48 @@
+Crash time: 2025-10-20 15:28:17
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ffe29d41415
+Thread ID: 36188
+
+Crash function: QPixmap::copy
+
+Call Stack:
+#0  QPixmap::copy
+#1  QPixmap::QPixmap
+#2  QGraphicsPixmapItem::pixmap
+#3  InteractiveImageItem::getDisplayImageSize [d:\qt_project\ciscamera_dalsa\src\ui\utils\imagewidget\interactiveimageitem.h:37]
+#4  InteractiveScene::getDisplayImageSize [d:\qt_project\ciscamera_dalsa\src\ui\utils\imagewidget\interactivescene.cpp:82]
+#5  InteractiveView::whenUpdateDisplayFit [d:\qt_project\ciscamera_dalsa\src\ui\utils\imagewidget\interactiveview.cpp:317]
+#6  InteractiveScene::whenDisplayImage [d:\qt_project\ciscamera_dalsa\src\ui\utils\imagewidget\interactivescene.cpp:48]
+#7  FrmVisionDisplay::displayImage [d:\qt_project\ciscamera_dalsa\src\ui\utils\imagewidget\frmvisiondisplay.cpp:71]
+#8  JointView::updateDisplay [d:\qt_project\ciscamera_dalsa\src\ui\jointview\jointview.cpp:137]
+#9  JointView::on_ckb_pixelContoursSquare_toggled [d:\qt_project\ciscamera_dalsa\src\ui\jointview\jointview.cpp:161]
+#10  JointView::qt_static_metacall [d:\qt_project\ciscamera_dalsa\release\moc_jointview.cpp:148]
+#11  JointView::qt_metacall [d:\qt_project\ciscamera_dalsa\release\moc_jointview.cpp:205]
+#12  QMimeData::urls
+#13  QAbstractButton::clicked
+#14  QAbstractButton::setChecked
+#15  QCheckBox::nextCheckState
+#16  QAbstractButton::click
+#17  QAbstractButton::mouseReleaseEvent
+#18  QWidget::event
+#19  QApplicationPrivate::notify_helper
+#20  QApplication::notify
+#21  QCoreApplication::notifyInternal2
+#22  QApplicationPrivate::sendMouseEvent
+#23  QSizePolicy::QSizePolicy
+#24  QSizePolicy::QSizePolicy
+#25  QApplicationPrivate::notify_helper
+#26  QApplication::notify
+#27  QCoreApplication::notifyInternal2
+#28  QGuiApplicationPrivate::processMouseEvent
+#29  QWindowSystemInterface::sendWindowSystemEvents
+#30  QEventDispatcherWin32::processEvents
+#31  qt_plugin_query_metadata
+#32  QEventLoop::exec
+#33  QCoreApplication::exec
+#34  main [d:\qt_project\ciscamera_dalsa\main.cpp:28]
+#35  WinMain
+#36  __scrt_common_main_seh [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288]
+#37  BaseThreadInitThunk
+#38  RtlUserThreadStart

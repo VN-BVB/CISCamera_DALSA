@@ -42,7 +42,6 @@ private slots:
     void updateDisplay();
     // Checkbox槽函数
     void on_ckb_pixelContoursSquare_toggled(bool checked);
-    void on_ckb_pixelContoursSquare_checkStateChanged(const Qt::CheckState &arg1);
     void on_ckb_pixelContoursLine_toggled(bool checked);
     void on_ckb_subpixelContours_toggled(bool checked);
     void on_ckb_fitlines_toggled(bool checked);

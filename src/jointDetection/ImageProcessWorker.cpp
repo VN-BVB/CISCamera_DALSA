@@ -1,7 +1,7 @@
 #include "ImageProcessWorker.h"
 #include "imageTools.h"
-#include "contourSegment/contourCurve.h"
-#include "contourSegment/jointSeam.h"
+#include "contourProcess/contourCurve.h"
+#include "contourProcess/jointSeam.h"
 #include <QDebug>
 
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent} {}

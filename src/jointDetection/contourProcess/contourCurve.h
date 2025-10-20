@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <cmath>
 
-#include "lineSegment.h"
+#include "lineSeg.h"
 #include "contourSegment.h"
 
 /**
@@ -59,7 +59,7 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
     std::vector<cv::Point2f> getSubpixelContours() const {return m_subpixelContour;}
     std::vector<std::vector<cv::Point>> getSegmentedPixelContours() const   {return m_segmentedPixelContours;}
     std::vector<cv::Point> getDeduplicatedPixelContour() const {return m_deduplicatedPixelContour;}
-    std::vector<LineSegment> getLineSegments() const {return m_lineSegments;}
+    std::vector<LineSeg> getLineSegments() const {return m_lineSegments;}
 
 
 private:
@@ -95,7 +95,7 @@ private:
     std::vector<cv::Point2f> m_cornerPoints;          // 角点位置
 
     // 直线拟合相关特征
-    std::vector<LineSegment> m_lineSegments;            // 分割后的各线段拟合特征
+    std::vector<LineSeg> m_lineSegments;            // 分割后的各线段拟合特征
 
     // 几何特征
     cv::Rect m_boundingRect;                           // 轮廓外接矩形

@@ -124,12 +124,13 @@ void JointView::updateDisplay() {
     if (!m_currentImage) return;
 
     // 在主线程中显示图像
-    ui->gv_image->displayImage(*m_currentImage, true);
+
     InteractiveDisplayManager* displayMgr = ui->gv_image->getDisplayManager();
     if (!displayMgr) return;
 
     InteractiveScene* scene = displayMgr->displayScene();
     if (!scene) return;
+    ui->gv_image->displayImage(*m_currentImage, true);
 
     // 根据checkbox状态绘制不同的内容
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
@@ -150,17 +151,13 @@ void JointView::updateDisplay() {
     if (m_showEndPoints && !m_cornerPoints.empty()) {
         scene->whenDrawPoints(m_cornerPoints);
     }
+    // @TODO:增加取消勾选时，删除相应轮廓的功能
 }
 
 // Checkbox槽函数实现
 void JointView::on_ckb_pixelContoursSquare_toggled(bool checked) {
     m_showPixelContoursSquare = checked;
     updateDisplay();
-}
-
-void JointView::on_ckb_pixelContoursSquare_checkStateChanged(const Qt::CheckState &arg1)
-{
-
 }
 
 void JointView::on_ckb_pixelContoursLine_toggled(bool checked) {

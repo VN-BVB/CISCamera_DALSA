@@ -5,7 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-// 利用多边形拟合算法实现轮廓分割
+// 轮廓分割类
 class ContourSegment
 {
 public:

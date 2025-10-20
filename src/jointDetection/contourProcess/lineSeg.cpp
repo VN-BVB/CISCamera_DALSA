@@ -1,15 +1,15 @@
-#include "lineSegment.h"
+#include "lineSeg.h"
 
 /******************************
- *********LineSegment*********
+ *********LineSeg*********
  ******************************/
-LineSegment::LineSegment(): m_length(0.0), m_angle(0.0) {}
+LineSeg::LineSeg(): m_length(0.0), m_angle(0.0) {}
 
 /**
 * @brief 从点集初始化线段特征
 * @param points 输入像素点集
 */
-void LineSegment::initializeFromPoints(const std::vector<cv::Point>& pixelPoints) {
+void LineSeg::initializeFromPoints(const std::vector<cv::Point>& pixelPoints) {
     m_pixelPoints = pixelPoints;
     calculateBasicFeatures();
     m_lineEquation = fitLine(m_pixelPoints);
@@ -19,7 +19,7 @@ void LineSegment::initializeFromPoints(const std::vector<cv::Point>& pixelPoints
 * @brief 从点集初始化线段特征
 * @param points 输入亚像素点集
 */
-void LineSegment::initializeFromPoints(const std::vector<cv::Point2f>& subpixelPoints) {
+void LineSeg::initializeFromPoints(const std::vector<cv::Point2f>& subpixelPoints) {
     m_subpixelPoints = subpixelPoints;
     calculateBasicFeatures();
     m_lineEquation = fitLine(m_subpixelPoints);
@@ -28,7 +28,7 @@ void LineSegment::initializeFromPoints(const std::vector<cv::Point2f>& subpixelP
 /**
 * @brief 计算基本几何特征
 */
-void LineSegment::calculateBasicFeatures() {
+void LineSeg::calculateBasicFeatures() {
     if (m_pixelPoints.empty()) return;
 
     // 计算起点和终点
@@ -51,7 +51,7 @@ void LineSegment::calculateBasicFeatures() {
 /**
 * @brief 清空所有特征数据
 */
-void LineSegment::clear() {
+void LineSeg::clear() {
     m_pixelPoints.clear();
     m_subpixelPoints.clear();
 
@@ -64,7 +64,7 @@ void LineSegment::clear() {
 * @brief 检查线段是否有效
 * @return 如果点集不为空且长度大于0则返回true
 */
-bool LineSegment::isValid() const
+bool LineSeg::isValid() const
 {
     return (m_lineEquation != cv::Vec4f{0,0,0,0});
 }
@@ -73,7 +73,7 @@ bool LineSegment::isValid() const
 * @brief 获取线段特征摘要信息
 * @return 特征摘要字符串
 */
-std::string LineSegment::getSummary() const {
+std::string LineSeg::getSummary() const {
     std::string summary;
     summary += "线段点数: " + std::to_string(m_pixelPoints.size()) + "\n";
     summary += "线段长度: " + std::to_string(m_length) + "\n";
@@ -83,7 +83,7 @@ std::string LineSegment::getSummary() const {
     return summary;
 }
 
-cv::Vec4f LineSegment::fitLine(const std::vector<cv::Point> &points)
+cv::Vec4f LineSeg::fitLine(const std::vector<cv::Point> &points)
 {
     if (points.empty()) {
         return cv::Vec4f(0, 0, 0, 0);
@@ -97,7 +97,7 @@ cv::Vec4f LineSegment::fitLine(const std::vector<cv::Point> &points)
     return lineParams;
 }
 
-cv::Vec4f LineSegment::fitLine(const std::vector<cv::Point2f> &points)
+cv::Vec4f LineSeg::fitLine(const std::vector<cv::Point2f> &points)
 {
     if (points.empty()) {
         return cv::Vec4f(0, 0, 0, 0);

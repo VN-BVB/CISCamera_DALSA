@@ -1,12 +1,10 @@
-#include "jointSeam.h"
-#include "src/jointDetection/imageTools.h"
+#include "edgeDetector.h"
 
-JointSeam::JointSeam(const cv::Mat &image) : m_image(image){
+EdgeDetector::EdgeDetector() {}
 
-}
 
 // // 改进Zernike亚像素偏移计算辅助函数
-// cv::Point2f ImageProcessWorker::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius)
+// cv::Point2f EdgeDetector::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius)
 // {
 //     // 提取边缘点邻域
 //     cv::Rect roi(cv::Point(std::max(0, int(edgePoint.x - radius)), std::max(0, int(edgePoint.y - radius))),
@@ -127,7 +125,7 @@ JointSeam::JointSeam(const cv::Mat &image) : m_image(image){
 // }
 
 // 原始Zernike亚像素偏移计算辅助函数
-cv::Point2f JointSeam::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius) {
+cv::Point2f EdgeDetector::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius) {
     // 检查边缘点是否在图像范围内
     if (edgePoint.x < 0 || edgePoint.x >= gray.cols || edgePoint.y < 0 || edgePoint.y >= gray.rows) {
         return edgePoint;
@@ -193,7 +191,7 @@ cv::Point2f JointSeam::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &e
     return edgePoint;  // 不满足条件时返回原坐标
 }
 
-std::vector<cv::Point2f> JointSeam::getSubpixelContourZernike(const cv::Mat &src, const std::vector<cv::Point> &contour) {
+std::vector<cv::Point2f> EdgeDetector::getSubpixelContourZernike(const cv::Mat &src, const std::vector<cv::Point> &contour) {
     cv::Mat gray;
     if (src.channels() > 1) {
         cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
@@ -216,7 +214,7 @@ std::vector<cv::Point2f> JointSeam::getSubpixelContourZernike(const cv::Mat &src
 }
 
 // Otsu算法自适应计算Canny阈值
-double JointSeam::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage) {
+double EdgeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage) {
     cv::Mat grayImage;
     if (srcImage.channels() > 1) {
         cv::cvtColor(srcImage, grayImage, cv::COLOR_BGR2GRAY);
@@ -265,65 +263,3 @@ double JointSeam::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage) {
     double TH = cv::threshold(nonMaxImage8U, thresholdedImage, 0, 255, cv::THRESH_OTSU);
     return TH;
 }
-
-void JointSeam::run() {
-    ImageTools imageTools;
-    cv::Mat grayImage;
-    if (m_image.channels() > 1) {
-        cv::cvtColor(m_image, grayImage, cv::COLOR_BGR2GRAY);
-    } else {
-        grayImage = m_image.clone();
-    }
-    cv::GaussianBlur(grayImage, grayImage, cv::Size(7, 7), 0, 0);
-    // 双阈值处理--根据Otsu算出的阈值确定为高阈值，取高阈值的一半记为低阈值
-    double TH = this->adaptiveCannyThresholdByOtsu(grayImage);
-    double TL = TH * 0.5;
-
-    cv::Mat edge;
-    cv::Canny(grayImage, edge, TL, TH);
-    cv::imwrite("E:/work/车门门环拼接/image/test/cropped_img_edge.bmp",  edge);
-
-    // 提取轮廓
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(edge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); // 轮廓近似方法设为保存所有点，也可以选择只保存端点，具体见源码注释
-    std::vector<std::vector<cv::Point>> filteredContours;
-    filteredContours = imageTools.filterContours(contours);
-    // 这里筛选出来的就是拼缝两侧的轮廓
-
-    // 轮廓信息整理
-    for (auto& contour : filteredContours) {
-        ContourCurve contourCurve;
-        contourCurve.initializePixelContour(contour);
-        std::vector<cv::Point2f> subpixelContour = getSubpixelContourZernike(grayImage, contourCurve.getPixelContour());
-        contourCurve.initializeSubpixelContour(subpixelContour);
-        m_contourCurves.push_back(contourCurve);
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

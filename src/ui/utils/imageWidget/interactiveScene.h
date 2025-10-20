@@ -53,6 +53,7 @@ public slots:
     void whenDrawLines(const std::vector<cv::Vec4f> &lines);
     // 绘制点集
     void whenDrawPoints(const std::vector<cv::Point2f> &Points);
+    // @TODO:将轮廓显示全整理成图元类
 
 protected:
     // 设置显示图像图元

@@ -204,7 +204,7 @@ void ContourCurve::calculateLines()
 
     for (auto contour : m_segmentedSubpixelContours)
     {
-        LineSegment ls;
+        LineSeg ls;
         ls.initializeFromPoints(contour);
         m_lineSegments.push_back(ls);
     }

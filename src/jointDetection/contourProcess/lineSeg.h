@@ -7,10 +7,10 @@
 /**
  * @brief 线段特征，存储一条线段的所有特征
  */
-class LineSegment
+class LineSeg
 {
 public:
-    LineSegment();
+    LineSeg();
     void initializeFromPoints(const std::vector<cv::Point>& points);
     void initializeFromPoints(const std::vector<cv::Point2f>& points);
     void clear();

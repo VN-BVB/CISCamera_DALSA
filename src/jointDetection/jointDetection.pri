@@ -9,5 +9,5 @@ SOURCES += \
     $$PWD/imageTools.cpp
 
 include(./edgeDetection/edgeDetection.pri)
-include(./contourSegment/contourSegment.pri)
+include(./contourProcess/contourProcess.pri)
 
