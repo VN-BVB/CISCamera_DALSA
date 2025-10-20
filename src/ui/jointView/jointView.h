@@ -1,5 +1,5 @@
-#ifndef IMAGEVIEWWINDOW_H
-#define IMAGEVIEWWINDOW_H
+#ifndef JOINTVIEW_H
+#define JOINTVIEW_H
 
 #include <QWidget>
 #include <QGraphicsView>
@@ -14,16 +14,16 @@
 #include "src/ui/utils/imageWidget/frmVisionDisplay.h"
 
 namespace Ui {
-class ImageViewWindow;
+class JointView;
 }
 
-class ImageViewWindow : public QWidget
+class JointView : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ImageViewWindow(QWidget *parent = nullptr);
-    ~ImageViewWindow();
+    explicit JointView(QWidget *parent = nullptr);
+    ~JointView();
 
 signals:
     void startImageRead(const QString &path);
@@ -40,7 +40,7 @@ private slots:
     void handleError(const QString &error);
 
 private:
-    Ui::ImageViewWindow *ui;
+    Ui::JointView *ui;
     QThread readThread;
     QThread processThread;
     ImageReadWorker *readWorker;
@@ -50,4 +50,4 @@ private:
     std::chrono::high_resolution_clock::time_point startTime;   // 图像处理开始时间
 };
 
-#endif // IMAGEVIEWWINDOW_H
+#endif // JOINTVIEW_H

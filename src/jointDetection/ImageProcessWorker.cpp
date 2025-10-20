@@ -1,5 +1,4 @@
 #include "ImageProcessWorker.h"
-#include "contourSegment/contourSegment.h"
 #include "imageTools.h"
 #include "contourSegment/contourCurve.h"
 #include "contourSegment/jointSeam.h"
@@ -19,7 +18,7 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         JointSeam jointSeam = JointSeam{croppedImg};
         jointSeam.run();
 
-        // @TODO:将轮廓存入contour类中，再拟合轮廓，最后在图上画出角点和拟合直线
+        // @TODO:在图上画出角点和拟合直线
         std::vector<ContourCurve> contourCurves = jointSeam.getContourCurves();
         std::vector<std::vector<cv::Point2f>> subpixelContours;
         subpixelContours.push_back(contourCurves[1].getSubpixelContours());

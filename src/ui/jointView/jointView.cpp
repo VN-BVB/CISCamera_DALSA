@@ -1,5 +1,5 @@
-#include "ImageViewWindow.h"
-#include "ui_ImageViewWindow.h"
+#include "jointView.h"
+#include "ui_jointView.h"
 #include "src/ui/utils/imageWidget/interactiveScene.h"
 #include "src/ui/utils/imageWidget/interactiveDisplayManager.h"
 
@@ -8,9 +8,9 @@
 #include <QGraphicsPathItem>
 #include <QPainterPath>
 
-ImageViewWindow::ImageViewWindow(QWidget *parent)
+JointView::JointView(QWidget *parent)
     : QWidget(parent), 
-    ui(new Ui::ImageViewWindow),
+    ui(new Ui::JointView),
     readWorker(new ImageReadWorker),
     processWorker(new ImageProcessWorker)
 {
@@ -25,24 +25,24 @@ ImageViewWindow::ImageViewWindow(QWidget *parent)
     // 读取线程
     readWorker->moveToThread(&readThread);
     connect(&readThread, &QThread::finished, readWorker, &QObject::deleteLater);
-    connect(this, &ImageViewWindow::startImageRead, readWorker, &ImageReadWorker::readImage);
-    connect(readWorker, &ImageReadWorker::imageRead, this, &ImageViewWindow::handleImageRead);
-    connect(readWorker, &ImageReadWorker::errorOccurred, this, &ImageViewWindow::handleError);
+    connect(this, &JointView::startImageRead, readWorker, &ImageReadWorker::readImage);
+    connect(readWorker, &ImageReadWorker::imageRead, this, &JointView::handleImageRead);
+    connect(readWorker, &ImageReadWorker::errorOccurred, this, &JointView::handleError);
 
     // 处理线程
     processWorker->moveToThread(&processThread);
     connect(&processThread, &QThread::finished, processWorker, &QObject::deleteLater);
-    connect(this, &ImageViewWindow::startImageProcess, processWorker, &ImageProcessWorker::processImage);
-    connect(processWorker, &ImageProcessWorker::imageProcessed, this, &ImageViewWindow::handleImageProcessed);
-    connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &ImageViewWindow::handleImageProcessedCannyDevenay);
-    connect(processWorker, &ImageProcessWorker::errorOccurred, this, &ImageViewWindow::handleError);
+    connect(this, &JointView::startImageProcess, processWorker, &ImageProcessWorker::processImage);
+    connect(processWorker, &ImageProcessWorker::imageProcessed, this, &JointView::handleImageProcessed);
+    connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &JointView::handleImageProcessedCannyDevenay);
+    connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
 
     // 启动线程
     readThread.start();
     processThread.start();
 }
 
-ImageViewWindow::~ImageViewWindow()
+JointView::~JointView()
 {
     readThread.quit();
     readThread.wait();
@@ -51,7 +51,7 @@ ImageViewWindow::~ImageViewWindow()
     delete ui;
 }
 
-void ImageViewWindow::on_pb_open_clicked()
+void JointView::on_pb_open_clicked()
 {
     startTime = std::chrono::high_resolution_clock::now();
 
@@ -63,13 +63,13 @@ void ImageViewWindow::on_pb_open_clicked()
     emit startImageRead(path);
 }
 
-void ImageViewWindow::handleImageRead(std::shared_ptr<cv::Mat> image)
+void JointView::handleImageRead(std::shared_ptr<cv::Mat> image)
 {
     emit startImageProcess(image);
 }
 
 // Zernike矩对应槽函数
-void ImageViewWindow::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
+void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
                                            std::vector<std::vector<cv::Point2f>> subpixelContours,
                                            std::vector<std::vector<cv::Point>> pixelContours,
                                            std::vector<cv::Vec4f> lines)
@@ -92,12 +92,12 @@ void ImageViewWindow::handleImageProcessed(std::shared_ptr<cv::Mat> processedIma
 }
 
 // CannyDevenay算法对应槽函数
-void ImageViewWindow::handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves)
+void JointView::handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves)
 {
 
 }
 
-void ImageViewWindow::handleError(const QString &error)
+void JointView::handleError(const QString &error)
 {
     qDebug() << "错误:" << error;
 }
