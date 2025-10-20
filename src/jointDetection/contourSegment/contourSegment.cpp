@@ -35,8 +35,8 @@ void ContourSegment::lineRansac(const std::vector<cv::Point> &points,
     auto n = points.size();  // 获取点集大小
     for(int iter = 0; iter < iterations; iter++){
         // 随机选择两个不同的点
-        auto i1 = rng.uniform(0, n-1);
-        auto i2 = rng.uniform(0, n-1);
+        auto i1 = rng.uniform(0, static_cast<int>(n-1));
+        auto i2 = rng.uniform(0, static_cast<int>(n-1));
         if (i1 == i2)
             continue;
 
@@ -61,7 +61,8 @@ void ContourSegment::lineRansac(const std::vector<cv::Point> &points,
 
         // 如果当前拟合得分更高，则更新最优结果
         if(score > bestScore) {
-            line = cv::Vec4f(dp.x, dp.y, p1.x, p1.y);
+            line = cv::Vec4f(static_cast<float>(dp.x), static_cast<float>(dp.y),
+                             static_cast<float>(p1.x), static_cast<float>(p1.y));
             bestScore = score;
             inlierPoints = inliers;//更新内点
         }
@@ -92,8 +93,8 @@ void ContourSegment::lineRansac(const std::vector<cv::Point2f> &points,
     auto n = points.size();  // 获取点集大小
     for(int iter = 0; iter < iterations; iter++){
         // 随机选择两个不同的点
-        auto i1 = rng.uniform(0, n-1);
-        auto i2 = rng.uniform(0, n-1);
+        auto i1 = rng.uniform(0, static_cast<int>(n-1));
+        auto i2 = rng.uniform(0, static_cast<int>(n-1));
         if (i1 == i2)
             continue;
 
@@ -118,7 +119,8 @@ void ContourSegment::lineRansac(const std::vector<cv::Point2f> &points,
 
         // 如果当前拟合得分更高，则更新最优结果
         if(score > bestScore) {
-            line = cv::Vec4f(dp.x, dp.y, p1.x, p1.y);
+            line = cv::Vec4f(static_cast<float>(dp.x), static_cast<float>(dp.y),
+                             static_cast<float>(p1.x), static_cast<float>(p1.y));
             bestScore = score;
             inlierPoints = inliers;//更新内点
         }

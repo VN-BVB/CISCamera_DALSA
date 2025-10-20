@@ -56,8 +56,11 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
     std::string getSummary() const;
     OpeningDirection getOpeningDirection() const {return m_openingDirection;}
     std::vector<cv::Point> getPixelContour() const  {return m_pixelContour;}
+    std::vector<cv::Point2f> getSubpixelContours() const {return m_subpixelContour;}
     std::vector<std::vector<cv::Point>> getSegmentedPixelContours() const   {return m_segmentedPixelContours;}
     std::vector<cv::Point> getDeduplicatedPixelContour() const {return m_deduplicatedPixelContour;}
+    std::vector<LineSegment> getLineSegments() const {return m_lineSegments;}
+
 
 private:
     void calculateBasicFeatures();
@@ -72,9 +75,11 @@ private:
     OpeningDirection calculateOpeningDirectionImpl(const std::vector<PointType>& contour) const;
     OpeningDirection calculateOpeningDirection();
 
-    void segment();
-
     void calculateLines();
+    cv::Point2f calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2);
+    void calculateCornerPoints();
+
+    void segment();
 
 private:
     // 基本轮廓信息
@@ -90,7 +95,7 @@ private:
     std::vector<cv::Point2f> m_cornerPoints;          // 角点位置
 
     // 直线拟合相关特征
-    std::vector<LineSegment> m_lineSegments;
+    std::vector<LineSegment> m_lineSegments;            // 分割后的各线段拟合特征
 
     // 几何特征
     cv::Rect m_boundingRect;                           // 轮廓外接矩形

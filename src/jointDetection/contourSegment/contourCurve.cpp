@@ -1,4 +1,5 @@
 #include "contourCurve.h"
+#include <QDebug>
 
 /******************************
  *********ContourCurve*******
@@ -13,7 +14,7 @@ void ContourCurve::initializePixelContour(const std::vector<cv::Point>& contour)
     m_pixelContour = contour;
     m_deduplicatedPixelContour = removeDuplicateContourPoints(m_pixelContour);
     calculateBasicFeatures();
-    calculateOpeningDirection();
+    m_openingDirection = calculateOpeningDirection();
     segment();
 }
 
@@ -28,6 +29,8 @@ void ContourCurve::initializeSubpixelContour(const std::vector<cv::Point2f>& con
     calculateBasicFeatures();
     m_openingDirection = calculateOpeningDirection();
     segment();
+    calculateLines();
+    calculateCornerPoints();
 }
 
 /**
@@ -207,11 +210,53 @@ void ContourCurve::calculateLines()
     }
 }
 
+// 计算两条直线的交点
+cv::Point2f ContourCurve::calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2) {
+    // 提取直线参数
+    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
+    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
 
+    // 检查两条直线是否平行
+    float cross = vx1 * vy2 - vy1 * vx2;
+    if (std::abs(cross) < 1e-10) {
+        // 直线平行或重合，返回无效点
+        qDebug() << "警告：两条直线平行或重合，无法计算交点";
+        return cv::Point2f(-1, -1);
+    }
 
+    // 使用参数方程求解交点
+    // 直线1: (x, y) = (x01, y01) + t1 * (vx1, vy1)
+    // 直线2: (x, y) = (x02, y02) + t2 * (vx2, vy2)
 
+    // 解方程组:
+    // x01 + t1 * vx1 = x02 + t2 * vx2
+    // y01 + t1 * vy1 = y02 + t2 * vy2
 
+    // 整理得:
+    // t1 * vx1 - t2 * vx2 = x02 - x01
+    // t1 * vy1 - t2 * vy2 = y02 - y01
 
+    float dx = x02 - x01;
+    float dy = y02 - y01;
+
+    // 使用克莱姆法则求解t1
+    float t1 = (dx * vy2 - dy * vx2) / cross;
+
+    // 计算交点坐标
+    float intersectX = x01 + t1 * vx1;
+    float intersectY = y01 + t1 * vy1;
+
+    return cv::Point2f(intersectX, intersectY);
+}
+
+void ContourCurve::calculateCornerPoints()
+{
+    if (m_lineSegments.empty()) return;
+    cv::Point2f cornerPoint1 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[1].getLineEquation());
+    m_cornerPoints.push_back(cornerPoint1);
+    cv::Point2f cornerPoint2 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[2].getLineEquation());
+    m_cornerPoints.push_back(cornerPoint2);
+}
 
 
 
