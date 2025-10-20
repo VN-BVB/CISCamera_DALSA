@@ -39,6 +39,15 @@ private slots:
     void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
 
+    void updateDisplay();
+    // Checkbox槽函数
+    void on_ckb_pixelContoursSquare_toggled(bool checked);
+    void on_ckb_pixelContoursSquare_checkStateChanged(const Qt::CheckState &arg1);
+    void on_ckb_pixelContoursLine_toggled(bool checked);
+    void on_ckb_subpixelContours_toggled(bool checked);
+    void on_ckb_fitlines_toggled(bool checked);
+    void on_ckb_endPoints_toggled(bool checked);
+
 private:
     Ui::JointView *ui;
     QThread readThread;
@@ -48,6 +57,20 @@ private:
 
     // @TODO:使用日志记录每个步骤处理时间
     std::chrono::high_resolution_clock::time_point startTime;   // 图像处理开始时间
+
+    // 存储当前显示的数据
+    std::shared_ptr<cv::Mat> m_currentImage;
+    std::vector<std::vector<cv::Point2f>> m_subpixelContours;
+    std::vector<std::vector<cv::Point>> m_pixelContours;
+    std::vector<cv::Vec4f> m_fitLines;
+    std::vector<cv::Point2f> m_cornerPoints;
+
+    // 显示控制标志
+    bool m_showPixelContoursSquare;
+    bool m_showPixelContoursLine;
+    bool m_showSubpixelContours;
+    bool m_showFitLines;
+    bool m_showEndPoints;
 };
 
 #endif // JOINTVIEW_H

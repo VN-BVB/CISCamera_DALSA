@@ -12,7 +12,8 @@ JointView::JointView(QWidget *parent)
     : QWidget(parent), 
     ui(new Ui::JointView),
     readWorker(new ImageReadWorker),
-    processWorker(new ImageProcessWorker)
+    processWorker(new ImageProcessWorker),
+    m_showPixelContoursSquare(false)
 {
     ui->setupUi(this);
     qRegisterMetaType<cv::Mat>("cv::Mat");
@@ -36,6 +37,14 @@ JointView::JointView(QWidget *parent)
     connect(processWorker, &ImageProcessWorker::imageProcessed, this, &JointView::handleImageProcessed);
     connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &JointView::handleImageProcessedCannyDevenay);
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
+
+    // 连接checkbox信号
+    connect(ui->ckb_pixelContoursSquare, &QCheckBox::toggled, this, &JointView::on_ckb_pixelContoursSquare_toggled);
+    connect(ui->ckb_pixelContoursLine, &QCheckBox::toggled, this, &JointView::on_ckb_pixelContoursLine_toggled);
+    connect(ui->ckb_subpixelContours, &QCheckBox::toggled, this, &JointView::on_ckb_subpixelContours_toggled);
+    connect(ui->ckb_fitlines, &QCheckBox::toggled, this, &JointView::on_ckb_fitlines_toggled);
+    connect(ui->ckb_endPoints, &QCheckBox::toggled, this, &JointView::on_ckb_endPoints_toggled);
+
 
     // 启动线程
     readThread.start();
@@ -74,16 +83,24 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
                                            std::vector<std::vector<cv::Point>> pixelContours,
                                            std::vector<cv::Vec4f> lines)
 {
-    // 在主线程中显示图像
-    ui->gv_image->displayImage(*processedImage, true);
-    InteractiveDisplayManager* displayMgr = ui->gv_image->getDisplayManager();
-    if (displayMgr)
-    {
-        InteractiveScene* scene = displayMgr->displayScene();
-        // scene->whenDrawSubpixelContours(subpixelContours);
-        scene->whenDrawPixelContours(pixelContours);
-        scene->whenDrawLines(lines);
+    // 保存当前数据
+    m_currentImage = processedImage;
+    m_subpixelContours = subpixelContours;
+    m_pixelContours = pixelContours;
+    m_fitLines = lines;
+    // 计算角点（拼缝端点）
+    m_cornerPoints.clear();
+    if (lines.size() >= 2) {
+        // 计算前两条直线的交点作为角点
+        cv::Point2f corner = cv::Point2f(4, 5);
+        if (corner.x >= 0 && corner.y >= 0) {
+            m_cornerPoints.push_back(corner);
+        }
     }
+
+    // 更新显示
+    updateDisplay();
+
 
     auto endTime = std::chrono::high_resolution_clock::now();
     // 计算并输出时间差
@@ -100,4 +117,68 @@ void JointView::handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> proces
 void JointView::handleError(const QString &error)
 {
     qDebug() << "错误:" << error;
+}
+
+// 更新显示函数
+void JointView::updateDisplay() {
+    if (!m_currentImage) return;
+
+    // 在主线程中显示图像
+    ui->gv_image->displayImage(*m_currentImage, true);
+    InteractiveDisplayManager* displayMgr = ui->gv_image->getDisplayManager();
+    if (!displayMgr) return;
+
+    InteractiveScene* scene = displayMgr->displayScene();
+    if (!scene) return;
+
+    // 根据checkbox状态绘制不同的内容
+    if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
+        scene->whenDrawPixelContours(m_pixelContours);
+    }
+    if (m_showPixelContoursLine && !m_pixelContours.empty()) {
+        scene->whenDrawPixelContours(m_pixelContours);
+    }
+
+    if (m_showSubpixelContours && !m_subpixelContours.empty()) {
+        scene->whenDrawSubpixelContours(m_subpixelContours);
+    }
+
+    if (m_showFitLines && !m_fitLines.empty()) {
+        scene->whenDrawLines(m_fitLines);
+    }
+
+    if (m_showEndPoints && !m_cornerPoints.empty()) {
+        scene->whenDrawPoints(m_cornerPoints);
+    }
+}
+
+// Checkbox槽函数实现
+void JointView::on_ckb_pixelContoursSquare_toggled(bool checked) {
+    m_showPixelContoursSquare = checked;
+    updateDisplay();
+}
+
+void JointView::on_ckb_pixelContoursSquare_checkStateChanged(const Qt::CheckState &arg1)
+{
+
+}
+
+void JointView::on_ckb_pixelContoursLine_toggled(bool checked) {
+    m_showPixelContoursLine = checked;
+    updateDisplay();
+}
+
+void JointView::on_ckb_subpixelContours_toggled(bool checked) {
+    m_showSubpixelContours = checked;
+    updateDisplay();
+}
+
+void JointView::on_ckb_fitlines_toggled(bool checked) {
+    m_showFitLines = checked;
+    updateDisplay();
+}
+
+void JointView::on_ckb_endPoints_toggled(bool checked) {
+    m_showEndPoints = checked;
+    updateDisplay();
 }

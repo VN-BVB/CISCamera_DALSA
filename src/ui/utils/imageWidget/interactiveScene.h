@@ -50,7 +50,9 @@ public slots:
     // 清除轮廓
     void whenClearContours();
     // 绘制多条直线
-    void whenDrawLines(const std::vector<cv::Vec4f> lines);
+    void whenDrawLines(const std::vector<cv::Vec4f> &lines);
+    // 绘制点集
+    void whenDrawPoints(const std::vector<cv::Point2f> &Points);
 
 protected:
     // 设置显示图像图元
