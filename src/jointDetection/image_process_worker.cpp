@@ -4,6 +4,8 @@
 #include "contourProcess/joint_seam.h"
 #include <QDebug>
 
+#include "src/test/test_curve_seg.cpp"
+
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent} {}
 
 
@@ -17,6 +19,7 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
 
         JointSeam jointSeam = JointSeam{croppedImg};
         jointSeam.run();
+
 
         // @TODO:在图上画出角点和拟合直线
         std::vector<ContourCurve> contourCurves = jointSeam.getContourCurves();

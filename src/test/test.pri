@@ -7,6 +7,7 @@ HEADERS += \
 
 
 SOURCES += \
+    $$PWD/test_curve_seg.cpp \
     $$PWD/test_frmVisionDisplay.cpp \
     $$PWD/test_tiny_spline.cpp
 

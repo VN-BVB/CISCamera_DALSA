@@ -31,6 +31,7 @@ void ContourCurve::initializeSubpixelContour(const std::vector<cv::Point2f>& con
     segment();
     calculateLines();
     calculateCornerPoints();
+    calculateBSplines();
 }
 
 /**
@@ -258,7 +259,15 @@ void ContourCurve::calculateCornerPoints()
     m_cornerPoints.push_back(cornerPoint2);
 }
 
-
+// 计算拟合的B样条曲线
+void ContourCurve::calculateBSplines() {
+    for (auto& contour : m_segmentedSubpixelContours) {
+        CurveSeg curve;
+        curve.initializeFromPoints(contour);
+        curve.fitSplineCurve();
+        m_curveSegments.push_back(curve);
+    }
+}
 
 
 

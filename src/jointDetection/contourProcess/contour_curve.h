@@ -10,6 +10,7 @@
 
 #include "line_seg.h"
 #include "contour_segment.h"
+#include "curve_seg.h"
 
 /**
  * @brief 开口方向枚举
@@ -63,21 +64,30 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
 
 
 private:
+    // 计算基本特征
     void calculateBasicFeatures();
     std::string openingDirectionToString(OpeningDirection direction) const;
 
+    // 去重
     template<typename PointType>
     std::vector<PointType> removeDuplicateContourPointsImpl(const std::vector<PointType>& contour) const;
     std::vector<cv::Point> removeDuplicateContourPoints(const std::vector<cv::Point> &contour);
     std::vector<cv::Point2f> removeDuplicateContourPoints(const std::vector<cv::Point2f>& contour);
 
+    // 计算开口方向
     template<typename PointType>
     OpeningDirection calculateOpeningDirectionImpl(const std::vector<PointType>& contour) const;
     OpeningDirection calculateOpeningDirection();
 
+    // 计算拟合直线
     void calculateLines();
+    // 计算两条直线的交点
     cv::Point2f calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2);
+    // 计算本条拼缝轮廓的缝隙段的端点
     void calculateCornerPoints();
+
+    // 计算拟合的B样条曲线
+    void calculateBSplines();
 
     void segment();
 
@@ -96,6 +106,8 @@ private:
 
     // 直线拟合相关特征
     std::vector<LineSeg> m_lineSegments;            // 分割后的各线段拟合特征
+    // 曲线拟合相关特征
+    std::vector<CurveSeg> m_curveSegments;          // 分割后的各曲线段拟合特征
 
     // 几何特征
     cv::Rect m_boundingRect;                           // 轮廓外接矩形

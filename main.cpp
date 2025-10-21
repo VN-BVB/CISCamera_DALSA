@@ -13,16 +13,12 @@
 #include "src/ui/jointView/joint_view.h"
 #include "src/test/test_frmVisionDisplay.h"
 
-#include "src/test/test_tiny_spline.h"
-
-    void
-    initPlog(); // 初始化日志类
+void initPlog(); // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     initPlog();                         // 初始化日志类
-    TinySplineqqq ts;
-    ts.runcv();
+
     JointView w;
     w.show();
 
