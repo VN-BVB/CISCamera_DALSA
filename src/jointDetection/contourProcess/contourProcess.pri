@@ -1,13 +1,15 @@
 HEADERS += \
-    $$PWD/contourCurve.h \
-    $$PWD/contourSegment.h \
-    $$PWD/jointSeam.h \
-    $$PWD/lineSeg.h
+    $$PWD/contour_curve.h \
+    $$PWD/contour_segment.h \
+    $$PWD/curve_seg.h \
+    $$PWD/joint_seam.h \
+    $$PWD/line_seg.h
 
 
 SOURCES += \
-    $$PWD/contourCurve.cpp \
-    $$PWD/contourSegment.cpp \
-    $$PWD/jointSeam.cpp \
-    $$PWD/lineSeg.cpp
+    $$PWD/contour_curve.cpp \
+    $$PWD/contour_segment.cpp \
+    $$PWD/curve_seg.cpp \
+    $$PWD/joint_seam.cpp \
+    $$PWD/line_seg.cpp
 

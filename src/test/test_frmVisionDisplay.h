@@ -2,7 +2,7 @@
 #define TEST_FRMVISIONDISPLAY_H
 
 #include <QWidget>
-#include "../ui/utils/imageWidget/frmVisionDisplay.h"
+#include "../ui/utils/imageWidget/frm_vision_display.h"
 
 namespace Ui {
 class test_FrmVisionDisplay;
