@@ -13,17 +13,17 @@
 #include "src/ui/jointView/jointView.h"
 #include "src/test/test_frmVisionDisplay.h"
 
+#include "src/test/test_tiny_spline.h"
+
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     initPlog();                         // 初始化日志类
+    TinySplineqqq ts;
+    ts.run();
     JointView w;
     w.show();
-    // test_FrmVisionDisplay t;
-    // t.show();
-    // QString imagePath = "E:/work/车门门环拼接/image/正面打光/Splice_20251017_153356916.png";
-    // t.displayImage(imagePath);
 
     return a.exec();
 }

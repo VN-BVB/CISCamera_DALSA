@@ -22,4 +22,12 @@ INCLUDEPATH += ./3rdParty/plog/include
 # ------------------LIBMODBUS库------------------
 INCLUDEPATH +=./3rdparty/libmodbus/include
 LIBS +=./3rdparty/libmodbus/X64/*.lib
+# ------------------tinyspline库------------------
+CONFIG(debug, debug|release) {
+    INCLUDEPATH += $$PWD/tinyspline/debug/include
+    LIBS += -L$$PWD/tinyspline/debug/lib64/ -ltinysplinecxx
+} else:CONFIG(release, debug|release) {
+    INCLUDEPATH += $$PWD/tinyspline/release/include
+    LIBS += -L$$PWD/tinyspline/release/lib64/ -ltinysplinecxx
+}
 
