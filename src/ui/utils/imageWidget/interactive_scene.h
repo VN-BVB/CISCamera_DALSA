@@ -5,6 +5,9 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <QtCharts/QChartView>
+#include <QtCharts/QSplineSeries>
+#include <QtCharts/QChart>
 
 class InteractiveView;
 class InteractiveImageItem;
@@ -53,6 +56,9 @@ public slots:
     void whenDrawLines(const std::vector<cv::Vec4f> &lines);
     // 绘制点集
     void whenDrawPoints(const std::vector<cv::Point2f> &Points);
+    // 绘制单条B样条曲线
+    void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints, int degree = 3, int segments = 100);
+
     // @TODO:将轮廓显示全整理成图元类
 
 protected:
@@ -75,6 +81,7 @@ protected:
     // 图像显示图元
     InteractiveImageItem *m_displayImageItem = nullptr;
 protected:
+    QList<QtCharts::QChartView*> m_chartViews; // 存储图表视图
     const QScopedPointer<InteractiveScenePrivate> d_ptr;    // Qt的智能指针
 private:
     Q_DECLARE_PRIVATE(InteractiveScene) // PIMPL设计模式，将类的实现细节隐藏在一个单独的私有类中，隐藏实现细节，加快编译速度

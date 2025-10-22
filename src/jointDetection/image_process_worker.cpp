@@ -25,6 +25,30 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         std::vector<ContourCurve> contourCurves = jointSeam.getContourCurves();
         std::vector<std::vector<cv::Point2f>> subpixelContours;
         subpixelContours.push_back(contourCurves[1].getSubpixelContours());
+
+        std::vector<cv::Point2f> fitPoints0;
+        std::vector<std::vector<cv::Point2f>> segments0;
+        segments0 = contourCurves[0].getSegmentedSubpixelContours();
+        fitPoints0 = segments0[1];
+        std::vector<cv::Point2f> fitPoints1;
+        std::vector<std::vector<cv::Point2f>> segments1;
+        segments1 = contourCurves[1].getSegmentedSubpixelContours();
+        fitPoints1 = segments1[1];
+        // 将fitPoints0和fitPoints1合并成一个vector
+        std::vector<cv::Point2f> fitPoints;
+        fitPoints.reserve(fitPoints0.size() + fitPoints1.size()); // 预分配内存以提高效率
+        fitPoints.insert(fitPoints.end(), fitPoints0.begin(), fitPoints0.end());
+        fitPoints.insert(fitPoints.end(), fitPoints1.begin(), fitPoints1.end());
+
+        // 绘制单条B样条曲线
+        std::vector<cv::Point2f> controlPoints = {
+            cv::Point2f(100, 100), cv::Point2f(200, 50),
+            cv::Point2f(300, 150), cv::Point2f(400, 100),
+            cv::Point2f(500, 200), cv::Point2f(600, 250)
+        };
+
+        testCurveSeg(contourCurves[1].getSubpixelContours());
+
         std::vector<std::vector<cv::Point>> pixelContour;
         pixelContour.push_back(contourCurves[1].getPixelContour());
         std::vector<cv::Vec4f> fitlines;

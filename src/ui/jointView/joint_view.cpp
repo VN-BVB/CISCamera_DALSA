@@ -132,6 +132,14 @@ void JointView::updateDisplay() {
     if (!scene) return;
     ui->gv_image->displayImage(*m_currentImage, true);
 
+    // 绘制单条B样条曲线
+    std::vector<cv::Point2f> controlPoints = {
+        cv::Point2f(100, 100), cv::Point2f(200, 50),
+        cv::Point2f(300, 150), cv::Point2f(400, 100),
+        cv::Point2f(500, 200), cv::Point2f(600, 250)
+    };
+    scene->whenDrawSingleBSplineCurve(controlPoints);
+
     // 根据checkbox状态绘制不同的内容
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
         scene->whenDrawPixelContours(m_pixelContours);

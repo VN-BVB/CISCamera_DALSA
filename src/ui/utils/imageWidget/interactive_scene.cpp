@@ -3,6 +3,7 @@
 #include "interactive_image_item.h"
 
 #include <QGraphicsItem>
+#include <QGraphicsProxyWidget>
 
 /*******************************/
 // [InteractiveScenePrivate]
@@ -258,7 +259,56 @@ void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points)
     }
 }
 
+// B样条曲线绘制函数实现
+void InteractiveScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints, int degree, int segments)
+{
+    if (controlPoints.size() < 2) {
+        return;
+    }
 
+    // 创建样条序列
+    QtCharts::QSplineSeries *series = new QtCharts::QSplineSeries();
+    series->setName("B样条曲线");
+
+    // 添加控制点到序列
+    for (const auto& point : controlPoints) {
+        series->append(point.x, point.y);
+    }
+
+    // 创建图表
+    QtCharts::QChart *chart = new QtCharts::QChart();
+    chart->legend()->hide();
+    chart->addSeries(series);
+    chart->createDefaultAxes();
+    chart->setBackgroundVisible(false); // 透明背景
+
+    // 设置曲线样式
+    QPen pen(QColor(255, 0, 255)); // 洋红色
+    pen.setWidth(2);
+    series->setPen(pen);
+
+    // 创建图表视图
+    QtCharts::QChartView *chartView = new QtCharts::QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->setStyleSheet("background: transparent;"); // 透明背景
+
+    // 将图表视图添加到场景
+    QGraphicsProxyWidget *proxy = this->addWidget(chartView);
+    proxy->setZValue(12); // 设置Z值
+
+    // 存储图表视图以便后续清除
+    m_chartViews.append(chartView);
+
+    // 绘制控制点
+    for (const auto& point : controlPoints) {
+        QGraphicsEllipseItem *controlPointItem = new QGraphicsEllipseItem(
+            point.x - 2, point.y - 2, 4, 4);
+        controlPointItem->setBrush(QBrush(QColor(0, 255, 255))); // 青色控制点
+        controlPointItem->setPen(QPen(Qt::black));
+        controlPointItem->setZValue(13); // 比曲线更高
+        this->addItem(controlPointItem);
+    }
+}
 
 
 

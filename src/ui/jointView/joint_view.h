@@ -8,6 +8,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <QThread>
 
+
 #include "src/jointDetection/image_read_worker.h"
 #include "src/jointDetection/image_process_worker.h"
 #include "src/jointDetection/edgeDetection/canny_devernay.h"

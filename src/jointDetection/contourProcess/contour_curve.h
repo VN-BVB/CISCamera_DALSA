@@ -59,6 +59,7 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
     std::vector<cv::Point> getPixelContour() const  {return m_pixelContour;}
     std::vector<cv::Point2f> getSubpixelContours() const {return m_subpixelContour;}
     std::vector<std::vector<cv::Point>> getSegmentedPixelContours() const   {return m_segmentedPixelContours;}
+    std::vector<std::vector<cv::Point2f>> getSegmentedSubpixelContours() const   {return m_segmentedSubpixelContours;}
     std::vector<cv::Point> getDeduplicatedPixelContour() const {return m_deduplicatedPixelContour;}
     std::vector<LineSeg> getLineSegments() const {return m_lineSegments;}
 
@@ -79,6 +80,18 @@ private:
     OpeningDirection calculateOpeningDirectionImpl(const std::vector<PointType>& contour) const;
     OpeningDirection calculateOpeningDirection();
 
+    // 计算起始点
+    cv::Point2f calculateStartPointByOpeningDirection(OpeningDirection openingDirection,
+                                                      const std::vector<cv::Point2f> &contour);
+    // 计算点在轮廓中的索引
+    int calculatePointIndex(const cv::Point2f& point,
+                            const std::vector<cv::Point2f>& contour,
+                            float tolerance = 1e-5f);
+    // 根据最邻近距离排序
+    std::vector<cv::Point2f> sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int firstPointIdx);
+    // 获得逆时针排序的单条轮廓
+    void sortContour();
+
     // 计算拟合直线
     void calculateLines();
     // 计算两条直线的交点
@@ -89,7 +102,10 @@ private:
     // 计算拟合的B样条曲线
     void calculateBSplines();
 
+    // 分割轮廓
     void segment();
+    void segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentContours);
+
 
 private:
     // 基本轮廓信息
@@ -98,6 +114,8 @@ private:
     OpeningDirection m_openingDirection;              // 开口方向
     std::vector<cv::Point> m_deduplicatedPixelContour;        // 去重后的像素级点集：由于扫描C字型轮廓时，算法会来回扫描成闭合轮廓，因此会有很多重复点
     std::vector<cv::Point2f> m_deduplicatedSubpixelContour;   // 去重后的亚像素级点集
+    cv::Point2f m_startPoint;                                 // 逆时针排序轮廓的起始点
+    std::vector<cv::Point2f> m_sortedSubpixelContour;         // 排序后的亚像素级点集（按最近邻顺序）
 
     // 轮廓分割相关特征
     std::vector<std::vector<cv::Point>> m_segmentedPixelContours;  // 分割后的轮廓段-像素级
@@ -179,19 +197,19 @@ OpeningDirection ContourCurve::calculateOpeningDirectionImpl(const std::vector<P
 
     for (const auto& point : contour) {
         // 检查正上方（x坐标相同，y坐标更小）
-        if (std::abs(point.x - avgX) < 1e-5 && point.y < avgY) {
+        if (std::abs(point.x - avgX) < 1 && point.y < avgY) {
             hasUp = true;
         }
         // 检查正下方（x坐标相同，y坐标更大）
-        if (std::abs(point.x - avgX) < 1e-5 && point.y > avgY) {
+        if (std::abs(point.x - avgX) < 1 && point.y > avgY) {
             hasDown = true;
         }
         // 检查正左方（y坐标相同，x坐标更小）
-        if (std::abs(point.y - avgY) < 1e-5 && point.x < avgX) {
+        if (std::abs(point.y - avgY) < 1 && point.x < avgX) {
             hasLeft = true;
         }
         // 检查正右方（y坐标相同，x坐标更大）
-        if (std::abs(point.y - avgY) < 1e-5 && point.x > avgX) {
+        if (std::abs(point.y - avgY) < 1 && point.x > avgX) {
             hasRight = true;
         }
     }
