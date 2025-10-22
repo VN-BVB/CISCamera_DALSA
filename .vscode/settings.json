@@ -47,5 +47,6 @@
         "typeinfo": "cpp",
         "unordered_set": "cpp",
         "iomanip": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "D:/Code/CISCamera_DALSA/3rdParty/plog"
 }
