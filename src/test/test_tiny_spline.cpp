@@ -44,13 +44,13 @@ void TinySplineqqq::runcv()
 {
     // 创建OpenCV Point2f格式的控制点
     std::vector<cv::Point2f> controlPoints;
-    controlPoints.push_back(cv::Point2f(-1.75f, -1.0f));   // x0, y0
-    controlPoints.push_back(cv::Point2f(-1.5f, -0.5f));    // x1, y1
-    controlPoints.push_back(cv::Point2f(-1.5f, 0.0f));     // x2, y2
-    controlPoints.push_back(cv::Point2f(-1.25f, 0.5f));    // x3, y3
-    controlPoints.push_back(cv::Point2f(-0.75f, 0.75f));   // x4, y4
-    controlPoints.push_back(cv::Point2f(0.0f, 0.5f));      // x5, y5
-    controlPoints.push_back(cv::Point2f(0.5f, 0.0f));      // x6, y6
+    controlPoints.push_back(cv::Point2f(100, 100));
+    controlPoints.push_back(cv::Point2f(150, 200));
+    controlPoints.push_back(cv::Point2f(200, 150));
+    controlPoints.push_back(cv::Point2f(250, 250));
+    controlPoints.push_back(cv::Point2f(300, 180));
+    controlPoints.push_back(cv::Point2f(350, 220));
+    controlPoints.push_back(cv::Point2f(400, 120));
 
     std::cout << "原始控制点 (OpenCV Point2f格式):" << std::endl;
     for (size_t i = 0; i < controlPoints.size(); ++i) {
@@ -76,13 +76,21 @@ void TinySplineqqq::runcv()
     image.setTo(cv::Scalar(255, 255, 255)); // 白色背景
 
     // 坐标变换：将数学坐标转换为图像坐标
-    // 数学坐标范围大约为 [-2, 1] x [-1, 1]
+    // 控制点范围大约为 [100, 400] x [100, 250]
     // 图像坐标范围 [0, image_width-1] x [0, image_height-1]
     auto mathToImage = [&](float x, float y) -> cv::Point {
-        // 数学坐标范围：x: [-2, 1], y: [-1, 1]
-        // 转换为图像坐标：x: [50, image_width-50], y: [image_height-50, 50]
-        int img_x = static_cast<int>((x + 2.0f) / 3.0f * (image_width - 100) + 50);
-        int img_y = static_cast<int>((1.0f - y) / 2.0f * (image_height - 100) + 50);
+        // 计算控制点的实际范围
+        float min_x = 100, max_x = 400;
+        float min_y = 100, max_y = 250;
+
+        // 添加一些边距
+        float margin_x = 50;
+        float margin_y = 50;
+
+        // 转换为图像坐标
+        int img_x = static_cast<int>((x - min_x) / (max_x - min_x) * (image_width - 2 * margin_x) + margin_x);
+        int img_y = static_cast<int>((max_y - y) / (max_y - min_y) * (image_height - 2 * margin_y) + margin_y);
+
         return cv::Point(img_x, img_y);
     };
 
@@ -130,8 +138,8 @@ void TinySplineqqq::runcv()
 
         cv::Point img_point = mathToImage(point[0], point[1]);
         cv::Point img_tangent_end = mathToImage(
-            point[0] + tangent[0] * 0.2f,
-            point[1] + tangent[1] * 0.2f
+            point[0] + tangent[0] * 20.0f,  // 放大切线长度以便显示
+            point[1] + tangent[1] * 20.0f
             );
 
         cv::arrowedLine(image, img_point, img_tangent_end,

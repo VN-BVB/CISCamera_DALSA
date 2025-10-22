@@ -44,7 +44,7 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
 
 
 /**
- * @brief 轮廓曲线，存储一条轮廓的所有特征
+ * @brief 轮廓曲线，存储拼缝一侧轮廓的所有特征
  */
  class ContourCurve
 {
