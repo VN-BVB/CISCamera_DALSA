@@ -69,6 +69,13 @@
      </widget>
     </item>
     <item>
+     <widget class="QCheckBox" name="ckb_fitCurves">
+      <property name="text">
+       <string>拟合曲线</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QCheckBox" name="ckb_endPoints">
       <property name="text">
        <string>拼缝端点</string>

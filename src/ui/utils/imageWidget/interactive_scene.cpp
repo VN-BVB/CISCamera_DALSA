@@ -251,7 +251,7 @@ void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points)
     for (const auto& point : points) {
         // 创建圆形标记点
         QGraphicsEllipseItem *pointItem = new QGraphicsEllipseItem(point.x - size/2, point.y - size/2, size, size);
-        pointItem->setBrush(QBrush(QColor(255, 165, 255))); // 填充颜色
+        pointItem->setBrush(QBrush(QColor(255, 165, 255))); // 粉色
         pointItem->setPen(QPen(Qt::black)); // 黑色边框
         pointItem->setZValue(15); // 设置较高的Z值，确保显示在最上层
 
@@ -260,7 +260,7 @@ void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points)
 }
 
 // B样条曲线绘制函数实现
-void InteractiveScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints, int degree, int segments)
+void InteractiveScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints)
 {
     if (controlPoints.size() < 2) {
         return;
@@ -303,17 +303,102 @@ void InteractiveScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f>
     for (const auto& point : controlPoints) {
         QGraphicsEllipseItem *controlPointItem = new QGraphicsEllipseItem(
             point.x - 2, point.y - 2, 4, 4);
-        controlPointItem->setBrush(QBrush(QColor(0, 255, 255))); // 青色控制点
+        controlPointItem->setBrush(QBrush(QColor(0, 255, 255))); // 青色
         controlPointItem->setPen(QPen(Qt::black));
         controlPointItem->setZValue(13); // 比曲线更高
         this->addItem(controlPointItem);
     }
 }
 
+// 使用tinyspline对象绘制B样条曲线
+void InteractiveScene::whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline) {
+    std::vector<tinyspline::real> controlPoints = spline.controlPoints();
+    size_t numControlPoints = spline.numControlPoints();
+    size_t dimension = spline.dimension();
 
+    // 检查维度是否为2（二维曲线）
+    if (dimension != 2) {
+        return;
+    }
 
+    if (numControlPoints < 2) {
+        return;
+    }
 
+    // 方法1：使用tinyspline采样功能获取曲线上的点
+    std::vector<tinyspline::real> sampledPoints = spline.sample(1000); // 采样100个点
 
+    // 创建QPainterPath来绘制曲线
+    QPainterPath path;
+
+    if (sampledPoints.size() >= 2) {
+        // 移动到第一个点
+        path.moveTo(sampledPoints[0], sampledPoints[1]);
+
+        // 连接所有采样点
+        for (size_t i = 2; i < sampledPoints.size(); i += 2) {
+            if (i + 1 < sampledPoints.size()) {
+                path.lineTo(sampledPoints[i], sampledPoints[i + 1]);
+            }
+        }
+    } else {
+        // 方法2：如果采样失败，直接连接控制点作为备用方案
+        path.moveTo(controlPoints[0], controlPoints[1]);
+        for (size_t i = 2; i < controlPoints.size(); i += 2) {
+            if (i + 1 < controlPoints.size()) {
+                path.lineTo(controlPoints[i], controlPoints[i + 1]);
+            }
+        }
+    }
+
+    // 创建路径图元
+    QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
+    QPen pen(QColor(255, 0, 255)); // 洋红色
+    pen.setWidthF(0.1); // 设置线宽
+    pen.setStyle(Qt::SolidLine);
+    pathItem->setPen(pen);
+    pathItem->setZValue(12); // 设置Z值
+
+    this->addItem(pathItem);
+
+    // // 绘制控制点
+    // for (size_t i = 0; i < numControlPoints; ++i) {
+    //     size_t baseIndex = i * dimension;
+    //     if (baseIndex + 1 < controlPoints.size()) {
+    //         tinyspline::real x = controlPoints[baseIndex];
+    //         tinyspline::real y = controlPoints[baseIndex + 1];
+
+    //         QGraphicsEllipseItem *controlPointItem = new QGraphicsEllipseItem(
+    //             x - 2, y - 2, 4, 4);
+    //         controlPointItem->setBrush(QBrush(QColor(0, 255, 255))); // 青色
+    //         controlPointItem->setPen(QPen(Qt::black));
+    //         controlPointItem->setZValue(13); // 比曲线更高
+    //         this->addItem(controlPointItem);
+    //     }
+    // }
+}
+
+// 绘制多条B样条曲线
+void InteractiveScene::whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines)
+{
+    if (splines.empty()) {
+        return;
+    }
+
+    // 遍历所有样条曲线
+    for (const auto& spline : splines) {
+        whenDrawSingleBSplineCurve(spline);
+    }
+}
+
+void InteractiveScene::whenDrawBSplineCurves(const std::vector<CurveSeg> &curves) {
+    std::vector<tinyspline::BSpline> bsplines;
+    // for (auto& curve : curves) {
+    //     bsplines.push_back(curve.getSpline());
+    // }
+    // whenDrawBSplineCurves(bsplines);
+    whenDrawSingleBSplineCurve(curves[1].getSpline());
+}
 
 
 

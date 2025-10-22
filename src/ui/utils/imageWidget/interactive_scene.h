@@ -9,6 +9,9 @@
 #include <QtCharts/QSplineSeries>
 #include <QtCharts/QChart>
 
+#include "tinysplinecxx.h"
+#include "src/jointDetection/contourProcess/curve_seg.h"
+
 class InteractiveView;
 class InteractiveImageItem;
 class InteractiveScenePrivate;
@@ -56,8 +59,11 @@ public slots:
     void whenDrawLines(const std::vector<cv::Vec4f> &lines);
     // 绘制点集
     void whenDrawPoints(const std::vector<cv::Point2f> &Points);
-    // 绘制单条B样条曲线
-    void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints, int degree = 3, int segments = 100);
+    // 绘制B样条曲线
+    void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints);
+    void whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline);
+    void whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines);
+    void whenDrawBSplineCurves(const std::vector<CurveSeg> &curves);
 
     // @TODO:将轮廓显示全整理成图元类
 

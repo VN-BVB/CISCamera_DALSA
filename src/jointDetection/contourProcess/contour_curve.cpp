@@ -25,14 +25,14 @@ void ContourCurve::initializePixelContour(const std::vector<cv::Point>& contour)
 void ContourCurve::initializeSubpixelContour(const std::vector<cv::Point2f>& contour)
 {
     m_subpixelContour = contour;
-    m_deduplicatedSubpixelContour = removeDuplicateContourPoints(m_subpixelContour);
-    m_openingDirection = calculateOpeningDirection();
-    sortContour();
-    calculateBasicFeatures();
-    segment();
-    calculateLines();
-    calculateCornerPoints();
-    calculateBSplines();
+    m_deduplicatedSubpixelContour = removeDuplicateContourPoints(m_subpixelContour);    // 去重
+    m_openingDirection = calculateOpeningDirection();   // 计算开口方向
+    sortContour();  // 逆时针排序，相当于二次扫描轮廓
+    calculateBasicFeatures();   // 计算基本特征
+    segment();  // 分割轮廓
+    calculateLines();   // 分区域直线拟合
+    calculateCornerPoints();    // 计算角点
+    calculateBSplines();    // 拟合样条曲线
 }
 
 /**

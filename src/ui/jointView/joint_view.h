@@ -13,6 +13,7 @@
 #include "src/jointDetection/image_process_worker.h"
 #include "src/jointDetection/edgeDetection/canny_devernay.h"
 #include "src/ui/utils/imageWidget/frm_vision_display.h"
+#include "src/jointDetection/contourProcess/curve_seg.h"
 
 namespace Ui {
 class JointView;
@@ -36,7 +37,8 @@ private slots:
     void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
                               std::vector<std::vector<cv::Point2f>> subpixelContours,
                               std::vector<std::vector<cv::Point>> pixelContour,
-                              std::vector<cv::Vec4f> lines);
+                              std::vector<cv::Vec4f> lines,
+                              std::vector<CurveSeg> curves);
     void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
 
@@ -47,6 +49,7 @@ private slots:
     void on_ckb_subpixelContours_toggled(bool checked);
     void on_ckb_fitlines_toggled(bool checked);
     void on_ckb_endPoints_toggled(bool checked);
+    void on_ckb_fitCurves_toggled(bool checked);
 
 private:
     Ui::JointView *ui;
@@ -63,14 +66,16 @@ private:
     std::vector<std::vector<cv::Point2f>> m_subpixelContours;
     std::vector<std::vector<cv::Point>> m_pixelContours;
     std::vector<cv::Vec4f> m_fitLines;
+    std::vector<CurveSeg> m_fitCurves;
     std::vector<cv::Point2f> m_cornerPoints;
 
     // 显示控制标志
-    bool m_showPixelContoursSquare;
-    bool m_showPixelContoursLine;
-    bool m_showSubpixelContours;
-    bool m_showFitLines;
-    bool m_showEndPoints;
+    bool m_showPixelContoursSquare = false;
+    bool m_showPixelContoursLine = false;
+    bool m_showSubpixelContours = false;
+    bool m_showFitLines = false;
+    bool m_showEndPoints = false;
+    bool m_showFitCurves = false;
 };
 
 #endif // JOINT_VIEW_H

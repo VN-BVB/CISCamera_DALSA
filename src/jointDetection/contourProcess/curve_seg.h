@@ -14,6 +14,7 @@ public:
     void initializeFromPoints(const std::vector<cv::Point2f>& points);
 
     void fitSplineCurve();
+    tinyspline::BSpline getSpline() const {return m_spline;}
 
     // 获取拟合后的样条曲线点
     std::vector<cv::Point2f> getFittedPoints(int numSamples = 100) const;

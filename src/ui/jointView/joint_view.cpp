@@ -22,6 +22,7 @@ JointView::JointView(QWidget *parent)
     qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point>>");
     qRegisterMetaType<std::vector<std::vector<cv::Point2f>>>("std::vector<std::vector<cv::Point2f>>");
     qRegisterMetaType<std::vector<cv::Vec4f>>("std::vector<cv::Vec4f>");
+    qRegisterMetaType<std::vector<CurveSeg>>("std::vector<CurveSeg>");
 
     // 读取线程
     readWorker->moveToThread(&readThread);
@@ -79,15 +80,17 @@ void JointView::handleImageRead(std::shared_ptr<cv::Mat> image)
 
 // Zernike矩对应槽函数
 void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
-                                           std::vector<std::vector<cv::Point2f>> subpixelContours,
-                                           std::vector<std::vector<cv::Point>> pixelContours,
-                                           std::vector<cv::Vec4f> lines)
+                                     std::vector<std::vector<cv::Point2f>> subpixelContours,
+                                     std::vector<std::vector<cv::Point>> pixelContours,
+                                     std::vector<cv::Vec4f> lines,
+                                     std::vector<CurveSeg> curves)
 {
     // 保存当前数据
     m_currentImage = processedImage;
     m_subpixelContours = subpixelContours;
     m_pixelContours = pixelContours;
     m_fitLines = lines;
+    m_fitCurves = curves;
     // 计算角点（拼缝端点）
     m_cornerPoints.clear();
     if (lines.size() >= 2) {
@@ -132,18 +135,11 @@ void JointView::updateDisplay() {
     if (!scene) return;
     ui->gv_image->displayImage(*m_currentImage, true);
 
-    // 绘制单条B样条曲线
-    std::vector<cv::Point2f> controlPoints = {
-        cv::Point2f(100, 100), cv::Point2f(200, 50),
-        cv::Point2f(300, 150), cv::Point2f(400, 100),
-        cv::Point2f(500, 200), cv::Point2f(600, 250)
-    };
-    scene->whenDrawSingleBSplineCurve(controlPoints);
-
     // 根据checkbox状态绘制不同的内容
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
         scene->whenDrawPixelContours(m_pixelContours);
     }
+
     if (m_showPixelContoursLine && !m_pixelContours.empty()) {
         scene->whenDrawPixelContours(m_pixelContours);
     }
@@ -154,6 +150,10 @@ void JointView::updateDisplay() {
 
     if (m_showFitLines && !m_fitLines.empty()) {
         scene->whenDrawLines(m_fitLines);
+    }
+
+    if (m_showFitCurves && !m_fitCurves.empty()) {
+        scene->whenDrawBSplineCurves(m_fitCurves);
     }
 
     if (m_showEndPoints && !m_cornerPoints.empty()) {
@@ -185,5 +185,10 @@ void JointView::on_ckb_fitlines_toggled(bool checked) {
 
 void JointView::on_ckb_endPoints_toggled(bool checked) {
     m_showEndPoints = checked;
+    updateDisplay();
+}
+
+void JointView::on_ckb_fitCurves_toggled(bool checked) {
+    m_showFitCurves = checked;
     updateDisplay();
 }

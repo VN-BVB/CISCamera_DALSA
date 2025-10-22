@@ -40,14 +40,9 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         fitPoints.insert(fitPoints.end(), fitPoints0.begin(), fitPoints0.end());
         fitPoints.insert(fitPoints.end(), fitPoints1.begin(), fitPoints1.end());
 
-        // 绘制单条B样条曲线
-        std::vector<cv::Point2f> controlPoints = {
-            cv::Point2f(100, 100), cv::Point2f(200, 50),
-            cv::Point2f(300, 150), cv::Point2f(400, 100),
-            cv::Point2f(500, 200), cv::Point2f(600, 250)
-        };
-
-        testCurveSeg(contourCurves[1].getSubpixelContours());
+        // 分段拟合后的样条曲线
+        std::vector<CurveSeg> curves;
+        curves = contourCurves[0].getCurveSegments();
 
         std::vector<std::vector<cv::Point>> pixelContour;
         pixelContour.push_back(contourCurves[1].getPixelContour());
@@ -57,7 +52,7 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
             fitlines.push_back(lineSegment.getLineEquation());
         }
         auto resultImage = std::make_shared<cv::Mat>(croppedImg);
-        emit imageProcessed(resultImage, subpixelContours, pixelContour, fitlines);
+        emit imageProcessed(resultImage, subpixelContours, pixelContour, fitlines, curves);
     } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());
 

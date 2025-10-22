@@ -6,6 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "edgeDetection/canny_devernay.h"
+#include "contourProcess/curve_seg.h"
 
 
 class ImageProcessWorker : public QObject
@@ -21,7 +22,8 @@ signals:
     void imageProcessed(std::shared_ptr<cv::Mat> processedImage,
                         std::vector<std::vector<cv::Point2f>> subpixelContours,
                         std::vector<std::vector<cv::Point>> pixelContour,
-                        std::vector<cv::Vec4f> lines);
+                        std::vector<cv::Vec4f> lines,
+                        std::vector<CurveSeg> curves);
     void imageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void errorOccurred(const QString &error);
 

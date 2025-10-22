@@ -30,6 +30,7 @@ public:
     QCheckBox *ckb_pixelContoursLine;
     QCheckBox *ckb_subpixelContours;
     QCheckBox *ckb_fitlines;
+    QCheckBox *ckb_fitCurves;
     QCheckBox *ckb_endPoints;
 
     void setupUi(QWidget *JointView)
@@ -71,6 +72,11 @@ public:
 
         verticalLayout->addWidget(ckb_fitlines);
 
+        ckb_fitCurves = new QCheckBox(layoutWidget);
+        ckb_fitCurves->setObjectName(QString::fromUtf8("ckb_fitCurves"));
+
+        verticalLayout->addWidget(ckb_fitCurves);
+
         ckb_endPoints = new QCheckBox(layoutWidget);
         ckb_endPoints->setObjectName(QString::fromUtf8("ckb_endPoints"));
 
@@ -90,6 +96,7 @@ public:
         ckb_pixelContoursLine->setText(QCoreApplication::translate("JointView", "\345\203\217\347\264\240\347\272\247\350\275\256\345\273\223\357\274\210\347\272\277\346\235\241\357\274\211", nullptr));
         ckb_subpixelContours->setText(QCoreApplication::translate("JointView", "\344\272\232\345\203\217\347\264\240\347\272\247\350\275\256\345\273\223", nullptr));
         ckb_fitlines->setText(QCoreApplication::translate("JointView", "\346\213\237\345\220\210\347\272\277\346\235\241", nullptr));
+        ckb_fitCurves->setText(QCoreApplication::translate("JointView", "\346\213\237\345\220\210\346\233\262\347\272\277", nullptr));
         ckb_endPoints->setText(QCoreApplication::translate("JointView", "\346\213\274\347\274\235\347\253\257\347\202\271", nullptr));
     } // retranslateUi
 

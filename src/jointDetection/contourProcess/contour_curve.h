@@ -58,10 +58,12 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
     OpeningDirection getOpeningDirection() const {return m_openingDirection;}
     std::vector<cv::Point> getPixelContour() const  {return m_pixelContour;}
     std::vector<cv::Point2f> getSubpixelContours() const {return m_subpixelContour;}
+    std::vector<cv::Point2f> getSortedSubpixelContours() const {return m_sortedSubpixelContour;}
     std::vector<std::vector<cv::Point>> getSegmentedPixelContours() const   {return m_segmentedPixelContours;}
     std::vector<std::vector<cv::Point2f>> getSegmentedSubpixelContours() const   {return m_segmentedSubpixelContours;}
     std::vector<cv::Point> getDeduplicatedPixelContour() const {return m_deduplicatedPixelContour;}
     std::vector<LineSeg> getLineSegments() const {return m_lineSegments;}
+    std::vector<CurveSeg> getCurveSegments() const {return m_curveSegments;}
 
 
 private:
@@ -99,13 +101,12 @@ private:
     // 计算本条拼缝轮廓的缝隙段的端点
     void calculateCornerPoints();
 
-    // 计算拟合的B样条曲线
-    void calculateBSplines();
-
     // 分割轮廓
     void segment();
     void segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentContours);
 
+    // 计算拟合的B样条曲线
+    void calculateBSplines();
 
 private:
     // 基本轮廓信息
