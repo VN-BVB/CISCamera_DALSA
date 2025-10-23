@@ -14,6 +14,7 @@
 #include "src/jointDetection/edgeDetection/canny_devernay.h"
 #include "src/ui/utils/imageWidget/frm_vision_display.h"
 #include "src/jointDetection/contourProcess/curve_seg.h"
+#include "src/jointDetection/contourProcess/joint_seam.h"
 
 namespace Ui {
 class JointView;
@@ -39,6 +40,8 @@ private slots:
                               std::vector<std::vector<cv::Point>> pixelContour,
                               std::vector<cv::Vec4f> lines,
                               std::vector<CurveSeg> curves);
+    void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
+                              std::shared_ptr<JointSeam> jointSeam);
     void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
 

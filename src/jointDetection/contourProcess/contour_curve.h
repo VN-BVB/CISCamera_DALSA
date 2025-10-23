@@ -66,6 +66,7 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
     std::vector<CurveSeg> getCurveSegments() const {return m_curveSegments;}
     std::vector<cv::Point2f> getCornerPoints() const {return m_cornerPoints;}
     std::vector<cv::Point2f> getNoConersContour() const {return m_noConersContour;}
+    std::vector<cv::Vec4f> getLines() const {return m_lines;}
 
 
 private:
@@ -120,7 +121,8 @@ private:
     // 计算两条直线的交点
     cv::Point2f calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2);
     // 计算本条拼缝轮廓的缝隙段的端点
-    void calculateCornerPoints();
+    void calculateEndPointsByFittedLines();
+    void calculateEndPointsByFittedCurves();
 
     // 分割轮廓
     void segment();
@@ -144,12 +146,14 @@ private:
     // 轮廓分割相关特征
     std::vector<std::vector<cv::Point>> m_segmentedPixelContours;       // 分割后的轮廓段-像素级
     std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours;  // 分割后的轮廓段-亚像素级
-    std::vector<cv::Point2f> m_endPoints;                               // 拼缝线段端点位置
 
     // 直线拟合相关特征
     std::vector<LineSeg> m_lineSegments;            // 分割后的各线段拟合特征
     // 曲线拟合相关特征
     std::vector<CurveSeg> m_curveSegments;          // 分割后的各曲线段拟合特征
+    // 端点计算相关特征
+    std::vector<cv::Vec4f> m_lines;                 // 用于计算端点的直线
+    std::vector<cv::Point2f> m_endPoints;           // 拼缝线段端点位置
 
     // 几何特征
     cv::Rect m_boundingRect;                           // 轮廓外接矩形

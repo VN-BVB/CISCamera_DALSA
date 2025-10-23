@@ -1,7 +1,6 @@
 #include "image_process_worker.h"
 #include "image_tools.h"
 #include "contourProcess/contour_curve.h"
-#include "contourProcess/joint_seam.h"
 #include <QDebug>
 
 #include "src/test/test_curve_seg.cpp"
@@ -17,12 +16,12 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         // cv::imwrite("D:/Cpp_Project/WeldseamMeasurement/tests/image/cropped_img.bmp", croppedImg);
         cv::Mat croppedImg = *image; // 直接读裁剪后的图，不用再裁剪
 
-        JointSeam jointSeam = JointSeam{croppedImg};
-        jointSeam.run();
+        auto jointSeam = std::make_shared<JointSeam>(croppedImg);
+        jointSeam->run();
 
 
         // @TODO:在图上画出角点和拟合直线
-        std::vector<ContourCurve> contourCurves = jointSeam.getContourCurves();
+        std::vector<ContourCurve> contourCurves = jointSeam->getContourCurves();
         std::vector<std::vector<cv::Point2f>> subpixelContours;
         subpixelContours.push_back(contourCurves[1].getSubpixelContours());
 
@@ -40,24 +39,19 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         fitPoints.insert(fitPoints.end(), fitPoints0.begin(), fitPoints0.end());
         fitPoints.insert(fitPoints.end(), fitPoints1.begin(), fitPoints1.end());
 
-        // 分段拟合后的样条曲线
-        std::vector<CurveSeg> curves;
-        curves = contourCurves[0].getCurveSegments();
-        cv::Vec4f tangent = curves[1].getTangent(0.996f);
-
         std::vector<std::vector<cv::Point>> pixelContour;
         pixelContour.push_back(contourCurves[1].getPixelContour());
         std::vector<cv::Vec4f> fitlines;
-        // for (auto lineSegment :  contourCurves[1].getLineSegments())
-        // {
-        //     fitlines.push_back(lineSegment.getLineEquation());
-        // }
-        fitlines.push_back(tangent);
+        for (auto contourCurve :  contourCurves)
+        {
+            for (auto line : contourCurve.getLines())
+            fitlines.push_back(line);
+        }
         auto resultImage = std::make_shared<cv::Mat>(croppedImg);
-        emit imageProcessed(resultImage, subpixelContours, pixelContour, fitlines, curves);
+        // emit imageProcessed(resultImage, subpixelContours, pixelContour, fitlines, contourCurves[1].getCurveSegments());
+        imageProcessed(resultImage, jointSeam);
     } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());
-
     }
 }
 

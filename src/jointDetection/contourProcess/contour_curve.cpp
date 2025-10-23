@@ -33,8 +33,9 @@ void ContourCurve::initializeSubpixelContour(const std::vector<cv::Point2f>& con
     calculateBasicFeatures();                           // 计算基本特征
     segment();                                          // 分割轮廓
     calculateLines();                                   // 分区域直线拟合
-    calculateCornerPoints();                            // 计算角点
+    // calculateEndPointsByFittedLines();                  // 计算端点
     calculateBSplines();                                // 拟合样条曲线
+    calculateEndPointsByFittedCurves();                 // 计算端点
 }
 
 /**
@@ -309,12 +310,33 @@ cv::Point2f ContourCurve::calculateLineIntersection(const cv::Vec4f &line1, cons
     return cv::Point2f(intersectX, intersectY);
 }
 
-void ContourCurve::calculateCornerPoints()
+void ContourCurve::calculateEndPointsByFittedLines()
 {
     if (m_lineSegments.empty()) return;
+    m_lines.push_back(m_lineSegments[0].getLineEquation());
+    m_lines.push_back(m_lineSegments[1].getLineEquation());
+    m_lines.push_back(m_lineSegments[0].getLineEquation());
+    m_lines.push_back(m_lineSegments[2].getLineEquation());
     cv::Point2f cornerPoint1 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[1].getLineEquation());
     m_endPoints.push_back(cornerPoint1);
     cv::Point2f cornerPoint2 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[2].getLineEquation());
+    m_endPoints.push_back(cornerPoint2);
+}
+
+void ContourCurve::calculateEndPointsByFittedCurves()
+{
+    if (m_curveSegments.empty()) return;
+    cv::Vec4f tangent1 = m_curveSegments[0].getTangent(0.01);
+    cv::Vec4f tangent2 = m_curveSegments[0].getTangent(0.996);
+    cv::Vec4f tangent3 = m_curveSegments[1].getTangent(0.996);
+    cv::Vec4f tangent4 = m_curveSegments[2].getTangent(0.01);
+    m_lines.push_back(tangent1);
+    m_lines.push_back(tangent2);
+    m_lines.push_back(tangent3);
+    m_lines.push_back(tangent4);
+    cv::Point2f cornerPoint1 = calculateLineIntersection(tangent1, tangent3);
+    m_endPoints.push_back(cornerPoint1);
+    cv::Point2f cornerPoint2 = calculateLineIntersection(tangent2, tangent4);
     m_endPoints.push_back(cornerPoint2);
 }
 

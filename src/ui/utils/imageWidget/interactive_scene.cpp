@@ -381,9 +381,7 @@ void InteractiveScene::whenDrawSingleBSplineCurve(const tinyspline::BSpline &spl
 // 绘制多条B样条曲线
 void InteractiveScene::whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines)
 {
-    if (splines.empty()) {
-        return;
-    }
+    if (splines.empty()) return;
 
     // 遍历所有样条曲线
     for (const auto& spline : splines) {
@@ -392,12 +390,13 @@ void InteractiveScene::whenDrawBSplineCurves(const std::vector<tinyspline::BSpli
 }
 
 void InteractiveScene::whenDrawBSplineCurves(const std::vector<CurveSeg> &curves) {
+    if (curves.empty()) return;
     std::vector<tinyspline::BSpline> bsplines;
-    // for (auto& curve : curves) {
-    //     bsplines.push_back(curve.getSpline());
-    // }
-    // whenDrawBSplineCurves(bsplines);
-    whenDrawSingleBSplineCurve(curves[1].getSpline());
+    for (auto& curve : curves) {
+        bsplines.push_back(curve.getSpline());
+    }
+    whenDrawBSplineCurves(bsplines);
+    // whenDrawSingleBSplineCurve(curves[1].getSpline());
 }
 
 

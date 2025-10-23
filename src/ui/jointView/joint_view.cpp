@@ -23,6 +23,7 @@ JointView::JointView(QWidget *parent)
     qRegisterMetaType<std::vector<std::vector<cv::Point2f>>>("std::vector<std::vector<cv::Point2f>>");
     qRegisterMetaType<std::vector<cv::Vec4f>>("std::vector<cv::Vec4f>");
     qRegisterMetaType<std::vector<CurveSeg>>("std::vector<CurveSeg>");
+    qRegisterMetaType<std::shared_ptr<JointSeam>>("std::shared_ptr<JointSeam>");
 
     // 读取线程
     readWorker->moveToThread(&readThread);
@@ -35,7 +36,24 @@ JointView::JointView(QWidget *parent)
     processWorker->moveToThread(&processThread);
     connect(&processThread, &QThread::finished, processWorker, &QObject::deleteLater);
     connect(this, &JointView::startImageProcess, processWorker, &ImageProcessWorker::processImage);
-    connect(processWorker, &ImageProcessWorker::imageProcessed, this, &JointView::handleImageProcessed);
+    // 连接第一个信号重载到第一个槽函数重载（5个参数版本）
+    connect(processWorker,
+            QOverload<std::shared_ptr<cv::Mat>,
+                      std::vector<std::vector<cv::Point2f>>,
+                      std::vector<std::vector<cv::Point>>,
+                      std::vector<cv::Vec4f>,
+                      std::vector<CurveSeg>>::of(&ImageProcessWorker::imageProcessed),
+            this,
+            QOverload<std::shared_ptr<cv::Mat>,
+                      std::vector<std::vector<cv::Point2f>>,
+                      std::vector<std::vector<cv::Point>>,
+                      std::vector<cv::Vec4f>,
+                      std::vector<CurveSeg>>::of(&JointView::handleImageProcessed));
+    // 连接第二个信号重载到第二个槽函数重载（2个参数版本）
+    connect(processWorker,
+            QOverload<std::shared_ptr<cv::Mat>, std::shared_ptr<JointSeam>>::of(&ImageProcessWorker::imageProcessed),
+            this,
+            QOverload<std::shared_ptr<cv::Mat>, std::shared_ptr<JointSeam>>::of(&JointView::handleImageProcessed));
     connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &JointView::handleImageProcessedCannyDevenay);
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
 
@@ -45,6 +63,7 @@ JointView::JointView(QWidget *parent)
     connect(ui->ckb_subpixelContours, &QCheckBox::toggled, this, &JointView::on_ckb_subpixelContours_toggled);
     connect(ui->ckb_fitlines, &QCheckBox::toggled, this, &JointView::on_ckb_fitlines_toggled);
     connect(ui->ckb_endPoints, &QCheckBox::toggled, this, &JointView::on_ckb_endPoints_toggled);
+    // @TODO:整理这里的connect，在需要的地方才连接
 
 
     // 启动线程
@@ -100,6 +119,45 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
             m_cornerPoints.push_back(corner);
         }
     }
+
+    // 更新显示
+    updateDisplay();
+
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    // 计算并输出时间差
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    qDebug() << "Total processing time: " << duration.count() << " ms";
+}
+
+void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
+                                     std::shared_ptr<JointSeam> jointSeam)
+{
+    m_currentImage = processedImage;
+    std::vector<std::vector<cv::Point2f>> subpixelContours;
+    std::vector<std::vector<cv::Point>> pixelContours;
+    for (auto contourCuve : jointSeam->getContourCurves()) {
+        subpixelContours.push_back(contourCuve.getSubpixelContours());
+        pixelContours.push_back(contourCuve.getPixelContour());
+    }
+    m_subpixelContours = subpixelContours;
+    m_pixelContours = pixelContours;
+
+    std::vector<cv::Vec4f> fitlines;
+    for (auto contourCurve :  jointSeam->getContourCurves())
+    {
+        for (auto line : contourCurve.getLines())
+            fitlines.push_back(line);
+    }
+    m_fitLines = fitlines;
+
+    std::vector<CurveSeg> curves;
+    for (auto contourCurve :  jointSeam->getContourCurves())
+    {
+        for (auto curveSeg : contourCurve.getCurveSegments())
+        curves.push_back(curveSeg);
+    }
+    m_fitCurves = curves;
 
     // 更新显示
     updateDisplay();
