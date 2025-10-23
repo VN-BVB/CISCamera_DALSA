@@ -1,8 +1,12 @@
 ﻿#ifndef TELECENTRIC_LINE_CALIBRATOR_H
 #define TELECENTRIC_LINE_CALIBRATOR_H
+#define _USE_MATH_DEFINES
+#include <Eigen/Core>
 #include <Eigen/Dense>
+#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -11,12 +15,13 @@
 #include <vector>
 
 #include "plog/Log.h"
+#include "telecentric_lm_optimizer.h"
 enum class PatternType { CHESSBOARD, CIRCLES_GRID, ASYMMETRIC_CIRCLES_GRID };
-struct Pose {
-    Eigen::Matrix3d R;
-    Eigen::Vector3d t;
-    double reprojErr;
-};
+// struct Pose {
+//     Eigen::Matrix3d R;
+//     Eigen::Vector3d t;
+//     double reprojErr;
+// };
 class TelecentricLineCalibrator {
 public:
     TelecentricLineCalibrator();
@@ -43,7 +48,7 @@ public:
     // 圆点检测函数（由你提供的版本）
     bool calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize, std::vector<cv::Point2d>& imagePoints);
 
-    bool calibrateCameraFromPointsDemo(const std::vector<std::vector<Eigen::Vector2d> >& all_imgPts,
+    bool calibrateCameraFromPointsDemo(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
                                        const std::vector<Eigen::Vector2d>& worldPts, int width, int height, double dx, double dy,
                                        Eigen::Matrix3d& K_out, double& rmse_out, std::vector<Pose>& poses_out);
 
@@ -67,5 +72,4 @@ private:
     double u0_, v0_;
     Eigen::Matrix3d K_;
 };
-
 #endif  // TELECENTRIC_LINE_CALIBRATOR_H

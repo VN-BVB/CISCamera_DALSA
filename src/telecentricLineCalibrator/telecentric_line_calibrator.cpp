@@ -304,11 +304,11 @@ Pose TelecentricLineCalibrator::extractPoseFromHomography(const Eigen::Matrix3d&
     }
 
     // === Step 4. 符号一致性判断 ===
-    if (best_r13_sgn == sign_r13_th && best_r23_sgn == sign_r23_th) {
-        std::cout << "外参初始化正常（符号一致）" << std::endl;
-    } else {
-        std::cout << "外参符号自动修正（论文符号不稳定或数据噪声）" << std::endl;
-    }
+    // if (best_r13_sgn == sign_r13_th && best_r23_sgn == sign_r23_th) {
+    //     std::cout << "外参初始化正常（符号一致）" << std::endl;
+    // } else {
+    //     std::cout << "外参符号自动修正（论文符号不稳定或数据噪声）" << std::endl;
+    // }
     // double score_pred = evaluate_combo(sign_r13_th * abs_r13, sign_r23_th * abs_r23);
     // double score_best = evaluate_combo(best_r13_sgn * abs_r13, best_r23_sgn * abs_r23);
 
@@ -380,8 +380,8 @@ bool TelecentricLineCalibrator::estimateIntrinsicsFromHomographies(const std::ve
 
     K_ << m_ / dx_, 0.0, u0, 0.0, m_ / dy_, v0, 0.0, 0.0, 1.0;
 
-    std::cout << "\n--- 误差加权平均得到的放大倍率 m = " << m_ << " ---\n";
-    std::cout << "内参矩阵 K =\n" << K_ << "\n";
+    // std::cout << "\n--- 误差加权平均得到的放大倍率 m = " << m_ << " ---\n";
+    // std::cout << "内参矩阵 K =\n" << K_ << "\n";
     return true;
 }
 
@@ -666,6 +666,69 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
 
     std::cout << "\n=== 点集标定完成 ===\n";
     std::cout << "K = \n" << K_ << "\n平均重投影误差 = " << rmse_out << " 像素\n";
+    // Step 6. 调用非线性优化（基于已有getOptimizedParams函数）
+    // 6.1 准备初始参数（从现有结果中提取，与之前一致）
+    double init_m = m_;                        // 初始放大倍率
+    double init_dx = dx_;                      // 水平像素尺寸（已知输入）
+    double init_dy = dy_;                      // 垂直像素尺寸（已知输入）
+    double init_u0 = K_(0, 2);                 // 主点x（从初始内参K_中提取）
+    double init_v0 = K_(1, 2);                 // 主点y（从初始内参K_中提取）
+    double init_theta = 0.0;                   // 倾斜角初始值（设0）
+    double init_k = 0.0;                       // 畸变系数初始值（设0）
+    std::vector<Pose> init_poses = poses_out;  // 初始外参
 
+    // 6.2 创建优化器对象（与之前一致）
+    TelecentricLMOptimizer optimizer(all_imgPts,  // 所有图像点
+                                     worldPts,    // 世界点
+                                     init_poses,  // 外参初始值
+                                     init_m,      // m初始值
+                                     init_dx,     // dx初始值
+                                     init_dy,     // dy初始值
+                                     init_u0,     // u0初始值
+                                     init_v0,     // v0初始值
+                                     init_theta,  // theta初始值
+                                     init_k       // k初始值
+    );
+
+    // 6.3 执行优化（参数与之前一致）
+    int max_iter = 100;
+    double eps_error = 1e-6;
+    double eps_param = 1e-8;
+    double init_lambda = 1e-3;
+    bool optimize_success = optimizer.optimize(max_iter, eps_error, eps_param, init_lambda);
+
+    if (!optimize_success) {
+        std::cerr << "非线性优化失败，使用初始标定结果\n";
+    } else {
+        // 6.4 关键修改：调用getOptimizedParams获取所有优化后参数
+        double opt_m, opt_dy, opt_u0, opt_v0, opt_theta, opt_k;
+        std::vector<Pose> opt_poses;
+        double opt_total_reprojErr;  // 优化后的总重投影误差
+        optimizer.getOptimizedParams(opt_m, opt_dy, opt_u0, opt_v0, opt_theta, opt_k, opt_poses, opt_total_reprojErr);
+
+        // 6.5 更新输出结果
+        // 1. 更新内参矩阵K_out（fx = opt_m / dx_，fy = opt_m / dy_）
+        K_out(0, 0) = opt_m / dx_;     // fx = m/dx（dx为已知输入，优化中未变）
+        K_out(1, 1) = opt_m / opt_dy;  // fy = m/dy（dy可能被优化，用opt_dy）
+        K_out(0, 2) = opt_u0;          // 优化后的主点u0
+        K_out(1, 2) = opt_v0;          // 优化后的主点v0
+        K_out(0, 1) = 0.0;             // 若考虑theta，可根据opt_theta调整（可选）
+        K_out(1, 0) = 0.0;
+        K_out(2, 0) = 0.0;
+        K_out(2, 1) = 0.0;
+        K_out(2, 2) = 1.0;
+
+        // 2. 更新外参和RMSE
+        poses_out = opt_poses;                                                   // 优化后的外参
+        rmse_out = opt_total_reprojErr / (all_imgPts.size() * worldPts.size());  // 总误差→平均RMSE（像素）
+
+        // 打印优化结果
+        std::cout << "\n=== 非线性优化完成 ===\n";
+        std::cout << "优化后内参K = \n" << K_out << std::endl;
+        std::cout << "优化后总重投影误差 = " << opt_total_reprojErr << " 像素\n";
+        std::cout << "优化后平均重投影误差（RMSE） = " << rmse_out << " 像素\n";
+        std::cout << "优化后倾斜角theta = " << opt_theta * 180 / M_PI << "°\n";  // 弧度转角度
+        std::cout << "优化后畸变系数k = " << opt_k << std::endl;
+    }
     return true;
 }
