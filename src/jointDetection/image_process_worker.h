@@ -20,6 +20,7 @@ public slots:
     void processImage(std::shared_ptr<cv::Mat> image);
 
 signals:
+    [[deprecated("这个信号发送的都是jointSeam的属性，请直接使用传递jointSeam的版本，以获得更多操作")]]
     void imageProcessed(std::shared_ptr<cv::Mat> processedImage,
                         std::vector<std::vector<cv::Point2f>> subpixelContours,
                         std::vector<std::vector<cv::Point>> pixelContour,
