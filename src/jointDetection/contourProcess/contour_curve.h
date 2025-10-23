@@ -64,6 +64,8 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
     std::vector<cv::Point> getDeduplicatedPixelContour() const {return m_deduplicatedPixelContour;}
     std::vector<LineSeg> getLineSegments() const {return m_lineSegments;}
     std::vector<CurveSeg> getCurveSegments() const {return m_curveSegments;}
+    std::vector<cv::Point2f> getCornerPoints() const {return m_cornerPoints;}
+    std::vector<cv::Point2f> getNoConersContour() const {return m_noConersContour;}
 
 
 private:
@@ -94,6 +96,25 @@ private:
     // 获得逆时针排序的单条轮廓
     void sortContour();
 
+
+    // 角点检测函数
+    std::vector<cv::Point2f> detectCornerPoints() const;
+    // 角点检测方法
+    std::vector<cv::Point2f> detectCornerPointsByCurvature(const std::vector<cv::Point2f>& contour,
+                                                           double curvatureThreshold = 0.1) const;
+    std::vector<cv::Point2f> detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour,
+                                                                double epsilon = 10) const;
+    std::vector<cv::Point2f> detectCornerPointsByHarris(const std::vector<cv::Point2f>& contour,
+                                                        double threshold = 0.01) const;
+    double calculateCurvature(const cv::Point2f& prev, const cv::Point2f& curr, const cv::Point2f& next) const;
+
+    // 移除角点附近指定半径范围内的轮廓点
+    std::vector<cv::Point2f> removePointsNearCorners(const std::vector<cv::Point2f>& contour,
+                                                     const std::vector<cv::Point2f>& cornerPoints,
+                                                     double radius = 10.0) const;
+    void removeCorners();
+
+
     // 计算拟合直线
     void calculateLines();
     // 计算两条直线的交点
@@ -110,18 +131,20 @@ private:
 
 private:
     // 基本轮廓信息
-    std::vector<cv::Point> m_pixelContour;            // 轮廓像素级点集
-    std::vector<cv::Point2f> m_subpixelContour;       // 轮廓亚像素级点集
-    OpeningDirection m_openingDirection;              // 开口方向
-    std::vector<cv::Point> m_deduplicatedPixelContour;        // 去重后的像素级点集：由于扫描C字型轮廓时，算法会来回扫描成闭合轮廓，因此会有很多重复点
-    std::vector<cv::Point2f> m_deduplicatedSubpixelContour;   // 去重后的亚像素级点集
-    cv::Point2f m_startPoint;                                 // 逆时针排序轮廓的起始点
-    std::vector<cv::Point2f> m_sortedSubpixelContour;         // 排序后的亚像素级点集（按最近邻顺序）
+    std::vector<cv::Point> m_pixelContour;                  // 轮廓像素级点集
+    std::vector<cv::Point2f> m_subpixelContour;             // 轮廓亚像素级点集
+    OpeningDirection m_openingDirection;                    // 开口方向
+    std::vector<cv::Point> m_deduplicatedPixelContour;      // 去重后的像素级点集：由于扫描C字型轮廓时，算法会来回扫描成闭合轮廓，因此会有很多重复点
+    std::vector<cv::Point2f> m_deduplicatedSubpixelContour; // 去重后的亚像素级点集
+    cv::Point2f m_startPoint;                               // 逆时针排序轮廓的起始点
+    std::vector<cv::Point2f> m_sortedSubpixelContour;       // 排序后的亚像素级点集（按最近邻顺序）
+    std::vector<cv::Point2f> m_cornerPoints;                // 角点位置
+    std::vector<cv::Point2f> m_noConersContour;             // 移除角点区域后的轮廓
 
     // 轮廓分割相关特征
-    std::vector<std::vector<cv::Point>> m_segmentedPixelContours;  // 分割后的轮廓段-像素级
-    std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours; // 分割后的轮廓段-亚像素级
-    std::vector<cv::Point2f> m_cornerPoints;          // 角点位置
+    std::vector<std::vector<cv::Point>> m_segmentedPixelContours;       // 分割后的轮廓段-像素级
+    std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours;  // 分割后的轮廓段-亚像素级
+    std::vector<cv::Point2f> m_endPoints;                               // 拼缝线段端点位置
 
     // 直线拟合相关特征
     std::vector<LineSeg> m_lineSegments;            // 分割后的各线段拟合特征

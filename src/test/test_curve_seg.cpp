@@ -46,8 +46,8 @@ void testCurveSeg(const std::vector<cv::Point2f> points) {
     std::cout << "样条曲线评估测试:" << std::endl;
     for (float u = 0.1f; u <= 0.9f; u += 0.2f) {
         cv::Point2f point = curve.evaluate(u);
-        cv::Point2f tangent = curve.getTangent(u);
-        std::cout << "u = " << u << ": 点 = (" << point.x << ", " << point.y
-                  << "), 切线 = (" << tangent.x << ", " << tangent.y << ")" << std::endl;
+        cv::Vec4f tangent = curve.getTangent(u);
+        // std::cout << "u = " << u << ": 点 = (" << point.x << ", " << point.y
+        //           << "), 切线 = (" << tangent.x << ", " << tangent.y << ")" << std::endl;
     }
 }

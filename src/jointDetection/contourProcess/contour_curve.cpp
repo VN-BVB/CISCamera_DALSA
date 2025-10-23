@@ -27,12 +27,14 @@ void ContourCurve::initializeSubpixelContour(const std::vector<cv::Point2f>& con
     m_subpixelContour = contour;
     m_deduplicatedSubpixelContour = removeDuplicateContourPoints(m_subpixelContour);    // 去重
     m_openingDirection = calculateOpeningDirection();   // 计算开口方向
-    sortContour();  // 逆时针排序，相当于二次扫描轮廓
-    calculateBasicFeatures();   // 计算基本特征
-    segment();  // 分割轮廓
-    calculateLines();   // 分区域直线拟合
-    calculateCornerPoints();    // 计算角点
-    calculateBSplines();    // 拟合样条曲线
+    sortContour();                                      // 逆时针排序，相当于二次扫描轮廓
+    m_cornerPoints = detectCornerPoints();              // 检测角点
+    removeCorners();                                    // 移除角点区域轮廓
+    calculateBasicFeatures();                           // 计算基本特征
+    segment();                                          // 分割轮廓
+    calculateLines();                                   // 分区域直线拟合
+    calculateCornerPoints();                            // 计算角点
+    calculateBSplines();                                // 拟合样条曲线
 }
 
 /**
@@ -311,9 +313,9 @@ void ContourCurve::calculateCornerPoints()
 {
     if (m_lineSegments.empty()) return;
     cv::Point2f cornerPoint1 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[1].getLineEquation());
-    m_cornerPoints.push_back(cornerPoint1);
+    m_endPoints.push_back(cornerPoint1);
     cv::Point2f cornerPoint2 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[2].getLineEquation());
-    m_cornerPoints.push_back(cornerPoint2);
+    m_endPoints.push_back(cornerPoint2);
 }
 
 // 计算拟合的B样条曲线
@@ -490,12 +492,210 @@ void ContourCurve::sortContour() {
     m_sortedSubpixelContour = sortContourByNearestNeighbor(m_deduplicatedSubpixelContour, pIndex);
 }
 
+/**
+* @brief 检测单条轮廓的角点
+* @return 检测到的角点集合
+*/
+std::vector<cv::Point2f> ContourCurve::detectCornerPoints() const
+{
+    if (m_sortedSubpixelContour.empty()) {
+        return {};
+    }
 
+    // 使用曲率方法检测角点（可以根据需要切换其他方法）
+    return detectCornerPointsByDouglasPeucker(m_sortedSubpixelContour);
+}
 
+/**
+* @brief 使用曲率方法检测角点
+* @param contour 输入轮廓
+* @param curvatureThreshold 曲率阈值，用于判断是否为角点
+* @return 检测到的角点
+*/
+std::vector<cv::Point2f> ContourCurve::detectCornerPointsByCurvature(const std::vector<cv::Point2f>& contour,
+                                                                     double curvatureThreshold) const
+{
+    if (contour.size() < 3) {
+        return {};
+    }
 
+    std::vector<cv::Point2f> cornerPoints;
+    const int windowSize = 5; // 曲率计算窗口大小
 
+    for (int i = windowSize; i < contour.size() - windowSize; ++i) {
+        cv::Point2f prev = contour[i - windowSize];
+        cv::Point2f curr = contour[i];
+        cv::Point2f next = contour[i + windowSize];
 
+        double curvature = calculateCurvature(prev, curr, next);
 
+        // 如果曲率超过阈值，认为是角点
+        if (curvature > curvatureThreshold) {
+            cornerPoints.push_back(curr);
+        }
+    }
+
+    return cornerPoints;
+}
+
+/**
+* @brief 使用Douglas-Peucker算法检测角点
+* @param contour 输入轮廓
+* @param epsilon 简化阈值
+* @return 检测到的角点
+*/
+std::vector<cv::Point2f> ContourCurve::detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour,
+                                                                          double epsilon) const
+{
+    if (contour.size() < 3) {
+        return {};
+    }
+
+    // 将Point2f转换为Point用于OpenCV的approxPolyDP
+    std::vector<cv::Point> intContour;
+    for (const auto& pt : contour) {
+        intContour.push_back(cv::Point(static_cast<int>(pt.x), static_cast<int>(pt.y)));
+    }
+
+    std::vector<cv::Point> approx;
+    cv::approxPolyDP(intContour, approx, epsilon, false);
+
+    // 转换回Point2f
+    std::vector<cv::Point2f> cornerPoints;
+    for (const auto& pt : approx) {
+        cornerPoints.push_back(cv::Point2f(static_cast<float>(pt.x), static_cast<float>(pt.y)));
+    }
+
+    return cornerPoints;
+}
+
+/**
+* @brief 使用Harris角点检测方法
+* @param contour 输入轮廓
+* @param threshold Harris响应阈值
+* @return 检测到的角点
+*/
+std::vector<cv::Point2f> ContourCurve::detectCornerPointsByHarris(const std::vector<cv::Point2f>& contour,
+                                                                  double threshold) const
+{
+    if (contour.empty()) {
+        return {};
+    }
+
+    // 创建图像用于Harris检测
+    cv::Rect boundingRect = cv::boundingRect(contour);
+    cv::Mat image = cv::Mat::zeros(boundingRect.height + 20, boundingRect.width + 20, CV_8UC1);
+
+    // 绘制轮廓
+    std::vector<cv::Point> intContour;
+    for (const auto& pt : contour) {
+        intContour.push_back(cv::Point(static_cast<int>(pt.x - boundingRect.x + 10),
+                                       static_cast<int>(pt.y - boundingRect.y + 10)));
+    }
+
+    cv::polylines(image, intContour, false, cv::Scalar(255), 1);
+
+    // Harris角点检测
+    cv::Mat corners, cornersNorm;
+    cv::cornerHarris(image, corners, 2, 3, 0.04);
+    cv::normalize(corners, cornersNorm, 0, 255, cv::NORM_MINMAX, CV_32FC1);
+
+    std::vector<cv::Point2f> cornerPoints;
+    for (int i = 0; i < cornersNorm.rows; i++) {
+        for (int j = 0; j < cornersNorm.cols; j++) {
+            if (cornersNorm.at<float>(i, j) > threshold * 255) {
+                cornerPoints.push_back(cv::Point2f(static_cast<float>(j + boundingRect.x - 10),
+                                                   static_cast<float>(i + boundingRect.y - 10)));
+            }
+        }
+    }
+
+    return cornerPoints;
+}
+
+/**
+* @brief 计算三点之间的曲率
+* @param prev 前一个点
+* @param curr 当前点
+* @param next 后一个点
+* @return 曲率值
+*/
+double ContourCurve::calculateCurvature(const cv::Point2f& prev, const cv::Point2f& curr, const cv::Point2f& next) const
+{
+    // 计算向量
+    cv::Point2f v1 = curr - prev;
+    cv::Point2f v2 = next - curr;
+
+    // 计算向量长度
+    double len1 = cv::norm(v1);
+    double len2 = cv::norm(v2);
+
+    if (len1 < 1e-10 || len2 < 1e-10) {
+        return 0.0;
+    }
+
+    // 归一化向量
+    v1 /= len1;
+    v2 /= len2;
+
+    // 计算夹角余弦值
+    double cosAngle = v1.dot(v2);
+
+    // 限制在有效范围内
+    cosAngle = std::max(-1.0, std::min(1.0, cosAngle));
+
+    // 计算夹角（弧度）
+    double angle = std::acos(cosAngle);
+
+    // 曲率与夹角成正比
+    return angle;
+}
+
+/**
+* @brief 移除角点附近指定半径范围内的轮廓点
+* @param contour 输入轮廓点集
+* @param cornerPoints 角点集合
+* @param radius 移除半径（像素），默认为10
+* @return 移除角点附近点后的轮廓点集
+*/
+std::vector<cv::Point2f> ContourCurve::removePointsNearCorners(const std::vector<cv::Point2f>& contour,
+                                                                   const std::vector<cv::Point2f>& cornerPoints,
+                                                                   double radius) const
+{
+    if (contour.empty() || cornerPoints.empty()) {
+        return contour;
+    }
+
+    std::vector<cv::Point2f> filteredContour;
+    double radiusSquared = radius * radius;  // 使用平方距离避免开方运算
+
+    for (const auto& point : contour) {
+        bool isNearCorner = false;
+
+        // 检查当前点是否在任何一个角点的半径范围内
+        for (const auto& corner : cornerPoints) {
+            double dx = point.x - corner.x;
+            double dy = point.y - corner.y;
+            double distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared <= radiusSquared) {
+                isNearCorner = true;
+                break;  // 如果靠近任何一个角点，就跳过该点
+            }
+        }
+
+        // 如果点不在任何角点的半径范围内，则保留
+        if (!isNearCorner) {
+            filteredContour.push_back(point);
+        }
+    }
+
+    return filteredContour;
+}
+
+void ContourCurve::removeCorners() {
+    m_noConersContour = removePointsNearCorners(m_sortedSubpixelContour, m_cornerPoints);
+}
 
 
 

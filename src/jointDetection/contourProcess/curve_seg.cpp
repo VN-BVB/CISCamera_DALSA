@@ -76,18 +76,22 @@ cv::Point2f CurveSeg::evaluate(float u) const {
     }
 }
 
-cv::Point2f CurveSeg::getTangent(float u) const {
+cv::Vec4f CurveSeg::getTangent(float u) const {
     if (!m_isFitted) {
-        return cv::Point2f(0, 0);
+        return cv::Vec4f(0, 0, 0, 0);
     }
 
     try {
+        // 获取切点坐标
+        cv::Point2f point = evaluate(u);
         tinyspline::BSpline derivative = m_spline.derive();
         std::vector<tinyspline::real> tangent = derivative.eval(u).result();
-        return cv::Point2f(tangent[0], tangent[1]);
+        // return cv::Vec4f(point.x, point.y, tangent[0], tangent[1]);
+        return cv::Vec4f(tangent[0], tangent[1], point.x, point.y);
+
     } catch (const std::exception& e) {
         std::cout << "计算切线失败: " << e.what() << std::endl;
-        return cv::Point2f(0, 0);
+        return cv::Vec4f(0, 0, 0, 0);
     }
 }
 

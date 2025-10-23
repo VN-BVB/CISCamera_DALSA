@@ -26,7 +26,7 @@ public:
     cv::Point2f evaluate(float u) const;
 
     // 获取样条曲线的导数（切线）
-    cv::Point2f getTangent(float u) const;
+    cv::Vec4f getTangent(float u) const;
 
     // 绘制曲线到图像
     void drawCurve(cv::Mat &image, const cv::Scalar &color = cv::Scalar(0, 255, 0),
@@ -35,6 +35,7 @@ public:
     // 绘制控制点和控制多边形
     void drawControlPoints(cv::Mat &image, const cv::Scalar &pointColor = cv::Scalar(0, 0, 255),
                            const cv::Scalar &polygonColor = cv::Scalar(255, 0, 0)) const;
+
 
 private:
     std::vector<cv::Point2f> m_points;

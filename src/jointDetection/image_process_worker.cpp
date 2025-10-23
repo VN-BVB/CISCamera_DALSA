@@ -43,14 +43,16 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         // 分段拟合后的样条曲线
         std::vector<CurveSeg> curves;
         curves = contourCurves[0].getCurveSegments();
+        cv::Vec4f tangent = curves[1].getTangent(0.996f);
 
         std::vector<std::vector<cv::Point>> pixelContour;
         pixelContour.push_back(contourCurves[1].getPixelContour());
         std::vector<cv::Vec4f> fitlines;
-        for (auto lineSegment :  contourCurves[1].getLineSegments())
-        {
-            fitlines.push_back(lineSegment.getLineEquation());
-        }
+        // for (auto lineSegment :  contourCurves[1].getLineSegments())
+        // {
+        //     fitlines.push_back(lineSegment.getLineEquation());
+        // }
+        fitlines.push_back(tangent);
         auto resultImage = std::make_shared<cv::Mat>(croppedImg);
         emit imageProcessed(resultImage, subpixelContours, pixelContour, fitlines, curves);
     } catch (const cv::Exception &e) {

@@ -21,11 +21,11 @@ int main(int argc, char *argv[]) {
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     initPlog();                         // 初始化日志类
 
-    TinySplineqqq testSpline;
-    testSpline.runcv();
+    // TinySplineqqq testSpline;
+    // testSpline.runcv();
 
-    // JointView w;
-    // w.show();
+    JointView w;
+    w.show();
 
     return a.exec();
 }
