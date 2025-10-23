@@ -237,9 +237,9 @@ std::vector<cv::Point2f> ContourCurve::sortContourByNearestNeighbor(const std::v
 */
 void ContourCurve::segment()
 {
-    if (!m_sortedSubpixelContour.empty())
+    if (!m_noConersContour.empty())
     {
-        segmentContour(m_sortedSubpixelContour, m_segmentedSubpixelContours);
+        segmentContour(m_noConersContour, m_segmentedSubpixelContours);
     } else {
         return;
     }
@@ -681,8 +681,8 @@ double ContourCurve::calculateCurvature(const cv::Point2f& prev, const cv::Point
 * @return 移除角点附近点后的轮廓点集
 */
 std::vector<cv::Point2f> ContourCurve::removePointsNearCorners(const std::vector<cv::Point2f>& contour,
-                                                                   const std::vector<cv::Point2f>& cornerPoints,
-                                                                   double radius) const
+                                                               const std::vector<cv::Point2f>& cornerPoints,
+                                                               double radius) const
 {
     if (contour.empty() || cornerPoints.empty()) {
         return contour;
@@ -716,7 +716,7 @@ std::vector<cv::Point2f> ContourCurve::removePointsNearCorners(const std::vector
 }
 
 void ContourCurve::removeCorners() {
-    m_noConersContour = removePointsNearCorners(m_sortedSubpixelContour, m_cornerPoints);
+    m_noConersContour = removePointsNearCorners(m_sortedSubpixelContour, m_cornerPoints, 15);
 }
 
 

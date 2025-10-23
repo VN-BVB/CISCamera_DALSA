@@ -1,0 +1,28 @@
+Crash time: 2025-10-23 16:20:12
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ff716d35990
+Thread ID: 14256
+
+Crash function: std::vector<cv::Point_<float>,std::allocator<cv::Point_<float> > >::operator=
+Source file: d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector
+Line: 1413
+
+Call Stack:
+#0  std::vector<cv::Point_<float>,std::allocator<cv::Point_<float> > >::operator= [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:1413]
+#1  ImageProcessWorker::processImage [d:\qt_project\ciscamera_dalsa\src\jointdetection\image_process_worker.cpp:32]
+#2  QtPrivate::FunctorCall<QtPrivate::IndexesList<0>,QtPrivate::List<std::shared_ptr<cv::Mat> >,void,void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>)>::call [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:152]
+#3  QtPrivate::FunctionPointer<void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>)>::call<QtPrivate::List<std::shared_ptr<cv::Mat> >,void> [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:186]
+#4  QtPrivate::QSlotObject<void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>),QtPrivate::List<std::shared_ptr<cv::Mat> >,void>::impl [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:419]
+#5  QMetaCallEvent::placeMetaCall
+#6  QObject::event
+#7  QApplicationPrivate::notify_helper
+#8  QApplication::notify
+#9  QCoreApplication::notifyInternal2
+#10  QCoreApplicationPrivate::sendPostedEvents
+#11  QEventDispatcherWin32::processEvents
+#12  QEventLoop::exec
+#13  QThread::exec
+#14  QThread::start
+#15  BaseThreadInitThunk
+#16  RtlUserThreadStart
