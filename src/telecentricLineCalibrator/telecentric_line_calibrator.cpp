@@ -719,8 +719,8 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
         K_out(2, 2) = 1.0;
 
         // 2. 更新外参和RMSE
-        poses_out = opt_poses;                                                   // 优化后的外参
-        rmse_out = opt_total_reprojErr / (all_imgPts.size() * worldPts.size());  // 总误差→平均RMSE（像素）
+        poses_out = opt_poses;  // 优化后的外参
+        rmse_out = opt_total_reprojErr;
 
         // 打印优化结果
         std::cout << "\n=== 非线性优化完成 ===\n";

@@ -181,6 +181,11 @@ private:
     Eigen::Matrix3d computeDRdy(double rx, double ry, double rz) const;
     Eigen::Matrix3d computeDRdz(double rx, double ry, double rz) const;
     void printParamChanges();
+    Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d &R) const;
+    Eigen::Matrix3d rotVecToMat(const Eigen::Vector3d &rvec) const;
+    void computeDRdr(const Eigen::Vector3d &rvec, Eigen::Matrix3d &dRdr1, Eigen::Matrix3d &dRdr2, Eigen::Matrix3d &dRdr3) const;
+    Eigen::VectorXd packParams() const;
+    void unpackParams(const Eigen::VectorXd &params);
 };
 
 #endif  // TELECENTRIC_LM_OPTIMIZER_H
