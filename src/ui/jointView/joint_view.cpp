@@ -111,12 +111,12 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
     m_fitLines = lines;
     m_fitCurves = curves;
     // 计算角点（拼缝端点）
-    m_cornerPoints.clear();
+    m_endPoints.clear();
     if (lines.size() >= 2) {
         // 计算前两条直线的交点作为角点
         cv::Point2f corner = cv::Point2f(4, 5);
         if (corner.x >= 0 && corner.y >= 0) {
-            m_cornerPoints.push_back(corner);
+            m_endPoints.push_back(corner);
         }
     }
 
@@ -136,7 +136,7 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
     m_currentImage = processedImage;
     std::vector<std::vector<cv::Point2f>> subpixelContours;
     std::vector<std::vector<cv::Point>> pixelContours;
-    for (auto contourCuve : jointSeam->getContourCurves()) {
+    for (auto& contourCuve : jointSeam->getContourCurves()) {
         subpixelContours.push_back(contourCuve.getSubpixelContours());
         pixelContours.push_back(contourCuve.getPixelContour());
     }
@@ -144,20 +144,28 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
     m_pixelContours = pixelContours;
 
     std::vector<cv::Vec4f> fitlines;
-    for (auto contourCurve :  jointSeam->getContourCurves())
+    for (auto& contourCurve :  jointSeam->getContourCurves())
     {
-        for (auto line : contourCurve.getLines())
+        for (auto& line : contourCurve.getLines())
             fitlines.push_back(line);
     }
     m_fitLines = fitlines;
 
     std::vector<CurveSeg> curves;
-    for (auto contourCurve :  jointSeam->getContourCurves())
+    for (auto& contourCurve :  jointSeam->getContourCurves())
     {
-        for (auto curveSeg : contourCurve.getCurveSegments())
+        for (auto& curveSeg : contourCurve.getCurveSegments())
         curves.push_back(curveSeg);
     }
     m_fitCurves = curves;
+
+    std::vector<cv::Point2f> endPoints;
+    for (auto& contourCurve :  jointSeam->getContourCurves())
+    {
+        for (auto& point : contourCurve.getEndPoints())
+            endPoints.push_back(point);
+    }
+    m_endPoints = endPoints;
 
     // 更新显示
     updateDisplay();
@@ -214,8 +222,8 @@ void JointView::updateDisplay() {
         scene->whenDrawBSplineCurves(m_fitCurves);
     }
 
-    if (m_showEndPoints && !m_cornerPoints.empty()) {
-        scene->whenDrawPoints(m_cornerPoints);
+    if (m_showEndPoints && !m_endPoints.empty()) {
+        scene->whenDrawPoints(m_endPoints);
     }
     // @TODO:增加取消勾选时，删除相应轮廓的功能
 }

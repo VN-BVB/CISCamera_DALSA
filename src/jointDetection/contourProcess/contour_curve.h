@@ -65,6 +65,7 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
     std::vector<LineSeg> getLineSegments() const {return m_lineSegments;}
     std::vector<CurveSeg> getCurveSegments() const {return m_curveSegments;}
     std::vector<cv::Point2f> getCornerPoints() const {return m_cornerPoints;}
+    std::vector<cv::Point2f> getEndPoints() const {return m_endPoints;}
     std::vector<cv::Point2f> getNoConersContour() const {return m_noConersContour;}
     std::vector<cv::Vec4f> getLines() const {return m_lines;}
 

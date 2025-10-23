@@ -247,12 +247,12 @@ void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points)
     if (points.empty())
         return;
 
-    int size = 5;
+    double size = 0.5;
     for (const auto& point : points) {
         // 创建圆形标记点
         QGraphicsEllipseItem *pointItem = new QGraphicsEllipseItem(point.x - size/2, point.y - size/2, size, size);
         pointItem->setBrush(QBrush(QColor(255, 165, 255))); // 粉色
-        pointItem->setPen(QPen(Qt::black)); // 黑色边框
+        pointItem->setPen(QPen(Qt::NoPen)); // 黑色边框
         pointItem->setZValue(15); // 设置较高的Z值，确保显示在最上层
 
         this->addItem(pointItem);

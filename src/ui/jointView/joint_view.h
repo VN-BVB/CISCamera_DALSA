@@ -71,7 +71,7 @@ private:
     std::vector<std::vector<cv::Point>> m_pixelContours;
     std::vector<cv::Vec4f> m_fitLines;
     std::vector<CurveSeg> m_fitCurves;
-    std::vector<cv::Point2f> m_cornerPoints;
+    std::vector<cv::Point2f> m_endPoints;
 
     // 显示控制标志
     bool m_showPixelContoursSquare = false;
