@@ -9,6 +9,16 @@
 const float MIN_DOMAIN = 0.01f;     // 样条曲线参数U的最小值
 const float MAX_DOMAIN = 0.996f;     // 样条曲线参数U的最大值
 
+/**
+ * @brief 端点信息结构体，包含点的坐标和对应的u值
+ */
+struct EndpointInfo {
+    cv::Point2f point;  // 端点坐标
+    float u;            // 对应的参数u值
+
+    EndpointInfo() : point(0, 0), u(0.0f) {}
+    EndpointInfo(const cv::Point2f& p, float u_val) : point(p), u(u_val) {}
+};
 
 /**
  * @brief 曲线，存储一条线段的所有特征
@@ -44,8 +54,10 @@ public:
     std::pair<cv::Point2f, cv::Point2f> sortPointsCounterClockwise(const cv::Point2f& point1,
                                                                    const cv::Point2f& point2,
                                                                    const cv::Point2f& referencePoint);
+    // 顺时针排序比较函数
+    bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const;
     // 按照参考点的逆时针方向排序其两端点
-    std::pair<cv::Point2f, cv::Point2f> sortEndpoints(const cv::Point2f& referencePoint);
+    std::pair<EndpointInfo, EndpointInfo> sortEndpoints(const cv::Point2f& referencePoint);
 
 private:
     std::vector<cv::Point2f> m_points;

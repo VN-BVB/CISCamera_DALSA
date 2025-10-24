@@ -125,10 +125,11 @@ private:
     // 分割轮廓
     void segment();
     void segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentContours);
+    // 顺时针排序比较函数
+    bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const;
     // 将分割后的轮廓进行逆时针排序
     std::map<int, std::vector<cv::Point2f>> sortContoursCounterClockwise(const std::vector<std::vector<cv::Point2f>>& segmentedContours,
-                                                                         const cv::Point2f& referencePoint,
-                                                                         OpeningDirection openingDrection) const;
+                                                                         const cv::Point2f& referencePoint) const;
     void sortSegmentedContours();
 
     // 计算拟合直线
@@ -159,9 +160,11 @@ private:
     std::map<int, std::vector<cv::Point2f>> m_counterClockwiseContours; // 逆时针排序后的分割轮廓
 
     // 直线拟合相关特征
-    std::vector<LineSeg> m_lineSegments;            // 分割后的各线段拟合特征
+    std::vector<LineSeg> m_lineSegments;                        // 分割后的各线段拟合特征
+    std::map<int, LineSeg> m_counterClockwiseLineSegments;      // 基于逆时针排序轮廓的直线拟合结果
     // 曲线拟合相关特征
-    std::vector<CurveSeg> m_curveSegments;          // 分割后的各曲线段拟合特征
+    std::vector<CurveSeg> m_curveSegments;                      // 分割后的各曲线段拟合特征
+    std::map<int, CurveSeg> m_counterClockwiseCurveSegments;    // 基于逆时针排序轮廓的样条曲线拟合结果
     // 端点计算相关特征
     std::vector<cv::Vec4f> m_lines;                 // 用于计算端点的直线
     std::vector<cv::Point2f> m_endPoints;           // 拼缝线段端点位置

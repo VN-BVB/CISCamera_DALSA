@@ -149,60 +149,92 @@ void CurveSeg::drawControlPoints(cv::Mat& image, const cv::Scalar& pointColor,
     }
 }
 
+/**
+* @brief 判断点A是否在点B的顺时针方向（相对于参考点）
+* @param pointA 第一个点
+* @param pointB 第二个点
+* @param referencePoint 参考点
+* @return 如果点A在点B的顺时针方向返回true，否则返回false
+*/
+bool CurveSeg::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const
+{
+
+    // 将参考点作为原点，计算相对坐标
+    cv::Point2f relA = pointA - referencePoint;
+    cv::Point2f relB = pointB - referencePoint;
+
+    // 计算叉积 det = (ax * by - ay * bx)
+    float det = relA.x * relB.y - relA.y * relB.x;
+
+    // 如果叉积为正，b在a顺时针方向
+    if (det > 0)
+        return false;
+
+    // 如果叉积为负，a在b顺时针方向
+    if (det < 0)
+        return true;
+
+    // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
+    float d1 = relA.x * relA.x + relA.y * relA.y;
+    float d2 = relB.x * relB.x + relB.y * relB.y;
+    return d1 < d2;
+}
 
 /**
-* @brief 以质心为原点建立坐标系，将两个点按逆时针方向排序
-* @param point1 第一个点
-* @param point2 第二个点
+* @brief 以参考点为原点建立坐标系，将两个点按逆时针方向排序
+* @param pointA 第一个点
+* @param pointB 第二个点
 * @param referencePoint 参考点
 * @return 排序后的点对，第一个点在前，第二个点在后（按逆时针方向）
 */
-std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const cv::Point2f& point1,
-                                                                         const cv::Point2f& point2,
+std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const cv::Point2f& pointA,
+                                                                         const cv::Point2f& pointB,
                                                                          const cv::Point2f& referencePoint)
 {
-    // 将质心转换为Point2f类型
-    cv::Point2f centroid(referencePoint.x, referencePoint.y);
-
-    // 计算两个点相对于质心的向量
-    cv::Point2f vec1 = point1 - centroid;
-    cv::Point2f vec2 = point2 - centroid;
-
-    // 计算两个向量的角度（相对于x轴正方向）
-    double angle1 = std::atan2(vec1.y, vec1.x);
-    double angle2 = std::atan2(vec2.y, vec2.x);
-
-    // 确保角度在[0, 2π)范围内
-    if (angle1 < 0) angle1 += 2 * M_PI;
-    if (angle2 < 0) angle2 += 2 * M_PI;
-
-    // 按角度大小排序（逆时针方向）
-    if (angle1 <= angle2) {
-        return std::make_pair(point1, point2);
+    std::pair<cv::Point2f, cv::Point2f> pointPair;
+    if (isPointClockwiseTo(pointA, pointB, referencePoint)) {
+        pointPair.first = pointA;
+        pointPair.second = pointB;
     } else {
-        return std::make_pair(point2, point1);
+        pointPair.first = pointB;
+        pointPair.second = pointA;
     }
+    return pointPair;
 }
 
 /**
 * @brief 自动获取轮廓端点并按参考点逆时针方向排序
 * @param referencePoint 参考点
-* @return 排序后的端点对，第一个点在前，第二个点在后（按逆时针方向）
+* @return 排序后的端点对，包含点的坐标和对应的u值
 */
-std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortEndpoints(const cv::Point2f& referencePoint)
+std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f& referencePoint)
 {
-    // 检查轮廓点是否为空
-    if (m_isFitted) {
+    // 检查轮廓是否已拟合
+    if (!m_isFitted) {
         std::cout << "轮廓尚未拟合" << std::endl;
-        return std::make_pair(cv::Point2f(0, 0), cv::Point2f(0, 0));
+        return std::make_pair(EndpointInfo(cv::Point2f(0, 0), 0.0f),
+                              EndpointInfo(cv::Point2f(0, 0), 0.0f));
     }
 
-    // 获取轮廓的两个端点（首尾点）
+    // 获取轮廓的两个端点（首尾点）及其对应的u值
     cv::Point2f endPoint1 = evaluate(MIN_DOMAIN);
     cv::Point2f endPoint2 = evaluate(MAX_DOMAIN);
 
-    return sortPointsCounterClockwise(endPoint1, endPoint2, referencePoint);
+    // 创建端点信息对象
+    EndpointInfo ep1(endPoint1, MIN_DOMAIN);
+    EndpointInfo ep2(endPoint2, MAX_DOMAIN);
+
+    // 按逆时针方向排序
+    std::pair<cv::Point2f, cv::Point2f> sortedPoints = sortPointsCounterClockwise(endPoint1, endPoint2, referencePoint);
+
+    // 根据排序结果返回对应的端点信息
+    if (sortedPoints.first == endPoint1) {
+        return std::make_pair(ep1, ep2);
+    } else {
+        return std::make_pair(ep2, ep1);
+    }
 }
+
 
 
 
