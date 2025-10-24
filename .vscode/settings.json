@@ -46,6 +46,7 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "unordered_set": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "map": "cpp"
     }
 }

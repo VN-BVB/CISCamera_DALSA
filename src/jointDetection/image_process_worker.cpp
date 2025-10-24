@@ -42,14 +42,14 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
         std::vector<std::vector<cv::Point>> pixelContour;
         pixelContour.push_back(contourCurves[1].getPixelContour());
         std::vector<cv::Vec4f> fitlines;
-        for (auto contourCurve :  contourCurves)
+        for (auto& contourCurve :  contourCurves)
         {
-            for (auto line : contourCurve.getLines())
+            for (auto& line : contourCurve.getLines())
             fitlines.push_back(line);
         }
         auto resultImage = std::make_shared<cv::Mat>(croppedImg);
         // emit imageProcessed(resultImage, subpixelContours, pixelContour, fitlines, contourCurves[1].getCurveSegments());
-        imageProcessed(resultImage, jointSeam);
+        emit imageProcessed(resultImage, jointSeam);
     } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());
     }

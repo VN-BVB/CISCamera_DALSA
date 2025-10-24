@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_set>
 #include <cmath>
+#include <map>
 
 #include "line_seg.h"
 #include "contour_segment.h"
@@ -46,10 +47,15 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
 /**
  * @brief 轮廓曲线，存储拼缝一侧轮廓的所有特征
  */
- class ContourCurve
+class ContourCurve
 {
- public:
+public:
     ContourCurve();
+    ContourCurve(const ContourCurve& other);                // 拷贝构造函数,在使用vector容纳这个类型，扩容时需要这些函数
+    ContourCurve& operator=(const ContourCurve& other);     // 拷贝赋值运算符
+    ContourCurve(ContourCurve&& other) noexcept;            // 移动构造函数
+    ContourCurve& operator=(ContourCurve&& other) noexcept; // 移动赋值运算符
+
     void initializePixelContour(const std::vector<cv::Point>& contour);
     void initializeSubpixelContour(const std::vector<cv::Point2f>& contour);
     void clear();
@@ -95,7 +101,7 @@ private:
                             float tolerance = 1e-5f);
     // 根据最邻近距离排序
     std::vector<cv::Point2f> sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int firstPointIdx);
-    // 获得逆时针排序的单条轮廓
+    // 获得逆时针排序的单条轮廓点集
     void sortContour();
 
 
@@ -116,21 +122,24 @@ private:
                                                      double radius = 10.0) const;
     void removeCorners();
 
+    // 分割轮廓
+    void segment();
+    void segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentContours);
+    // 将分割后的轮廓进行逆时针排序
+    std::map<int, std::vector<cv::Point2f>> sortContoursCounterClockwise(const std::vector<std::vector<cv::Point2f>>& segmentedContours,
+                                                                         const cv::Point2f& referencePoint,
+                                                                         OpeningDirection openingDrection) const;
+    void sortSegmentedContours();
 
     // 计算拟合直线
     void calculateLines();
+    // 计算拟合的B样条曲线
+    void calculateBSplines();
     // 计算两条直线的交点
     cv::Point2f calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2);
     // 计算本条拼缝轮廓的缝隙段的端点
     void calculateEndPointsByFittedLines();
     void calculateEndPointsByFittedCurves();
-
-    // 分割轮廓
-    void segment();
-    void segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentContours);
-
-    // 计算拟合的B样条曲线
-    void calculateBSplines();
 
 private:
     // 基本轮廓信息
@@ -147,6 +156,7 @@ private:
     // 轮廓分割相关特征
     std::vector<std::vector<cv::Point>> m_segmentedPixelContours;       // 分割后的轮廓段-像素级
     std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours;  // 分割后的轮廓段-亚像素级
+    std::map<int, std::vector<cv::Point2f>> m_counterClockwiseContours; // 逆时针排序后的分割轮廓
 
     // 直线拟合相关特征
     std::vector<LineSeg> m_lineSegments;            // 分割后的各线段拟合特征

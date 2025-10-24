@@ -3,7 +3,13 @@
 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <iostream>
 #include "tinysplinecxx.h"
+
+const float MIN_DOMAIN = 0.01f;     // 样条曲线参数U的最小值
+const float MAX_DOMAIN = 0.996f;     // 样条曲线参数U的最大值
+
+
 /**
  * @brief 曲线，存储一条线段的所有特征
  */
@@ -12,7 +18,6 @@ class CurveSeg
 public:
     CurveSeg();
     void initializeFromPoints(const std::vector<cv::Point2f>& points);
-
     void fitSplineCurve();
     tinyspline::BSpline getSpline() const {return m_spline;}
 
@@ -36,6 +41,11 @@ public:
     void drawControlPoints(cv::Mat &image, const cv::Scalar &pointColor = cv::Scalar(0, 0, 255),
                            const cv::Scalar &polygonColor = cv::Scalar(255, 0, 0)) const;
 
+    std::pair<cv::Point2f, cv::Point2f> sortPointsCounterClockwise(const cv::Point2f& point1,
+                                                                   const cv::Point2f& point2,
+                                                                   const cv::Point2f& referencePoint);
+    // 按照参考点的逆时针方向排序其两端点
+    std::pair<cv::Point2f, cv::Point2f> sortEndpoints(const cv::Point2f& referencePoint);
 
 private:
     std::vector<cv::Point2f> m_points;
