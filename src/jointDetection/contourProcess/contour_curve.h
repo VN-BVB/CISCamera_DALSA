@@ -46,6 +46,16 @@ using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
 
 /**
  * @brief 轮廓曲线，存储拼缝一侧轮廓的所有特征
+ * 轮廓特征的计算过程：
+ * 1、通过像素坐标或亚像素坐标初始化轮廓
+ * 2、计算轮廓开口方向
+ * 3、去除重复点
+ * 4、筛选轮廓起点并将点逆时针排序连接
+ * 5、检测角点位置并移除角点区域
+ * 6、分割轮廓
+ * 7、将每段分割轮廓当成一个个部分，然后逆时针排序这些部分
+ * 8、选取每端分割轮廓对应的端点
+ * 9、计算对应端点处的切线并计算交点
  */
 class ContourCurve
 {
@@ -68,8 +78,8 @@ public:
     std::vector<std::vector<cv::Point>> getSegmentedPixelContours() const   {return m_segmentedPixelContours;}
     std::vector<std::vector<cv::Point2f>> getSegmentedSubpixelContours() const   {return m_segmentedSubpixelContours;}
     std::vector<cv::Point> getDeduplicatedPixelContour() const {return m_deduplicatedPixelContour;}
-    std::vector<LineSeg> getLineSegments() const {return m_lineSegments;}
-    std::vector<CurveSeg> getCurveSegments() const {return m_curveSegments;}
+    std::map<int, LineSeg> getLineSegments() const {return m_lineSegments;}
+    std::map<int, CurveSeg> getCurveSegments() const {return m_curveSegments;}
     std::vector<cv::Point2f> getCornerPoints() const {return m_cornerPoints;}
     std::vector<cv::Point2f> getEndPoints() const {return m_endPoints;}
     std::vector<cv::Point2f> getNoConersContour() const {return m_noConersContour;}
@@ -90,7 +100,7 @@ private:
     // 计算开口方向
     template<typename PointType>
     OpeningDirection calculateOpeningDirectionImpl(const std::vector<PointType>& contour) const;
-    OpeningDirection calculateOpeningDirection();
+    void calculateOpeningDirection();
 
     // 计算起始点
     cv::Point2f calculateStartPointByOpeningDirection(OpeningDirection openingDirection,
@@ -106,7 +116,7 @@ private:
 
 
     // 角点检测函数
-    std::vector<cv::Point2f> detectCornerPoints() const;
+    void detectCornerPoints();
     // 角点检测方法
     std::vector<cv::Point2f> detectCornerPointsByCurvature(const std::vector<cv::Point2f>& contour,
                                                            double curvatureThreshold = 0.1) const;
@@ -123,8 +133,8 @@ private:
     void removeCorners();
 
     // 分割轮廓
-    void segment();
     void segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentContours);
+    void segment();
     // 顺时针排序比较函数
     bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const;
     // 将分割后的轮廓进行逆时针排序
@@ -160,11 +170,9 @@ private:
     std::map<int, std::vector<cv::Point2f>> m_counterClockwiseContours; // 逆时针排序后的分割轮廓
 
     // 直线拟合相关特征
-    std::vector<LineSeg> m_lineSegments;                        // 分割后的各线段拟合特征
-    std::map<int, LineSeg> m_counterClockwiseLineSegments;      // 基于逆时针排序轮廓的直线拟合结果
+    std::map<int, LineSeg> m_lineSegments;      // 基于逆时针排序轮廓的直线拟合结果
     // 曲线拟合相关特征
-    std::vector<CurveSeg> m_curveSegments;                      // 分割后的各曲线段拟合特征
-    std::map<int, CurveSeg> m_counterClockwiseCurveSegments;    // 基于逆时针排序轮廓的样条曲线拟合结果
+    std::map<int, CurveSeg> m_curveSegments;    // 基于逆时针排序轮廓的样条曲线拟合结果
     // 端点计算相关特征
     std::vector<cv::Vec4f> m_lines;                 // 用于计算端点的直线
     std::vector<cv::Point2f> m_endPoints;           // 拼缝线段端点位置

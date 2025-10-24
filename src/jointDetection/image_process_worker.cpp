@@ -48,7 +48,6 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
             fitlines.push_back(line);
         }
         auto resultImage = std::make_shared<cv::Mat>(croppedImg);
-        // emit imageProcessed(resultImage, subpixelContours, pixelContour, fitlines, contourCurves[1].getCurveSegments());
         emit imageProcessed(resultImage, jointSeam);
     } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());

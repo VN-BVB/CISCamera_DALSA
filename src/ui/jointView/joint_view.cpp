@@ -154,7 +154,7 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
     std::vector<CurveSeg> curves;
     for (auto& contourCurve :  jointSeam->getContourCurves())
     {
-        for (auto& curveSeg : contourCurve.getCurveSegments())
+        for (auto& [index, curveSeg] : contourCurve.getCurveSegments())
         curves.push_back(curveSeg);
     }
     m_fitCurves = curves;

@@ -8,6 +8,7 @@
  ******************************/
 ContourCurve::ContourCurve(): m_area(0.0), m_perimeter(0.0), m_aspectRatio(0.0),m_approxError(0.0) {}
 
+[[deprecated("此类应处理亚像素级坐标，像素级初始化操作应弃用，并且此初始化操作计算内容不全")]]
 /**
 * @brief 从像素级轮廓点集初始化
 * @param contour 输入轮廓像素点集
@@ -16,7 +17,7 @@ void ContourCurve::initializePixelContour(const std::vector<cv::Point>& contour)
     m_pixelContour = contour;
     m_deduplicatedPixelContour = removeDuplicateContourPoints(m_pixelContour);
     calculateBasicFeatures();
-    m_openingDirection = calculateOpeningDirection();
+    calculateOpeningDirection();
     segment();
 }
 
@@ -28,9 +29,9 @@ void ContourCurve::initializeSubpixelContour(const std::vector<cv::Point2f>& con
 {
     m_subpixelContour = contour;
     m_deduplicatedSubpixelContour = removeDuplicateContourPoints(m_subpixelContour);    // 去重
-    m_openingDirection = calculateOpeningDirection();   // 计算开口方向
+    calculateOpeningDirection();   // 计算开口方向
     sortContour();                                      // 逆时针排序，相当于二次扫描轮廓
-    m_cornerPoints = detectCornerPoints();              // 检测角点
+    detectCornerPoints();              // 检测角点
     removeCorners();                                    // 移除角点区域轮廓
     calculateBasicFeatures();                           // 计算基本特征
     segment();                                          // 分割轮廓
@@ -96,9 +97,9 @@ void ContourCurve::clear() {
     m_segmentedSubpixelContours.clear();
     m_cornerPoints.clear();
     m_lineSegments.clear();
-    m_counterClockwiseLineSegments.clear();
+    m_lineSegments.clear();
     m_curveSegments.clear();
-    m_counterClockwiseCurveSegments.clear();
+    m_curveSegments.clear();
     m_approxPolygon.clear();
     m_sortedSubpixelContour.clear();
     m_counterClockwiseContours.clear();
@@ -114,7 +115,7 @@ void ContourCurve::clear() {
 * @return 如果轮廓不为空则返回true
 */
 bool ContourCurve::isValid() const {
-    return !m_pixelContour.empty();
+    return (!m_pixelContour.empty() || !m_subpixelContour.empty());
 }
 
 /**
@@ -152,6 +153,7 @@ std::string ContourCurve::getSummary() const {
     return summary;
 }
 
+[[deprecated("弃用像素级坐标去重")]]
 /**
 * @brief removeDuplicateContourPoints 轮廓点去重
 * @param contour 输入轮廓点集
@@ -178,360 +180,13 @@ std::vector<cv::Point2f> ContourCurve::removeDuplicateContourPoints(
 * @brief 计算轮廓的开口方向
 * @return 开口方向枚举值
 */
-OpeningDirection ContourCurve::calculateOpeningDirection()
+void ContourCurve::calculateOpeningDirection()
 {
     // 优先使用亚像素级坐标，如果为空则使用像素级坐标
     if (!m_deduplicatedSubpixelContour.empty()) {
-        return calculateOpeningDirectionImpl(m_deduplicatedSubpixelContour);
+        m_openingDirection = calculateOpeningDirectionImpl(m_deduplicatedSubpixelContour);
     } else if (!m_deduplicatedPixelContour.empty()) {
-        return calculateOpeningDirectionImpl(m_deduplicatedPixelContour);
-    }
-
-    return OpeningDirection::UNKNOWN;
-}
-
-/**
-* @brief 按最近邻算法对轮廓点进行排序
-* @param contour 输入轮廓点集
-* @return 排序后的轮廓点集
-*/
-std::vector<cv::Point2f> ContourCurve::sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int firstPointIdx)
-{
-    if (contour.empty()) {
-        return std::vector<cv::Point2f>();
-    }
-
-    std::vector<cv::Point2f> sortedContour;
-    std::vector<bool> visited(contour.size(), false);
-
-    // 从第一个点开始
-    int currentIndex = firstPointIdx;
-    sortedContour.push_back(contour[currentIndex]);
-    visited[currentIndex] = true;
-
-    // 继续排序剩余的点
-    while (sortedContour.size() < contour.size()) {
-        double minDistance = std::numeric_limits<double>::max();
-        int nearestIndex = -1;
-
-        // 寻找距离当前点最近的点
-        for (int i = 0; i < contour.size(); ++i) {
-            if (!visited[i]) {
-                double distance = cv::norm(contour[currentIndex] - contour[i]);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestIndex = i;
-                }
-            }
-        }
-
-        if (nearestIndex != -1) {
-            sortedContour.push_back(contour[nearestIndex]);
-            visited[nearestIndex] = true;
-            currentIndex = nearestIndex;
-        } else {
-            break; // 没有找到未访问的点
-        }
-    }
-
-    return sortedContour;
-}
-
-/**
-* @brief 对轮廓进行线段分割
-*/
-void ContourCurve::segment()
-{
-    if (!m_noConersContour.empty())
-    {
-        segmentContour(m_noConersContour, m_segmentedSubpixelContours);
-    } else {
-        return;
-    }
-}
-
-/**
-* @brief 对轮廓进行线段分割
-* @param contour 待分割轮廓点集
-* @param segmentedContours 分割后的轮廓点集
-*/
-void ContourCurve::segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentedContours)
-{
-    std::vector<cv::Vec4f> lines;
-    double threshold = 8;
-    int maxIterations = 100;
-    ContourSegment cs{contour};
-    cs.sequentialRansac3Times(contour, segmentedContours, lines, threshold, maxIterations);
-}
-
-/**
-* @brief 判断点A是否在点B的顺时针方向（相对于参考点）
-* @param pointA 第一个点
-* @param pointB 第二个点
-* @param referencePoint 参考点
-* @return 如果点A在点B的顺时针方向返回true，否则返回false
-*/
-bool ContourCurve::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const
-{
-    // 将参考点作为原点，计算相对坐标
-    cv::Point2f relA = pointA - referencePoint;
-    cv::Point2f relB = pointB - referencePoint;
-
-    // 计算叉积 det = (ax * by - ay * bx)
-    float det = relA.x * relB.y - relA.y * relB.x;
-
-    // 如果叉积为正，b在a顺时针方向
-    if (det > 0)
-        return false;
-
-    // 如果叉积为负，a在b顺时针方向
-    if (det < 0)
-        return true;
-
-    // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
-    float d1 = relA.x * relA.x + relA.y * relA.y;
-    float d2 = relB.x * relB.x + relB.y * relB.y;
-    return d1 < d2;
-}
-
-/**
-* @brief 将分割后的轮廓进行逆时针排序，返回键值对格式
-* @param segmentedContours 分割后的轮廓集合
-* @param referencePoint 参考点，用于计算轮廓的相对角度
-* @return 键值对，键为1、2、3表示逆时针的第1、2、3条轮廓，值为对应的轮廓点集合
-*/
-std::map<int, std::vector<cv::Point2f>> ContourCurve::sortContoursCounterClockwise(const std::vector<std::vector<cv::Point2f>>& segmentedContours,
-                                                                                   const cv::Point2f& referencePoint) const
-{
-    std::map<int, std::vector<cv::Point2f>> sortedContours;
-
-    if (segmentedContours.empty()) {
-        return sortedContours;
-    }
-
-    // 1. 从每段轮廓中选取中间点
-    std::vector<std::pair<cv::Point2f, std::vector<cv::Point2f>>> contoursWithMidPoints;
-    for (const auto& contour : segmentedContours) {
-        if (contour.empty()) {
-            continue;
-        }
-
-        // 计算轮廓的中间点
-        int midIndex = static_cast<int>(contour.size() / 2);
-        cv::Point2f midPoint = contour[midIndex];
-
-        contoursWithMidPoints.push_back({midPoint, contour});
-    }
-
-    if (contoursWithMidPoints.empty()) {
-        return sortedContours;
-    }
-
-    // 2. 对中间点进行逆时针排序（相对于参考点）
-    // 使用冒泡排序进行逆时针排序
-    for (int i = 0; i < contoursWithMidPoints.size() - 1; i++) {
-        for (int j = 0; j < contoursWithMidPoints.size() - i - 1; j++) {
-            const cv::Point2f& pointA = contoursWithMidPoints[j].first;
-            const cv::Point2f& pointB = contoursWithMidPoints[j + 1].first;
-
-            // 如果pointA在pointB的顺时针方向，交换位置
-            if (isPointClockwiseTo(pointA, pointB, referencePoint)) {
-                std::swap(contoursWithMidPoints[j], contoursWithMidPoints[j + 1]);
-            }
-        }
-    }
-
-    // 3. 创建循环链表结构（使用vector模拟循环链表）
-    std::vector<std::pair<cv::Point2f, std::vector<cv::Point2f>>> circularList = contoursWithMidPoints;
-
-    // 4. 找到点数最多的轮廓
-    auto maxPointContour = std::max_element(circularList.begin(), circularList.end(),
-                                            [](const std::pair<cv::Point2f, std::vector<cv::Point2f>>& a,
-                                               const std::pair<cv::Point2f, std::vector<cv::Point2f>>& b) {
-                                                return a.second.size() < b.second.size();
-                                            });
-
-    if (maxPointContour == circularList.end()) {
-        return sortedContours;
-    }
-
-    // 5. 确定三条轮廓的位置
-    int maxIndex = std::distance(circularList.begin(), maxPointContour);
-    int n = static_cast<int>(circularList.size());
-
-    // 计算前一项（第一条轮廓）- 顺时针方向的前一个
-    int firstIndex = (maxIndex - 1 + n) % n;
-
-    // 计算后一项（第三条轮廓）- 顺时针方向的后一个
-    int thirdIndex = (maxIndex + 1) % n;
-
-    // 6. 将三条轮廓存入map
-    sortedContours[1] = circularList[firstIndex].second;  // 第一条轮廓（顺时针方向的前一个）
-    sortedContours[2] = circularList[maxIndex].second;    // 第二条轮廓（点数最多的）
-    sortedContours[3] = circularList[thirdIndex].second;  // 第三条轮廓（顺时针方向的后一个）
-
-    return sortedContours;
-}
-
-void ContourCurve::sortSegmentedContours() {
-    if (m_segmentedSubpixelContours.empty()) return;
-    m_counterClockwiseContours = sortContoursCounterClockwise(m_segmentedSubpixelContours, m_centroid);
-}
-
-void ContourCurve::calculateLines()
-{
-    if (m_segmentedSubpixelContours.empty()) return;
-
-    // 清空原有的直线拟合结果
-    m_lineSegments.clear();
-    m_counterClockwiseLineSegments.clear();
-
-    // 使用m_segmentedSubpixelContours进行直线拟合（保持原有功能）
-    for (auto& contour : m_segmentedSubpixelContours)
-    {
-        LineSeg ls;
-        ls.initializeFromPoints(contour);
-        m_lineSegments.push_back(ls);
-    }
-
-    // 使用m_counterClockwiseContours进行直线拟合（新增功能）
-    if (!m_counterClockwiseContours.empty()) {
-        for (const auto& [index, contour] : m_counterClockwiseContours) {
-            LineSeg ls;
-            ls.initializeFromPoints(contour);
-            m_counterClockwiseLineSegments[index] = ls;
-        }
-    }
-}
-
-// 计算拟合的B样条曲线
-void ContourCurve::calculateBSplines() {
-    // 使用原始的m_segmentedSubpixelContours进行拟合
-    for (auto& contour : m_segmentedSubpixelContours) {
-        CurveSeg curve;
-        curve.initializeFromPoints(contour);
-        curve.fitSplineCurve();
-        m_curveSegments.push_back(curve);
-    }
-
-    // 使用逆时针排序的m_counterClockwiseContours进行拟合
-    for (const auto& [index, contour] : m_counterClockwiseContours) {
-        CurveSeg curve;
-        curve.initializeFromPoints(contour);
-        curve.fitSplineCurve();
-        m_counterClockwiseCurveSegments[index] = curve;
-    }
-}
-
-// 计算两条直线的交点
-cv::Point2f ContourCurve::calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2) {
-    // 提取直线参数
-    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
-    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
-
-    // 检查两条直线是否平行
-    float cross = vx1 * vy2 - vy1 * vx2;
-    if (std::abs(cross) < 1e-10) {
-        // 直线平行或重合，返回无效点
-        qDebug() << "警告：两条直线平行或重合，无法计算交点";
-        return cv::Point2f(-1, -1);
-    }
-
-    // 使用参数方程求解交点
-    // 直线1: (x, y) = (x01, y01) + t1 * (vx1, vy1)
-    // 直线2: (x, y) = (x02, y02) + t2 * (vx2, vy2)
-
-    // 解方程组:
-    // x01 + t1 * vx1 = x02 + t2 * vx2
-    // y01 + t1 * vy1 = y02 + t2 * vy2
-
-    // 整理得:
-    // t1 * vx1 - t2 * vx2 = x02 - x01
-    // t1 * vy1 - t2 * vy2 = y02 - y01
-
-    float dx = x02 - x01;
-    float dy = y02 - y01;
-
-    // 使用克莱姆法则求解t1
-    float t1 = (dx * vy2 - dy * vx2) / cross;
-
-    // 计算交点坐标
-    float intersectX = x01 + t1 * vx1;
-    float intersectY = y01 + t1 * vy1;
-
-    return cv::Point2f(intersectX, intersectY);
-}
-
-void ContourCurve::calculateEndPointsByFittedLines()
-{
-    if (m_lineSegments.empty()) return;
-    m_lines.push_back(m_lineSegments[0].getLineEquation());
-    m_lines.push_back(m_lineSegments[1].getLineEquation());
-    m_lines.push_back(m_lineSegments[0].getLineEquation());
-    m_lines.push_back(m_lineSegments[2].getLineEquation());
-    cv::Point2f cornerPoint1 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[1].getLineEquation());
-    m_endPoints.push_back(cornerPoint1);
-    cv::Point2f cornerPoint2 = calculateLineIntersection(m_lineSegments[0].getLineEquation(), m_lineSegments[2].getLineEquation());
-    m_endPoints.push_back(cornerPoint2);
-}
-
-void ContourCurve::calculateEndPointsByFittedCurves()
-{
-    // 先按逆时针标记线，再获得每条线端点的逆时针标记，最后根据这个确定选取轮廓的哪端切线进行计算
-    // 清空之前的计算结果
-    m_lines.clear();
-    m_endPoints.clear();
-
-    // 优先使用逆时针排序的曲线段
-    if (!m_counterClockwiseCurveSegments.empty()) {
-        // 获取三条曲线段
-        CurveSeg& curve1 = m_counterClockwiseCurveSegments[1];  // 第一条轮廓（逆时针方向的前一个）
-        CurveSeg& curve2 = m_counterClockwiseCurveSegments[2];  // 第二条轮廓（点数最多的）
-        CurveSeg& curve3 = m_counterClockwiseCurveSegments[3];  // 第三条轮廓（逆时针方向的后一个）
-
-        // 使用质心作为参考点
-        cv::Point2f referencePoint(m_centroid.x, m_centroid.y);
-
-        // 对每条曲线段的端点进行逆时针排序
-        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints1 = curve1.sortEndpoints(referencePoint);
-        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints2 = curve2.sortEndpoints(referencePoint);
-        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints3 = curve3.sortEndpoints(referencePoint);
-
-        // 键为1的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
-        EndpointInfo endpoint1_ccw = sortedEndpoints1.first;  // 更逆时针的端点
-        // 键为2的曲线：取相对于参考点更顺时针的端点（即排序后的第二个端点）
-        EndpointInfo endpoint2_cw = sortedEndpoints2.second;  // 更顺时针的端点
-        // 键为3的曲线：取相对于参考点更顺时针的端点（即排序后的第一个端点）
-        EndpointInfo endpoint3_ccw = sortedEndpoints3.second;  // 更顺时针的端点
-        // 键为2的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
-        EndpointInfo endpoint2_ccw = sortedEndpoints2.first;  // 更逆时针的端点
-
-        // 获取对应端点的切线
-        cv::Vec4f tangent1 = curve1.getTangent(endpoint1_ccw.u);  // 键为1的曲线更逆时针端点的切线
-        cv::Vec4f tangent2_cw = curve2.getTangent(endpoint2_cw.u);  // 键为2的曲线更顺时针端点的切线
-        cv::Vec4f tangent3 = curve3.getTangent(endpoint3_ccw.u);  // 键为3的曲线更顺时针端点的切线
-        cv::Vec4f tangent2_ccw = curve2.getTangent(endpoint2_ccw.u);  // 键为2的曲线更逆时针端点的切线
-
-        // 保存切线用于后续使用
-        m_lines.push_back(tangent1);
-        m_lines.push_back(tangent2_cw);
-        m_lines.push_back(tangent3);
-        m_lines.push_back(tangent2_ccw);
-
-        // 计算交点：键为1的曲线更逆时针端点的切线与键为2的曲线更顺时针端点的切线求交点
-        cv::Point2f cornerPoint1 = calculateLineIntersection(tangent1, tangent2_cw);
-        // 计算交点：键为3的曲线更顺时针端点的切线与键为2的曲线更逆时针端点的切线求交点
-        cv::Point2f cornerPoint2 = calculateLineIntersection(tangent3, tangent2_ccw);
-
-        m_endPoints.push_back(cornerPoint1);
-        m_endPoints.push_back(cornerPoint2);
-
-        qDebug() << "使用逆时针排序曲线段计算端点完成";
-        qDebug() << "端点1坐标: (" << cornerPoint1.x << ", " << cornerPoint1.y << ")";
-        qDebug() << "端点2坐标: (" << cornerPoint2.x << ", " << cornerPoint2.y << ")";
-
-    } else {
-        qDebug() << "警告：没有可用的曲线段数据，无法计算端点";
+        m_openingDirection = calculateOpeningDirectionImpl(m_deduplicatedPixelContour);
     }
 }
 
@@ -693,6 +348,56 @@ int ContourCurve::calculatePointIndex(const cv::Point2f &point,
     return -1;
 }
 
+/**
+* @brief 按最近邻算法对轮廓点进行排序
+* @param contour 输入轮廓点集
+* @return 排序后的轮廓点集
+*/
+std::vector<cv::Point2f> ContourCurve::sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int firstPointIdx)
+{
+    if (contour.empty()) {
+        return std::vector<cv::Point2f>();
+    }
+
+    std::vector<cv::Point2f> sortedContour;
+    std::vector<bool> visited(contour.size(), false);
+
+    // 从第一个点开始
+    int currentIndex = firstPointIdx;
+    sortedContour.push_back(contour[currentIndex]);
+    visited[currentIndex] = true;
+
+    // 继续排序剩余的点
+    while (sortedContour.size() < contour.size()) {
+        double minDistance = std::numeric_limits<double>::max();
+        int nearestIndex = -1;
+
+        // 寻找距离当前点最近的点
+        for (int i = 0; i < contour.size(); ++i) {
+            if (!visited[i]) {
+                double distance = cv::norm(contour[currentIndex] - contour[i]);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestIndex = i;
+                }
+            }
+        }
+
+        if (nearestIndex != -1) {
+            sortedContour.push_back(contour[nearestIndex]);
+            visited[nearestIndex] = true;
+            currentIndex = nearestIndex;
+        } else {
+            break; // 没有找到未访问的点
+        }
+    }
+
+    return sortedContour;
+}
+
+/**
+* @brief 对轮廓按开口方向确定起始点，并按逆时针排序，可理解为扫描
+*/
 void ContourCurve::sortContour() {
     m_startPoint = calculateStartPointByOpeningDirection(m_openingDirection, m_deduplicatedSubpixelContour);
     int pIndex = calculatePointIndex(m_startPoint, m_deduplicatedSubpixelContour);
@@ -703,14 +408,14 @@ void ContourCurve::sortContour() {
 * @brief 检测单条轮廓的角点
 * @return 检测到的角点集合
 */
-std::vector<cv::Point2f> ContourCurve::detectCornerPoints() const
+void ContourCurve::detectCornerPoints()
 {
     if (m_sortedSubpixelContour.empty()) {
-        return {};
+        return;
     }
 
-    // 使用曲率方法检测角点（可以根据需要切换其他方法）
-    return detectCornerPointsByDouglasPeucker(m_sortedSubpixelContour);
+    // 使用多边形拟合方法检测角点（可以根据需要切换其他方法）
+    m_cornerPoints = detectCornerPointsByDouglasPeucker(m_sortedSubpixelContour);
 }
 
 /**
@@ -858,6 +563,7 @@ double ContourCurve::calculateCurvature(const cv::Point2f& prev, const cv::Point
     return angle;
 }
 
+
 /**
 * @brief 移除角点附近指定半径范围内的轮廓点
 * @param contour 输入轮廓点集
@@ -900,8 +606,315 @@ std::vector<cv::Point2f> ContourCurve::removePointsNearCorners(const std::vector
     return filteredContour;
 }
 
+/**
+* @brief 移除角点和干扰点区域
+*/
 void ContourCurve::removeCorners() {
     m_noConersContour = removePointsNearCorners(m_sortedSubpixelContour, m_cornerPoints, 15);
+}
+
+/**
+* @brief 对轮廓进行线段分割
+* @param contour 待分割轮廓点集
+* @param segmentedContours 分割后的轮廓点集
+*/
+void ContourCurve::segmentContour(const std::vector<cv::Point2f> &contour, std::vector<std::vector<cv::Point2f>> &segmentedContours)
+{
+    std::vector<cv::Vec4f> lines;
+    double threshold = 8;
+    int maxIterations = 100;
+    ContourSegment cs{contour};
+    cs.sequentialRansac3Times(contour, segmentedContours, lines, threshold, maxIterations);
+}
+
+/**
+* @brief 对轮廓进行分割
+*/
+void ContourCurve::segment()
+{
+    if (!m_noConersContour.empty())
+    {
+        segmentContour(m_noConersContour, m_segmentedSubpixelContours);
+    } else {
+        return;
+    }
+}
+
+/**
+* @brief 判断点A是否在点B的顺时针方向（相对于参考点）
+* @param pointA 第一个点
+* @param pointB 第二个点
+* @param referencePoint 参考点
+* @return 如果点A在点B的顺时针方向返回true，否则返回false
+*/
+bool ContourCurve::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const
+{
+    // 将参考点作为原点，计算相对坐标
+    cv::Point2f relA = pointA - referencePoint;
+    cv::Point2f relB = pointB - referencePoint;
+
+    // 计算叉积 det = (ax * by - ay * bx)
+    float det = relA.x * relB.y - relA.y * relB.x;
+
+    // 如果叉积为正，b在a顺时针方向
+    if (det > 0)
+        return false;
+
+    // 如果叉积为负，a在b顺时针方向
+    if (det < 0)
+        return true;
+
+    // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
+    float d1 = relA.x * relA.x + relA.y * relA.y;
+    float d2 = relB.x * relB.x + relB.y * relB.y;
+    return d1 < d2;
+}
+
+/**
+* @brief 将分割后的轮廓进行逆时针排序，返回键值对格式
+* @param segmentedContours 分割后的轮廓集合
+* @param referencePoint 参考点，用于计算轮廓的相对角度
+* @return 键值对，键为1、2、3表示逆时针的第1、2、3条轮廓，值为对应的轮廓点集合
+*/
+std::map<int, std::vector<cv::Point2f>> ContourCurve::sortContoursCounterClockwise(const std::vector<std::vector<cv::Point2f>>& segmentedContours,
+                                                                                   const cv::Point2f& referencePoint) const
+{
+    std::map<int, std::vector<cv::Point2f>> sortedContours;
+
+    if (segmentedContours.empty()) {
+        return sortedContours;
+    }
+
+    // 1. 从每段轮廓中选取中间点
+    std::vector<std::pair<cv::Point2f, std::vector<cv::Point2f>>> contoursWithMidPoints;
+    for (const auto& contour : segmentedContours) {
+        if (contour.empty()) {
+            continue;
+        }
+
+        // 计算轮廓的中间点
+        int midIndex = static_cast<int>(contour.size() / 2);
+        cv::Point2f midPoint = contour[midIndex];
+
+        contoursWithMidPoints.push_back({midPoint, contour});
+    }
+
+    if (contoursWithMidPoints.empty()) {
+        return sortedContours;
+    }
+
+    // 2. 对中间点进行逆时针排序（相对于参考点）
+    // 使用冒泡排序进行逆时针排序
+    for (int i = 0; i < contoursWithMidPoints.size() - 1; i++) {
+        for (int j = 0; j < contoursWithMidPoints.size() - i - 1; j++) {
+            const cv::Point2f& pointA = contoursWithMidPoints[j].first;
+            const cv::Point2f& pointB = contoursWithMidPoints[j + 1].first;
+
+            // 如果pointA在pointB的顺时针方向，交换位置
+            if (isPointClockwiseTo(pointA, pointB, referencePoint)) {
+                std::swap(contoursWithMidPoints[j], contoursWithMidPoints[j + 1]);
+            }
+        }
+    }
+
+    // 3. 创建循环链表结构（使用vector模拟循环链表）
+    std::vector<std::pair<cv::Point2f, std::vector<cv::Point2f>>> circularList = contoursWithMidPoints;
+
+    // 4. 找到点数最多的轮廓
+    auto maxPointContour = std::max_element(circularList.begin(), circularList.end(),
+                                            [](const std::pair<cv::Point2f, std::vector<cv::Point2f>>& a,
+                                               const std::pair<cv::Point2f, std::vector<cv::Point2f>>& b) {
+                                                return a.second.size() < b.second.size();
+                                            });
+
+    if (maxPointContour == circularList.end()) {
+        return sortedContours;
+    }
+
+    // 5. 确定三条轮廓的位置
+    int maxIndex = std::distance(circularList.begin(), maxPointContour);
+    int n = static_cast<int>(circularList.size());
+
+    // 计算前一项（第一条轮廓）- 顺时针方向的前一个
+    int firstIndex = (maxIndex - 1 + n) % n;
+
+    // 计算后一项（第三条轮廓）- 顺时针方向的后一个
+    int thirdIndex = (maxIndex + 1) % n;
+
+    // 6. 将三条轮廓存入map
+    sortedContours[1] = circularList[firstIndex].second;  // 第一条轮廓（顺时针方向的前一个）
+    sortedContours[2] = circularList[maxIndex].second;    // 第二条轮廓（点数最多的）
+    sortedContours[3] = circularList[thirdIndex].second;  // 第三条轮廓（顺时针方向的后一个）
+
+    return sortedContours;
+}
+
+/**
+* @brief 对分割后的轮廓进行整体排序
+*/
+void ContourCurve::sortSegmentedContours() {
+    if (m_segmentedSubpixelContours.empty()) return;
+    m_counterClockwiseContours = sortContoursCounterClockwise(m_segmentedSubpixelContours, m_centroid);
+}
+
+/**
+* @brief 对所有排序后的分割轮廓进行直线拟合
+*/
+void ContourCurve::calculateLines()
+{
+    if (m_counterClockwiseContours.empty()) return;
+
+    // 清空原有的直线拟合结果
+    m_lineSegments.clear();
+    // 使用m_counterClockwiseContours进行直线拟合
+    if (!m_counterClockwiseContours.empty()) {
+        for (const auto& [index, contour] : m_counterClockwiseContours) {
+            LineSeg ls;
+            ls.initializeFromPoints(contour);
+            m_lineSegments[index] = ls;
+        }
+    }
+}
+
+/**
+* @brief 对所有排序后的分割轮廓进行样条曲线拟合
+*/
+void ContourCurve::calculateBSplines()
+{
+    if (m_counterClockwiseContours.empty()) return;
+    // 使用逆时针排序的m_counterClockwiseContours进行拟合
+    for (const auto& [index, contour] : m_counterClockwiseContours) {
+        CurveSeg curve;
+        curve.initializeFromPoints(contour);
+        curve.fitSplineCurve();
+        m_curveSegments[index] = curve;
+    }
+}
+
+/**
+* @brief calculateLineIntersection 计算两条直线的交点
+* @param line1 直线1方程
+* @param line2 直线2方程
+* @return 交点坐标
+*/
+cv::Point2f ContourCurve::calculateLineIntersection(const cv::Vec4f &line1, const cv::Vec4f &line2) {
+    // 提取直线参数
+    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
+    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
+
+    // 检查两条直线是否平行
+    float cross = vx1 * vy2 - vy1 * vx2;
+    if (std::abs(cross) < 1e-10) {
+        // 直线平行或重合，返回无效点
+        qDebug() << "警告：两条直线平行或重合，无法计算交点";
+        return cv::Point2f(-1, -1);
+    }
+
+    // 使用参数方程求解交点
+    // 直线1: (x, y) = (x01, y01) + t1 * (vx1, vy1)
+    // 直线2: (x, y) = (x02, y02) + t2 * (vx2, vy2)
+
+    // 解方程组:
+    // x01 + t1 * vx1 = x02 + t2 * vx2
+    // y01 + t1 * vy1 = y02 + t2 * vy2
+
+    // 整理得:
+    // t1 * vx1 - t2 * vx2 = x02 - x01
+    // t1 * vy1 - t2 * vy2 = y02 - y01
+
+    float dx = x02 - x01;
+    float dy = y02 - y01;
+
+    // 使用克莱姆法则求解t1
+    float t1 = (dx * vy2 - dy * vx2) / cross;
+
+    // 计算交点坐标
+    float intersectX = x01 + t1 * vx1;
+    float intersectY = y01 + t1 * vy1;
+
+    return cv::Point2f(intersectX, intersectY);
+}
+
+/**
+* @brief calculateEndPointsByFittedLines 通过拟合的直线求属于拼缝的端点
+*/
+void ContourCurve::calculateEndPointsByFittedLines()
+{
+    if (m_lineSegments.empty()) return;
+    cv::Vec4f line1 = m_lineSegments[1].getLineEquation();
+    cv::Vec4f line2 = m_lineSegments[2].getLineEquation();
+    cv::Vec4f line3 = m_lineSegments[3].getLineEquation();
+    cv::Point2f cornerPoint1 = calculateLineIntersection(line1, line2);
+    m_endPoints.push_back(cornerPoint1);
+    cv::Point2f cornerPoint2 = calculateLineIntersection(line3, line2);
+    m_endPoints.push_back(cornerPoint2);
+    m_lines.push_back(line1);
+    m_lines.push_back(line2);
+    m_lines.push_back(line3);
+    m_lines.push_back(line2);
+}
+
+/**
+* @brief calculateEndPointsByFittedLines 通过拟合的样条曲线求属于拼缝的端点
+*/
+void ContourCurve::calculateEndPointsByFittedCurves()
+{
+    // 先按逆时针标记线，再获得每条线端点的逆时针标记，最后根据这个确定选取轮廓的哪端切线进行计算
+    // 清空之前的计算结果
+    m_lines.clear();
+    m_endPoints.clear();
+
+    // 优先使用逆时针排序的曲线段
+    if (!m_curveSegments.empty()) {
+        // 获取三条曲线段
+        CurveSeg& curve1 = m_curveSegments[1];  // 第一条轮廓（逆时针方向的前一个）
+        CurveSeg& curve2 = m_curveSegments[2];  // 第二条轮廓（点数最多的）
+        CurveSeg& curve3 = m_curveSegments[3];  // 第三条轮廓（逆时针方向的后一个）
+
+        // 使用质心作为参考点
+        cv::Point2f referencePoint(m_centroid.x, m_centroid.y);
+
+        // 对每条曲线段的端点进行逆时针排序
+        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints1 = curve1.sortEndpoints(referencePoint);
+        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints2 = curve2.sortEndpoints(referencePoint);
+        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints3 = curve3.sortEndpoints(referencePoint);
+
+        // 键为1的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
+        EndpointInfo endpoint1_ccw = sortedEndpoints1.first;  // 更逆时针的端点
+        // 键为2的曲线：取相对于参考点更顺时针的端点（即排序后的第二个端点）
+        EndpointInfo endpoint2_cw = sortedEndpoints2.second;  // 更顺时针的端点
+        // 键为3的曲线：取相对于参考点更顺时针的端点（即排序后的第一个端点）
+        EndpointInfo endpoint3_ccw = sortedEndpoints3.second;  // 更顺时针的端点
+        // 键为2的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
+        EndpointInfo endpoint2_ccw = sortedEndpoints2.first;  // 更逆时针的端点
+
+        // 获取对应端点的切线
+        cv::Vec4f tangent1 = curve1.getTangent(endpoint1_ccw.u);  // 键为1的曲线更逆时针端点的切线
+        cv::Vec4f tangent2_cw = curve2.getTangent(endpoint2_cw.u);  // 键为2的曲线更顺时针端点的切线
+        cv::Vec4f tangent3 = curve3.getTangent(endpoint3_ccw.u);  // 键为3的曲线更顺时针端点的切线
+        cv::Vec4f tangent2_ccw = curve2.getTangent(endpoint2_ccw.u);  // 键为2的曲线更逆时针端点的切线
+
+        // 保存切线用于后续使用
+        m_lines.push_back(tangent1);
+        m_lines.push_back(tangent2_cw);
+        m_lines.push_back(tangent3);
+        m_lines.push_back(tangent2_ccw);
+
+        // 计算交点：键为1的曲线更逆时针端点的切线与键为2的曲线更顺时针端点的切线求交点
+        cv::Point2f cornerPoint1 = calculateLineIntersection(tangent1, tangent2_cw);
+        // 计算交点：键为3的曲线更顺时针端点的切线与键为2的曲线更逆时针端点的切线求交点
+        cv::Point2f cornerPoint2 = calculateLineIntersection(tangent3, tangent2_ccw);
+
+        m_endPoints.push_back(cornerPoint1);
+        m_endPoints.push_back(cornerPoint2);
+
+        qDebug() << "使用逆时针排序曲线段计算端点完成";
+        qDebug() << "端点1坐标: (" << cornerPoint1.x << ", " << cornerPoint1.y << ")";
+        qDebug() << "端点2坐标: (" << cornerPoint2.x << ", " << cornerPoint2.y << ")";
+
+    } else {
+        qDebug() << "警告：没有可用的曲线段数据，无法计算端点";
+    }
 }
 
 /******************************
@@ -923,9 +936,7 @@ ContourCurve::ContourCurve(const ContourCurve& other)
     m_segmentedSubpixelContours(other.m_segmentedSubpixelContours),
     m_counterClockwiseContours(other.m_counterClockwiseContours),
     m_lineSegments(other.m_lineSegments),
-    m_counterClockwiseLineSegments(other.m_counterClockwiseLineSegments),
     m_curveSegments(other.m_curveSegments),
-    m_counterClockwiseCurveSegments(other.m_counterClockwiseCurveSegments),
     m_lines(other.m_lines),
     m_endPoints(other.m_endPoints),
     m_boundingRect(other.m_boundingRect),
@@ -935,8 +946,7 @@ ContourCurve::ContourCurve(const ContourCurve& other)
     m_centroid(other.m_centroid),
     m_approxPolygon(other.m_approxPolygon),
     m_approxError(other.m_approxError)
-{
-}
+{}
 
 // 拷贝赋值运算符
 ContourCurve& ContourCurve::operator=(const ContourCurve& other)
@@ -955,9 +965,9 @@ ContourCurve& ContourCurve::operator=(const ContourCurve& other)
         m_segmentedSubpixelContours = other.m_segmentedSubpixelContours;
         m_counterClockwiseContours = other.m_counterClockwiseContours;
         m_lineSegments = other.m_lineSegments;
-        m_counterClockwiseLineSegments = other.m_counterClockwiseLineSegments;
+        m_lineSegments = other.m_lineSegments;
         m_curveSegments = other.m_curveSegments;
-        m_counterClockwiseCurveSegments = other.m_counterClockwiseCurveSegments;
+        m_curveSegments = other.m_curveSegments;
         m_lines = other.m_lines;
         m_endPoints = other.m_endPoints;
         m_boundingRect = other.m_boundingRect;
@@ -986,9 +996,7 @@ ContourCurve::ContourCurve(ContourCurve&& other) noexcept
     m_segmentedSubpixelContours(std::move(other.m_segmentedSubpixelContours)),
     m_counterClockwiseContours(std::move(other.m_counterClockwiseContours)),
     m_lineSegments(std::move(other.m_lineSegments)),
-    m_counterClockwiseLineSegments(std::move(other.m_counterClockwiseLineSegments)),
     m_curveSegments(std::move(other.m_curveSegments)),
-    m_counterClockwiseCurveSegments(std::move(other.m_counterClockwiseCurveSegments)),
     m_lines(std::move(other.m_lines)),
     m_endPoints(std::move(other.m_endPoints)),
     m_boundingRect(std::move(other.m_boundingRect)),
@@ -1020,9 +1028,9 @@ ContourCurve& ContourCurve::operator=(ContourCurve&& other) noexcept
         m_segmentedSubpixelContours = std::move(other.m_segmentedSubpixelContours);
         m_counterClockwiseContours = std::move(other.m_counterClockwiseContours);
         m_lineSegments = std::move(other.m_lineSegments);
-        m_counterClockwiseLineSegments = std::move(other.m_counterClockwiseLineSegments);
+        m_lineSegments = std::move(other.m_lineSegments);
         m_curveSegments = std::move(other.m_curveSegments);
-        m_counterClockwiseCurveSegments = std::move(other.m_counterClockwiseCurveSegments);
+        m_curveSegments = std::move(other.m_curveSegments);
         m_lines = std::move(other.m_lines);
         m_endPoints = std::move(other.m_endPoints);
         m_boundingRect = std::move(other.m_boundingRect);
