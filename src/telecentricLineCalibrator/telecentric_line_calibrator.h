@@ -25,6 +25,7 @@ enum class PatternType { CHESSBOARD, CIRCLES_GRID, ASYMMETRIC_CIRCLES_GRID };
 class TelecentricLineCalibrator {
 public:
     TelecentricLineCalibrator();
+    Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d& R) const;
 
     /**
      * @brief 线阵远心镜头标定（DLT 初值求解）

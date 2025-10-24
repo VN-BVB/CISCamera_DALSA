@@ -12,6 +12,8 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
+#include <unsupported/Eigen/NonLinearOptimization>  // LM
+#include <unsupported/Eigen/NumericalDiff>          // 数值导数自动计算
 #include <vector>
 
 #include "plog/Log.h"
@@ -158,34 +160,10 @@ private:
     // 用增量更新所有参数
     void updateParams(const Eigen::VectorXd& delta);
 
-    /**
-     * 旋转矩阵→欧拉角（参数化转换）
-     * TODO：需与初步标定的旋转参数化方式一致（如ZYX/XYZ顺序）
-     * @param R 旋转矩阵
-     * @param rx x轴旋转角（弧度）
-     * @param ry y轴旋转角（弧度）
-     * @param rz z轴旋转角（弧度）
-     */
-    void eigen2Euler(const Eigen::Matrix3d& R, double& rx, double& ry, double& rz) const;
-
-    /**
-     * 欧拉角→旋转矩阵（参数化转换）
-     * TODO：需与eigen2Euler对应（同一种欧拉角顺序）
-     * @param rx x轴旋转角（弧度）
-     * @param ry y轴旋转角（弧度）
-     * @param rz z轴旋转角（弧度）
-     * @param R 输出旋转矩阵
-     */
-    void euler2Eigen(double rx, double ry, double rz, Eigen::Matrix3d& R) const;
-    Eigen::Matrix3d computeDRdx(double rx, double ry, double rz) const;
-    Eigen::Matrix3d computeDRdy(double rx, double ry, double rz) const;
-    Eigen::Matrix3d computeDRdz(double rx, double ry, double rz) const;
     void printParamChanges();
-    Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d &R) const;
-    Eigen::Matrix3d rotVecToMat(const Eigen::Vector3d &rvec) const;
-    void computeDRdr(const Eigen::Vector3d &rvec, Eigen::Matrix3d &dRdr1, Eigen::Matrix3d &dRdr2, Eigen::Matrix3d &dRdr3) const;
-    Eigen::VectorXd packParams() const;
-    void unpackParams(const Eigen::VectorXd &params);
+    Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d& R) const;
+    Eigen::Matrix3d rotVecToMat(const Eigen::Vector3d& rvec) const;
+    void computeDRdr(const Eigen::Vector3d& rvec, Eigen::Matrix3d& dRdr1, Eigen::Matrix3d& dRdr2, Eigen::Matrix3d& dRdr3) const;
 };
 
 #endif  // TELECENTRIC_LM_OPTIMIZER_H

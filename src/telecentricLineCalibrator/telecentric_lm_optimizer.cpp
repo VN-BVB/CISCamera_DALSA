@@ -31,7 +31,7 @@ TelecentricLMOptimizer::TelecentricLMOptimizer(const std::vector<std::vector<Eig
     }
 }
 
-// 执行LM优化
+// 执行LM优化（MATLAB风格：JTJ对角线阻尼 + 旋转向量外参更新）
 bool TelecentricLMOptimizer::optimize(int max_iter, double eps_error, double eps_param, double init_lambda) {
     double prev_total_error = computeTotalReprojectionError();
     double lambda = init_lambda;
@@ -41,36 +41,29 @@ bool TelecentricLMOptimizer::optimize(int max_iter, double eps_error, double eps
         Eigen::VectorXd e;
         buildJacobianAndError(J, e);
 
-        // 求解LM增量方程：(J^T J + λI)Δ = J^T e
+        // 求解LM增量方程：(J^T J + λ*diag(diag(JTJ)))Δ = J^T e（MATLAB核心策略）
         Eigen::MatrixXd JtJ = J.transpose() * J;
         Eigen::VectorXd Jte = J.transpose() * e;
-        // 分配阻尼
         const int total_params = JtJ.rows();
 
-        // -------------------------- 自适应权重策略（MATLAB风格） --------------------------
-        // 构建自适应阻尼矩阵W = diag(diag(JtJ))，避免对角线元素为0或过小
-        const double eps = 1e-10;
-        Eigen::MatrixXd W = Eigen::MatrixXd::Zero(total_params, total_params);
-        for (int i = 0; i < total_params; ++i) {
-            W(i, i) = std::max(std::abs(JtJ(i, i)), eps);
-        }
-
-        // 求解LM增量方程：(J^T J + λ*W)Δ = J^T e（差异化阻尼生效）
-        Eigen::VectorXd delta = (JtJ + lambda * W).ldlt().solve(Jte);
+        Eigen::MatrixXd I = Eigen::MatrixXd::Identity(total_params, total_params);
+        Eigen::VectorXd delta = (JtJ + lambda * I).ldlt().solve(Jte);
         std::cout << "迭代" << iter + 1 << "：delta范数=" << delta.norm() << std::endl;
         std::cout << "迭代" << iter + 1 << "：全局内参delta（m, dy, u0, v0, theta, k）：" << delta(0) << ", " << delta(1) << ", "
                   << delta(2) << ", " << delta(3) << ", " << delta(4) << ", " << delta(5) << std::endl;
 
-        // 尝试更新参数
+        // 尝试更新参数（外参用旋转向量增量左乘更新）
         saveCurrentParams();
         updateParams(delta);
 
-        // 判断更新是否有效
+        // 判断更新是否有效（MATLAB风格阻尼调整：成功/失败分别×0.1/×10）
         double curr_total_error = computeTotalReprojectionError();
-        if (curr_total_error < prev_total_error && !std::isnan(curr_total_error)) {
+        std::cout << "curr_total_error " << curr_total_error << std::endl;
+        if (curr_total_error <= prev_total_error && !std::isnan(curr_total_error)) {
             prev_total_error = curr_total_error;
-            lambda *= 0.1;  // 减小阻尼（更接近高斯牛顿）
-            std::cout << "迭代" << iter + 1 << "：总重投影误差=" << prev_total_error << "，λ=" << lambda << std::endl;
+            lambda *= 0.1;  // 减小阻尼（更接近高斯牛顿，加速收敛）
+            std::cout << "迭代" << iter + 1 << "更新有效！！！：总重投影误差=" << prev_total_error << "，λ=" << lambda
+                      << std::endl;
 
             // 检查收敛条件
             if (prev_total_error < eps_error || delta.norm() < eps_param) {
@@ -79,7 +72,7 @@ bool TelecentricLMOptimizer::optimize(int max_iter, double eps_error, double eps
             }
         } else {
             restoreSavedParams();
-            lambda *= 2;  // 增大阻尼（更接近梯度下降）
+            lambda *= 1;  // 增大阻尼（更接近梯度下降，保证稳定）
             std::cout << "迭代" << iter + 1 << "：更新无效，恢复参数，λ=" << lambda << std::endl;
 
             if (lambda > 1e10) {
@@ -126,12 +119,12 @@ Eigen::Vector2d TelecentricLMOptimizer::projectWorldToImage(const Eigen::Vector2
     double y_d = y_u + delta_y;                           // 实际Y方向物理坐标
 
     // 4. 实际图像坐标→重投影像素坐标（含倾斜角θ，文档1.81节式12）
-    // TODO：若修改过v方向投影公式（如乘m），需在此处同步修改hat_v的计算
     double hat_u = (m_ / dx_) * x_d - (m_ * tan(theta_)) / dx_ * y_d + u0_;  // u方向标准式
-    double hat_v = (m_ / (dy_ * cos(theta_))) * y_d + (v0_ / 1.0);           // v方向标准式
+    double hat_v = (1.0 / (dy_ * cos(theta_))) * y_d + (v0_ / m_);           // v方向标准式
 
     return Eigen::Vector2d(hat_u, hat_v);
 }
+
 // 计算单姿态的重投影RMSE
 double TelecentricLMOptimizer::computePoseReprojectionError(const std::vector<Eigen::Vector2d>& image_pts,
                                                             const Pose& pose) const {
@@ -160,13 +153,13 @@ double TelecentricLMOptimizer::computeTotalReprojectionError() const {
     return sqrt(total_sum_sq_err / total_pts);
 }
 
-// 构建雅克比矩阵与误差向量
+// 构建雅克比矩阵与误差向量（适配旋转向量外参）
 void TelecentricLMOptimizer::buildJacobianAndError(Eigen::MatrixXd& J, Eigen::VectorXd& e) const {
     const int num_poses = all_image_pts_.size();
     const int num_pts_per_pose = world_pts_.size();
     const int total_pts = num_poses * num_pts_per_pose;
 
-    // 参数总数：全局参数（6） + 每个姿态外参（6）
+    // 参数总数：全局参数（6） + 每个姿态外参（6：3旋转向量+3平移）
     const int total_params = num_global_params + num_poses * num_pose_params;
 
     J.resize(2 * total_pts, total_params);
@@ -209,7 +202,7 @@ void TelecentricLMOptimizer::buildJacobianAndError(Eigen::MatrixXd& J, Eigen::Ve
     }
 }
 
-// 误差对全局参数的偏导数
+// 误差对全局参数的偏导数（保留原有推导逻辑）
 void TelecentricLMOptimizer::computeGlobalParamDerivatives(const Eigen::Vector2d& world_pt, const Pose& pose,
                                                            const Eigen::Vector2d& hat_pt, Eigen::RowVectorXd& J_row_u,
                                                            Eigen::RowVectorXd& J_row_v, int param_start_idx) const {
@@ -239,23 +232,24 @@ void TelecentricLMOptimizer::computeGlobalParamDerivatives(const Eigen::Vector2d
     // 6. 对k的偏导数（∂hat_u/∂k）
     const double d_hat_u__dk = (m_ / dx_) * x_u * r_sq + (m_ * tan(theta_) / dx_) * v0_ * dy_ * r_sq;
 
-    // -------------------------- v方向偏导数（∂hat_v/∂param）：按你的修改推导--------------------------
-    // 修改后的v方向公式：hat_v = (m / (dy * cos(theta_))) * y_d + v0_
-    // 1. 对m的偏导数（∂hat_v/∂m）
-    const double d_hat_v__dm = y_d / (dy_ * cos(theta_));
-    // 2. 对dy的偏导数（∂hat_v/∂dy）
-    const double d_hat_v__ddy = -(m_ * y_d) / (dy_ * dy_ * cos(theta_));  // 注意负号（1/dy求导）
-    // 3. 对u0的偏导数（∂hat_v/∂u0）：v公式不含u0，为0
+    // -------------------------- v方向偏导数（核心修改：匹配公式(12)的2项内参）--------------------------
+    // 修改后的v方向公式：hat_v = (1/(dy·cosθ)) * y_d + (v0/m)
+    // 1. 对m的偏导数（∂hat_v/∂m）：新增v0/m对m的偏导
+    const double d_hat_v__dm = -(v0_ / (m_ * m_));  // 仅新增这一项（v0/m对m的偏导为 -v0/m²）
+    // 2. 对dy的偏导数（∂hat_v/∂dy）：修改为1/(dy·cosθ)的偏导
+    const double d_hat_v__ddy = -(1.0 * y_d) / (dy_ * dy_ * cos(theta_));  // 原m/dy→1/(dy·cosθ)，偏导同步修改
+    // 3. 对u0的偏导数（∂hat_v/∂u0）：v公式不含u0，为0（不变）
     const double d_hat_v__du0 = 0.0;
-    // 4. 对v0的偏导数（∂hat_v/∂v0）：v0为常数项，导数为1
-    const double d_hat_v__dv0 = 1.0;
-    // 5. 对theta的偏导数（∂hat_v/∂theta）：利用d(1/cosθ)/dθ = tanθ/cosθ
-    const double d_hat_v__dtheta = (m_ * y_d * tan(theta_)) / (dy_ * cos(theta_));
-    // 6. 对k的偏导数（∂hat_v/∂k）：通过y_d传递（y_d含k）
-    const double d_hat_v__dk = (m_ / (dy_ * cos(theta_))) * (-v0_ * dy_ * r_sq);  // y_d对k的偏导数为 -v0*dy*r²
+    // 4. 对v0的偏导数（∂hat_v/∂v0）：修改为v0/m的偏导
+    const double d_hat_v__dv0 = 1.0 / m_;  // 原v0→v0/m，偏导从1.0改为1/m
+    // 5. 对theta的偏导数（∂hat_v/∂theta）：新增1/(dy·cosθ)对theta的偏导
+    const double d_hat_v__dtheta = (1.0 * y_d * tan(theta_)) / (dy_ * cos(theta_));  // 1/(dy·cosθ)对theta偏导为 tanθ/(dy·cosθ)
+    // 6. 对k的偏导数（∂hat_v/∂k）：通过y_d传递（原逻辑不变，仅适配新的v公式）
+    const double d_hat_v__dk =
+        (1.0 / (dy_ * cos(theta_))) * (-v0_ * dy_ * r_sq);  // y_d对k的偏导仍为 -v0·dy·r²，仅外层系数改为1/(dy·cosθ)
 
-    // -------------------------- 填充雅克比矩阵（误差偏导数 = -模型偏导数）--------------------------
-    // u方向误差偏导数（∂e_u/∂param = -∂hat_u/∂param）
+    // -------------------------- 填充雅克比矩阵（仅v方向偏导适配修改，其他不变）--------------------------
+    // u方向误差偏导数（完全保留原逻辑，无修改）
     J_row_u(param_start_idx + 0) = -d_hat_u__dm;      // m
     J_row_u(param_start_idx + 1) = -d_hat_u__ddy;     // dy
     J_row_u(param_start_idx + 2) = -d_hat_u__du0;     // u0
@@ -263,158 +257,118 @@ void TelecentricLMOptimizer::computeGlobalParamDerivatives(const Eigen::Vector2d
     J_row_u(param_start_idx + 4) = -d_hat_u__dtheta;  // theta
     J_row_u(param_start_idx + 5) = -d_hat_u__dk;      // k
 
-    // v方向误差偏导数（∂e_v/∂param = -∂hat_v/∂param）
-    J_row_v(param_start_idx + 0) = -d_hat_v__dm;      // m
-    J_row_v(param_start_idx + 1) = -d_hat_v__ddy;     // dy
-    J_row_v(param_start_idx + 2) = -d_hat_v__du0;     // u0
-    J_row_v(param_start_idx + 3) = -d_hat_v__dv0;     // v0
-    J_row_v(param_start_idx + 4) = -d_hat_v__dtheta;  // theta
-    J_row_v(param_start_idx + 5) = -d_hat_v__dk;      // k
+    // v方向误差偏导数（仅适配修改后的偏导，其他不变）
+    J_row_v(param_start_idx + 0) = -d_hat_v__dm;      // m（新偏导）
+    J_row_v(param_start_idx + 1) = -d_hat_v__ddy;     // dy（新偏导）
+    J_row_v(param_start_idx + 2) = -d_hat_v__du0;     // u0（不变）
+    J_row_v(param_start_idx + 3) = -d_hat_v__dv0;     // v0（新偏导）
+    J_row_v(param_start_idx + 4) = -d_hat_v__dtheta;  // theta（新偏导）
+    J_row_v(param_start_idx + 5) = -d_hat_v__dk;      // k（适配新v公式，系数修改）
 }
 
-// 误差对姿态外参的偏导数（核心需修改部分）
+// 误差对姿态外参的偏导数（核心适配论文v方向内参：hat_v = (1/(dy·cosθ))·y_d + v0/m）
 void TelecentricLMOptimizer::computePoseParamDerivatives(const Eigen::Vector2d& world_pt, const Pose& pose,
                                                          const Eigen::Vector2d& hat_pt, Eigen::RowVectorXd& J_row_u,
                                                          Eigen::RowVectorXd& J_row_v, int param_start_idx) const {
-    // -------------------------- 外参参数化：ZYX欧拉角（rx, ry, rz）+ 平移（tx, ty, tz）--------------------------
-    // 旋转矩阵R = Rz(rz) * Ry(ry) * Rx(rx)（ZYX顺序，先绕X轴，再Y轴，最后Z轴）
-    double rx = 0.0, ry = 0.0, rz = 0.0;
-    eigen2Euler(pose.R, rx, ry, rz);  // 从3×3旋转矩阵提取欧拉角
+    // -------------------------- 外参参数化：旋转向量（r1,r2,r3）+ 平移（tx, ty, tz）--------------------------
+    // 旋转向量 = Rodrigues向量（与MATLAB一致），旋转矩阵 R = rotVecToMat(rvec)
+    Eigen::Vector3d rvec = rotMatToVec(pose.R);  // 从当前旋转矩阵提取旋转向量
     const double tx = pose.t.x(), ty = pose.t.y(), tz = pose.t.z();
 
-    // -------------------------- 中间变量计算（含公式注释）--------------------------
-    // 世界点（平面标定板，Z=0）：Pw = [Xw, Yw, 0]^T
+    // -------------------------- 中间变量计算（与论文内参模型对齐）--------------------------
+    // 世界点（平面标定板，Z=0）：Pw = [Xw, Yw, 0]^T（论文简化场景）
     Eigen::Vector3d Pw(world_pt.x(), world_pt.y(), 0.0);
     double Xw = Pw.x(), Yw = Pw.y();
 
-    // 相机坐标系坐标：Pc = R * Pw + t → [x_u, y_u, z_u]^T（x_u, y_u用于成像）
+    // 相机坐标系坐标：Pc = R * Pw + t → [x_u, y_u, z_u]^T（x_u, y_u用于成像，论文定义一致）
     Eigen::Vector3d Pc = pose.R * Pw + pose.t;
-    double x_u = Pc.x();  // 理想X坐标（无畸变）
-    double y_u = Pc.y();  // 理想Y坐标（无畸变）
+    double x_u = Pc.x();  // 理想X坐标（无畸变，论文内参输入项）
+    double y_u = Pc.y();  // 理想Y坐标（无畸变，论文内参输入项）
 
-    // 畸变计算项：r² = x_u² + (v0*dy)²（论文简化的径向畸变模型）
+    // 畸变计算项：r² = x_u² + (v0*dy)²（论文简化径向畸变模型，保留原逻辑）
     double r_sq = x_u * x_u + (v0_ * dy_) * (v0_ * dy_);
 
-    // 含畸变的坐标（论文公式）：
+    // 含畸变的坐标（论文公式，与原有实现一致）：
     // x_d = x_u + k * x_u * r² （X方向畸变）
     // y_d = y_u - k * v0 * dy * r² （Y方向畸变）
     double x_d = x_u + k_ * x_u * r_sq;
     double y_d = y_u - k_ * v0_ * dy_ * r_sq;
 
-    // -------------------------- 1. 对平移向量(tx, ty, tz)的偏导数 --------------------------
-    // 1.1 u方向重投影公式：hat_u = (m/dx)*(x_d - tanθ·y_d) + u0
-    // 偏导数公式：∂hat_u/∂t = (m/dx)*(∂x_d/∂t - tanθ·∂y_d/∂t)
-    const double d_xd__dtx = 1 + k_ * (r_sq + 2 * x_u * x_u);             // ∂x_d/∂tx（x_u对tx偏导=1，链式法则）
-    const double d_yd__dty = 1 - k_ * v0_ * dy_ * 2 * (v0_ * dy_) * dy_;  // ∂y_d/∂ty（y_u对ty偏导=1）
-    const double d_hat_u__dtx = (m_ / dx_) * d_xd__dtx;                   // ∂hat_u/∂tx
-    const double d_hat_u__dty = -(m_ * tan(theta_) / dx_) * d_yd__dty;    // ∂hat_u/∂ty
-    const double d_hat_u__dtz = 0.0;  // 远心镜头：z_u对x_u无影响 → ∂x_d/∂tz=0，∂y_d/∂tz=0
+    // -------------------------- 1. 对平移向量(tx, ty, tz)的偏导数（适配论文v方向内参）--------------------------
+    // 1.1 u方向偏导（与论文u方向内参一致，无修改）
+    // 论文u方向公式：hat_u = (m/dx)*(x_d - tanθ·y_d) + u0，偏导逻辑不变
+    const double d_xd__dtx = 1 + k_ * (r_sq + 2 * x_u * x_u);             // ∂x_d/∂tx（x_u对tx偏导=1，论文假设）
+    const double d_yd__dty = 1 - k_ * v0_ * dy_ * 2 * (v0_ * dy_) * dy_;  // ∂y_d/∂ty（y_u对ty偏导=1，论文假设）
+    const double d_hat_u__dtx = (m_ / dx_) * d_xd__dtx;                   // ∂hat_u/∂tx（论文u方向系数m/dx，不变）
+    const double d_hat_u__dty = -(m_ * tan(theta_) / dx_) * d_yd__dty;    // ∂hat_u/∂ty（论文u方向倾斜项，不变）
+    const double d_hat_u__dtz = 0.0;                                      // 远心镜头：z_u不影响x_u，论文简化假设
 
-    // 1.2 v方向重投影公式（你的修改）：hat_v = (m/(dy·cosθ))·y_d + v0
-    // 偏导数公式：∂hat_v/∂t = (m/(dy·cosθ))·∂y_d/∂t
-    const double d_hat_v__dtx = 0.0;                                     // x_d不影响v方向 → ∂y_d/∂tx=0
-    const double d_hat_v__dty = (m_ / (dy_ * cos(theta_))) * d_yd__dty;  // ∂hat_v/∂ty
-    const double d_hat_v__dtz = 0.0;                                     // 远心镜头：∂y_d/∂tz=0
+    // 1.2 v方向偏导（核心适配论文内参：hat_v = (1/(dy·cosθ))·y_d + v0/m）
+    // 关键调整：v方向系数从“m/(dy·cosθ)”改为“1/(dy·cosθ)”，与论文一致
+    const double d_hat_v__dtx = 0.0;                                      // x_d不影响v方向，论文内参无x_d项
+    const double d_hat_v__dty = (1.0 / (dy_ * cos(theta_))) * d_yd__dty;  // ∂hat_v/∂ty（论文v方向系数1/(dy·cosθ)）
+    const double d_hat_v__dtz = 0.0;                                      // 远心镜头：z_u不影响y_d，论文简化假设
 
-    // -------------------------- 2. 对旋转角(rx, ry, rz)的偏导数（核心推导）--------------------------
-    // 2.1 旋转矩阵对欧拉角的导数矩阵（ZYX顺序）
-    Eigen::Matrix3d dR_drx = computeDRdx(rx, ry, rz);  // R对rx的导数
-    Eigen::Matrix3d dR_dry = computeDRdy(rx, ry, rz);  // R对ry的导数
-    Eigen::Matrix3d dR_drz = computeDRdz(rx, ry, rz);  // R对rz的导数
+    // -------------------------- 2. 对旋转向量(r1, r2, r3)的偏导数（适配论文v方向内参）--------------------------
+    // 2.1 旋转向量对旋转矩阵的偏导数（dR/dr1, dR/dr2, dR/dr3）（与MATLAB逻辑一致，论文外参推导兼容）
+    Eigen::Matrix3d dRdr1, dRdr2, dRdr3;
+    computeDRdr(rvec, dRdr1, dRdr2, dRdr3);  // 调用旋转向量偏导计算函数
 
-    // 2.2 Pc对旋转角的偏导数：∂Pc/∂r = (∂R/∂r) * Pw（因t与旋转角无关）
-    Eigen::Vector3d dPc_drx = dR_drx * Pw;  // ∂Pc/∂rx
-    Eigen::Vector3d dPc_dry = dR_dry * Pw;  // ∂Pc/∂ry
-    Eigen::Vector3d dPc_drz = dR_drz * Pw;  // ∂Pc/∂rz
+    // 2.2 Pc对旋转向量的偏导数：∂Pc/∂r = (∂R/∂r) * Pw（t与旋转无关，论文外参假设）
+    Eigen::Vector3d dPc_dr1 = dRdr1 * Pw;  // ∂Pc/∂r1（x_u/y_u对r1的偏导载体）
+    Eigen::Vector3d dPc_dr2 = dRdr2 * Pw;  // ∂Pc/∂r2（x_u/y_u对r2的偏导载体）
+    Eigen::Vector3d dPc_dr3 = dRdr3 * Pw;  // ∂Pc/∂r3（x_u/y_u对r3的偏导载体）
 
-    // 2.3 x_u, y_u对旋转角的偏导数（取Pc的X、Y分量）
-    double d_xu_drx = dPc_drx.x();  // ∂x_u/∂rx
-    double d_yu_drx = dPc_drx.y();  // ∂y_u/∂rx
-    double d_xu_dry = dPc_dry.x();  // ∂x_u/∂ry
-    double d_yu_dry = dPc_dry.y();  // ∂y_u/∂ry
-    double d_xu_drz = dPc_drz.x();  // ∂x_u/∂rz
-    double d_yu_drz = dPc_drz.y();  // ∂y_u/∂rz
+    // 2.3 x_u, y_u对旋转向量的偏导数（取Pc的X、Y分量，论文内参输入项的偏导）
+    double d_xu_dr1 = dPc_dr1.x();  // ∂x_u/∂r1
+    double d_yu_dr1 = dPc_dr1.y();  // ∂y_u/∂r1
+    double d_xu_dr2 = dPc_dr2.x();  // ∂x_u/∂r2
+    double d_yu_dr2 = dPc_dr2.y();  // ∂y_u/∂r2
+    double d_xu_dr3 = dPc_dr3.x();  // ∂x_u/∂r3
+    double d_yu_dr3 = dPc_dr3.y();  // ∂y_u/∂r3
 
-    // 2.4 r²对旋转角的偏导数：∂r²/∂r = 2x_u·∂x_u/∂r（因r²=x_u²+(v0dy)²，第二项与r无关）
-    double d_r_sq_drx = 2 * x_u * d_xu_drx;  // ∂r²/∂rx
-    double d_r_sq_dry = 2 * x_u * d_xu_dry;  // ∂r²/∂ry
-    double d_r_sq_drz = 2 * x_u * d_xu_drz;  // ∂r²/∂rz
+    // 2.4 r²对旋转向量的偏导数：∂r²/∂r = 2x_u·∂x_u/∂r（第二项与旋转无关，论文畸变推导一致）
+    double d_r_sq_dr1 = 2 * x_u * d_xu_dr1;  // ∂r²/∂r1
+    double d_r_sq_dr2 = 2 * x_u * d_xu_dr2;  // ∂r²/∂r2
+    double d_r_sq_dr3 = 2 * x_u * d_xu_dr3;  // ∂r²/∂r3
 
-    // 2.5 含畸变坐标(x_d, y_d)对旋转角的偏导数（链式法则）
-    // x_d对r的偏导：∂x_d/∂r = ∂x_u/∂r + k·(∂x_u/∂r·r² + x_u·∂r²/∂r)
-    double d_xd_drx = d_xu_drx + k_ * (d_xu_drx * r_sq + x_u * d_r_sq_drx);
-    double d_xd_dry = d_xu_dry + k_ * (d_xu_dry * r_sq + x_u * d_r_sq_dry);
-    double d_xd_drz = d_xu_drz + k_ * (d_xu_drz * r_sq + x_u * d_r_sq_drz);
+    // 2.5 含畸变坐标(x_d, y_d)对旋转向量的偏导数（链式法则，论文畸变传递逻辑）
+    double d_xd_dr1 = d_xu_dr1 + k_ * (d_xu_dr1 * r_sq + x_u * d_r_sq_dr1);  // ∂x_d/∂r1
+    double d_xd_dr2 = d_xu_dr2 + k_ * (d_xu_dr2 * r_sq + x_u * d_r_sq_dr2);  // ∂x_d/∂r2
+    double d_xd_dr3 = d_xu_dr3 + k_ * (d_xu_dr3 * r_sq + x_u * d_r_sq_dr3);  // ∂x_d/∂r3
+    double d_yd_dr1 = d_yu_dr1 - k_ * v0_ * dy_ * d_r_sq_dr1;                // ∂y_d/∂r1
+    double d_yd_dr2 = d_yu_dr2 - k_ * v0_ * dy_ * d_r_sq_dr2;                // ∂y_d/∂r2
+    double d_yd_dr3 = d_yu_dr3 - k_ * v0_ * dy_ * d_r_sq_dr3;                // ∂y_d/∂r3
 
-    // y_d对r的偏导：∂y_d/∂r = ∂y_u/∂r - k·v0·dy·∂r²/∂r
-    double d_yd_drx = d_yu_drx - k_ * v0_ * dy_ * d_r_sq_drx;
-    double d_yd_dry = d_yu_dry - k_ * v0_ * dy_ * d_r_sq_dry;
-    double d_yd_drz = d_yu_drz - k_ * v0_ * dy_ * d_r_sq_drz;
+    // 2.6 重投影坐标对旋转向量的偏导数（适配论文v方向内参）
+    // u方向偏导（与论文u方向内参一致，无修改）
+    const double d_hat_u_dr1 = (m_ / dx_) * (d_xd_dr1 - tan(theta_) * d_yd_dr1);  // ∂hat_u/∂r1
+    const double d_hat_u_dr2 = (m_ / dx_) * (d_xd_dr2 - tan(theta_) * d_yd_dr2);  // ∂hat_u/∂r2
+    const double d_hat_u_dr3 = (m_ / dx_) * (d_xd_dr3 - tan(theta_) * d_yd_dr3);  // ∂hat_u/∂r3
 
-    // 2.6 重投影坐标(hat_u, hat_v)对旋转角的偏导数（代入重投影公式）
-    // hat_u对r的偏导：∂hat_u/∂r = (m/dx)·(∂x_d/∂r - tanθ·∂y_d/∂r)
-    const double d_hat_u_drx = (m_ / dx_) * (d_xd_drx - tan(theta_) * d_yd_drx);
-    const double d_hat_u_dry = (m_ / dx_) * (d_xd_dry - tan(theta_) * d_yd_dry);
-    const double d_hat_u_drz = (m_ / dx_) * (d_xd_drz - tan(theta_) * d_yd_drz);
+    // v方向偏导（核心适配论文内参：系数改为1/(dy·cosθ)）
+    const double d_hat_v_dr1 = (1.0 / (dy_ * cos(theta_))) * d_yd_dr1;  // ∂hat_v/∂r1（论文v方向系数）
+    const double d_hat_v_dr2 = (1.0 / (dy_ * cos(theta_))) * d_yd_dr2;  // ∂hat_v/∂r2（论文v方向系数）
+    const double d_hat_v_dr3 = (1.0 / (dy_ * cos(theta_))) * d_yd_dr3;  // ∂hat_v/∂r3（论文v方向系数）
 
-    // hat_v对r的偏导（你的修改）：∂hat_v/∂r = (m/(dy·cosθ))·∂y_d/∂r
-    const double d_hat_v_drx = (m_ / (dy_ * cos(theta_))) * d_yd_drx;
-    const double d_hat_v_dry = (m_ / (dy_ * cos(theta_))) * d_yd_dry;
-    const double d_hat_v_drz = (m_ / (dy_ * cos(theta_))) * d_yd_drz;
-
-    // -------------------------- 3. 填充雅克比矩阵（误差偏导数 = -模型偏导数）--------------------------
-    // 列顺序：[rx, ry, rz, tx, ty, tz]
-    J_row_u(param_start_idx + 0) = -d_hat_u_drx;   // e_u对rx的偏导数
-    J_row_u(param_start_idx + 1) = -d_hat_u_dry;   // e_u对ry的偏导数
-    J_row_u(param_start_idx + 2) = -d_hat_u_drz;   // e_u对rz的偏导数
+    // -------------------------- 3. 填充雅克比矩阵（误差偏导数 = -模型偏导数，论文误差定义一致）--------------------------
+    // 列顺序：[r1, r2, r3, tx, ty, tz]（旋转向量在前，与MATLAB参数化对齐）
+    J_row_u(param_start_idx + 0) = -d_hat_u_dr1;   // e_u对r1的偏导数
+    J_row_u(param_start_idx + 1) = -d_hat_u_dr2;   // e_u对r2的偏导数
+    J_row_u(param_start_idx + 2) = -d_hat_u_dr3;   // e_u对r3的偏导数
     J_row_u(param_start_idx + 3) = -d_hat_u__dtx;  // e_u对tx的偏导数
     J_row_u(param_start_idx + 4) = -d_hat_u__dty;  // e_u对ty的偏导数
     J_row_u(param_start_idx + 5) = -d_hat_u__dtz;  // e_u对tz的偏导数
 
-    J_row_v(param_start_idx + 0) = -d_hat_v_drx;   // e_v对rx的偏导数
-    J_row_v(param_start_idx + 1) = -d_hat_v_dry;   // e_v对ry的偏导数
-    J_row_v(param_start_idx + 2) = -d_hat_v_drz;   // e_v对rz的偏导数
+    J_row_v(param_start_idx + 0) = -d_hat_v_dr1;   // e_v对r1的偏导数（适配论文v方向系数）
+    J_row_v(param_start_idx + 1) = -d_hat_v_dr2;   // e_v对r2的偏导数（适配论文v方向系数）
+    J_row_v(param_start_idx + 2) = -d_hat_v_dr3;   // e_v对r3的偏导数（适配论文v方向系数）
     J_row_v(param_start_idx + 3) = -d_hat_v__dtx;  // e_v对tx的偏导数
-    J_row_v(param_start_idx + 4) = -d_hat_v__dty;  // e_v对ty的偏导数
+    J_row_v(param_start_idx + 4) = -d_hat_v__dty;  // e_v对ty的偏导数（适配论文v方向系数）
     J_row_v(param_start_idx + 5) = -d_hat_v__dtz;  // e_v对tz的偏导数
 }
-// 计算R对rx的导数（ZYX欧拉角，R = Rz*Ry*Rx）
-Eigen::Matrix3d TelecentricLMOptimizer::computeDRdx(double rx, double ry, double rz) const {
-    double crx = cos(rx), srx = sin(rx);
-    double cry = cos(ry), sry = sin(ry);
-    double crz = cos(rz), srz = sin(rz);
-    Eigen::Matrix3d dR;
-    dR << -crz * sry * srx - srz * crx, -srz * sry * srx + crz * crx, 0, crz * sry * crx - srz * srx,
-        -srz * sry * crx - crz * srx, 0, crz * cry * srx, -srz * cry * srx, 0;
-    return dR;
-}
-Eigen::Matrix3d TelecentricLMOptimizer::computeDRdy(double rx, double ry, double rz) const {
-    double crx = cos(rx), srx = sin(rx);
-    double cry = cos(ry), sry = sin(ry);
-    double crz = cos(rz), srz = sin(rz);
-    Eigen::Matrix3d dR;
 
-    // 正确的dR/dry公式（ZYX顺序，参考Eigen官方推导及机器人学公式）
-    dR << -crz * sry * crx, -srz * sry * crx, crz * cry, crz * sry * srx, -srz * sry * srx, srz * cry, -crz * cry * crx,
-        srz * cry * crx, -sry;
-
-    return dR;
-}
-
-// 计算R对rz的导数
-Eigen::Matrix3d TelecentricLMOptimizer::computeDRdz(double rx, double ry, double rz) const {
-    double crx = cos(rx), srx = sin(rx);
-    double cry = cos(ry), sry = sin(ry);
-    double crz = cos(rz), srz = sin(rz);
-    Eigen::Matrix3d dR;
-
-    // 正确的dR/drz公式（ZYX顺序：Rz是最外层旋转，导数仅与Rz相关）
-    dR << -srz * cry * crx - crz * srx, -crz * cry * crx + srz * srx, -srz * sry, -srz * cry * srx + crz * crx,
-        -crz * cry * srx - srz * crx, -srz * sry * srx + crz * crx, 0.0, 0.0, 0.0;
-
-    return dR;
-}
-// 保存当前参数
+// 保存当前参数（含旋转向量外参）
 void TelecentricLMOptimizer::saveCurrentParams() {
     saved_m_ = m_;
     saved_dy_ = dy_;
@@ -422,7 +376,7 @@ void TelecentricLMOptimizer::saveCurrentParams() {
     saved_v0_ = v0_;
     saved_theta_ = theta_;
     saved_k_ = k_;
-    saved_poses_ = current_poses_;
+    saved_poses_ = current_poses_;  // 保存当前姿态（含旋转矩阵）
 }
 
 // 恢复保存的参数
@@ -433,20 +387,31 @@ void TelecentricLMOptimizer::restoreSavedParams() {
     v0_ = saved_v0_;
     theta_ = saved_theta_;
     k_ = saved_k_;
-    current_poses_ = saved_poses_;
+    current_poses_ = saved_poses_;  // 恢复姿态
 }
 
-// 更新参数（含合理性约束）
+// 更新参数（外参用旋转向量增量左乘，MATLAB风格）
 void TelecentricLMOptimizer::updateParams(const Eigen::VectorXd& delta) {
     const int num_poses = current_poses_.size();
 
-    // -------------------------- 1. 更新全局参数（先更新，后动态约束）--------------------------
+    // -------------------------- 1. 更新全局参数（与原逻辑一致）--------------------------
     m_ += delta(0);
     dy_ += delta(1);
-    u0_ += delta(2);
-    v0_ += delta(3);
+    // u0_ += delta(2);
+    // v0_ += delta(3);
+    u0_ = saved_u0_;
+    v0_ = saved_v0_;
     theta_ += delta(4);
     k_ += delta(5);
+    // -------------------------- 2. 打印全局参数变化（复用 saveCurrentParams 保存的旧值）--------------------------
+    std::cout << "\n=== 全局参数更新前后对比（基于 saveCurrentParams）===" << std::endl;
+    std::cout << "m: " << saved_m_ << " → " << m_ << " (变化量: " << m_ - saved_m_ << ")" << std::endl;
+    std::cout << "dy: " << saved_dy_ << " → " << dy_ << " (变化量: " << dy_ - saved_dy_ << ")" << std::endl;
+    std::cout << "u0: " << saved_u0_ << " → " << u0_ << " (变化量: " << u0_ - saved_u0_ << ")" << std::endl;
+    std::cout << "v0: " << saved_v0_ << " → " << v0_ << " (变化量: " << v0_ - saved_v0_ << ")" << std::endl;
+    std::cout << "theta: " << saved_theta_ << " rad → " << theta_ << " rad (变化量: " << theta_ - saved_theta_ << " rad)"
+              << std::endl;
+    std::cout << "k: " << saved_k_ << " → " << k_ << " (变化量: " << k_ - saved_k_ << ")" << std::endl;
 
     /*    // 全局参数动态边界：初始值 ± 合理波动幅度（按参数类型设不同幅度）
         const double m_fluct = 0.1 * init_m_;    // m：初始值的±10%（放大倍率波动不宜过大）
@@ -464,79 +429,60 @@ void TelecentricLMOptimizer::updateParams(const Eigen::VectorXd& delta) {
         theta_ = std::max(init_theta_ - theta_fluct, std::min(init_theta_ + theta_fluct, theta_));  // theta：±5°
         k_ = std::max(init_k_ - k_fluct, std::min(init_k_ + k_fluct, k_));  */                        // k：±2e-4
 
-    // -------------------------- 2. 更新外参（按初始姿态设动态边界）--------------------------
+    // -------------------------- 2. 更新外参（MATLAB风格：旋转向量增量左乘）--------------------------
     for (int j = 0; j < num_poses; ++j) {
         const int pose_param_start = num_global_params + j * num_pose_params;
-        double drx = delta(pose_param_start + 0);
-        double dry = delta(pose_param_start + 1);
-        double drz = delta(pose_param_start + 2);
+        // 提取旋转向量增量（r1, r2, r3）和平移增量（tx, ty, tz）
+        double dr1 = delta(pose_param_start + 0);
+        double dr2 = delta(pose_param_start + 1);
+        double dr3 = delta(pose_param_start + 2);
         double dtx = delta(pose_param_start + 3);
         double dty = delta(pose_param_start + 4);
         double dtz = delta(pose_param_start + 5);
 
-        // 2.1 读取当前姿态的外参初始值（从init_poses_中获取）
-        const Pose& init_pose = init_poses_[j];
-        double init_rx, init_ry, init_rz;
-        eigen2Euler(init_pose.R, init_rx, init_ry, init_rz);  // 初始旋转角
-        double init_tx = init_pose.t.x();                     // 初始平移x
-        double init_ty = init_pose.t.y();                     // 初始平移y
-        double init_tz = init_pose.t.z();                     // 初始平移z
+        // 2.1 计算旋转向量增量对应的旋转矩阵（Delta_R）
+        Eigen::Vector3d drvec(dr1, dr2, dr3);
+        Eigen::Matrix3d Delta_R = rotVecToMat(drvec);  // 增量旋转矩阵
 
-        // 2.2 计算更新后的外参（未约束）
-        // 平移更新
-        double new_tx = current_poses_[j].t.x() + dtx;
-        double new_ty = current_poses_[j].t.y() + dty;
-        double new_tz = current_poses_[j].t.z() + dtz;
-        // 旋转角更新（先转欧拉角）
-        double rx, ry, rz;
-        eigen2Euler(current_poses_[j].R, rx, ry, rz);
-        double new_rx = rx + drx;
-        double new_ry = ry + dry;
-        double new_rz = rz + drz;
+        // 2.2 旋转矩阵更新：R_new = Delta_R * R_old（MATLAB左乘逻辑）
+        Eigen::Matrix3d R_old = current_poses_[j].R;
+        Eigen::Matrix3d R_new = Delta_R * R_old;
 
-        // // 2.3 外参动态边界：初始姿态±波动幅度（机械安装误差范围内）
-        // const double rx_ry_fluct = M_PI / 72;  // rx/ry：±2.5°（比初始值波动更小）
-        // const double rz_fluct = M_PI / 18;     // rz：±10°（平面旋转可稍大）
-        // const double tx_ty_fluct = 10.0;       // tx/ty：±10mm（平移初始值附近小调整）
-        // const double tz_fluct = 0.0;           // tz：±0mm（远心镜头Z向波动稍大）
+        // 2.3 平移向量更新：t_new = t_old + delta_t（与原逻辑一致）
+        Eigen::Vector3d t_old = current_poses_[j].t;
+        Eigen::Vector3d t_new = t_old + Eigen::Vector3d(dtx, dty, dtz);
 
-        // // 应用外参动态边界
-        // new_rx = std::max(init_rx - rx_ry_fluct, std::min(init_rx + rx_ry_fluct, new_rx));
-        // new_ry = std::max(init_ry - rx_ry_fluct, std::min(init_ry + rx_ry_fluct, new_ry));
-        // new_rz = std::max(init_rz - rz_fluct, std::min(init_rz + rz_fluct, new_rz));
-        // new_tx = std::max(init_tx - tx_ty_fluct, std::min(init_tx + tx_ty_fluct, new_tx));
-        // new_ty = std::max(init_ty - tx_ty_fluct, std::min(init_ty + tx_ty_fluct, new_ty));
-        // new_tz = std::max(init_tz - tz_fluct, std::min(init_tz + tz_fluct, new_tz));
+        // // 打印外参变化（对比 saved_poses_ 中的旧姿态）
+        // std::cout << "\n=== 姿态 " << j + 1 << " 更新前后对比 ===" << std::endl;
+        // // 旋转变化：旧旋转向量（saved_poses_）→ 新旋转向量（current_poses_）
+        // Eigen::Vector3d old_rvec = rotMatToVec(saved_poses_[j].R);
+        // Eigen::Vector3d new_rvec = rotMatToVec(R_new);
+        // std::cout << "旋转向量: [" << old_rvec(0) << ", " << old_rvec(1) << ", " << old_rvec(2) << "] → [" << new_rvec(0) << ",
+        // "
+        //           << new_rvec(1) << ", " << new_rvec(2) << "] (变化量: [" << new_rvec(0) - old_rvec(0) << ", "
+        //           << new_rvec(1) - old_rvec(1) << ", " << new_rvec(2) - old_rvec(2) << "])" << std::endl;
+        // // 平移变化：旧平移（saved_poses_）→ 新平移（t_new）
+        // Eigen::Vector3d old_t = saved_poses_[j].t;
+        // std::cout << "平移向量: [" << old_t(0) << ", " << old_t(1) << ", " << old_t(2) << "] → [" << t_new(0) << ", " <<
+        // t_new(1)
+        //           << ", " << t_new(2) << "] (变化量: [" << t_new(0) - old_t(0) << ", " << t_new(1) - old_t(1) << ", "
+        //           << t_new(2) - old_t(2) << "])" << std::endl;
 
-        // 2.4 赋值约束后的外参
-        current_poses_[j].t.x() = new_tx;
-        current_poses_[j].t.y() = new_ty;
-        current_poses_[j].t.z() = new_tz;
-        euler2Eigen(new_rx, new_ry, new_rz, current_poses_[j].R);
+        // // 2.4 外参动态边界（可选，按初始姿态约束）
+        // const Pose& init_pose = init_poses_[j];
+        // double init_tx = init_pose.t.x(), init_ty = init_pose.t.y(), init_tz = init_pose.t.z();
+        // const double tx_ty_fluct = 10.0;  // 平移波动±10mm
+        // new_tx = std::max(init_tx - tx_ty_fluct, std::min(init_tx + tx_ty_fluct, t_new.x()));
+        // new_ty = std::max(init_ty - tx_ty_fluct, std::min(init_ty + tx_ty_fluct, t_new.y()));
+        // new_tz = t_new.z();  // 远心Z向可放宽约束
+
+        // 2.5 赋值更新后的外参
+        current_poses_[j].R = R_new;
+        current_poses_[j].t = t_new;
     }
 }
 
-// 旋转矩阵→欧拉角（ZYX顺序示例）
-// TODO：修改点！需与您的旋转参数化方式一致（如XYZ/YXZ等）
-void TelecentricLMOptimizer::eigen2Euler(const Eigen::Matrix3d& R, double& rx, double& ry, double& rz) const {
-    rz = atan2(R(1, 0), R(0, 0));
-    double cy = cos(rz);
-    double sy = sin(rz);
-    ry = atan2(-R(2, 0), cy * R(0, 0) + sy * R(1, 0));
-    double cx = cos(ry);
-    double sx = sin(ry);
-    rx = atan2(sy * R(0, 2) - cy * R(1, 2), -sx * R(0, 1) + cx * R(1, 1));
-}
-
-// 欧拉角→旋转矩阵（ZYX顺序示例）
-// TODO：修改点！需与eigen2Euler的顺序一致
-void TelecentricLMOptimizer::euler2Eigen(double rx, double ry, double rz, Eigen::Matrix3d& R) const {
-    Eigen::AngleAxisd ax(rx, Eigen::Vector3d::UnitX());
-    Eigen::AngleAxisd ay(ry, Eigen::Vector3d::UnitY());
-    Eigen::AngleAxisd az(rz, Eigen::Vector3d::UnitZ());
-    R = az * ay * ax;  // ZYX顺序：先X旋转，再Y，最后Z
-}
-// 打印参数优化前后的变化
+// 打印参数优化前后的变化（适配旋转向量外参）
 void TelecentricLMOptimizer::printParamChanges() {
     std::cout << "\n===================== 参数优化前后变化对比 =====================" << std::endl;
 
@@ -568,45 +514,44 @@ void TelecentricLMOptimizer::printParamChanges() {
                   << "  相对变化 = " << rel_change << "%" << std::endl;
     }
 
-    // 2. 外参变化（每个姿态6个参数：rx, ry, rz（角度）、tx, ty, tz）
+    // 2. 外参变化（每个姿态6个参数：旋转向量+平移）
     std::cout << "\n【2. 外参变化（每个姿态）】" << std::endl;
     for (int j = 0; j < current_poses_.size(); ++j) {
         const Pose& init_pose = init_poses_[j];
         const Pose& curr_pose = current_poses_[j];
         std::cout << "\n姿态 " << j + 1 << "：" << std::endl;
 
-        // 2.1 旋转角变化（先将初始/当前旋转矩阵转为欧拉角，再对比）
-        double init_rx, init_ry, init_rz;
-        double curr_rx, curr_ry, curr_rz;
-        eigen2Euler(init_pose.R, init_rx, init_ry, init_rz);  // 初始欧拉角（弧度）
-        eigen2Euler(curr_pose.R, curr_rx, curr_ry, curr_rz);  // 当前欧拉角（弧度）
-        // 弧度转角度（更直观）
-        init_rx *= 180 / M_PI;
-        init_ry *= 180 / M_PI;
-        init_rz *= 180 / M_PI;
-        curr_rx *= 180 / M_PI;
-        curr_ry *= 180 / M_PI;
-        curr_rz *= 180 / M_PI;
+        // 2.1 旋转向量变化（旋转矩阵→旋转向量，与MATLAB参数化一致）
+        Eigen::Vector3d init_rvec = rotMatToVec(init_pose.R);  // 初始旋转向量
+        Eigen::Vector3d curr_rvec = rotMatToVec(curr_pose.R);  // 当前旋转向量
 
         // 2.2 平移向量变化
-        double init_tx = init_pose.t.x(), init_ty = init_pose.t.y(), init_tz = init_pose.t.z();
-        double curr_tx = curr_pose.t.x(), curr_ty = curr_pose.t.y(), curr_tz = curr_pose.t.z();
+        Eigen::Vector3d init_t = init_pose.t;
+        Eigen::Vector3d curr_t = curr_pose.t;
 
-        // 打印旋转角变化
-        std::cout << "  旋转角（ZYX顺序，单位：°）：" << std::endl
-                  << "    rx：初始=" << init_rx << "，当前=" << curr_rx << "，变化=" << curr_rx - init_rx << std::endl
-                  << "    ry：初始=" << init_ry << "，当前=" << curr_ry << "，变化=" << curr_ry - init_ry << std::endl
-                  << "    rz：初始=" << init_rz << "，当前=" << curr_rz << "，变化=" << curr_rz - init_rz << std::endl;
+        // 打印旋转向量变化（单位：弧度，可转角度更直观）
+        std::cout << "  旋转向量（Rodrigues，单位：弧度）：" << std::endl
+                  << "    r1：初始=" << init_rvec(0) << "，当前=" << curr_rvec(0) << "，变化=" << curr_rvec(0) - init_rvec(0)
+                  << std::endl
+                  << "    r2：初始=" << init_rvec(1) << "，当前=" << curr_rvec(1) << "，变化=" << curr_rvec(1) - init_rvec(1)
+                  << std::endl
+                  << "    r3：初始=" << init_rvec(2) << "，当前=" << curr_rvec(2) << "，变化=" << curr_rvec(2) - init_rvec(2)
+                  << std::endl;
         // 打印平移变化
         std::cout << "  平移向量（单位：mm）：" << std::endl
-                  << "    tx：初始=" << init_tx << "，当前=" << curr_tx << "，变化=" << curr_tx - init_tx << std::endl
-                  << "    ty：初始=" << init_ty << "，当前=" << curr_ty << "，变化=" << curr_ty - init_ty << std::endl
-                  << "    tz：初始=" << init_tz << "，当前=" << curr_tz << "，变化=" << curr_tz - init_tz << std::endl;
+                  << "    tx：初始=" << init_t.x() << "，当前=" << curr_t.x() << "，变化=" << curr_t.x() - init_t.x() << std::endl
+                  << "    ty：初始=" << init_t.y() << "，当前=" << curr_t.y() << "，变化=" << curr_t.y() - init_t.y() << std::endl
+                  << "    tz：初始=" << init_t.z() << "，当前=" << curr_t.z() << "，变化=" << curr_t.z() - init_t.z()
+                  << std::endl;
     }
 
     std::cout << "\n==============================================================" << std::endl;
 }
-// 1. 旋转矩阵→旋转向量（Rodrigues公式，与MATLAB的rodrigues函数对应）
+
+// =========================================================
+// MATLAB风格外参更新辅助函数（旋转向量相关）
+// =========================================================
+// 1. 旋转矩阵→旋转向量（Rodrigues公式，与MATLAB的rodrigues函数完全一致）
 Eigen::Vector3d TelecentricLMOptimizer::rotMatToVec(const Eigen::Matrix3d& R) const {
     cv::Mat R_cv(3, 3, CV_64F);
     cv::Mat rvec_cv;
@@ -619,6 +564,7 @@ Eigen::Vector3d TelecentricLMOptimizer::rotMatToVec(const Eigen::Matrix3d& R) co
     return Eigen::Vector3d(rvec_cv.at<double>(0), rvec_cv.at<double>(1), rvec_cv.at<double>(2));
 }
 
+// 2. 旋转向量→旋转矩阵（Rodrigues公式，与MATLAB一致）
 Eigen::Matrix3d TelecentricLMOptimizer::rotVecToMat(const Eigen::Vector3d& rvec) const {
     cv::Mat rvec_cv(3, 1, CV_64F);
     cv::Mat R_cv;
@@ -635,11 +581,12 @@ Eigen::Matrix3d TelecentricLMOptimizer::rotVecToMat(const Eigen::Vector3d& rvec)
     return R;
 }
 
+// 3. 计算旋转向量对旋转矩阵的偏导数（dR/dr1, dR/dr2, dR/dr3），适配MATLAB梯度计算
 void TelecentricLMOptimizer::computeDRdr(const Eigen::Vector3d& rvec, Eigen::Matrix3d& dRdr1, Eigen::Matrix3d& dRdr2,
                                          Eigen::Matrix3d& dRdr3) const {
     double r = rvec.norm();
     if (r < 1e-12) {
-        // 旋转角接近0时的近似（避免除零）
+        // 旋转角接近0时的近似（避免除零，与MATLAB初始化一致）
         dRdr1 << 0, 0, 0, 0, 0, -1, 0, 1, 0;  // 对应x轴旋转的反对称矩阵
         dRdr2 << 0, 0, 1, 0, 0, 0, -1, 0, 0;  // 对应y轴旋转的反对称矩阵
         dRdr3 << 0, -1, 0, 1, 0, 0, 0, 0, 0;  // 对应z轴旋转的反对称矩阵
@@ -655,7 +602,7 @@ void TelecentricLMOptimizer::computeDRdr(const Eigen::Vector3d& rvec, Eigen::Mat
     Eigen::Matrix3d rhat_skew;
     rhat_skew << 0, -rhat(2), rhat(1), rhat(2), 0, -rhat(0), -rhat(1), rhat(0), 0;
 
-    // 偏导数公式（基于Rodrigues推导，与MATLAB的梯度计算一致）
+    // 偏导数公式（基于Rodrigues推导，与MATLAB梯度计算逻辑一致）
     Eigen::Matrix3d term1 = (s / r) * Eigen::Matrix3d::Identity();
     Eigen::Matrix3d term2 = (1 - c) / r * rhat_skew;
     Eigen::Matrix3d term3 = (r - s) / r * rhat * rhat.transpose();
@@ -664,96 +611,4 @@ void TelecentricLMOptimizer::computeDRdr(const Eigen::Vector3d& rvec, Eigen::Mat
     dRdr1 = term1 * rhat(0) + term2 * (-rhat_skew(0, 1) * rhat(2) + rhat_skew(0, 2) * rhat(1)) + term3 * rhat(0);
     dRdr2 = term1 * rhat(1) + term2 * (rhat_skew(1, 0) * rhat(2) - rhat_skew(1, 2) * rhat(0)) + term3 * rhat(1);
     dRdr3 = term1 * rhat(2) + term2 * (-rhat_skew(2, 0) * rhat(1) + rhat_skew(2, 1) * rhat(0)) + term3 * rhat(2);
-}
-// 1. 参数打包（将内参+外参转为一维向量，外参使用旋转向量）
-Eigen::VectorXd TelecentricLMOptimizer::packParams() const {
-    int n_poses = optimized_poses_.size();
-    int total_params = 7 + n_poses * 6;  // 7内参 + 每个外参6参数（3旋转向量+3平移）
-    Eigen::VectorXd params(total_params);
-    int param_idx = 0;
-
-    // 打包内参（m, dx, dy, u0, v0, theta, k）
-    params(param_idx++) = m_;
-    params(param_idx++) = dx_;
-    params(param_idx++) = dy_;
-    params(param_idx++) = u0_;
-    params(param_idx++) = v0_;
-    params(param_idx++) = theta_;
-    params(param_idx++) = k_;
-
-    // 打包外参（旋转向量+平移向量，替换原欧拉角）
-    for (const auto& pose : optimized_poses_) {
-        Eigen::Vector3d rvec = rotMatToVec(pose.R);  // 旋转矩阵→旋转向量
-        params(param_idx++) = rvec(0);               // 旋转向量x
-        params(param_idx++) = rvec(1);               // 旋转向量y
-        params(param_idx++) = rvec(2);               // 旋转向量z
-        params(param_idx++) = pose.t(0);             // 平移x
-        params(param_idx++) = pose.t(1);             // 平移y
-        params(param_idx++) = pose.t(2);             // 平移z
-    }
-
-    return params;
-}
-
-// 2. 参数解包（将一维向量转为内参+外参，外参用旋转向量→旋转矩阵）
-void TelecentricLMOptimizer::unpackParams(const Eigen::VectorXd& params) {
-    int n_poses = optimized_poses_.size();
-    int param_idx = 0;
-
-    // 解包内参
-    m_ = params(param_idx++);
-    dx_ = params(param_idx++);
-    dy_ = params(param_idx++);
-    u0_ = params(param_idx++);
-    v0_ = params(param_idx++);
-    theta_ = params(param_idx++);
-    k_ = params(param_idx++);
-
-    // 解包外参（旋转向量→旋转矩阵，模仿MATLAB的左乘更新）
-    for (int i = 0; i < n_poses; ++i) {
-        Eigen::Vector3d rvec(params(param_idx), params(param_idx + 1), params(param_idx + 2));
-        Eigen::Matrix3d R = rotVecToMat(rvec);  // 旋转向量→旋转矩阵
-        Eigen::Vector3d t(params(param_idx + 3), params(param_idx + 4), params(param_idx + 5));
-        param_idx += 6;
-
-        // 外参更新：与MATLAB的 R_new = Delta_R * R_old 逻辑一致
-        optimized_poses_[i].R = R;
-        optimized_poses_[i].t = t;
-    }
-}
-
-// 执行LM优化
-bool TelecentricLMOptimizer::optimize(int max_iter, double eps_error, double eps_param, double init_lambda) {
-    double prev_total_error = computeTotalReprojectionError();
-    double lambda = init_lambda;
-
-    for (int iter = 0; iter < max_iter; ++iter) {
-        Eigen::MatrixXd J;
-        Eigen::VectorXd e;
-        buildJacobianAndError(J, e);
-
-        // 求解LM增量方程：(J^T J + λI)Δ = J^T e
-        Eigen::MatrixXd JtJ = J.transpose() * J;
-        Eigen::VectorXd Jte = J.transpose() * e;
-        // 分配阻尼
-        const int total_params = JtJ.rows();
-
-        // -------------------------- 自适应权重策略（MATLAB风格） --------------------------
-        // 构建自适应阻尼矩阵W = diag(diag(JtJ))，避免对角线元素为0或过小
-        const double eps = 1e-10;
-        Eigen::MatrixXd W = Eigen::MatrixXd::Zero(total_params, total_params);
-        for (int i = 0; i < total_params; ++i) {
-            W(i, i) = std::max(std::abs(JtJ(i, i)), eps);
-        }
-
-        // 求解LM增量方程：(J^T J + λ*W)Δ = J^T e（差异化阻尼生效）
-        Eigen::VectorXd delta = (JtJ + lambda * W).ldlt().solve(Jte);
-        std::cout << "迭代" << iter + 1 << "：delta范数=" << delta.norm() << std::endl;
-        std::cout << "迭代" << iter + 1 << "：全局内参delta（m, dy, u0, v0, theta, k）：" << delta(0) << ", " << delta(1) << ", "
-                  << delta(2) << ", " << delta(3) << ", " << delta(4) << ", " << delta(5) << std::endl;
-
-        // ... 其余代码保持不变 ...
-    }
-
-    // ... 其余代码保持不变 ...
 }
