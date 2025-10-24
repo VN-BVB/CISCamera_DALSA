@@ -2,11 +2,10 @@
 #include "curve_seg.h"
 #include <cmath>
 
-CurveSeg::CurveSeg() {}
+CurveSeg::CurveSeg() : m_minDomain(MIN_DOMAIN), m_maxDomain(MAX_DOMAIN){}
 
 void CurveSeg::initializeFromPoints(const std::vector<cv::Point2f>& points) {
     m_points = points;
-
 }
 
 void CurveSeg::fitSplineCurve() {
@@ -34,12 +33,33 @@ void CurveSeg::fitSplineCurve() {
             m_controlPoints.push_back(m_points[i]);
         }
 
+        // 使用tinyspline的C++接口获取实际的domain范围
+        try {
+            // 方法1：使用domain()方法获取元组
+            auto domain_tuple = m_spline.domain();
+            m_minDomain = static_cast<float>(domain_tuple.min());
+            m_maxDomain = static_cast<float>(domain_tuple.max());
+
+            std::cout << "样条曲线拟合成功，使用 " << m_points.size() << " 个控制点" << std::endl;
+            std::cout << "实际Domain范围: [" << m_minDomain << ", " << m_maxDomain << "]" << std::endl;
+
+        } catch (const std::exception& e) {
+            std::cout << "获取domain范围失败，使用默认范围: " << e.what() << std::endl;
+            // 使用默认的安全范围
+            m_minDomain = MIN_DOMAIN;
+            m_maxDomain = MAX_DOMAIN;
+        }
+
+
         m_isFitted = true;
         std::cout << "样条曲线拟合成功，使用 " << m_points.size() << " 个控制点" << std::endl;
 
     } catch (const std::exception& e) {
         std::cout << "样条曲线拟合失败: " << e.what() << std::endl;
         m_isFitted = false;
+        // 拟合失败时重置domain范围
+        m_minDomain = MIN_DOMAIN;
+        m_maxDomain = MAX_DOMAIN;
     }
 }
 
@@ -52,7 +72,7 @@ std::vector<cv::Point2f> CurveSeg::getFittedPoints(int numSamples) const {
     }
 
     for (int i = 0; i <= numSamples; ++i) {
-        float u = static_cast<float>(i) / numSamples;
+        float u = m_minDomain + (m_maxDomain - m_minDomain) * (static_cast<float>(i) / numSamples);
         cv::Point2f point = evaluate(u);
         fittedPoints.push_back(point);
     }
@@ -217,12 +237,12 @@ std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f&
     }
 
     // 获取轮廓的两个端点（首尾点）及其对应的u值
-    cv::Point2f endPoint1 = evaluate(MIN_DOMAIN);
-    cv::Point2f endPoint2 = evaluate(MAX_DOMAIN);
+    cv::Point2f endPoint1 = evaluate(m_minDomain);
+    cv::Point2f endPoint2 = evaluate(m_maxDomain);
 
     // 创建端点信息对象
-    EndpointInfo ep1(endPoint1, MIN_DOMAIN);
-    EndpointInfo ep2(endPoint2, MAX_DOMAIN);
+    EndpointInfo ep1(endPoint1, m_minDomain);
+    EndpointInfo ep2(endPoint2, m_maxDomain);
 
     // 按逆时针方向排序
     std::pair<cv::Point2f, cv::Point2f> sortedPoints = sortPointsCounterClockwise(endPoint1, endPoint2, referencePoint);

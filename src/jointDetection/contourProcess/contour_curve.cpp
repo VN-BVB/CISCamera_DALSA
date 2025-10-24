@@ -530,29 +530,6 @@ void ContourCurve::calculateEndPointsByFittedCurves()
         qDebug() << "端点1坐标: (" << cornerPoint1.x << ", " << cornerPoint1.y << ")";
         qDebug() << "端点2坐标: (" << cornerPoint2.x << ", " << cornerPoint2.y << ")";
 
-    } else if (!m_curveSegments.empty()) {
-        // 如果没有逆时针排序的曲线段，使用原始的曲线段作为备选方案
-        qDebug() << "警告：未找到逆时针排序的曲线段，使用原始曲线段计算端点";
-
-        if (m_curveSegments.size() < 3) {
-            qDebug() << "警告：曲线段数量不足，无法计算端点";
-            return;
-        }
-
-        cv::Vec4f tangent1 = m_curveSegments[0].getTangent(MIN_DOMAIN);
-        cv::Vec4f tangent2 = m_curveSegments[0].getTangent(MAX_DOMAIN);
-        cv::Vec4f tangent3 = m_curveSegments[1].getTangent(MAX_DOMAIN);
-        cv::Vec4f tangent4 = m_curveSegments[2].getTangent(MIN_DOMAIN);
-
-        m_lines.push_back(tangent1);
-        m_lines.push_back(tangent2);
-        m_lines.push_back(tangent3);
-        m_lines.push_back(tangent4);
-
-        cv::Point2f cornerPoint1 = calculateLineIntersection(tangent1, tangent3);
-        m_endPoints.push_back(cornerPoint1);
-        cv::Point2f cornerPoint2 = calculateLineIntersection(tangent2, tangent4);
-        m_endPoints.push_back(cornerPoint2);
     } else {
         qDebug() << "警告：没有可用的曲线段数据，无法计算端点";
     }

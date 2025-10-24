@@ -6,8 +6,8 @@
 #include <iostream>
 #include "tinysplinecxx.h"
 
-const float MIN_DOMAIN = 0.01f;     // 样条曲线参数U的最小值
-const float MAX_DOMAIN = 0.996f;     // 样条曲线参数U的最大值
+const float MIN_DOMAIN = 0.005f;     // 样条曲线参数U的最小值
+const float MAX_DOMAIN = 0.995f;     // 样条曲线参数U的最大值
 
 /**
  * @brief 端点信息结构体，包含点的坐标和对应的u值
@@ -64,6 +64,8 @@ private:
     tinyspline::BSpline m_spline;             // 拟合的样条曲线
     bool m_isFitted;                          // 是否已经拟合
     std::vector<cv::Point2f> m_controlPoints; // 控制点（用于显示）
+    float m_minDomain;                         // 样条曲线参数U的最小值
+    float m_maxDomain;                         // 样条曲线参数U的最大值
 };
 
 #endif // CURVE_SEG_H
