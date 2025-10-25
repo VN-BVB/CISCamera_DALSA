@@ -97,8 +97,6 @@ void ContourCurve::clear() {
     m_segmentedSubpixelContours.clear();
     m_cornerPoints.clear();
     m_lineSegments.clear();
-    m_lineSegments.clear();
-    m_curveSegments.clear();
     m_curveSegments.clear();
     m_approxPolygon.clear();
     m_sortedSubpixelContour.clear();
