@@ -56,6 +56,7 @@ private:
     std::shared_ptr<cv::Mat> masterImg, slaveImg;
     bool masterReady = false;
     bool slaveReady = false;
+    bool triggerRunning = false;
     const double startPos = 380.0;
     const double endPos = 720.0;
     const double speed = 30.0;
@@ -72,5 +73,6 @@ private slots:
     void on_btnSoftWareTrigger_clicked();
     void on_btnCISConfig_clicked();
     void on_btnSave_clicked();
+    void on_btnStopTrigger_clicked();
 };
 #endif  // CIS_CAMERA_IMAGE_H

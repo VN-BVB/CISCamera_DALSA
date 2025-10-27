@@ -123,6 +123,37 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
     try {
         auto result = std::make_shared<cv::Mat>();
         cv::hconcat(mAligned, sAligned, *result);
+        cv::Mat gray;
+        if (result->channels() == 3)
+            cv::cvtColor(*result, gray, cv::COLOR_BGR2GRAY);
+        else
+            gray = *result;
+        cv::Mat colMean;
+        cv::reduce(gray, colMean, 0, cv::REDUCE_AVG, CV_32F);
+
+        const float whiteThresh = 250.0f;
+        int left = 0, right = result->cols - 1;
+
+        // 从左找第一个非白列
+        for (int c = 0; c < colMean.cols; ++c) {
+            if (colMean.at<float>(0, c) < whiteThresh) {
+                left = c;
+                break;
+            }
+        }
+        // 从右找第一个非白列
+        for (int c = colMean.cols - 1; c >= 0; --c) {
+            if (colMean.at<float>(0, c) < whiteThresh) {
+                right = c;
+                break;
+            }
+        }
+
+        // 防止越界
+        if (right > left + 10) {
+            cv::Rect roi(left, 0, right - left + 1, result->rows);
+            *result = (*result)(roi).clone();
+        }
 
         {
             QMutexLocker locker(&mtx_);
@@ -175,9 +206,11 @@ bool CameraImageProcessor::imwriteSmart(const QString& path, const cv::Mat& img,
 }
 
 void CameraImageProcessor::saveResult(const QString& dir, const QString& prefix, const QString& ext, bool alsoSaveSingles) {
+    emit text(QString(u8"正在进行保存，请稍等..."));
     std::shared_ptr<cv::Mat> toSave, m, s;
     {
         QMutexLocker locker(&mtx_);
+        // cv::bitwise_not(*lastResult_, *toSave);
         toSave = lastResult_;
         m = lastMaster_;
         s = lastSlave_;
@@ -198,7 +231,7 @@ void CameraImageProcessor::saveResult(const QString& dir, const QString& prefix,
     QString err;
     if (imwriteSmart(mainPath, *toSave, err)) {
         emit text(QString(u8"已保存：%1").arg(mainPath));
-        emit saved(mainPath);
+        std::cout << u8"检测是否能发送";
     } else {
         emit error(QString(u8"保存失败：%1 （%2）").arg(mainPath, err));
     }
@@ -207,14 +240,14 @@ void CameraImageProcessor::saveResult(const QString& dir, const QString& prefix,
         if (m && !m->empty()) {
             QString mp = base + "_master" + ext;
             if (imwriteSmart(mp, *m, err))
-                emit saved(mp);
+                emit text(QString(u8"已保存：%1").arg(mp));
             else
                 emit error(QString(u8"保存Master失败：%1 （%2）").arg(mp, err));
         }
         if (s && !s->empty()) {
             QString sp = base + "_slave" + ext;
             if (imwriteSmart(sp, *s, err))
-                emit saved(sp);
+                emit text(QString(u8"已保存：%1").arg(sp));
             else
                 emit error(QString(u8"保存Slave失败：%1 （%2）").arg(sp, err));
         }

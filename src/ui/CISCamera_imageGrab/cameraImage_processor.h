@@ -21,7 +21,6 @@ signals:
     void imageReady(std::shared_ptr<cv::Mat> result);
     void text(const QString& msg);
     void error(const QString& msg);
-    void saved(const QString& filepath);
 
 public slots:
     void processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave, bool spliceEnabled);
@@ -32,8 +31,7 @@ public slots:
     // 保存最近一次处理结果（或回退到master/slave）
     // dir：目录；prefix：文件前缀；ext：后缀（".png" ".tif" ".exr" …）
     // alsoSaveSingles：是否同时保存 master/slave（若存在）
-    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png",
-                    bool alsoSaveSingles = false);
+    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png", bool alsoSaveSingles = false);
 
     // 清空内部缓存
     void clear();
