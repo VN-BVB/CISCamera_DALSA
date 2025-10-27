@@ -56,9 +56,9 @@ public slots:
     // 清除轮廓
     void whenClearContours();
     // 绘制多条直线
-    void whenDrawLines(const std::vector<cv::Vec4f> &lines);
+    void whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
     // 绘制点集
-    void whenDrawPoints(const std::vector<cv::Point2f> &Points);
+    void whenDrawPoints(const std::vector<cv::Point2f> &Points, const QColor &color);
     // 绘制B样条曲线
     void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints);
     void whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline);

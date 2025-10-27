@@ -85,7 +85,7 @@ void JointView::on_pb_open_clicked()
     startTime = std::chrono::high_resolution_clock::now();
 
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
-    QString path = "E:/work/车门门环拼接/image/test/cropped_img_mirrored_stitched.bmp";
+    QString path = "E:/work/车门门环拼接/image/背面打光/Splice_20251027_092312509.bmp";
     if(path.isEmpty())
         return;
 
@@ -108,15 +108,15 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
     m_currentImage = processedImage;
     m_subpixelContours = subpixelContours;
     m_pixelContours = pixelContours;
-    m_fitLines = lines;
+    m_fitTangentLines = lines;
     m_fitCurves = curves;
     // 计算角点（拼缝端点）
-    m_endPoints.clear();
+    m_endPointsByTangentLines.clear();
     if (lines.size() >= 2) {
         // 计算前两条直线的交点作为角点
         cv::Point2f corner = cv::Point2f(4, 5);
         if (corner.x >= 0 && corner.y >= 0) {
-            m_endPoints.push_back(corner);
+            m_endPointsByTangentLines.push_back(corner);
         }
     }
 
@@ -134,70 +134,30 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
                                      std::shared_ptr<JointSeam> jointSeam)
 {
     m_currentImage = processedImage;
-    // std::vector<std::vector<cv::Point2f>> subpixelContours;
-    // std::vector<std::vector<cv::Point>> pixelContours;
-    // for (auto& contourCuve : jointSeam->getContourCurves()) {
-    //     subpixelContours.push_back(contourCuve.getSubpixelContours());
-    //     pixelContours.push_back(contourCuve.getPixelContour());
-    // }
-    // m_subpixelContours = subpixelContours;
-    // m_pixelContours = pixelContours;
-
-    // std::vector<cv::Vec4f> fitlines;
-    // for (auto& contourCurve :  jointSeam->getContourCurves())
-    // {
-    //     for (auto& line : contourCurve.getLines())
-    //         fitlines.push_back(line);
-    // }
-    // m_fitLines = fitlines;
-
-    // std::vector<CurveSeg> curves;
-    // for (auto& contourCurve :  jointSeam->getContourCurves())
-    // {
-    //     for (auto& [index, curveSeg] : contourCurve.getCurveSegments())
-    //     curves.push_back(curveSeg);
-    // }
-    // m_fitCurves = curves;
-
-    // std::vector<cv::Point2f> endPoints;
-    // for (auto& contourCurve :  jointSeam->getContourCurves())
-    // {
-    //     for (auto& point : contourCurve.getEndPoints())
-    //         endPoints.push_back(point);
-    // }
-    // m_endPoints = endPoints;
 
     for (auto& cp : jointSeam->getContourProcessor()) {
         m_subpixelContours.push_back(cp.getSortedContour());
-    }
+        for (auto& line : cp.getTangentLines())
+            m_fitTangentLines.push_back(line);
 
-    std::vector<cv::Vec4f> fitlines;
-    for (auto& cp :  jointSeam->getContourProcessor())
-    {
-        for (auto& line : cp.getLines())
-            fitlines.push_back(line);
-    }
-    m_fitLines = fitlines;
-
-    std::vector<CurveSeg> curves;
-    for (auto& cp :  jointSeam->getContourProcessor())
-    {
         for (auto& [index, curveSeg] : cp.getCurveSegments())
-        curves.push_back(curveSeg);
-    }
-    m_fitCurves = curves;
+            m_fitCurves.push_back(curveSeg);
 
-    std::vector<cv::Point2f> endPoints;
-    for (auto& cp :  jointSeam->getContourProcessor())
-    {
+        for (auto& line : cp.getTangentLines())
+            m_fitTangentLines.push_back(line);
+
         for (auto& point : cp.getEndPoints())
-            endPoints.push_back(point);
+            m_endPointsByTangentLines.push_back(point);
+
+        for (auto& line : cp.getLines())
+            m_fitLines.push_back(line);
+
+        // for (auto& point : cp.getEndPointsByFitedLines())
+        //     m_endPointsByFittedLines.push_back(point);
     }
-    m_endPoints = endPoints;
 
     // 更新显示
     updateDisplay();
-
 
     auto endTime = std::chrono::high_resolution_clock::now();
     // 计算并输出时间差
@@ -242,16 +202,24 @@ void JointView::updateDisplay() {
         scene->whenDrawSubpixelContours(m_subpixelContours);
     }
 
-    if (m_showFitLines && !m_fitLines.empty()) {
-        scene->whenDrawLines(m_fitLines);
+    if (m_showFitLines && !m_fitTangentLines.empty()) {
+        scene->whenDrawLines(m_fitTangentLines, 0.05, Qt::blue);
     }
 
     if (m_showFitCurves && !m_fitCurves.empty()) {
         scene->whenDrawBSplineCurves(m_fitCurves);
     }
 
-    if (m_showEndPoints && !m_endPoints.empty()) {
-        scene->whenDrawPoints(m_endPoints);
+    if (m_showEndPoints && !m_endPointsByTangentLines.empty()) {
+        scene->whenDrawPoints(m_endPointsByTangentLines, Qt::green);
+    }
+
+    if (!m_fitLines.empty()) {
+        scene->whenDrawLines(m_fitLines, 1000, Qt::yellow);
+    }
+
+    if (!m_endPointsByFittedLines.empty()) {
+        scene->whenDrawPoints(m_endPointsByFittedLines, Qt::red);
     }
     // @TODO:增加取消勾选时，删除相应轮廓的功能
 }

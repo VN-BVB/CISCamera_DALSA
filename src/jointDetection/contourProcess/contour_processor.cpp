@@ -43,10 +43,11 @@ void ContourProcessor::processContour(const std::vector<cv::Point2f>& contour) {
     m_curveSegments = ContourFitter::fitCurvesToSegments(sortedSegments);
 
     // 10. 计算端点
-    m_endPoints = ContourFitter::calculateEndPoints(m_curveSegments, centroid, m_lines);
+    m_endPoints = ContourFitter::calculateEndPoints(m_curveSegments, centroid, m_tangentLines);
 
     // 11. 拟合直线（可选）
     m_lineSegments = ContourFitter::fitLinesToSegments(sortedSegments);
+    m_endPointsByFitedLines = ContourFitter::calculateEndPoints(m_lineSegments);
 }
 
 std::string ContourProcessor::getSummary() const {
@@ -58,5 +59,41 @@ std::string ContourProcessor::getSummary() const {
     summary += "曲线段数: " + std::to_string(m_curveSegments.size()) + "\n";
     return summary;
 }
+
+
+std::vector<cv::Vec4f> ContourProcessor::getLines() {
+    for (auto& [index, lineSeg] : m_lineSegments) {
+        m_lines.push_back(lineSeg.getLineEquation());
+    }
+    return m_lines;
+}
+
+std::vector<cv::Point2f> ContourProcessor::getEndPointsByFitedLines() const {
+    return m_endPointsByFitedLines;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

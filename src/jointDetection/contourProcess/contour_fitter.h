@@ -21,6 +21,9 @@ public:
         const cv::Point2f centroid,
         std::vector<cv::Vec4f>& lines);
 
+    static std::vector<cv::Point2f> calculateEndPoints(
+        const std::map<int, LineSeg>& lineSegments);
+
     static cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2);
 };
 

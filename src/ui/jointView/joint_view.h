@@ -69,9 +69,11 @@ private:
     std::shared_ptr<cv::Mat> m_currentImage;
     std::vector<std::vector<cv::Point2f>> m_subpixelContours;
     std::vector<std::vector<cv::Point>> m_pixelContours;
-    std::vector<cv::Vec4f> m_fitLines;
+    std::vector<cv::Vec4f> m_fitTangentLines;                           // 曲线端点切线
     std::vector<CurveSeg> m_fitCurves;
-    std::vector<cv::Point2f> m_endPoints;
+    std::vector<cv::Point2f> m_endPointsByTangentLines;
+    std::vector<cv::Vec4f> m_fitLines;                                  // 拟合线段
+    std::vector<cv::Point2f> m_endPointsByFittedLines;
 
     // 显示控制标志
     bool m_showPixelContoursSquare = false;

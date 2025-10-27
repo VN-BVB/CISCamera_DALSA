@@ -3,10 +3,23 @@
 
 std::map<int, LineSeg> ContourFitter::fitLinesToSegments(const std::map<int, std::vector<cv::Point2f>>& segments) {
     std::map<int, LineSeg> lineSegments;
+    int key = 1;
     for (const auto& [index, contour] : segments) {
         LineSeg ls;
-        ls.initializeFromPoints(contour);
-        lineSegments[index] = ls;
+        if (index == 2) {
+            // 只取contour的前100个元素
+            std::vector<cv::Point2f> first100Points;
+            first100Points.assign(contour.begin(), contour.begin() + 100);
+            ls.initializeFromPoints(first100Points);
+            lineSegments[key++] = ls;
+            std::vector<cv::Point2f> end100Points;
+            end100Points.assign(contour.end() - 100, contour.end());
+            ls.initializeFromPoints(end100Points);
+            lineSegments[key++] = ls;
+        } else {
+            ls.initializeFromPoints(contour);
+            lineSegments[key++] = ls;
+        }
     }
     return lineSegments;
 }
@@ -78,6 +91,21 @@ std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, C
 
     } else {
         qDebug() << "警告：没有可用的曲线段数据，无法计算端点";
+    }
+    return endPoints;
+}
+
+std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, LineSeg>& lineSegments) {
+    std::vector<cv::Point2f> endPoints;
+    if (!lineSegments.empty()) {
+        LineSeg line1 = lineSegments.at(1);
+        LineSeg line2 = lineSegments.at(2);
+        LineSeg line3 = lineSegments.at(3);
+        LineSeg line4 = lineSegments.at(4);
+        cv::Point2f cornerPoint1 = calculateLineIntersection(line1.getLineEquation(), line2.getLineEquation());
+        cv::Point2f cornerPoint2 = calculateLineIntersection(line3.getLineEquation(), line4.getLineEquation());
+        endPoints.push_back(cornerPoint1);
+        endPoints.push_back(cornerPoint2);
     }
     return endPoints;
 }

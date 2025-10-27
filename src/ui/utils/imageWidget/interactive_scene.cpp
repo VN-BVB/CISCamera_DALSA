@@ -194,13 +194,13 @@ void InteractiveScene::whenClearContours()
     return;
 }
 
-void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> &lines)
+void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length, const QColor &color)
 {
     if (lines.empty())
         return;
 
     // 使用蓝色绘制直线，与轮廓的红色和绿色区分开
-    QPen pen(Qt::blue);
+    QPen pen(color);
     pen.setWidthF(0.2);  // 设置线宽
     pen.setStyle(Qt::SolidLine);  // 实线
 
@@ -225,8 +225,7 @@ void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> &lines)
 
         // 计算直线的起点和终点
         // 使用图像边界来确定直线的绘制范围
-        float length = std::max(imageSize.width(), imageSize.height()) * 2.0f; // 足够长的直线
-        length = 0.05;  // 控制线长
+        // float length = std::max(imageSize.width(), imageSize.height()) * 2.0f; // 足够长的直线
 
         // 计算起点和终点
         float x1 = x0 - length * vx;
@@ -243,7 +242,7 @@ void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> &lines)
     }
 }
 
-void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points)
+void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points,const QColor &color)
 {
     if (points.empty())
         return;
@@ -252,7 +251,7 @@ void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points)
     for (const auto& point : points) {
         // 创建圆形标记点
         QGraphicsEllipseItem *pointItem = new QGraphicsEllipseItem(point.x - size/2, point.y - size/2, size, size);
-        pointItem->setBrush(QBrush(QColor(255, 165, 255))); // 粉色
+        pointItem->setBrush(QBrush(color)); // 粉色
         pointItem->setPen(QPen(Qt::NoPen)); // 黑色边框
         pointItem->setZValue(15); // 设置较高的Z值，确保显示在最上层
 

@@ -22,14 +22,18 @@ public:
     std::map<int, LineSeg> getLineSegments() const { return m_lineSegments; }
     std::map<int, CurveSeg> getCurveSegments() const { return m_curveSegments; }
     std::vector<cv::Point2f> getEndPoints() const { return m_endPoints; }
-    std::vector<cv::Vec4f> getLines() const { return m_lines; }
+    std::vector<cv::Vec4f> getTangentLines() const { return m_tangentLines; }
+    std::vector<cv::Vec4f> getLines();
+    std::vector<cv::Point2f> getEndPointsByFitedLines() const;
 
 private:
-    ContourData m_data;
-    std::map<int, LineSeg> m_lineSegments;
-    std::map<int, CurveSeg> m_curveSegments;
-    std::vector<cv::Point2f> m_endPoints;
-    std::vector<cv::Vec4f> m_lines;
+    ContourData m_data;                                     // 轮廓数据
+    std::map<int, LineSeg> m_lineSegments;                  // 拟合线段信息
+    std::map<int, CurveSeg> m_curveSegments;                // 拟合曲线
+    std::vector<cv::Vec4f> m_tangentLines;                  // 曲线切线信息
+    std::vector<cv::Point2f> m_endPoints;                   // 曲线拟合求的端点
+    std::vector<cv::Point2f> m_endPointsByFitedLines;       // 直线拟合求的端点
+    std::vector<cv::Vec4f> m_lines;                  // 直线拟合线段信息
 };
 
 
