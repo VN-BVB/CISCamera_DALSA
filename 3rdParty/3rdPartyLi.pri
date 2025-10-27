@@ -1,3 +1,4 @@
+# ------------------DALSA库-------------------
 # 头文件路径
 INCLUDEPATH += "C:/Program Files/Teledyne DALSA/Sapera/Include"
 DEPENDPATH  += "C:/Program Files/Teledyne DALSA/Sapera/Include"
@@ -22,4 +23,6 @@ INCLUDEPATH += ./3rdParty/plog/include
 # ------------------LIBMODBUS库------------------
 INCLUDEPATH +=./3rdparty/libmodbus/include
 LIBS +=./3rdparty/libmodbus/X64/*.lib
-
+# ------------------Eigen矩阵运算库------------------
+INCLUDEPATH += D:\ProgramData\eigen-git-mirror-master
+# ------------------CERES矩阵运算库------------------
