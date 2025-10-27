@@ -134,35 +134,63 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
                                      std::shared_ptr<JointSeam> jointSeam)
 {
     m_currentImage = processedImage;
-    std::vector<std::vector<cv::Point2f>> subpixelContours;
-    std::vector<std::vector<cv::Point>> pixelContours;
-    for (auto& contourCuve : jointSeam->getContourCurves()) {
-        subpixelContours.push_back(contourCuve.getSubpixelContours());
-        pixelContours.push_back(contourCuve.getPixelContour());
+    // std::vector<std::vector<cv::Point2f>> subpixelContours;
+    // std::vector<std::vector<cv::Point>> pixelContours;
+    // for (auto& contourCuve : jointSeam->getContourCurves()) {
+    //     subpixelContours.push_back(contourCuve.getSubpixelContours());
+    //     pixelContours.push_back(contourCuve.getPixelContour());
+    // }
+    // m_subpixelContours = subpixelContours;
+    // m_pixelContours = pixelContours;
+
+    // std::vector<cv::Vec4f> fitlines;
+    // for (auto& contourCurve :  jointSeam->getContourCurves())
+    // {
+    //     for (auto& line : contourCurve.getLines())
+    //         fitlines.push_back(line);
+    // }
+    // m_fitLines = fitlines;
+
+    // std::vector<CurveSeg> curves;
+    // for (auto& contourCurve :  jointSeam->getContourCurves())
+    // {
+    //     for (auto& [index, curveSeg] : contourCurve.getCurveSegments())
+    //     curves.push_back(curveSeg);
+    // }
+    // m_fitCurves = curves;
+
+    // std::vector<cv::Point2f> endPoints;
+    // for (auto& contourCurve :  jointSeam->getContourCurves())
+    // {
+    //     for (auto& point : contourCurve.getEndPoints())
+    //         endPoints.push_back(point);
+    // }
+    // m_endPoints = endPoints;
+
+    for (auto& cp : jointSeam->getContourProcessor()) {
+        m_subpixelContours.push_back(cp.getSortedContour());
     }
-    m_subpixelContours = subpixelContours;
-    m_pixelContours = pixelContours;
 
     std::vector<cv::Vec4f> fitlines;
-    for (auto& contourCurve :  jointSeam->getContourCurves())
+    for (auto& cp :  jointSeam->getContourProcessor())
     {
-        for (auto& line : contourCurve.getLines())
+        for (auto& line : cp.getLines())
             fitlines.push_back(line);
     }
     m_fitLines = fitlines;
 
     std::vector<CurveSeg> curves;
-    for (auto& contourCurve :  jointSeam->getContourCurves())
+    for (auto& cp :  jointSeam->getContourProcessor())
     {
-        for (auto& [index, curveSeg] : contourCurve.getCurveSegments())
+        for (auto& [index, curveSeg] : cp.getCurveSegments())
         curves.push_back(curveSeg);
     }
     m_fitCurves = curves;
 
     std::vector<cv::Point2f> endPoints;
-    for (auto& contourCurve :  jointSeam->getContourCurves())
+    for (auto& cp :  jointSeam->getContourProcessor())
     {
-        for (auto& point : contourCurve.getEndPoints())
+        for (auto& point : cp.getEndPoints())
             endPoints.push_back(point);
     }
     m_endPoints = endPoints;

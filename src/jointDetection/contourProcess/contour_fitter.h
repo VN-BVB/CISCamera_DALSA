@@ -17,7 +17,9 @@ public:
         const std::map<int, std::vector<cv::Point2f>>& segments);
 
     static std::vector<cv::Point2f> calculateEndPoints(
-        const std::map<int, CurveSeg>& curveSegments);
+        const std::map<int, CurveSeg>& curveSegments,
+        const cv::Point2f centroid,
+        std::vector<cv::Vec4f>& lines);
 
     static cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2);
 };

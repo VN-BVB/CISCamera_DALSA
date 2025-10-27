@@ -137,3 +137,33 @@ std::vector<std::vector<cv::Point>> ImageTools::filterContours(const std::vector
 
     return filteredContours;
 }
+
+
+// 去除轮廓两端的一部分
+std::vector<cv::Point2f> ImageTools::trimContourEnds(const std::vector<cv::Point2f>& contour, float trimRatio) {
+    std::vector<cv::Point2f> trimmedContour;
+
+    if (contour.empty() || trimRatio <= 0.0f || trimRatio >= 0.5f) {
+        // 如果轮廓为空或trimRatio不在有效范围内，返回原始轮廓
+        return contour;
+    }
+
+    // 计算需要去除的点数
+    int totalPoints = static_cast<int>(contour.size());
+    int pointsToRemove = static_cast<int>(totalPoints * trimRatio);
+
+    if (pointsToRemove * 2 >= totalPoints) {
+        // 如果要去除的点数过多，返回空轮廓
+        return trimmedContour;
+    }
+
+    // 保留中间部分，去除两端
+    int startIndex = pointsToRemove;
+    int endIndex = totalPoints - pointsToRemove;
+
+    for (int i = startIndex; i < endIndex; ++i) {
+        trimmedContour.push_back(contour[i]);
+    }
+
+    return trimmedContour;
+}

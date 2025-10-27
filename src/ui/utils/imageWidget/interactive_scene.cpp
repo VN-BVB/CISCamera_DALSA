@@ -226,6 +226,7 @@ void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> &lines)
         // 计算直线的起点和终点
         // 使用图像边界来确定直线的绘制范围
         float length = std::max(imageSize.width(), imageSize.height()) * 2.0f; // 足够长的直线
+        length = 0.05;  // 控制线长
 
         // 计算起点和终点
         float x1 = x0 - length * vx;

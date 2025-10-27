@@ -1,8 +1,7 @@
 #ifndef CONTOUR_FEATURE_CALCULATOR_H
 #define CONTOUR_FEATURE_CALCULATOR_H
 
-#include <opencv2/opencv.hpp>
-
+#include "contour_utils.h"
 /**
  * @brief 轮廓特征计算器 - 负责各种特征计算
  */

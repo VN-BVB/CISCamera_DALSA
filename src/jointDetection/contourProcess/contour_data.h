@@ -1,32 +1,7 @@
 #ifndef CONTOUR_DATA_H
 #define CONTOUR_DATA_H
 
-#include <opencv2/opencv.hpp>
-
-/**
- * @brief 开口方向枚举
- */
-enum class OpeningDirection : int {
-    UNKNOWN = 0,
-    UP = 1,
-    DOWN = 2,
-    LEFT = 3,
-    RIGHT = 4
-};
-
-// 自定义哈希和判等器
-struct Point2fHash {
-    std::size_t operator()(const cv::Point2f& p) const {
-        return std::hash<float>()(p.x) ^ (std::hash<float>()(p.y) << 1);
-    }
-};
-
-struct Point2fEqual {
-    bool operator()(const cv::Point2f& a, const cv::Point2f& b) const {
-        const float epsilon = 1e-5f;
-        return std::abs(a.x - b.x) < epsilon && std::abs(a.y - b.y) < epsilon;
-    }
-};
+#include "contour_utils.h"
 
 /**
  * @brief 轮廓数据容器类 - 只负责数据存储
@@ -62,13 +37,13 @@ public:
     }
 
 private:
-    std::vector<cv::Point> m_pixelContour;
-    std::vector<cv::Point2f> m_subpixelContour;
-    OpeningDirection m_openingDirection;
-    std::vector<cv::Point2f> m_sortedSubpixelContour;
-    std::vector<cv::Point2f> m_cornerPoints;
-    std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours;
-    std::map<int, std::vector<cv::Point2f>> m_counterClockwiseContours;
+    std::vector<cv::Point> m_pixelContour;                                  // 像素级坐标轮廓
+    std::vector<cv::Point2f> m_subpixelContour;                             // 亚像素级坐标轮廓
+    OpeningDirection m_openingDirection;                                    // 轮廓开口方向
+    std::vector<cv::Point2f> m_sortedSubpixelContour;                       // 点相对于重心逆时针排序后的轮廓
+    std::vector<cv::Point2f> m_cornerPoints;                                // 轮廓多边形拟合后的角点
+    std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours;      // 分割后的轮廓
+    std::map<int, std::vector<cv::Point2f>> m_counterClockwiseContours;     // 逆时针排序分割后的轮廓（一段一段的）
 };
 
 

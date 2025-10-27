@@ -30,11 +30,16 @@ void JointSeam::run() {
 
     // 轮廓信息整理
     for (auto& contour : filteredContours) {
-        ContourCurve contourCurve;
-        contourCurve.initializePixelContour(contour);
+        // ContourCurve contourCurve;
+        // contourCurve.initializePixelContour(contour);
+        // std::vector<cv::Point2f> subpixelContour = ed.getSubpixelContourZernike(grayImage, contour);
+        // contourCurve.initializeSubpixelContour(subpixelContour);
+        // m_contourCurves.push_back(contourCurve);
+
+        ContourProcessor cProcessor;
         std::vector<cv::Point2f> subpixelContour = ed.getSubpixelContourZernike(grayImage, contour);
-        contourCurve.initializeSubpixelContour(subpixelContour);
-        m_contourCurves.push_back(contourCurve);
+        cProcessor.processContour(subpixelContour);
+        m_contourProcessor.push_back(cProcessor);
     }
 }
 

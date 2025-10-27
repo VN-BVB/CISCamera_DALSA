@@ -1,4 +1,5 @@
 #include "contour_feature_calculator.h"
+#include <unordered_set>
 
 OpeningDirection ContourFeatureCalculator::calculateOpeningDirection(const std::vector<cv::Point2f>& contour) {
     if (contour.empty()) return OpeningDirection::UNKNOWN;
@@ -14,10 +15,10 @@ OpeningDirection ContourFeatureCalculator::calculateOpeningDirection(const std::
     bool hasUp = false, hasDown = false, hasLeft = false, hasRight = false;
 
     for (const auto& point : contour) {
-        if (std::abs(point.x - avgX) < 1 && point.y < avgY) hasUp = true;
-        if (std::abs(point.x - avgX) < 1 && point.y > avgY) hasDown = true;
-        if (std::abs(point.y - avgY) < 1 && point.x < avgX) hasLeft = true;
-        if (std::abs(point.y - avgY) < 1 && point.x > avgX) hasRight = true;
+        if (std::abs(point.x - avgX) < 1 && point.y < avgY) hasUp = true;       // 检查正上方（x坐标相同，y坐标更小）
+        if (std::abs(point.x - avgX) < 1 && point.y > avgY) hasDown = true;     // 检查正下方（x坐标相同，y坐标更大）
+        if (std::abs(point.y - avgY) < 1 && point.x < avgX) hasLeft = true;     // 检查正左方（y坐标相同，x坐标更小）
+        if (std::abs(point.y - avgY) < 1 && point.x > avgX) hasRight = true;    // 检查正右方（y坐标相同，x坐标更大）
     }
 
     if (!hasUp) return OpeningDirection::UP;
@@ -29,7 +30,16 @@ OpeningDirection ContourFeatureCalculator::calculateOpeningDirection(const std::
 }
 
 std::vector<cv::Point2f> ContourFeatureCalculator::removeDuplicatePoints(const std::vector<cv::Point2f>& contour) {
-    std::unordered_set<cv::Point2f, Point2fHash, Point2fEqual> seen;
+    // 定义点比较结构体
+    struct PointCompare {
+        bool operator()(const cv::Point2f& a, const cv::Point2f& b) const {
+            if (a.x == b.x) return a.y < b.y;
+            return a.x < b.x;
+        }
+    };
+    using PointSet = std::set<cv::Point2f, PointCompare>;
+
+    PointSet seen;
     std::vector<cv::Point2f> uniquePoints;
 
     for (const auto& point : contour) {
@@ -180,6 +190,7 @@ std::vector<cv::Point2f> ContourFeatureCalculator::removePointsNearCorners(const
 
     for (const auto& point : contour) {
         bool isNearCorner = false;
+        // 检查当前点是否在任何一个角点的半径范围内
         for (const auto& corner : cornerPoints) {
             double dx = point.x - corner.x;
             double dy = point.y - corner.y;

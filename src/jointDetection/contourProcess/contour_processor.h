@@ -1,7 +1,8 @@
 #ifndef CONTOUR_PROCESSOR_H
 #define CONTOUR_PROCESSOR_H
 
-#include <opencv2/opencv.hpp>
+#include "contour_utils.h"
+#include "contour_data.h"
 #include "curve_seg.h"
 #include "line_seg.h"
 
@@ -31,11 +32,6 @@ private:
     std::vector<cv::Vec4f> m_lines;
 };
 
-// 工具函数命名空间
-namespace ContourUtils {
-std::string openingDirectionToString(OpeningDirection direction);
-int findPointIndex(const cv::Point2f& point, const std::vector<cv::Point2f>& contour, float tolerance = 1e-5f);
-cv::Point2f calculateCentroid(const std::vector<cv::Point2f>& contour);
 
 
 

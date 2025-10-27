@@ -24,6 +24,8 @@ public:
                                                        int minHeight = 0,
                                                        int minWidth = 0,
                                                        double maxAspectRatio = 0);
+    // 去除轮廓两端的一部分
+    std::vector<cv::Point2f> trimContourEnds(const std::vector<cv::Point2f>& contour, float trimRatio);
 };
 
 #endif // IMAGE_TOOLS_H

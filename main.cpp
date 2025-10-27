@@ -24,6 +24,10 @@ int main(int argc, char *argv[]) {
     // TinySplineqqq testSpline;
     // testSpline.runcv();
 
+    // test_FrmVisionDisplay testDisplay;
+    // testDisplay.displayImage("E:/work/车门门环拼接/image/背面打光/Splice_20251027_092312509.bmp");
+    // testDisplay.show();
+
     JointView w;
     w.show();
 
