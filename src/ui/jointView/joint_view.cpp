@@ -85,7 +85,8 @@ void JointView::on_pb_open_clicked()
     startTime = std::chrono::high_resolution_clock::now();
 
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
-    QString path = "E:/work/车门门环拼接/image/背面打光/Splice_20251027_092312509.bmp";
+    // QString path = "E:/work/车门门环拼接/image/背面打光/Splice_20251027_092312509.bmp";
+    QString path = "E:/work/车门门环拼接/image/test/frontLight/cropped_img_front_light.bmp";
     if(path.isEmpty())
         return;
 
@@ -152,8 +153,8 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
         for (auto& line : cp.getLines())
             m_fitLines.push_back(line);
 
-        // for (auto& point : cp.getEndPointsByFitedLines())
-        //     m_endPointsByFittedLines.push_back(point);
+        for (auto& point : cp.getEndPointsByFitedLines())
+            m_endPointsByFittedLines.push_back(point);
     }
 
     // 更新显示
@@ -218,9 +219,9 @@ void JointView::updateDisplay() {
         scene->whenDrawLines(m_fitLines, 1000, Qt::yellow);
     }
 
-    if (!m_endPointsByFittedLines.empty()) {
-        scene->whenDrawPoints(m_endPointsByFittedLines, Qt::red);
-    }
+    // if (!m_endPointsByFittedLines.empty()) {
+    //     scene->whenDrawPoints(m_endPointsByFittedLines, Qt::red);
+    // }
     // @TODO:增加取消勾选时，删除相应轮廓的功能
 }
 

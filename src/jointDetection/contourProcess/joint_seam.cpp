@@ -20,13 +20,16 @@ void JointSeam::run() {
     double TL = TH * 0.5;
 
     cv::Mat edge;
-    cv::Canny(grayImage, edge, TL, TH);
+    cv::Canny(grayImage, edge, 30, 100);
+    cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/front_light_edge.bmp", edge);
 
     // 提取轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(edge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE); // 轮廓近似方法设为保存所有点，也可以选择只保存端点，具体见源码注释
     std::vector<std::vector<cv::Point>> filteredContours;
     filteredContours = imageTools.filterContours(contours); // 筛选出来拼缝两侧的轮廓
+    imageTools.drawColorfulContoursAndSave(grayImage, filteredContours,
+                                           "E:/work/车门门环拼接/image/test/frontLight/front_light_filted_edge.bmp");
 
     // 轮廓信息整理
     for (auto& contour : filteredContours) {

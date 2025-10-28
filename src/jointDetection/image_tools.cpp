@@ -12,8 +12,16 @@ void ImageTools::drawColorfulContoursAndSave(const cv::Mat &src,
                                  const std::vector<std::vector<cv::Point>> &contours,
                                  const std::string &savePath)
 {
-    // 绘制不同颜色的分割轮廓
-    cv::Mat coloredSegmentsImage = cv::Mat::zeros(src.size(), CV_8UC3);
+    // 创建原图的副本，直接在原图上绘制彩色轮廓
+    cv::Mat resultImage;
+    if (src.channels() == 1) {
+        // 如果是灰度图，转换为彩色图
+        cv::cvtColor(src, resultImage, cv::COLOR_GRAY2BGR);
+    } else {
+        // 如果是彩色图，直接复制
+        resultImage = src.clone();
+    }
+
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),    // 蓝色
         cv::Scalar(0, 255, 0),    // 绿色
@@ -28,9 +36,9 @@ void ImageTools::drawColorfulContoursAndSave(const cv::Mat &src,
     for (size_t i = 0; i < contours.size(); ++i) {
         cv::Scalar color = colors[i % colors.size()];
         for (auto &point : contours[i]) {
-            if (point.x >= 0 && point.x < coloredSegmentsImage.cols &&
-                point.y >= 0 && point.y < coloredSegmentsImage.rows) {
-                coloredSegmentsImage.at<cv::Vec3b>(point.y, point.x) = cv::Vec3b(
+            if (point.x >= 0 && point.x < resultImage.cols &&
+                point.y >= 0 && point.y < resultImage.rows) {
+                resultImage.at<cv::Vec3b>(point.y, point.x) = cv::Vec3b(
                     static_cast<uchar>(color[0]),
                     static_cast<uchar>(color[1]),
                     static_cast<uchar>(color[2])
@@ -38,8 +46,9 @@ void ImageTools::drawColorfulContoursAndSave(const cv::Mat &src,
             }
         }
     }
-    cv::imwrite(savePath,coloredSegmentsImage);
+    cv::imwrite(savePath, resultImage);
 }
+
 
 #include <unordered_set>
 #include <cmath>
