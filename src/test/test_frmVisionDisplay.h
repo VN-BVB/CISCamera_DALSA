@@ -2,7 +2,11 @@
 #define TEST_FRMVISIONDISPLAY_H
 
 #include <QWidget>
+#include <QPushButton>
 #include "../ui/utils/imageWidget/frm_vision_display.h"
+#include "../ui/utils/imageWidget/interactive_scene.h"
+#include "../ui/utils/imageWidget/interactive_display_manager.h"
+#include "test_edge_assembly.h"
 
 namespace Ui {
 class test_FrmVisionDisplay;
@@ -18,10 +22,13 @@ public:
 
 public slots:
     void displayImage(const QString &imagePath);
+    void displayContours(std::vector<std::vector<cv::Point2f>> contours);
+    void onBeginButtonClicked();
 
 private:
     Ui::test_FrmVisionDisplay *ui;
     FrmVisionDisplay *m_frmDisplay;
+    QPushButton* m_btn_begin;
 };
 
 #endif // TEST_FRMVISIONDISPLAY_H

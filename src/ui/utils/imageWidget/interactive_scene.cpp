@@ -128,7 +128,7 @@ void InteractiveScene::whenDrawSingleSubpixelContour(const std::vector<cv::Point
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
     QPen pen(Qt::red); // 亚像素用红色，像素级用绿色
-    pen.setWidthF(0.1);
+    pen.setWidthF(1);
     pen.setStyle(Qt::DashLine);    // 亚像素级用虚线，像素级用实线
     pathItem->setPen(pen);
     pathItem->setZValue(10);

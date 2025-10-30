@@ -46,5 +46,4 @@ private:
     std::map<int, std::vector<cv::Point2f>> m_counterClockwiseContours;     // 逆时针排序分割后的轮廓（一段一段的）
 };
 
-
 #endif // CONTOUR_DATA_H

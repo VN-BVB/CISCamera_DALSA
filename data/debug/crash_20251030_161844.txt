@@ -1,0 +1,20 @@
+Crash time: 2025-10-30 16:18:44
+Exception code: 0xe06d7363
+Exception type: Unknown Exception
+Exception address: 0x7ffca00b804a
+Thread ID: 5096
+
+Crash function: RaiseException
+
+Call Stack:
+#0  RaiseException
+#1  CxxThrowException
+#2  cv::error
+#3  cv::error
+#4  cv::drawContours
+#5  contourLeft [d:\qt_project\ciscamera_dalsa\src\workpieceedgeassembly\test_edge_assembly.cpp:24]
+#6  main [d:\qt_project\ciscamera_dalsa\main.cpp:36]
+#7  WinMain
+#8  __scrt_common_main_seh [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288]
+#9  BaseThreadInitThunk
+#10  RtlUserThreadStart
