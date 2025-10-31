@@ -2,6 +2,9 @@
 #define INTERACTIVE_DISPLAY_MANAGER_H
 
 #include <QObject>
+#include <QLabel>
+#include <QFuture>
+#include <QtConcurrent/QtConcurrent>
 
 const int DisplayViewSceneSize = 2000;
 
@@ -32,9 +35,19 @@ protected:  // 初始化接口
     void initView();
     // 后续可添加初始化这个小组件的工具栏等内容
 
+private slots:
+    void onPixelColorReady(const QPoint &pt, int r, int g, int b);
+
+private:
+    // 在线程中获取像素颜色
+    static void getPixelColor(const QPixmap &pixmap, const QPoint &pt, InteractiveDisplayManager *manager);
 
 private:
     InteractiveView* m_displayView = nullptr;   // 显示视图
+    QLabel* lbGrayValue = nullptr;            // 灰度值标签
+    QFuture<void> m_pixelColorFuture;           // 异步任务
+    QPoint m_lastMousePos;                      // 最后鼠标位置
+    bool m_isProcessing = false;                // 是否正在处理
 
 };
 

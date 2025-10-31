@@ -47,7 +47,7 @@ void test_FrmVisionDisplay::displayImage(const QString &imagePath)
 {
     cv::Mat image = cv::imread(imagePath.toStdString(), cv::IMREAD_GRAYSCALE);
     // cv::Mat croppedImg = image(cv::Rect(4200, 4200, 1800, 200));
-    cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/piececropped_img.bmp", image);
+    // cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/piececropped_img.bmp", image);
     auto smartPtrImage = std::make_shared<cv::Mat>(image);
     if (m_frmDisplay)
     {
