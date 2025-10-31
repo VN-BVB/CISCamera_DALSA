@@ -125,7 +125,7 @@ ContourData TestEdgeAssembly::setContourData(cv::Point2f offset, int direction)
     return cd;
 }
 
-void TestEdgeAssembly::generateSeams()
+void TestEdgeAssembly::generateNineSeams()
 {
     std::vector<ContourData> cDatas;
     ContourData cd;
@@ -204,9 +204,53 @@ void TestEdgeAssembly::generateSeams()
     m_cDatas = cDatas;
 }
 
+void TestEdgeAssembly::generateFiveSeams()
+{
+    std::vector<ContourData> cDatas;
+    ContourData cd;
+    cv::Point2f offsetPoint;
+    // 拼缝1
+    offsetPoint = cv::Point2f(500,10);
+    cd = setContourData(offsetPoint,0);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(610,10);
+    cd = setContourData(offsetPoint,1);
+    cDatas.push_back(cd);
+    // 拼缝2
+    offsetPoint = cv::Point2f(1400,600);
+    cd = setContourData(offsetPoint,2);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(1400,710);
+    cd = setContourData(offsetPoint,3);
+    cDatas.push_back(cd);
+    // 拼缝3
+    offsetPoint = cv::Point2f(300,1000);
+    cd = setContourData(offsetPoint,0);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(410,1000);
+    cd = setContourData(offsetPoint,1);
+    cDatas.push_back(cd);
+    // 拼缝4
+    offsetPoint = cv::Point2f(100,600);
+    cd = setContourData(offsetPoint,2);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(100,710);
+    cd = setContourData(offsetPoint,3);
+    cDatas.push_back(cd);
+    // 拼缝5
+    offsetPoint = cv::Point2f(100,300);
+    cd = setContourData(offsetPoint,2);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(100,410);
+    cd = setContourData(offsetPoint,3);
+    cDatas.push_back(cd);
+
+    m_cDatas = cDatas;
+}
+
 void TestEdgeAssembly::run()
 {
-    generateSeams();
+    generateFiveSeams();
     std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
     
     int i = 0;
@@ -219,8 +263,7 @@ void TestEdgeAssembly::run()
 
     EdgeAssembly edgeAssembly = EdgeAssembly{cbbs};
     edgeAssembly.generateWorkpiece();
-    edgeAssembly.validateCombinations(9);
-    return ;
+    edgeAssembly.validateCombinations(5);
 }
 
 
