@@ -19,7 +19,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<ContourBoundingBox>> m_cbbs;                // 所有待分组的轮廓框
-    std::vector<WorkpieceBoundingBox> m_resultWorkpieces; // 最终分组结果
+    std::vector<WorkpieceBoundingBox> m_possibleWorkpieces; // 最终分组结果
 };
 
 #endif // EDGE_ASSEMBLY_H

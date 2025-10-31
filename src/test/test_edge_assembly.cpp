@@ -219,7 +219,7 @@ void TestEdgeAssembly::run()
 
     EdgeAssembly edgeAssembly = EdgeAssembly{cbbs};
     edgeAssembly.generateWorkpiece();
-    // edgeAssembly.validateCombinations(9);
+    edgeAssembly.validateCombinations(9);
     return ;
 }
 
