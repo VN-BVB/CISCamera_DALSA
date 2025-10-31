@@ -38,7 +38,6 @@ void WorkpieceBoundingBox::updateOuterBoundingBox() {
 
 void WorkpieceBoundingBox::addContourBoundingBox(std::shared_ptr<ContourBoundingBox> cbb) {
     m_cbbs.push_back(cbb);
-    cbb->setIsPaired(true);
     updateOuterBoundingBox();
 }
 
@@ -54,15 +53,22 @@ bool WorkpieceBoundingBox::isLegal(std::shared_ptr<ContourBoundingBox> candidate
         candidateRect.y + candidateRect.height / 2.0f
         );
 
-    if (!m_outerBoundingBox.contains(candidateCenter)) {
+    if (m_outerBoundingBox.contains(candidateCenter)) {
         // 2. 检查工件中是否有与候选轮廓相背的轮廓
         int candidateOppositeId = candidateCbb->getOppositeId();
-
         for (const auto& existingCbb : m_cbbs) {
             if (existingCbb->getId() == candidateOppositeId) {
-                return false; // 找到相背轮廓，不合法
+                return false;
             }
         }
+        // 3. 候选框不是组成工件的轮廓，但又包含在工件矩形中，则不合法
+        int candidateId = candidateCbb->getId();
+        for (const auto& existingCbb : m_cbbs) {
+            if (existingCbb->getId() == candidateId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     return true;

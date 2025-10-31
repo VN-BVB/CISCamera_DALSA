@@ -10,7 +10,7 @@ class ContourBoundingBox
 {
 public:
     ContourBoundingBox();
-    void setContourData(int id, const ContourData& contourData);
+    void initContourData(int id, const ContourData& contourData);
     int getId() const {return m_id;}
     int getOppositeId() const {return m_oppositeId;}
     void setIsPaired(bool paired) {m_isPaired = paired;}
@@ -31,7 +31,7 @@ private:
     cv::Point2f m_bottomLeft;
     int m_id;                                       // 轮廓最小包围框id
     int m_oppositeId;                               // 与其相背轮廓的id（轮廓id从0开始，偶数与其id+1相背，奇数与其id-1相背）
-    bool m_isPaired;                                // 是否已被分配到工件
+    bool m_isPaired = false;                                // 是否已被分配到工件
 
 };
 

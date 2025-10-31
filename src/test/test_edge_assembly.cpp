@@ -125,7 +125,7 @@ ContourData TestEdgeAssembly::setContourData(cv::Point2f offset, int direction)
     return cd;
 }
 
-void TestEdgeAssembly::run()
+void TestEdgeAssembly::generateSeams()
 {
     std::vector<ContourData> cDatas;
     ContourData cd;
@@ -201,12 +201,26 @@ void TestEdgeAssembly::run()
     cd = setContourData(offsetPoint,3);
     cDatas.push_back(cd);
 
-
-
-
-
-
     m_cDatas = cDatas;
+}
+
+void TestEdgeAssembly::run()
+{
+    generateSeams();
+    std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
+    
+    int i = 0;
+    for (auto& cData : m_cDatas)
+    {
+        std::shared_ptr<ContourBoundingBox> cbb = std::make_shared<ContourBoundingBox>();
+        cbb->initContourData(i++, cData);
+        cbbs.push_back(cbb);
+    }
+
+    EdgeAssembly edgeAssembly = EdgeAssembly{cbbs};
+    edgeAssembly.generateWorkpiece();
+    // edgeAssembly.validateCombinations(9);
+    return ;
 }
 
 

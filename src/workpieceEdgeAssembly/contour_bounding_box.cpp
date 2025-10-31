@@ -2,7 +2,7 @@
 
 ContourBoundingBox::ContourBoundingBox() {}
 
-void ContourBoundingBox::setContourData(int id, const ContourData& contourData) {
+void ContourBoundingBox::initContourData(int id, const ContourData& contourData) {
     if (!contourData.isValid()) return;
     m_id = id;
     m_contourData = contourData;
