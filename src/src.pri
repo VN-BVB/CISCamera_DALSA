@@ -1,5 +1,6 @@
 include( ./ui/ui.pri )
 include( ./rail/rail.pri )
+include( ./config/config.pri )
 include( ./crashHandler/crashHandler.pri )
 include( ./cameraFactory/cameraFactory.pri )
 include( ./jointDetection/jointDetection.pri )

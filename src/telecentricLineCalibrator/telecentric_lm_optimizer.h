@@ -17,153 +17,86 @@
 #include <vector>
 
 #include "plog/Log.h"
+// 姿态结构体（与原有代码保持一致）
 struct Pose {
-    Eigen::Matrix3d R;
-    Eigen::Vector3d t;
-    double reprojErr;
+    Eigen::Matrix3d R;  // 旋转矩阵
+    Eigen::Vector3d t;  // 平移向量
+    double reprojErr;   // 重投影误差
 };
-/**
- * LM非线性优化类
- * 功能：优化相机内参、外参、倾斜角、畸变系数，最小化重投影误差
- */
+extern double rms;
 class TelecentricLMOptimizer {
 public:
-    /**
-     * 构造函数：初始化标定数据与参数初始值
-     * @param all_image_pts 所有姿态的实际图像点（u,v，亚像素精度）
-     * @param world_pts 世界坐标系下的标定板特征点（Xw,Yw，Z=0）
-     * @param init_poses 外参初始值（来自DLT初步标定）
-     * @param init_m 放大倍率m初始值（参考文档1.71节公式）
-     * @param init_dx 水平像素尺寸dx（已知，镜头手册，不优化）
-     * @param init_dy 垂直像素尺寸dy初始值（参考文档1.72节h_v/h_l）
-     * @param init_u0 主点水平坐标u0初始值（图像中心）
-     * @param init_v0 主点垂直坐标v0初始值（图像中心）
-     * @param init_theta 倾斜角θ初始值（参考文档1.91节）
-     * @param init_k 径向畸变系数k初始值（参考文档1.91节）
-     */
-    TelecentricLMOptimizer(const std::vector<std::vector<Eigen::Vector2d>>& all_image_pts,
+    using Scalar = double;
+    // 构造函数：输入初始数据
+    TelecentricLMOptimizer(const std::vector<std::vector<Eigen::Vector2d>>& all_img_pts,
                            const std::vector<Eigen::Vector2d>& world_pts, const std::vector<Pose>& init_poses, double init_m,
                            double init_dx, double init_dy, double init_u0, double init_v0, double init_theta, double init_k);
 
-    /**
-     * 执行LM优化
-     * @param max_iter 最大迭代次数（建议100，参考文档1.92节）
-     * @param eps_error 误差收敛阈值（建议1e-8）
-     * @param eps_param 参数变化阈值（建议1e-10）
-     * @param init_lambda 初始阻尼系数（建议1.0）
-     * @return 优化是否成功
-     */
-    bool optimize(int max_iter = 100, double eps_error = 1e-8, double eps_param = 1e-10, double init_lambda = 1.0);
+    // 执行优化
+    bool optimize(int max_iter, double eps_error, double eps_param, double init_lambda);
 
-    /**
-     * 获取优化结果
-     * @param m 优化后的放大倍率
-     * @param dy 优化后的垂直像素尺寸
-     * @param u0 优化后的主点水平坐标
-     * @param v0 优化后的主点垂直坐标
-     * @param theta 优化后的倾斜角
-     * @param k 优化后的径向畸变系数
-     * @param optimized_poses 优化后的外参
-     * @param total_reprojErr 总重投影RMSE
-     */
-    void getOptimizedParams(double& m, double& dy, double& u0, double& v0, double& theta, double& k,
-                            std::vector<Pose>& optimized_poses, double& total_reprojErr) const;
+    // 获取优化结果
+    void getOptimizedParams(double& opt_m, double& opt_dy, double& opt_u0, double& opt_v0, double& opt_theta, double& opt_k,
+                            std::vector<Pose>& opt_poses, double& total_reproj_err) const;
+    // 参数可动性与缩放控制
+    std::vector<bool> param_fixed_;    // 是否固定
+    std::vector<double> param_scale_;  // 敏感度缩放比例
 
 private:
-    // 待优化参数（参考文档1.86节）
-    double m_;                         // 内参：放大倍率
-    double dy_;                        // 内参：垂直像素尺寸
-    double u0_;                        // 内参：主点水平坐标
-    double v0_;                        // 内参：主点垂直坐标
-    double theta_;                     // 运动参数：倾斜角
-    double k_;                         // 畸变参数：径向畸变系数
-    std::vector<Pose> current_poses_;  // 外参：所有姿态的R、t
-    const int num_global_params = 6;   // 全局参数数量
-    const int num_pose_params = 6;     // 外部参数数量
-    double init_m_;                    // 放大倍率初始值
-    double init_dx_;                   // 水平像素尺寸初始值
-    double init_dy_;                   // 垂直像素尺寸初始值
-    double init_u0_;                   // 主点x初始值
-    double init_v0_;                   // 主点y初始值
-    double init_theta_;                // 倾斜角初始值
-    double init_k_;                    // 畸变系数初始值
+    // 优化问题定义（友元类用于访问私有成员）
+    struct CostFunctor {
+        using Scalar = TelecentricLMOptimizer::Scalar;
+        using InputType = Eigen::VectorXd;
+        using ValueType = Eigen::VectorXd;
+        using JacobianType = Eigen::MatrixXd;
 
-    // 标定数据（固定）
-    const std::vector<std::vector<Eigen::Vector2d>> all_image_pts_;  // 实际图像点
-    const std::vector<Eigen::Vector2d> world_pts_;                   // 世界点
-    const std::vector<Pose> init_poses_;                             // 外参初始值
-    const double dx_;                                                // 水平像素尺寸（已知）
+        // 关键新增：数值微分需要的编译期参数维度（动态）
+        static constexpr int InputsAtCompileTime = Eigen::Dynamic;
+        // 关键新增：数值微分需要的编译期残差维度（动态）
+        static constexpr int ValuesAtCompileTime = Eigen::Dynamic;
 
-    // 参数保存与恢复（LM回溯用）
-    double saved_m_, saved_dy_, saved_u0_, saved_v0_, saved_theta_, saved_k_;
-    std::vector<Pose> saved_poses_;
+        const TelecentricLMOptimizer& optimizer;
 
-    /**
-     * 世界点→重投影像素点（核心投影函数，含倾斜角与畸变）
-     * @param world_pt 世界点（Xw,Yw）
-     * @param pose 外参（R,t）
-     * @return 重投影像素点（hat_u, hat_v）
-     */
-    Eigen::Vector2d projectWorldToImage(const Eigen::Vector2d& world_pt, const Pose& pose) const;
+        CostFunctor(const TelecentricLMOptimizer& opt) : optimizer(opt) {}
 
-    /**
-     * 计算单姿态的重投影RMSE
-     * @param image_pts 单姿态的实际图像点
-     * @param pose 单姿态的外参
-     * @return 重投影RMSE
-     */
-    double computePoseReprojectionError(const std::vector<Eigen::Vector2d>& image_pts, const Pose& pose) const;
+        int operator()(const InputType& params, ValueType& residuals) const;
+        int inputs() const { return optimizer.param_count_; }
+        int values() const { return optimizer.residual_count_; }
+    };
+    using NumericalDiffFunctor = Eigen::NumericalDiff<CostFunctor>;
+    // 数据存储
+    std::vector<std::vector<Eigen::Vector2d>> all_img_pts_;  // 所有图像点
+    std::vector<Eigen::Vector2d> world_pts_;                 // 世界坐标点
+    int img_count_;                                          // 图像数量
+    int points_per_img_;                                     // 每幅图像的点数
 
-    /**
-     * 计算所有姿态的总重投影RMSE（优化目标函数值）
-     * @return 总重投影RMSE
-     */
-    double computeTotalReprojectionError() const;
+    // 参数维度
+    int param_count_;     // 总参数数量
+    int residual_count_;  // 残差数量
+    // 优化前后的参数
+    Eigen::VectorXd optimized_params_;
+    double init_m_;
+    double init_dx_;
+    double init_dy_;
+    double init_u0_;
+    double init_v0_;
+    double init_theta_;
+    double init_k_;
+    std::vector<Pose> init_poses_;
 
-    /**
-     * 构建雅克比矩阵J与误差向量e
-     * @param J 输出雅克比矩阵（2*N × M，N为总点数，M为参数数）
-     * @param e 输出误差向量（2*N × 1）
-     */
-    void buildJacobianAndError(Eigen::MatrixXd& J, Eigen::VectorXd& e) const;
+    // 编码：将参数转换为优化向量
+    Eigen::VectorXd encodeParams() const;
 
-    /**
-     * 计算误差对全局参数的偏导数（填充雅克比矩阵）
-     * @param world_pt 世界点
-     * @param pose 外参
-     * @param hat_pt 重投影点
-     * @param J_row_u u方向误差的雅克比行
-     * @param J_row_v v方向误差的雅克比行
-     * @param param_start_idx 全局参数在J中的起始列索引
-     */
-    void computeGlobalParamDerivatives(const Eigen::Vector2d& world_pt, const Pose& pose, const Eigen::Vector2d& hat_pt,
-                                       Eigen::RowVectorXd& J_row_u, Eigen::RowVectorXd& J_row_v, int param_start_idx) const;
+    // 解码：从优化向量恢复参数
+    void decodeParams(const Eigen::VectorXd& params, double& m, double& dy, double& u0, double& v0, double& theta, double& k,
+                      std::vector<Pose>& poses) const;
 
-    /**
-     * 计算误差对姿态外参的偏导数（填充雅克比矩阵）
-     * @param world_pt 世界点
-     * @param pose 外参
-     * @param hat_pt 重投影点
-     * @param J_row_u u方向误差的雅克比行
-     * @param J_row_v v方向误差的雅克比行
-     * @param param_start_idx 当前姿态参数在J中的起始列索引
-     */
-    void computePoseParamDerivatives(const Eigen::Vector2d& world_pt, const Pose& pose, const Eigen::Vector2d& hat_pt,
-                                     Eigen::RowVectorXd& J_row_u, Eigen::RowVectorXd& J_row_v, int param_start_idx) const;
+    // 计算重投影残差
+    void computeResiduals(const Eigen::VectorXd& params, Eigen::VectorXd& residuals) const;
+    void setParamFixed(int idx, bool fixed);
+    void setParamScale(int idx, double scale);
 
-    // 保存当前参数（用于LM回溯）
-    void saveCurrentParams();
-
-    // 恢复保存的参数（LM更新无效时）
-    void restoreSavedParams();
-
-    // 用增量更新所有参数
-    void updateParams(const Eigen::VectorXd& delta);
-
-    void printParamChanges();
-    Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d& R) const;
-    Eigen::Matrix3d rotVecToMat(const Eigen::Vector3d& rvec) const;
-    void computeDRdr(const Eigen::Vector3d& rvec, Eigen::Matrix3d& dRdr1, Eigen::Matrix3d& dRdr2, Eigen::Matrix3d& dRdr3) const;
+    friend class TelecentricLineCalibrator;
 };
 
 #endif  // TELECENTRIC_LM_OPTIMIZER_H

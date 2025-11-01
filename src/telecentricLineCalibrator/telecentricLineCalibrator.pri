@@ -6,4 +6,4 @@ HEADERS += \
 SOURCES += \
     $$PWD/telecentric_line_calibrator.cpp \
     $$PWD/telecentric_lm_optimizer.cpp
-
+include( ./libcbdetect/libcbdetect.pri)

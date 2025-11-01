@@ -24,5 +24,6 @@ INCLUDEPATH += ./3rdParty/plog/include
 INCLUDEPATH +=./3rdparty/libmodbus/include
 LIBS +=./3rdparty/libmodbus/X64/*.lib
 # ------------------Eigen矩阵运算库------------------
-INCLUDEPATH += D:\ProgramData\eigen-git-mirror-master
-# ------------------CERES矩阵运算库------------------
+INCLUDEPATH += D:/ProgramData/eigen-git-mirror-master
+# ------------------cereal序列化反序列化库------------------
+INCLUDEPATH += ./3rdparty/cereal/include

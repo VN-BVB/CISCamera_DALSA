@@ -1,35 +1,35 @@
-﻿// // #include <plog/Init.h>
-// // #include <plog/Initializers/ConsoleInitializer.h>
-// // #include <plog/Initializers/RollingFileInitializer.h>
-// // #include <plog/Log.h>
+﻿// #include <plog/Init.h>
+// #include <plog/Initializers/ConsoleInitializer.h>
+// #include <plog/Initializers/RollingFileInitializer.h>
+// #include <plog/Log.h>
 
-// // #include <QApplication>
-// // // clang-format off
-// // #include <winsock2.h>
-// // #include <windows.h>
-// // // clang-format on
-// // #include "src/crashHandler/CrashHandler.h"
-// // #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
-// // #include "src/ui/ImageViewWindow.h"
+// #include <QApplication>
+// // clang-format off
+// #include <winsock2.h>
+// #include <windows.h>
+// // clang-format on
+// #include "src/crashHandler/CrashHandler.h"
+// #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
+// #include "src/ui/ImageViewWindow.h"
 
-// // void initPlog();  // 初始化日志类
-// // int main(int argc, char *argv[]) {
-// //     QApplication a(argc, argv);
-// //     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
-// //     initPlog();                         // 初始化日志类
-// //     CISWidget w;
-// //     w.show();
+// void initPlog();  // 初始化日志类
+// int main(int argc, char *argv[]) {
+//     QApplication a(argc, argv);
+//     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
+//     initPlog();                         // 初始化日志类
+//     CISWidget w;
+//     w.show();
 
-// //     return a.exec();
-// // }
-// // // 初始化日志类
-// // void initPlog() {
-// //     // 日志信息分类等级: none = 0, fatal = 1, error = 2, warning = 3, info = 4, debug = 5, verbose = 6
-// //     // 设置初始化等级后, 等级『数值大于』设置值的日志信息就会被『忽略』
-// //     plog::init(plog::debug, "./data/log/log.csv", 1000000000, 100);
-// //     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-// //     plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
-// // }
+//     return a.exec();
+// }
+// // 初始化日志类
+// void initPlog() {
+//     // 日志信息分类等级: none = 0, fatal = 1, error = 2, warning = 3, info = 4, debug = 5, verbose = 6
+//     // 设置初始化等级后, 等级『数值大于』设置值的日志信息就会被『忽略』
+//     plog::init(plog::debug, "./data/log/log.csv", 1000000000, 100);
+//     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
+//     plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
+// }
 #include <Eigen/Dense>
 #include <filesystem>
 #include <fstream>
@@ -68,7 +68,7 @@ bool readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pt
 
 // 主程序
 int main() {
-    std::string folder = "./data/CISCamera_Image/txt/";
+    std::string folder = "./data/CISCamera_Image/txt";
     std::vector<std::vector<Eigen::Vector2d>> all_image_points;
 
     // 遍历文件夹读取所有txt
@@ -87,8 +87,8 @@ int main() {
     }
 
     // 构造世界坐标系下圆心点
-    const int W = 7, H = 7;
-    const double spacingMM = 20.0;
+    const int W = 8, H = 11;
+    const double spacingMM = 10.0;
     std::vector<Eigen::Vector2d> worldPts;
     worldPts.reserve(W * H);
     for (int r = 0; r < H; ++r)

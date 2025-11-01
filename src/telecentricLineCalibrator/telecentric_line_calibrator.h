@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "plog/Log.h"
+#include "src/config/calibration_data_io.h"
 #include "telecentric_lm_optimizer.h"
 enum class PatternType { CHESSBOARD, CIRCLES_GRID, ASYMMETRIC_CIRCLES_GRID };
 // struct Pose {
@@ -63,7 +64,7 @@ private:
                                    const double m);
     Eigen::Matrix3d initIntrinsic(const Eigen::Matrix3d& H, double dx, double dy, double u0, double v0);
     double computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
-                                    const Pose& pose, const Eigen::Matrix3d& K);
+                                    const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath = " ");
     double computeReprojectionErrorFinal(const std::vector<Eigen::Vector2d>& worldPts,
                                          const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose, const Eigen::Matrix3d& K,
                                          double k);
@@ -72,5 +73,8 @@ private:
     double m_, dx_, dy_;
     double u0_, v0_;
     Eigen::Matrix3d K_;
+    Eigen::Matrix<double, 1, 5> coff_dis_;
+    const std::string calib_data_path_ =
+        "./data/calibration_config/before_optimization_calib_data.json";  // 文件名更清晰，区分内参+外参
 };
 #endif  // TELECENTRIC_LINE_CALIBRATOR_H
