@@ -1,7 +1,7 @@
 [Board]
 Server Name=Xtium-CL_MX4
-Device Name=CameraLink Base Mono #1
-Device Index=0
+Device Name=CameraLink Base Mono #2
+Device Index=1
 [General]
 Version=301
 Vic Name=Default Area Scan 1 tap Mono
@@ -101,7 +101,7 @@ Frame Integrate Enable=0
 Internal Frame Trigger Enable=0
 Internal Frame Trigger Freq=30000
 Internal Line Trigger Enable=1
-Internal Line Trigger Freq=1416
+Internal Line Trigger Freq=1412
 Line Integrate Duration=20
 Line Integrate Enable=1
 Line Trigger Enable=0
