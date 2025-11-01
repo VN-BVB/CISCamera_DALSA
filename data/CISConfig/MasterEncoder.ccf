@@ -46,7 +46,7 @@ Saturation=100000
 Sharpness=0
 [Stream Conditioning]
 Crop Activation=0
-Crop Height=5000
+Crop Height=50
 Crop Left=0
 Crop Top=0
 Crop Width=15552
@@ -61,7 +61,7 @@ Lut Number=0
 Pixel Mask=255
 Scale Horizontal=15552
 Scale Horizontal Method=1
-Scale Vertical=5000
+Scale Vertical=50
 Scale Vertical Method=1
 Snap Count=1
 Vertical Sync Reference=2
@@ -170,8 +170,19 @@ Time Integrate Pulse 1 Delay=0
 Time Integrate Pulse 1 Duration=1
 Time Integrate Pulse 1 Polarity=1
 WEN Polarity=0
+Cycling Preset Count=0
+Cycling Preset Enable=0
+Cycling Preset Incremental Source=0
+Cycling Preset Repeater=1
+Cycling Preset Reset Source=0
+Cycling preset Select=0
+Shaft Encoder Pulse Fractional Multiplier=0
+Strobe Destination=0
+External Line Trigger Duration=0
+Camera Control Readout Delay=0
 [Output]
 Output Format=1
+Output Multi Plane Split=0
 [Shared Control Signals]
 Camera Reset=-1
 Camera Trigger=-1
@@ -251,6 +262,7 @@ Pixel Clock Output=0x0
 Reset/Trigger Input=0x0
 VD Input=0x0
 WEN Output=0x0
+CXP Configuration=0x0
 [Custom Camera IO Control Signals]
 Max Control=0
 [Serial Port]
@@ -260,3 +272,5 @@ Flow Control=0x1
 Parity=0x1
 Stop Bits=0x1
 Initialization String=
+[Camera Link Data]
+User Setting Size=0

@@ -3,6 +3,7 @@
 
 #include <SapClassBasic.h>
 
+#include <QDir>
 #include <QImage>
 #include <QObject>
 #include <atomic>
@@ -20,6 +21,7 @@ public:
     ~DalsaCamera();
 
     bool initCamera(const QString& configPath, int resourceIndex = 0) override;
+    bool isRunning() const override { return m_trigger.load(); }
 
 public slots:
     void startGrab() override;
@@ -55,6 +57,7 @@ private:
     // 状态
     std::atomic<bool> m_running;
     std::atomic<bool> m_freeze;
+    std::atomic<bool> m_trigger;
     std::atomic<bool> m_saveEnabled;
     int m_maxFrames;
     int m_frameCount;
@@ -70,6 +73,7 @@ private:
 
     // trigger mode
     TriggerMode m_triggerMode;
+    friend class CISWidget;
 };
 
 #endif  // DALSA_CAMERA_H

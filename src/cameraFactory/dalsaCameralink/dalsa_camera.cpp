@@ -11,7 +11,7 @@ DalsaCamera::DalsaCamera(QObject* parent)
       m_View(nullptr),
       m_pData(nullptr),
       m_running(false),
-      m_freeze(false),
+      m_trigger(false),
       m_saveEnabled(false),
       m_maxFrames(0),
       m_frameCount(0),
@@ -51,7 +51,7 @@ bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
 
     SapLocation loc(serverName, resourceIndex);
     m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
-    m_Buffers = new SapBufferWithTrash(2, m_Acquisition);
+    m_Buffers = new SapBufferWithTrash(1, m_Acquisition);  // 设立缓冲区， 若用于实时显示，则设立多个缓冲区，并用settrash来标记使用的
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
     m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, this);
     m_pAcqDevice = new SapAcqDevice(loc);
@@ -150,7 +150,7 @@ void DalsaCamera::startGrab() {
     }
 
     m_running = true;
-    m_freeze = false;
+    m_trigger = false;
     m_frameCount = 0;
 
     if (!m_Xfer) return;
@@ -182,6 +182,7 @@ void DalsaCamera::startGrab() {
 
 void DalsaCamera::stopGrab() {
     m_running = false;
+    m_trigger = false;
     if (m_Xfer) m_Xfer->Abort();
     if (m_worker.joinable()) m_worker.join();
     m_frameCount = 0;
@@ -228,6 +229,7 @@ bool DalsaCamera::softwareTrigger() {
 
     PLOGD << "SoftwareTrigger 触发成功";
     emit sendText(QString(u8"SoftwareTrigger 触发成功"));
+    m_trigger = true;
     return true;
 }
 // =================== 回调部分 ===================
@@ -253,20 +255,16 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     auto matPtr = std::make_shared<cv::Mat>();
     // 按照相机数据格式转换成 cv::Mat
     if (cam->m_Buffers->GetFormat() == SapFormatRGB888) {
-        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data);
+        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_8UC3, data).clone();
     } else if (cam->m_Buffers->GetFormat() == SapFormatMono8) {
-        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data);
+        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_8UC1, data).clone();
     } else if (cam->m_Buffers->GetFormat() == SapFormatMono16) {
-        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data);
+        *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data).clone();
     } else {
         std::cout << "none mode for converting to img " << std::endl;
         // 不支持的格式
         return;
     }
-    // cv::imshow("aaaa", mat);
-    // cv::waitKey(1);
-
-    // QMetaObject::invokeMethod(cam, "handleImageFromCallback", Qt::QueuedConnection, Q_ARG(cv::Mat, mat));
     QMetaObject::invokeMethod(cam, [cam, matPtr]() { cam->handleImageFromCallback(matPtr); }, Qt::QueuedConnection);
 
     // 保存逻辑（依然用 SapBuffer 保存，避免 OpenCV 再写一次大图）
