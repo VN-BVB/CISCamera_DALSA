@@ -1,5 +1,5 @@
-#ifndef INTERACTIVE_DISPLAY_MANAGER_H
-#define INTERACTIVE_DISPLAY_MANAGER_H
+#ifndef DISPLAY_MANAGER_H
+#define DISPLAY_MANAGER_H
 
 #include <QObject>
 #include <QLabel>
@@ -8,25 +8,25 @@
 
 const int DisplayViewSceneSize = 2000;
 
-class InteractiveView;
-class InteractiveScene;
-class InteractiveDisplayManagerPrivate;
+class DisplayView;
+class DisplayScene;
+class DisplayManagerPrivate;
 
-class InteractiveDisplayManager : public QObject
+class DisplayManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit InteractiveDisplayManager(QObject *parent = nullptr);
-    ~InteractiveDisplayManager();
+    explicit DisplayManager(QObject *parent = nullptr);
+    ~DisplayManager();
 
 protected:
-    const QScopedPointer<InteractiveDisplayManagerPrivate> d_ptr;
+    const QScopedPointer<DisplayManagerPrivate> d_ptr;
 
 public:
     // 获取显示视图
-    InteractiveView* displayView() const { return m_displayView;}
+    DisplayView* displayView() const { return m_displayView;}
     // 获取显示场景
-    InteractiveScene* displayScene() const;
+    DisplayScene* displayScene() const;
 
 protected:  // 初始化接口
     // 初始化
@@ -40,10 +40,10 @@ private slots:
 
 private:
     // 在线程中获取像素颜色
-    static void getPixelColor(const QPixmap &pixmap, const QPoint &pt, InteractiveDisplayManager *manager);
+    static void getPixelColor(const QPixmap &pixmap, const QPoint &pt, DisplayManager *manager);
 
 private:
-    InteractiveView* m_displayView = nullptr;   // 显示视图
+    DisplayView* m_displayView = nullptr;   // 显示视图
     QLabel* lbGrayValue = nullptr;            // 灰度值标签
     QFuture<void> m_pixelColorFuture;           // 异步任务
     QPoint m_lastMousePos;                      // 最后鼠标位置
@@ -51,4 +51,4 @@ private:
 
 };
 
-#endif // INTERACTIVE_DISPLAY_MANAGER_H
+#endif // DISPLAY_MANAGER_H

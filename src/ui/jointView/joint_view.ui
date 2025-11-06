@@ -89,7 +89,7 @@
   <customwidget>
    <class>FrmVisionDisplay</class>
    <extends>QGraphicsView</extends>
-   <header location="global">src/ui/utils/imageWidget/frm_vision_display.h</header>
+   <header location="global">src/ui/utils/display/frm_display.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

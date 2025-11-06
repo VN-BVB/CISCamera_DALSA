@@ -1,4 +1,4 @@
-#include "interactive_image_item.h"
+#include "display_image_item.h"
 #include <QPen>
 #include <QPainter>
 #include <QGraphicsSceneHoverEvent>
@@ -30,42 +30,42 @@ struct SDisplayText
 };
 
 /*********************************/
-//InteractiveImageItemPrivate
+//DisplayImageItemPrivate
 /*********************************/
-class InteractiveImageItemPrivate
+class DisplayImageItemPrivate
 {
-    Q_DISABLE_COPY(InteractiveImageItemPrivate)
-    Q_DECLARE_PUBLIC(InteractiveImageItem)
+    Q_DISABLE_COPY(DisplayImageItemPrivate)
+    Q_DECLARE_PUBLIC(DisplayImageItem)
 public:
-    InteractiveImageItemPrivate(InteractiveImageItem *q):q_ptr(q)
+    DisplayImageItemPrivate(DisplayImageItem *q):q_ptr(q)
     {
         lstDisplayText.clear();
     }
-    virtual ~InteractiveImageItemPrivate() {}
+    virtual ~DisplayImageItemPrivate() {}
 
 public:
-    InteractiveImageItem *const q_ptr;
+    DisplayImageItem *const q_ptr;
     QList<SDisplayText> lstDisplayText;
 };
 
 /*************************/
-//InteractiveImageItem
+//DisplayImageItem
 /*************************/
-InteractiveImageItem::InteractiveImageItem(QObject *parent)
+DisplayImageItem::DisplayImageItem(QObject *parent)
     :QObject(parent),
     QGraphicsPixmapItem(nullptr),
-    d_ptr(new InteractiveImageItemPrivate(this))
+    d_ptr(new DisplayImageItemPrivate(this))
 {
     setAcceptHoverEvents(true);
 }
 
-InteractiveImageItem::~InteractiveImageItem()
+DisplayImageItem::~DisplayImageItem()
 {
 
 }
 
 // 显示图像
-bool InteractiveImageItem::displayImage(const QImage &image)
+bool DisplayImageItem::displayImage(const QImage &image)
 {
     if (image.isNull()) return false;
     setPixmap(QPixmap::fromImage(image));
@@ -73,19 +73,19 @@ bool InteractiveImageItem::displayImage(const QImage &image)
 }
 
 // 清除图像
-void InteractiveImageItem::clearImage()
+void DisplayImageItem::clearImage()
 {
     setPixmap(QPixmap());
 }
 
 // 添加显示文本
-void InteractiveImageItem::addDisplayText(const QString &text,
+void DisplayImageItem::addDisplayText(const QString &text,
                                           const QPointF &pt,
                                           const double &size,
                                           const QColor &color,
                                           const bool &clear)
 {
-    Q_D(InteractiveImageItem);  // 使用Qt的PIMPL宏获取指向私有实现类的指针
+    Q_D(DisplayImageItem);  // 使用Qt的PIMPL宏获取指向私有实现类的指针
     if (clear)
     {
         d->lstDisplayText.clear();
@@ -95,14 +95,14 @@ void InteractiveImageItem::addDisplayText(const QString &text,
 }
 
 // 清除文本
-void InteractiveImageItem::clearDisplayText()
+void DisplayImageItem::clearDisplayText()
 {
-    Q_D(InteractiveImageItem);
+    Q_D(DisplayImageItem);
     d->lstDisplayText.clear();
     this->update();
 }
 
-QPointF InteractiveImageItem::getDisplayImageCenter() const
+QPointF DisplayImageItem::getDisplayImageCenter() const
 {
     auto width = this->pixmap().width();
     auto height = this->pixmap().height();
@@ -111,10 +111,10 @@ QPointF InteractiveImageItem::getDisplayImageCenter() const
 }
 
 // 基类绘制方法，用于自定义图元的绘制逻辑
-void InteractiveImageItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void DisplayImageItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     QGraphicsPixmapItem::paint(painter, option, widget);    // 调用基类的绘制方法，绘制基础原始图像
-    Q_D(InteractiveImageItem);
+    Q_D(DisplayImageItem);
     foreach (auto displayText, d->lstDisplayText) {
         painter->save();
         auto pen = painter->pen();
@@ -135,7 +135,7 @@ void InteractiveImageItem::paint(QPainter *painter, const QStyleOptionGraphicsIt
 }
 
 // 处理鼠标在图元上的悬停事件
-void InteractiveImageItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
+void DisplayImageItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 {
     QPointF scenePos = event->scenePos();     // 返回场景坐标系中的坐标，与海康与halcon的效果相同，若是返回图元坐标系中的坐标，则鼠标通过像素块中心时才会产生坐标变化
     QPointF itemPos = mapFromScene(scenePos); // 转换为图元坐标系
@@ -161,7 +161,7 @@ void InteractiveImageItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 }
 
 // 处理鼠标离开图形项时的悬停事件
-void InteractiveImageItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
+void DisplayImageItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
     emit this->sendHoverLeave();
     return QGraphicsPixmapItem::hoverLeaveEvent(event);

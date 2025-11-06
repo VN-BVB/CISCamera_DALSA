@@ -1,19 +1,19 @@
-#ifndef INTERACTIVE_IMAGE_ITEM_H
-#define INTERACTIVE_IMAGE_ITEM_H
+#ifndef DISPLAY_IMAGE_ITEM_H
+#define DISPLAY_IMAGE_ITEM_H
 
-#include "interactive_global.h"
+#include "display_global.h"
 #include <QGraphicsPixmapItem>
 #include <QPen>
 #define InteractiveImageItem_Type InteractiveGraphicsItemUserType+1
-class InteractiveImageItemPrivate;
-class InteractiveImageItem :  public QObject, public QGraphicsPixmapItem
+class DisplayImageItemPrivate;
+class DisplayImageItem :  public QObject, public QGraphicsPixmapItem
 {
     Q_OBJECT
 
-    friend class InteractiveScene;
+    friend class DisplayScene;
 public:
-    explicit InteractiveImageItem(QObject *parent = nullptr);
-    ~InteractiveImageItem();
+    explicit DisplayImageItem(QObject *parent = nullptr);
+    ~DisplayImageItem();
 
 protected:
     // 显示图像
@@ -51,9 +51,9 @@ signals:
     // 悬停离开
     void sendHoverLeave();
 protected:
-    const QScopedPointer<InteractiveImageItemPrivate> d_ptr;
+    const QScopedPointer<DisplayImageItemPrivate> d_ptr;
 private:
-    Q_DECLARE_PRIVATE(InteractiveImageItem)
+    Q_DECLARE_PRIVATE(DisplayImageItem)
 };
 
-#endif // INTERACTIVE_IMAGE_ITEM_H
+#endif // DISPLAY_IMAGE_ITEM_H

@@ -18,7 +18,7 @@
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QWidget>
-#include <src/ui/utils/imageWidget/openGLImageWidget.h>
+#include <src/ui/utils/display/openGLImageWidget.h>
 #include "src/rail/rail_widget.h"
 
 QT_BEGIN_NAMESPACE

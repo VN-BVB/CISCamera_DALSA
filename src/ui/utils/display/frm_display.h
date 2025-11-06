@@ -1,11 +1,11 @@
-#ifndef FRM_VISION_DISPLAY_H
-#define FRM_VISION_DISPLAY_H
+#ifndef FRM_DISPLAY_H
+#define FRM_DISPLAY_H
 
 #include "base_widget.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 
-class InteractiveDisplayManager;
+class DisplayManager;
 
 class FrmVisionDisplay : public BaseWidget
 {
@@ -16,7 +16,7 @@ public:
     ~FrmVisionDisplay();
     Q_DISABLE_COPY(FrmVisionDisplay)
 
-    InteractiveDisplayManager* getDisplayManager();
+    DisplayManager* getDisplayManager();
 
 public slots:
     void displayImage(const QImage &image, bool autoFit = true);
@@ -28,7 +28,7 @@ protected:
     void initFrm() override;
 
 private:
-    InteractiveDisplayManager* m_displayMgr;
+    DisplayManager* m_displayMgr;
 };
 
-#endif // FRM_VISION_DISPLAY_H
+#endif // FRM_DISPLAY_H

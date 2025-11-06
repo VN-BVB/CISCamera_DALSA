@@ -15,7 +15,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
-#include <src/ui/utils/imageWidget/frm_vision_display.h>
+#include <src/ui/utils/display/frm_display.h>
 
 QT_BEGIN_NAMESPACE
 

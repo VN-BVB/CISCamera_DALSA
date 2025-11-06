@@ -2,20 +2,20 @@
 #include <QKeyEvent>
 #include <QGraphicsItem>
 #include <QScrollBar>
-#include "interactive_view.h"
-#include "interactive_scene.h"
-#include "interactive_image_item.h"
+#include "display_view.h"
+#include "display_scene.h"
+#include "display_image_item.h"
 
 /*******************************/
-//* [InteractiveViewPrivate]
+//* [DisplayViewPrivate]
 /*******************************/
-class InteractiveViewPrivate
+class DisplayViewPrivate
 {
-    Q_DISABLE_COPY(InteractiveViewPrivate)
-    Q_DECLARE_PUBLIC(InteractiveView)
+    Q_DISABLE_COPY(DisplayViewPrivate)
+    Q_DECLARE_PUBLIC(DisplayView)
 
 public:
-    InteractiveViewPrivate(InteractiveView *q):q_ptr(q)
+    DisplayViewPrivate(DisplayView *q):q_ptr(q)
     {
         resizeToFif=true;
         doubleClickToFit=true;
@@ -23,13 +23,13 @@ public:
         maxZoomCoeff=ViewMaxZoomCoeff_Default;
         minZoomCoeff=ViewMinZoomCoeff_Default;
     }
-    virtual ~InteractiveViewPrivate(){}
+    virtual ~DisplayViewPrivate(){}
 
 public:
     void init();
     void updateBackground();
 public:
-    InteractiveView              *const q_ptr;
+    DisplayView              *const q_ptr;
 
     bool                        resizeToFif;//是否重置尺寸缩放至合适大小
     bool                        doubleClickToFit;//是否双击缩放至合适大小
@@ -41,20 +41,20 @@ public:
 
 
 /*******************************/
-//* [InteractiveView]
+//* [DisplayView]
 /*******************************/
 #define VIEW_CENTER viewport()->rect().center()
 #define VIEW_WIDTH viewport()->rect().width()
 #define VIEW_HEIGHT viewport()->rect().height()
 
-InteractiveView::InteractiveView(QWidget *parent)
+DisplayView::DisplayView(QWidget *parent)
     : QGraphicsView(parent),
     m_translateButton(Qt::LeftButton),
     m_zoomDelta(0.1),
     m_translateSpeed(0.5),
     m_bMouseTranslate(false),
-    d_ptr(new InteractiveViewPrivate(this)),
-    m_scene(new InteractiveScene(this))
+    d_ptr(new DisplayViewPrivate(this)),
+    m_scene(new DisplayScene(this))
 {
     // 去掉滚动条
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -74,7 +74,7 @@ InteractiveView::InteractiveView(QWidget *parent)
 }
 
 // 缩放的增量
-void InteractiveView::setZoomDelta(qreal delta)
+void DisplayView::setZoomDelta(qreal delta)
 {
     // 建议增量范围
     Q_ASSERT_X(delta >= 0.0 && delta <= 1.0,
@@ -82,36 +82,36 @@ void InteractiveView::setZoomDelta(qreal delta)
     m_zoomDelta = delta;
 }
 
-qreal InteractiveView::zoomDelta() const
+qreal DisplayView::zoomDelta() const
 {
     return m_zoomDelta;
 }
 
-double InteractiveView::maxZoomCoeff() const
+double DisplayView::maxZoomCoeff() const
 {
-    Q_D(const InteractiveView);
+    Q_D(const DisplayView);
     return d->maxZoomCoeff;
 }
 
-void InteractiveView::setMaxZoomCoeff(const double &coeff)
+void DisplayView::setMaxZoomCoeff(const double &coeff)
 {
-    Q_D(InteractiveView);
+    Q_D(DisplayView);
     d->maxZoomCoeff=coeff;
 }
 
-double InteractiveView::minZoomCoeff() const
+double DisplayView::minZoomCoeff() const
 {
-    Q_D(const InteractiveView);
+    Q_D(const DisplayView);
     return d->minZoomCoeff;
 }
-void InteractiveView::setMinZoomCoeff(const double &coeff)
+void DisplayView::setMinZoomCoeff(const double &coeff)
 {
-    Q_D(InteractiveView);
+    Q_D(DisplayView);
     d->minZoomCoeff=coeff;
 }
 
 // 平移速度
-void InteractiveView::setTranslateSpeed(qreal speed)
+void DisplayView::setTranslateSpeed(qreal speed)
 {
     // 建议速度范围
     Q_ASSERT_X(speed >= 0.0 && speed <= 2.0,
@@ -119,14 +119,14 @@ void InteractiveView::setTranslateSpeed(qreal speed)
     m_translateSpeed = speed;
 }
 
-qreal InteractiveView::translateSpeed() const
+qreal DisplayView::translateSpeed() const
 {
     return m_translateSpeed;
 }
 
 
 // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
-void InteractiveView::keyPressEvent(QKeyEvent *event)
+void DisplayView::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key())
     {
@@ -161,7 +161,7 @@ void InteractiveView::keyPressEvent(QKeyEvent *event)
 }
 
 // 平移
-void InteractiveView::mouseMoveEvent(QMouseEvent *event)
+void DisplayView::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_bMouseTranslate)
     {
@@ -174,7 +174,7 @@ void InteractiveView::mouseMoveEvent(QMouseEvent *event)
     QGraphicsView::mouseMoveEvent(event);
 }
 
-void InteractiveView::mousePressEvent(QMouseEvent *event)
+void DisplayView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == m_translateButton)
     {
@@ -186,7 +186,7 @@ void InteractiveView::mousePressEvent(QMouseEvent *event)
     QGraphicsView::mousePressEvent(event);
 }
 
-void InteractiveView::mouseReleaseEvent(QMouseEvent *event)
+void DisplayView::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == m_translateButton)
     {
@@ -197,9 +197,9 @@ void InteractiveView::mouseReleaseEvent(QMouseEvent *event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-void InteractiveView::mouseDoubleClickEvent(QMouseEvent *event)
+void DisplayView::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    Q_D(InteractiveView);
+    Q_D(DisplayView);
     if(d->doubleClickToFit)
     {
         whenZoomToDisplayFit();
@@ -208,9 +208,9 @@ void InteractiveView::mouseDoubleClickEvent(QMouseEvent *event)
 }
 
 // 放大/缩小
-void InteractiveView::wheelEvent(QWheelEvent *event)
+void DisplayView::wheelEvent(QWheelEvent *event)
 {
-    Q_D(InteractiveView);
+    Q_D(DisplayView);
     int deltaY = event->angleDelta().y();
     if((deltaY > 0)&&(m_rZoomValue >= d->maxZoomCoeff))//最大放大
     {
@@ -234,9 +234,9 @@ void InteractiveView::wheelEvent(QWheelEvent *event)
 }
 
 // 放大
-void InteractiveView::zoomUp()
+void DisplayView::zoomUp()
 {
-    Q_D(InteractiveView);
+    Q_D(DisplayView);
     if(m_rZoomValue >= d->maxZoomCoeff)//最大放大
     {
         return;
@@ -250,9 +250,9 @@ void InteractiveView::zoomUp()
 }
 
 // 缩小
-void InteractiveView::zoomDown()
+void DisplayView::zoomDown()
 {
-    Q_D(InteractiveView);
+    Q_D(DisplayView);
     if(m_rZoomValue <= d->minZoomCoeff)//最小缩小
     {
         return;
@@ -266,7 +266,7 @@ void InteractiveView::zoomDown()
 }
 
 // 平移
-void InteractiveView::translate(QPointF delta)
+void DisplayView::translate(QPointF delta)
 {
     // 根据当前 zoom 缩放平移数
     delta *= m_rZoomValue;
@@ -312,7 +312,7 @@ void InteractiveView::translate(QPointF delta)
     }
 }
 
-void InteractiveView::whenUpdateDisplayFit()
+void DisplayView::whenUpdateDisplayFit()
 {
     int imageWidth = m_scene->getDisplayImageSize().width();
     int imageHeight = m_scene->getDisplayImageSize().height();
@@ -355,7 +355,7 @@ void InteractiveView::whenUpdateDisplayFit()
 /*
  将图像缩放到合适视图的大小，并调整显示位置
 */
-void InteractiveView::whenZoomToDisplayFit()
+void DisplayView::whenZoomToDisplayFit()
 {
     zoomByValue(m_rZoomFit);
     QScrollBar *pHbar = this->horizontalScrollBar();
@@ -365,7 +365,7 @@ void InteractiveView::whenZoomToDisplayFit()
     // centerOn(m_scene->getDisplayImageItem()->getDisplayImageCenter());
 }
 
-void InteractiveView::zoomByValue(const double &val)
+void DisplayView::zoomByValue(const double &val)
 {
     double tmp = val / m_rZoomValue;
     // 绝对缩放

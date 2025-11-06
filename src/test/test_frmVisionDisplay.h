@@ -3,9 +3,9 @@
 
 #include <QWidget>
 #include <QPushButton>
-#include "../ui/utils/imageWidget/frm_vision_display.h"
-#include "../ui/utils/imageWidget/interactive_scene.h"
-#include "../ui/utils/imageWidget/interactive_display_manager.h"
+#include "../ui/utils/display/frm_display.h"
+#include "../ui/utils/display/display_scene.h"
+#include "../ui/utils/display/display_manager.h"
 #include "test_edge_assembly.h"
 
 namespace Ui {

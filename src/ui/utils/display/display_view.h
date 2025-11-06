@@ -1,7 +1,7 @@
-#ifndef INTERACTIVE_VIEW_H
-#define INTERACTIVE_VIEW_H
+#ifndef DISPLAY_VIEW_H
+#define DISPLAY_VIEW_H
 
-#include "interactive_global.h"
+#include "display_global.h"
 #include <QGraphicsView>
 
 const double ViewMaxZoomCoeff_Default = 100;
@@ -9,17 +9,17 @@ const double ViewMinZoomCoeff_Default = 0.00001;
 
 class QWheelEvent;
 class QKeyEvent;
-class InteractiveScene;
-class InteractiveImageItem;
-class InteractiveViewPrivate;
+class DisplayScene;
+class DisplayImageItem;
+class DisplayViewPrivate;
 
-class InteractiveView : public QGraphicsView
+class DisplayView : public QGraphicsView
 {
     Q_OBJECT
 
-    friend class InteractiveScene;
+    friend class DisplayScene;
 public:
-    explicit InteractiveView(QWidget *parent = 0);
+    explicit DisplayView(QWidget *parent = 0);
 
     // 缩放的增量
     void setZoomDelta(qreal delta);
@@ -39,7 +39,7 @@ public:
 
 public: // 公共接口
     // 获取场景
-    InteractiveScene* getScene() {return m_scene;}
+    DisplayScene* getScene() {return m_scene;}
 
 protected:  // 视窗事件
     // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
@@ -82,12 +82,12 @@ protected: //view控件状态
 
 protected:
     // 显示的场景
-    InteractiveScene *m_scene;
+    DisplayScene *m_scene;
 
 protected:
-    const QScopedPointer<InteractiveViewPrivate> d_ptr;
+    const QScopedPointer<DisplayViewPrivate> d_ptr;
 private:
-    Q_DECLARE_PRIVATE(InteractiveView)
+    Q_DECLARE_PRIVATE(DisplayView)
 };
 
-#endif // INTERACTIVE_VIEW_H
+#endif // DISPLAY_VIEW_H

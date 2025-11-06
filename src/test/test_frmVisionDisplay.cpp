@@ -57,10 +57,10 @@ void test_FrmVisionDisplay::displayImage(const QString &imagePath)
 
 void test_FrmVisionDisplay::displayContours(std::vector<std::vector<cv::Point2f>> contours)
 {
-    InteractiveDisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
+    DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
     if (!displayMgr) return;
 
-    InteractiveScene* scene = displayMgr->displayScene();
+    DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
     scene->whenDrawSubpixelContours(contours);
 }

@@ -1,45 +1,45 @@
-#include "interactive_scene.h"
-#include "interactive_view.h"
-#include "interactive_image_item.h"
+#include "display_scene.h"
+#include "display_view.h"
+#include "display_image_item.h"
 
 #include <QGraphicsItem>
 #include <QGraphicsProxyWidget>
 
 /*******************************/
-// [InteractiveScenePrivate]
+// [DisplayScenePrivate]
 /*******************************/
-class InteractiveScenePrivate
+class DisplayScenePrivate
 {
-    Q_DISABLE_COPY(InteractiveScenePrivate) // 禁止拷贝赋值操作
-    Q_DECLARE_PUBLIC(InteractiveScene)  // 设置公共访问权限
+    Q_DISABLE_COPY(DisplayScenePrivate) // 禁止拷贝赋值操作
+    Q_DECLARE_PUBLIC(DisplayScene)  // 设置公共访问权限
 public:
-    InteractiveScenePrivate(InteractiveScene* q):q_ptr(q)
+    DisplayScenePrivate(DisplayScene* q):q_ptr(q)
     {
         roiDrawing = false;
     }
-    virtual ~InteractiveScenePrivate(){}
+    virtual ~DisplayScenePrivate(){}
 public:
-    InteractiveScene* const q_ptr;
+    DisplayScene* const q_ptr;
     bool roiDrawing;
 };
 
 /*******************************/
-// [InteractiveScene]
+// [DisplayScene]
 /*******************************/
-InteractiveScene::InteractiveScene(InteractiveView *parentView)
+DisplayScene::DisplayScene(DisplayView *parentView)
     :QGraphicsScene(parentView),    // 派生类调用父类构造函数
     m_parentView(parentView),
-    m_displayImageItem(new InteractiveImageItem(this)),
-    d_ptr(new InteractiveScenePrivate(this))
+    m_displayImageItem(new DisplayImageItem(this)),
+    d_ptr(new DisplayScenePrivate(this))
 {
     m_parentView->setScene(this);
     setDisplayImageItem(m_displayImageItem);
 }
 
-InteractiveScene::~InteractiveScene()
+DisplayScene::~DisplayScene()
 {}
 
-bool InteractiveScene::whenDisplayImage(const QImage &image, bool bAutoFit)
+bool DisplayScene::whenDisplayImage(const QImage &image, bool bAutoFit)
 {
     if (!m_displayImageItem) return false;
     emit sendUpdateDisplayImage(image);
@@ -53,42 +53,42 @@ bool InteractiveScene::whenDisplayImage(const QImage &image, bool bAutoFit)
     return true;
 }
 
-void InteractiveScene::whenClearImage()
+void DisplayScene::whenClearImage()
 {
     if (!m_displayImageItem) return ;
     m_displayImageItem->clearImage();
     emit sendClearDisplayImage();
 }
 
-void InteractiveScene::whenAddDisplayText(const QString &text, const QPointF &pt, const double &size,
+void DisplayScene::whenAddDisplayText(const QString &text, const QPointF &pt, const double &size,
                         const QColor &color, const bool &clear)
 {
     if (!m_displayImageItem) return;
     m_displayImageItem->addDisplayText(text, pt, size, color, clear);
 }
 
-void InteractiveScene::whenClearDisplayText()
+void DisplayScene::whenClearDisplayText()
 {
     if (!m_displayImageItem) return;
     m_displayImageItem->clearDisplayText();
 }
 
-QPixmap InteractiveScene::getDisplayImage()
+QPixmap DisplayScene::getDisplayImage()
 {
     return m_displayImageItem->pixmap();
 }
 
-QSize InteractiveScene::getDisplayImageSize() const
+QSize DisplayScene::getDisplayImageSize() const
 {
     return m_displayImageItem->getDisplayImageSize();
 }
 
-void InteractiveScene::setDisplayImageItem(InteractiveImageItem* imageItem)
+void DisplayScene::setDisplayImageItem(DisplayImageItem* imageItem)
 {
     // 遍历所有图元，确保只有一个图像图元在显示
     foreach (auto item, this->items())
     {
-        if (item->type() == InteractiveImageItem::Type)
+        if (item->type() == DisplayImageItem::Type)
         {
             this->removeItem(item);
         }
@@ -102,19 +102,19 @@ void InteractiveScene::setDisplayImageItem(InteractiveImageItem* imageItem)
     }
 }
 
-void InteractiveScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
+void DisplayScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     emit sendMousePress(event);
     return QGraphicsScene::mousePressEvent(event);
 }
 
-void InteractiveScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+void DisplayScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     emit sendMouseRelease(event);
     return QGraphicsScene::mouseReleaseEvent(event);
 }
 
-void InteractiveScene::whenDrawSingleSubpixelContour(const std::vector<cv::Point2f> &subpixelContour)
+void DisplayScene::whenDrawSingleSubpixelContour(const std::vector<cv::Point2f> &subpixelContour)
 {
     if (subpixelContour.empty())
         return;
@@ -136,7 +136,7 @@ void InteractiveScene::whenDrawSingleSubpixelContour(const std::vector<cv::Point
     this->addItem(pathItem);
 }
 
-void InteractiveScene::whenDrawSinglePixelContour(const std::vector<cv::Point> &pixelContour)
+void DisplayScene::whenDrawSinglePixelContour(const std::vector<cv::Point> &pixelContour)
 {
     if (pixelContour.empty())
         return;
@@ -170,7 +170,7 @@ void InteractiveScene::whenDrawSinglePixelContour(const std::vector<cv::Point> &
     }
 }
 
-void InteractiveScene::whenDrawSubpixelContours(const std::vector<std::vector<cv::Point2f>> &subpixelContours)
+void DisplayScene::whenDrawSubpixelContours(const std::vector<std::vector<cv::Point2f>> &subpixelContours)
 {
     whenClearContours();
     for (auto contour : subpixelContours)
@@ -179,7 +179,7 @@ void InteractiveScene::whenDrawSubpixelContours(const std::vector<std::vector<cv
     }
 }
 
-void InteractiveScene::whenDrawPixelContours(const std::vector<std::vector<cv::Point>> &pixelContours)
+void DisplayScene::whenDrawPixelContours(const std::vector<std::vector<cv::Point>> &pixelContours)
 {
     whenClearContours();
     for (auto contour : pixelContours)
@@ -188,13 +188,13 @@ void InteractiveScene::whenDrawPixelContours(const std::vector<std::vector<cv::P
     }
 }
 
-void InteractiveScene::whenClearContours()
+void DisplayScene::whenClearContours()
 {
     // @TODO:预留，之后将所有contour变成contourItem，然后用一个数组同一管理，清除时便清空这个数组
     return;
 }
 
-void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length, const QColor &color)
+void DisplayScene::whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length, const QColor &color)
 {
     if (lines.empty())
         return;
@@ -242,7 +242,7 @@ void InteractiveScene::whenDrawLines(const std::vector<cv::Vec4f> &lines, const 
     }
 }
 
-void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points,const QColor &color)
+void DisplayScene::whenDrawPoints(const std::vector<cv::Point2f> &points,const QColor &color)
 {
     if (points.empty())
         return;
@@ -260,7 +260,7 @@ void InteractiveScene::whenDrawPoints(const std::vector<cv::Point2f> &points,con
 }
 
 // B样条曲线绘制函数实现
-void InteractiveScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints)
+void DisplayScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints)
 {
     if (controlPoints.size() < 2) {
         return;
@@ -311,7 +311,7 @@ void InteractiveScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f>
 }
 
 // 使用tinyspline对象绘制B样条曲线
-void InteractiveScene::whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline) {
+void DisplayScene::whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline) {
     std::vector<tinyspline::real> controlPoints = spline.controlPoints();
     size_t numControlPoints = spline.numControlPoints();
     size_t dimension = spline.dimension();
@@ -379,7 +379,7 @@ void InteractiveScene::whenDrawSingleBSplineCurve(const tinyspline::BSpline &spl
 }
 
 // 绘制多条B样条曲线
-void InteractiveScene::whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines)
+void DisplayScene::whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines)
 {
     if (splines.empty()) return;
 
@@ -389,7 +389,7 @@ void InteractiveScene::whenDrawBSplineCurves(const std::vector<tinyspline::BSpli
     }
 }
 
-void InteractiveScene::whenDrawBSplineCurves(const std::vector<CurveSeg> &curves) {
+void DisplayScene::whenDrawBSplineCurves(const std::vector<CurveSeg> &curves) {
     if (curves.empty()) return;
     std::vector<tinyspline::BSpline> bsplines;
     for (auto& curve : curves) {

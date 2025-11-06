@@ -1,7 +1,7 @@
-#include "interactive_display_manager.h"
-#include "src/ui/utils/imageWidget/interactive_view.h"
-#include "interactive_scene.h"
-#include "interactive_image_item.h"
+#include "display_manager.h"
+#include "src/ui/utils/display/display_view.h"
+#include "display_scene.h"
+#include "display_image_item.h"
 
 // Qt
 #include <QVBoxLayout>
@@ -12,20 +12,20 @@
 /**************************************************************/
 //* [InteractiveDisplayManagerPrivate]
 /**************************************************************/
-class InteractiveDisplayManagerPrivate
+class DisplayManagerPrivate
 {
-    Q_DISABLE_COPY(InteractiveDisplayManagerPrivate)
-    Q_DECLARE_PUBLIC(InteractiveDisplayManager)
+    Q_DISABLE_COPY(DisplayManagerPrivate)
+    Q_DECLARE_PUBLIC(DisplayManager)
 
 public:
-    InteractiveDisplayManagerPrivate(InteractiveDisplayManager *q):q_ptr(q)
+    DisplayManagerPrivate(DisplayManager *q):q_ptr(q)
     {
 
     }
-    ~InteractiveDisplayManagerPrivate(){}
+    ~DisplayManagerPrivate(){}
 
 public:
-    InteractiveDisplayManager              *const q_ptr;
+    DisplayManager              *const q_ptr;
 
 
 };
@@ -33,14 +33,14 @@ public:
 /**************************************************************/
 //* [InteractiveDisplayManager]
 /**************************************************************/
-InteractiveDisplayManager::InteractiveDisplayManager(QObject *parent)
+DisplayManager::DisplayManager(QObject *parent)
     : QObject{parent},
-    d_ptr(new InteractiveDisplayManagerPrivate(this))
+    d_ptr(new DisplayManagerPrivate(this))
 {
     init();
 }
 
-InteractiveDisplayManager::~InteractiveDisplayManager()
+DisplayManager::~DisplayManager()
 {
     // 等待异步任务完成
     if (m_pixelColorFuture.isRunning()) {
@@ -48,14 +48,14 @@ InteractiveDisplayManager::~InteractiveDisplayManager()
     }
 }
 
-void InteractiveDisplayManager::init()
+void DisplayManager::init()
 {
     initView();
 }
 
-void InteractiveDisplayManager::initView()
+void DisplayManager::initView()
 {
-    m_displayView = new InteractiveView();
+    m_displayView = new DisplayView();
     // m_displayView->setSceneRect(-DisplayViewSceneSize/2,-DisplayViewSceneSize/2,DisplayViewSceneSize,DisplayViewSceneSize);
     // m_displayView->setSceneRect(0,0,3000,3000);
     m_displayView->setMinZoomCoeff(ViewMinZoomCoeff_Default);
@@ -95,10 +95,10 @@ void InteractiveDisplayManager::initView()
     lyView->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum,QSizePolicy::Expanding));
     lyView->addWidget(downWdg);
 
-    InteractiveScene* scene = m_displayView->getScene();
+    DisplayScene* scene = m_displayView->getScene();
     auto imageItem = scene->getDisplayImageItem();
     // 修改后的鼠标位置处理 - 使用异步线程
-    connect(imageItem, &InteractiveImageItem::sendHoverImagePosition, this, [=](const QPoint &pt)
+    connect(imageItem, &DisplayImageItem::sendHoverImagePosition, this, [=](const QPoint &pt)
             {
                 // 如果正在处理上一个请求，跳过新的请求
                 if (m_isProcessing) {
@@ -114,11 +114,11 @@ void InteractiveDisplayManager::initView()
                     getPixelColor(imageItem->pixmap(), pt, this);
                 });
             });
-    connect(imageItem, &InteractiveImageItem::sendHoverLeave, this, [=]()
+    connect(imageItem, &DisplayImageItem::sendHoverLeave, this, [=]()
             {
                 lbGrayValue->setText("");
             });
-    connect(scene, &InteractiveScene::sendUpdateDisplayImage, this, [=](const QImage& img)
+    connect(scene, &DisplayScene::sendUpdateDisplayImage, this, [=](const QImage& img)
             {
                 if(!img.isNull())
                 {
@@ -135,7 +135,7 @@ void InteractiveDisplayManager::initView()
 }
 
 // 在线程中获取像素颜色的静态方法
-void InteractiveDisplayManager::getPixelColor(const QPixmap &pixmap, const QPoint &pt, InteractiveDisplayManager *manager)
+void DisplayManager::getPixelColor(const QPixmap &pixmap, const QPoint &pt, DisplayManager *manager)
 {
     if (pixmap.isNull()) {
         return;
@@ -156,7 +156,7 @@ void InteractiveDisplayManager::getPixelColor(const QPixmap &pixmap, const QPoin
 }
 
 // 在主线程中更新UI的槽函数
-void InteractiveDisplayManager::onPixelColorReady(const QPoint &pt, int r, int g, int b)
+void DisplayManager::onPixelColorReady(const QPoint &pt, int r, int g, int b)
 {
     // 检查是否还是同一个位置（防止过时的结果）
     if (pt == m_lastMousePos) {
@@ -172,7 +172,7 @@ void InteractiveDisplayManager::onPixelColorReady(const QPoint &pt, int r, int g
     m_isProcessing = false;
 }
 
-InteractiveScene* InteractiveDisplayManager::displayScene() const
+DisplayScene* DisplayManager::displayScene() const
 {
     if (!m_displayView) return nullptr;
     return m_displayView->getScene();

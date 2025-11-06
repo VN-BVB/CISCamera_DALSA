@@ -1,5 +1,5 @@
-#ifndef INTERACTIVE_SCENE_H
-#define INTERACTIVE_SCENE_H
+#ifndef DISPLAY_SCENE_H
+#define DISPLAY_SCENE_H
 
 #include <QGraphicsScene>
 #include <opencv2/opencv.hpp>
@@ -12,22 +12,22 @@
 #include "tinysplinecxx.h"
 #include "src/jointDetection/contourProcess/curve_seg.h"
 
-class InteractiveView;
-class InteractiveImageItem;
-class InteractiveScenePrivate;
-class InteractiveScene : public QGraphicsScene
+class DisplayView;
+class DisplayImageItem;
+class DisplayScenePrivate;
+class DisplayScene : public QGraphicsScene
 {
     Q_OBJECT
 
-    friend class InteractiveView;   // 双向友元虽然破坏了封装性，但在View和Scene这种紧密耦合的框架组件中是合理的，可以简化实现，避免调用公共接口产生的开销
+    friend class DisplayView;   // 双向友元虽然破坏了封装性，但在View和Scene这种紧密耦合的框架组件中是合理的，可以简化实现，避免调用公共接口产生的开销
 public:
-    explicit InteractiveScene(InteractiveView *parentView = nullptr);
-    ~InteractiveScene();
+    explicit DisplayScene(DisplayView *parentView = nullptr);
+    ~DisplayScene();
 public:
     // 获取视图
-    InteractiveView* getView() const {return m_parentView;}
+    DisplayView* getView() const {return m_parentView;}
     // 获取图像显示图元
-    InteractiveImageItem* getDisplayImageItem() const {return m_displayImageItem;}
+    DisplayImageItem* getDisplayImageItem() const {return m_displayImageItem;}
     // 获取显示的图像
     QPixmap getDisplayImage();
     // 获取显示的图像的尺寸
@@ -69,7 +69,7 @@ public slots:
 
 protected:
     // 设置显示图像图元
-    void setDisplayImageItem(InteractiveImageItem* imageItem);
+    void setDisplayImageItem(DisplayImageItem* imageItem);
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
@@ -83,14 +83,14 @@ signals:
     void sendMouseRelease(QGraphicsSceneMouseEvent* event);
 protected:
     // 父视图
-    InteractiveView *m_parentView = nullptr;
+    DisplayView *m_parentView = nullptr;
     // 图像显示图元
-    InteractiveImageItem *m_displayImageItem = nullptr;
+    DisplayImageItem *m_displayImageItem = nullptr;
 protected:
     QList<QtCharts::QChartView*> m_chartViews; // 存储图表视图
-    const QScopedPointer<InteractiveScenePrivate> d_ptr;    // Qt的智能指针
+    const QScopedPointer<DisplayScenePrivate> d_ptr;    // Qt的智能指针
 private:
-    Q_DECLARE_PRIVATE(InteractiveScene) // PIMPL设计模式，将类的实现细节隐藏在一个单独的私有类中，隐藏实现细节，加快编译速度
+    Q_DECLARE_PRIVATE(DisplayScene) // PIMPL设计模式，将类的实现细节隐藏在一个单独的私有类中，隐藏实现细节，加快编译速度
 };
 
-#endif // INTERACTIVE_SCENE_H
+#endif // DISPLAY_SCENE_H

@@ -12,7 +12,7 @@
 #include "src/jointDetection/image_read_worker.h"
 #include "src/jointDetection/image_process_worker.h"
 #include "src/jointDetection/edgeDetection/canny_devernay.h"
-#include "src/ui/utils/imageWidget/frm_vision_display.h"
+#include "src/ui/utils/display/frm_display.h"
 #include "src/jointDetection/contourProcess/curve_seg.h"
 #include "src/jointDetection/contourProcess/joint_seam.h"
 

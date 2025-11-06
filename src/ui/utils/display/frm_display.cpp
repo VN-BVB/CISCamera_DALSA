@@ -1,7 +1,7 @@
-#include "frm_vision_display.h"
-#include "interactive_display_manager.h"
-#include "interactive_view.h"
-#include "interactive_scene.h"
+#include "frm_display.h"
+#include "display_manager.h"
+#include "display_view.h"
+#include "display_scene.h"
 #include <QVBoxLayout>
 #include <QDebug>
 
@@ -21,7 +21,7 @@ void FrmVisionDisplay::initFrm()
     vLayoutDisplay->setSpacing(0);
 
     // InteractiveDisplayManager* displayMgr = new InteractiveDisplayManager();
-    m_displayMgr = new InteractiveDisplayManager();
+    m_displayMgr = new DisplayManager();
     if (m_displayMgr)
     {
         auto view = m_displayMgr->displayView();
@@ -33,7 +33,7 @@ void FrmVisionDisplay::initFrm()
     }
 }
 
-InteractiveDisplayManager* FrmVisionDisplay::getDisplayManager()
+DisplayManager* FrmVisionDisplay::getDisplayManager()
 {
     return m_displayMgr;
 }
@@ -41,7 +41,7 @@ InteractiveDisplayManager* FrmVisionDisplay::getDisplayManager()
 void FrmVisionDisplay::displayImage(const QImage &image, bool autoFit)
 {
     if (!m_displayMgr) return;
-    InteractiveScene* scene = m_displayMgr->displayScene();
+    DisplayScene* scene = m_displayMgr->displayScene();
     if (scene)
     {
         scene->whenDisplayImage(image, autoFit);
@@ -65,7 +65,7 @@ void FrmVisionDisplay::displayImage(const cv::Mat &image, bool autoFit)
                       static_cast<int>(img_rgb.step), QImage::Format_RGB888);
     }
     if (!m_displayMgr) return;
-    InteractiveScene* scene = m_displayMgr->displayScene();
+    DisplayScene* scene = m_displayMgr->displayScene();
     if (scene)
     {
         scene->whenDisplayImage(qimg, autoFit);
@@ -94,7 +94,7 @@ void FrmVisionDisplay::displayImage(std::shared_ptr<cv::Mat> image, bool autoFit
     }
 
     if (!m_displayMgr) return;
-    InteractiveScene* scene = m_displayMgr->displayScene();
+    DisplayScene* scene = m_displayMgr->displayScene();
     if (scene)
     {
         scene->whenDisplayImage(qimg, autoFit);

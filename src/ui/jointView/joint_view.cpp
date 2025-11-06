@@ -1,7 +1,7 @@
 #include "joint_view.h"
 #include "ui_joint_view.h"
-#include "src/ui/utils/imageWidget/interactive_scene.h"
-#include "src/ui/utils/imageWidget/interactive_display_manager.h"
+#include "src/ui/utils/display/display_scene.h"
+#include "src/ui/utils/display/display_manager.h"
 
 #include <QFileDialog>
 #include <QDebug>
@@ -183,10 +183,10 @@ void JointView::updateDisplay() {
 
     // 在主线程中显示图像
 
-    InteractiveDisplayManager* displayMgr = ui->gv_image->getDisplayManager();
+    DisplayManager* displayMgr = ui->gv_image->getDisplayManager();
     if (!displayMgr) return;
 
-    InteractiveScene* scene = displayMgr->displayScene();
+    DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
     ui->gv_image->displayImage(*m_currentImage, true);
 
