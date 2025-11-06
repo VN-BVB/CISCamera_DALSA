@@ -47,6 +47,9 @@
         "typeinfo": "cpp",
         "unordered_set": "cpp",
         "iomanip": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "future": "cpp"
     }
 }
