@@ -86,7 +86,7 @@ void JointView::on_pb_open_clicked()
 
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
     // QString path = "E:/work/车门门环拼接/image/背面打光/Splice_20251027_092312509.bmp";
-    QString path = "E:/work/车门门环拼接/image/test/frontLight/cropped_img_front_light.bmp";
+    QString path = "E:/work/车门门环拼接/image/背面打光/9513_3837.bmp";
     if(path.isEmpty())
         return;
 
