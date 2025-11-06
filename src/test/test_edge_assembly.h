@@ -18,6 +18,7 @@ public:
     void run();
 
     std::vector<ContourData> m_cDatas;
+    std::vector<cv::RotatedRect> m_workpieceRotateRect;
 
 
 };

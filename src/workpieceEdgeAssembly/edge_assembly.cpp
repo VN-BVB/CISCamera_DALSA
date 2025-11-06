@@ -99,9 +99,10 @@ void EdgeAssembly::generateWorkpiece() {
     }
 
     qDebug() << "可能的工件组合";
+    int i = 0;
     for (auto& workPiece : m_possibleWorkpieces) {
         std::vector<int> ids = workPiece.getContourIds();
-        QString str = "";
+        QString str = QString::number(i++) + ": ";
         for (auto& id : ids) {
             str += QString("%1,").arg(id);
         }
@@ -109,9 +110,9 @@ void EdgeAssembly::generateWorkpiece() {
     }
 }
 
-// 辅助函数：生成组合
+// 辅助函数：生成组合,递归
 void EdgeAssembly::generateCombinations(int n, int k, int start, std::vector<int>& current,
-                          std::vector<std::vector<int>>& result) {
+                                        std::vector<std::vector<int>>& result) {
     if (current.size() == k) {
         result.push_back(current);
         return;
@@ -124,9 +125,9 @@ void EdgeAssembly::generateCombinations(int n, int k, int start, std::vector<int
     }
 }
 
-// 检查组合是否合法：所有工件不能包含重复的轮廓id
+// 检查组合是否合法：所有工件不能包含重复的轮廓id，且包含所有轮廓
 bool EdgeAssembly::isCombinationValid(const std::vector<WorkpieceBoundingBox>& workpieces,
-                        const std::vector<int>& combination) {
+                                      const std::vector<int>& combination) {
     std::set<int> allContourIds;
 
     for (int index : combination) {
@@ -183,6 +184,7 @@ void EdgeAssembly::validateCombinations(int n) {
             validCombinations.push_back(combination);
         }
     }
+    m_validCombinations = validCombinations;
 
     // 输出结果（这里可以根据需要存储或处理合法组合）
     qDebug() << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：" ;

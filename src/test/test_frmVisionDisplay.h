@@ -23,6 +23,7 @@ public:
 public slots:
     void displayImage(const QString &imagePath);
     void displayContours(std::vector<std::vector<cv::Point2f>> contours);
+    void displayRotateRects(std::vector<cv::RotatedRect>& RotatedRects);
     void onBeginButtonClicked();
 
 private:

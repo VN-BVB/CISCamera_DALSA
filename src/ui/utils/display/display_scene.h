@@ -64,6 +64,8 @@ public slots:
     void whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline);
     void whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines);
     void whenDrawBSplineCurves(const std::vector<CurveSeg> &curves);
+    // 绘制旋转矩形
+    void whenDisplayRotateRects(const std::vector<cv::RotatedRect>& RotatedRects);
 
     // @TODO:将轮廓显示全整理成图元类
 

@@ -65,6 +65,16 @@ void test_FrmVisionDisplay::displayContours(std::vector<std::vector<cv::Point2f>
     scene->whenDrawSubpixelContours(contours);
 }
 
+void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& RotatedRects)
+{
+    DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
+    if (!displayMgr) return;
+
+    DisplayScene* scene = displayMgr->displayScene();
+    if (!scene) return;
+    scene->whenDisplayRotateRects(RotatedRects);
+}
+
 // 添加按钮点击槽函数实现
 void test_FrmVisionDisplay::onBeginButtonClicked()
 {
@@ -78,6 +88,7 @@ void test_FrmVisionDisplay::onBeginButtonClicked()
         std::vector<cv::Point2f> contour = cdata.getSubpixelContour();
         contours.push_back(contour);
     }
+    displayRotateRects(tea.m_workpieceRotateRect);
     displayContours(contours);
 }
 

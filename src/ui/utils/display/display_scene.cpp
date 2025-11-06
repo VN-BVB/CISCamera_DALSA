@@ -399,6 +399,50 @@ void DisplayScene::whenDrawBSplineCurves(const std::vector<CurveSeg> &curves) {
     // whenDrawSingleBSplineCurve(curves[1].getSpline());
 }
 
+// 绘制旋转矩形
+void DisplayScene::whenDisplayRotateRects(const std::vector<cv::RotatedRect>& rotatedRects)
+{
+    if (rotatedRects.empty())
+        return;
+
+    // 使用绿色绘制旋转矩形，与轮廓的红色区分开
+    QPen pen(Qt::green);
+    pen.setWidthF(0.5);  // 设置线宽
+    pen.setStyle(Qt::SolidLine);  // 实线
+
+    for (const auto& rotatedRect : rotatedRects)
+    {
+        // 获取旋转矩形的四个角点
+        cv::Point2f vertices[4];
+        rotatedRect.points(vertices);
+
+        // 创建QPainterPath来绘制旋转矩形
+        QPainterPath path;
+        path.moveTo(vertices[0].x, vertices[0].y);
+
+        // 连接四个角点形成闭合矩形
+        for (int i = 1; i < 4; ++i) {
+            path.lineTo(vertices[i].x, vertices[i].y);
+        }
+        path.closeSubpath();  // 闭合路径
+
+        // 创建路径图元
+        QGraphicsPathItem *rectItem = new QGraphicsPathItem(path);
+        rectItem->setPen(pen);
+        rectItem->setZValue(10);  // 设置Z值，确保显示在图像上方
+
+        this->addItem(rectItem);
+
+        // // 可选：绘制矩形的中心点
+        // cv::Point2f center = rotatedRect.center;
+        // QGraphicsEllipseItem *centerItem = new QGraphicsEllipseItem(
+        //     center.x - 1, center.y - 1, 2, 2);
+        // centerItem->setBrush(QBrush(Qt::red));  // 红色中心点
+        // centerItem->setPen(QPen(Qt::NoPen));
+        // centerItem->setZValue(11);  // 比矩形边框更高
+        // this->addItem(centerItem);
+    }
+}
 
 
 

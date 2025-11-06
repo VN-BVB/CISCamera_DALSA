@@ -8,23 +8,26 @@ void ContourBoundingBox::initContourData(int id, const ContourData& contourData)
     m_contourData = contourData;
     // 生成包围框信息
     m_boundingRect = generateBoundingBox(m_contourData);
-    m_topLeft = cv::Point2f(m_boundingRect.x, m_boundingRect.y);
-    m_topRight = cv::Point2f(m_boundingRect.x + m_boundingRect.width, m_boundingRect.y);
-    m_bottomRight = cv::Point2f(m_boundingRect.x + m_boundingRect.width, m_boundingRect.y + m_boundingRect.height);
-    m_bottomLeft = cv::Point2f(m_boundingRect.x, m_boundingRect.y + m_boundingRect.height);
+    // 获取旋转矩形的四个角点
+    cv::Point2f vertices[4];
+    m_boundingRect.points(vertices);
+    m_topLeft = vertices[0];
+    m_topRight = vertices[1];
+    m_bottomRight = vertices[2];
+    m_bottomLeft = vertices[3];
     // 设置相背轮廓id
     m_oppositeId =  setOppositeTo(m_id);
 }
 
-cv::Rect2f ContourBoundingBox::generateBoundingBox(const ContourData& contourData) {
+cv::RotatedRect ContourBoundingBox::generateBoundingBox(const ContourData& contourData) {
 
     std::vector<cv::Point2f> contour = contourData.getSubpixelContour();
     if (contour.empty()) {
-        return cv::Rect2f(0, 0, 0, 0);
+        return cv::RotatedRect(cv::Point2f(0, 0), cv::Size2f(0, 0), 0);
     }
 
-    cv::Rect2f boundingRect = cv::boundingRect(contour);
-    return boundingRect;
+    cv::RotatedRect rotatedRect = cv::minAreaRect(contour);
+    return rotatedRect;
 }
 
 int ContourBoundingBox::setOppositeTo(int id) {
