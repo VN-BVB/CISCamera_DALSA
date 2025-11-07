@@ -1,13 +1,13 @@
 HEADERS += \
-    $$PWD/ImageProcessWorker.h \
-    $$PWD/ImageReadWorker.h \
-    $$PWD/imageTools.h
+    $$PWD/image_process_worker.h \
+    $$PWD/image_read_worker.h \
+    $$PWD/image_tools.h
 
 SOURCES += \
-    $$PWD/ImageProcessWorker.cpp \
-    $$PWD/ImageReadWorker.cpp \
-    $$PWD/imageTools.cpp
+    $$PWD/image_process_worker.cpp \
+    $$PWD/image_read_worker.cpp \
+    $$PWD/image_tools.cpp
 
 include(./edgeDetection/edgeDetection.pri)
-include(./contourSegment/contourSegment.pri)
+include(./contourProcess/contourProcess.pri)
 

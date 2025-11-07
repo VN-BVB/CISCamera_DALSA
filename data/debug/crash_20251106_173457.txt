@@ -1,0 +1,47 @@
+Crash time: 2025-11-06 17:34:57
+Exception code: 0xe06d7363
+Exception type: Unknown Exception
+Exception address: 0x7ffca00b804a
+Thread ID: 37448
+
+Crash function: RaiseException
+
+Call Stack:
+#0  RaiseException
+#1  CxxThrowException
+#2  cv::error
+#3  cv::error
+#4  cv::fillPoly
+#5  calculateOverlapPercentage [d:\qt_project\ciscamera_dalsa\src\workpieceedgeassembly\workpiece_bounding_box.cpp:69]
+#6  WorkpieceBoundingBox::isLegal [d:\qt_project\ciscamera_dalsa\src\workpieceedgeassembly\workpiece_bounding_box.cpp:132]
+#7  EdgeAssembly::generateWorkpiece [d:\qt_project\ciscamera_dalsa\src\workpieceedgeassembly\edge_assembly.cpp:46]
+#8  TestEdgeAssembly::run [d:\qt_project\ciscamera_dalsa\src\test\test_edge_assembly.cpp:432]
+#9  test_FrmVisionDisplay::onBeginButtonClicked [d:\qt_project\ciscamera_dalsa\src\test\test_frmvisiondisplay.cpp:85]
+#10  QtPrivate::FunctorCall<QtPrivate::IndexesList<>,QtPrivate::List<>,void,void (__cdecl test_FrmVisionDisplay::*)(void)>::call [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:152]
+#11  QtPrivate::FunctionPointer<void (__cdecl test_FrmVisionDisplay::*)(void)>::call<QtPrivate::List<>,void> [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:186]
+#12  QtPrivate::QSlotObject<void (__cdecl test_FrmVisionDisplay::*)(void),QtPrivate::List<>,void>::impl [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:419]
+#13  QMimeData::urls
+#14  QAbstractButton::clicked
+#15  QAbstractButton::click
+#16  QAbstractButton::mouseReleaseEvent
+#17  QWidget::event
+#18  QApplicationPrivate::notify_helper
+#19  QApplication::notify
+#20  QCoreApplication::notifyInternal2
+#21  QApplicationPrivate::sendMouseEvent
+#22  QSizePolicy::QSizePolicy
+#23  QSizePolicy::QSizePolicy
+#24  QApplicationPrivate::notify_helper
+#25  QApplication::notify
+#26  QCoreApplication::notifyInternal2
+#27  QGuiApplicationPrivate::processMouseEvent
+#28  QWindowSystemInterface::sendWindowSystemEvents
+#29  QEventDispatcherWin32::processEvents
+#30  qt_plugin_query_metadata
+#31  QEventLoop::exec
+#32  QCoreApplication::exec
+#33  main [d:\qt_project\ciscamera_dalsa\main.cpp:33]
+#34  WinMain
+#35  __scrt_common_main_seh [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288]
+#36  BaseThreadInitThunk
+#37  RtlUserThreadStart

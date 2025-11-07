@@ -1,0 +1,43 @@
+Crash time: 2025-11-07 10:45:32
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ff6efc45e45
+Thread ID: 18468
+
+Crash function: std::vector<int,std::allocator<int> >::size
+Source file: d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector
+Line: 1704
+
+Call Stack:
+#0  std::vector<int,std::allocator<int> >::size [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:1704]
+#1  std::vector<int,std::allocator<int> >::vector<int,std::allocator<int> > [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:735]
+#2  TestEdgeAssembly::run [d:\qt_project\ciscamera_dalsa\src\test\test_edge_assembly.cpp:520]
+#3  test_FrmVisionDisplay::onBeginButtonClicked [d:\qt_project\ciscamera_dalsa\src\test\test_frmvisiondisplay.cpp:85]
+#4  QtPrivate::FunctorCall<QtPrivate::IndexesList<>,QtPrivate::List<>,void,void (__cdecl test_FrmVisionDisplay::*)(void)>::call [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:152]
+#5  QtPrivate::FunctionPointer<void (__cdecl test_FrmVisionDisplay::*)(void)>::call<QtPrivate::List<>,void> [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:186]
+#6  QtPrivate::QSlotObject<void (__cdecl test_FrmVisionDisplay::*)(void),QtPrivate::List<>,void>::impl [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:419]
+#7  QMimeData::urls
+#8  QAbstractButton::clicked
+#9  QAbstractButton::click
+#10  QAbstractButton::mouseReleaseEvent
+#11  QWidget::event
+#12  QApplicationPrivate::notify_helper
+#13  QApplication::notify
+#14  QCoreApplication::notifyInternal2
+#15  QApplicationPrivate::sendMouseEvent
+#16  QSizePolicy::QSizePolicy
+#17  QSizePolicy::QSizePolicy
+#18  QApplicationPrivate::notify_helper
+#19  QApplication::notify
+#20  QCoreApplication::notifyInternal2
+#21  QGuiApplicationPrivate::processMouseEvent
+#22  QWindowSystemInterface::sendWindowSystemEvents
+#23  QEventDispatcherWin32::processEvents
+#24  qt_plugin_query_metadata
+#25  QEventLoop::exec
+#26  QCoreApplication::exec
+#27  main [d:\qt_project\ciscamera_dalsa\main.cpp:33]
+#28  WinMain
+#29  __scrt_common_main_seh [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288]
+#30  BaseThreadInitThunk
+#31  RtlUserThreadStart

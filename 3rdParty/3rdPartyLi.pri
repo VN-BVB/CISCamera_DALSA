@@ -31,7 +31,14 @@ INCLUDEPATH += ./3rdparty/cereal/include
 # ---------- Python 环境 ----------
 PYTHON_VER = 39
 PYTHON_ROOT = D:/anaconda/envs/Telecentric-Calibration
-
 INCLUDEPATH += $$PYTHON_ROOT/include
 LIBS += -L$$PYTHON_ROOT/libs -lpython$$PYTHON_VER
 INCLUDEPATH += D:/ProgramData/extern/pybind11/include
+# ------------------tinyspline库------------------
+CONFIG(debug, debug|release) {
+    INCLUDEPATH += $$PWD/tinyspline/debug/include
+    LIBS += -L$$PWD/tinyspline/debug/lib64/ -ltinysplinecxx
+} else:CONFIG(release, debug|release) {
+    INCLUDEPATH += $$PWD/tinyspline/release/include
+    LIBS += -L$$PWD/tinyspline/release/lib64/ -ltinysplinecxx
+}
