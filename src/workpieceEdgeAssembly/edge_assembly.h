@@ -2,6 +2,8 @@
 #define EDGE_ASSEMBLY_H
 
 #include "workpiece_bounding_box.h"
+#include <cstdint>
+#include <functional>
 
 class EdgeAssembly
 {
@@ -22,11 +24,36 @@ public:
     void calculateMostLikelyCombination();  // 计算最有可能的工件组合
 
 private:
+    // 位运算类型定义
+    typedef uint64_t ContourSet;
+
+    // 工件信息结构体（用于动态规划）
+    struct WorkpieceInfo {
+        int index;
+        ContourSet contourMask;
+        int contourCount;
+        float boundingBoxArea;
+
+        WorkpieceInfo(int idx, const WorkpieceBoundingBox& wp);
+    };
+
     // 优化的组合生成方法
     void generateOptimizedCombinations(int start, int k,
                                        std::vector<int>& current,
                                        std::set<int>& usedContourIds,
                                        std::vector<std::vector<int>>& result);
+
+    // 动态规划+位运算优化方法
+    void generateOptimizedCombinationsDP(int k, std::vector<std::vector<int>>& result);
+    void dfsCombinations(const std::vector<WorkpieceInfo>& infos, int start, int k,
+                         ContourSet targetMask, ContourSet usedMask,
+                         std::vector<int>& current, std::vector<std::vector<int>>& result);
+
+    // 辅助方法
+    int getMaxContoursPerWorkpiece(const std::vector<WorkpieceInfo>& infos, int start) const;
+    bool hasIntersectionWithSelected(const std::vector<int>& selected, int newIndex) const;
+    int countBits(ContourSet mask) const;
+    ContourSet createTargetMask() const;
 
     // 检查组合是否合法（不检查轮廓ID重复）
     bool isCombinationValidWithoutIdCheck(const std::vector<WorkpieceBoundingBox>& workpieces,

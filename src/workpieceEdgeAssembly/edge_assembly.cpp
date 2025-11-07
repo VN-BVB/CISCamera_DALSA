@@ -238,59 +238,59 @@ bool EdgeAssembly::isCombinationValid(const std::vector<WorkpieceBoundingBox>& w
     return true;
 }
 
-// 根据门环工件个数，组合工件，保证轮廓不重合
-void EdgeAssembly::validateCombinations(int n) {
-    if (m_possibleWorkpieces.empty() || n <= 0) {
-        return;
-    }
+// // 根据门环工件个数，组合工件，保证轮廓不重合
+// void EdgeAssembly::validateCombinations(int n) {
+//     if (m_possibleWorkpieces.empty() || n <= 0) {
+//         return;
+//     }
 
-    // 如果n大于工件数量，则无法选择n个工件
-    if (n > m_possibleWorkpieces.size()) {
-        return;
-    }
+//     // 如果n大于工件数量，则无法选择n个工件
+//     if (n > m_possibleWorkpieces.size()) {
+//         return;
+//     }
 
-    // 存储合法的组合
-    std::vector<std::vector<int>> validCombinations;
+//     // 存储合法的组合
+//     std::vector<std::vector<int>> validCombinations;
 
-    // 优化的组合生成算法：在生成过程中避免重复轮廓ID
-    std::vector<int> current;
-    std::set<int> usedContourIds;
-    generateOptimizedCombinations(0, n, current, usedContourIds, validCombinations);
+//     // 优化的组合生成算法：在生成过程中避免重复轮廓ID
+//     std::vector<int> current;
+//     std::set<int> usedContourIds;
+//     generateOptimizedCombinations(0, n, current, usedContourIds, validCombinations);
 
-    m_validCombinations = validCombinations;
+//     m_validCombinations = validCombinations;
 
-    // 输出结果（这里可以根据需要存储或处理合法组合）
-    qDebug() << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：" ;
+//     // 输出结果（这里可以根据需要存储或处理合法组合）
+//     qDebug() << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：" ;
 
-    for (size_t i = 0; i < validCombinations.size(); ++i) {
-        QString str1 = "组合 " + QString::number(i + 1) + ": [";
-        for (size_t j = 0; j < validCombinations[i].size(); ++j) {
-            str1 += QString::number(validCombinations[i][j]);
-            if (j < validCombinations[i].size() - 1) {
-                str1 += ", ";
-            }
-        }
-        str1 += "]";
-        qDebug() << str1;
+//     for (size_t i = 0; i < validCombinations.size(); ++i) {
+//         QString str1 = "组合 " + QString::number(i + 1) + ": [";
+//         for (size_t j = 0; j < validCombinations[i].size(); ++j) {
+//             str1 += QString::number(validCombinations[i][j]);
+//             if (j < validCombinations[i].size() - 1) {
+//                 str1 += ", ";
+//             }
+//         }
+//         str1 += "]";
+//         qDebug() << str1;
 
-        // 输出每个组合中工件的轮廓id
-        QString str2 = "  轮廓id: ";
-        std::set<int> allIds;
-        for (int index : validCombinations[i]) {
-            std::vector<int> ids = m_possibleWorkpieces[index].getContourIds();
-            for (int id : ids) {
-                allIds.insert(id);
-            }
-        }
-        for (int id : allIds) {
-            str2 += QString::number(id);
-            str2 += ",";
-        };
-        qDebug() << str2;
-    }
-    // 新增：计算最有可能的工件组合
-    calculateMostLikelyCombination();
-}
+//         // 输出每个组合中工件的轮廓id
+//         QString str2 = "  轮廓id: ";
+//         std::set<int> allIds;
+//         for (int index : validCombinations[i]) {
+//             std::vector<int> ids = m_possibleWorkpieces[index].getContourIds();
+//             for (int id : ids) {
+//                 allIds.insert(id);
+//             }
+//         }
+//         for (int id : allIds) {
+//             str2 += QString::number(id);
+//             str2 += ",";
+//         };
+//         qDebug() << str2;
+//     }
+//     // 新增：计算最有可能的工件组合
+//     calculateMostLikelyCombination();
+// }
 
 // // 优化的组合生成算法：递归生成组合，避免包含重复轮廓ID的工件,且工件中心线段不能相交
 // void EdgeAssembly::generateOptimizedCombinations(int start, int k,
@@ -426,25 +426,405 @@ void EdgeAssembly::calculateMostLikelyCombination() {
     qDebug() << contourIdsStr;
 }
 
-// 优化的组合生成算法：使用提前剪枝和启发式搜索
+// // 优化的组合生成算法：使用提前剪枝和启发式搜索
+// void EdgeAssembly::generateOptimizedCombinations(int start, int k,
+//                                                  std::vector<int>& current,
+//                                                  std::set<int>& usedContourIds,
+//                                                  std::vector<std::vector<int>>& result) {
+//     // 提前剪枝：如果剩余工件数量不足以完成组合，直接返回
+//     int remainingWorkpieces = m_possibleWorkpieces.size() - start;
+//     if (remainingWorkpieces < k - static_cast<int>(current.size())) {
+//         return;
+//     }
+
+//     if (current.size() == k) {
+//         // 检查是否包含了所有轮廓
+//         std::set<int> allExpectedContourIds;
+//         for (const auto& cbb : m_cbbs) {
+//             allExpectedContourIds.insert(cbb->getId());
+//         }
+
+//         if (usedContourIds == allExpectedContourIds) {
+//             // 检查线段相交情况
+//             if (isCombinationValidWithoutIdCheck(m_possibleWorkpieces, current)) {
+//                 result.push_back(current);
+//             }
+//         }
+//         return;
+//     }
+
+//     // 启发式排序：优先选择包含较少轮廓的工件（减少后续冲突）
+//     std::vector<int> indices;
+//     for (int i = start; i < m_possibleWorkpieces.size(); ++i) {
+//         indices.push_back(i);
+//     }
+
+//     // 按工件包含的轮廓数量排序（少的在前）
+//     std::sort(indices.begin(), indices.end(), [this](int a, int b) {
+//         return m_possibleWorkpieces[a].getContourIds().size() <
+//                m_possibleWorkpieces[b].getContourIds().size();
+//     });
+
+//     for (int idx : indices) {
+//         int i = idx;
+
+//         // 检查当前工件是否包含已使用的轮廓ID
+//         std::vector<int> contourIds = m_possibleWorkpieces[i].getContourIds();
+//         bool hasDuplicate = false;
+
+//         for (int id : contourIds) {
+//             if (usedContourIds.find(id) != usedContourIds.end()) {
+//                 hasDuplicate = true;
+//                 break;
+//             }
+//         }
+
+//         // 如果包含重复轮廓ID，跳过该工件
+//         if (hasDuplicate) {
+//             continue;
+//         }
+
+//         // 提前剪枝：检查当前工件与已选工件的线段是否相交
+//         bool hasIntersection = false;
+//         for (int selectedIdx : current) {
+//             const WorkpieceBoundingBox& currentWp = m_possibleWorkpieces[i];
+//             const WorkpieceBoundingBox& selectedWp = m_possibleWorkpieces[selectedIdx];
+
+//             if (doWorkpiecesIntersect(currentWp, selectedWp)) {
+//                 hasIntersection = true;
+//                 break;
+//             }
+//         }
+
+//         if (hasIntersection) {
+//             continue;
+//         }
+
+//         // 添加当前工件到组合中
+//         current.push_back(i);
+//         for (int id : contourIds) {
+//             usedContourIds.insert(id);
+//         }
+
+//         // 递归生成剩余组合
+//         generateOptimizedCombinations(i + 1, k, current, usedContourIds, result);
+
+//         // 回溯：移除当前工件
+//         current.pop_back();
+//         for (int id : contourIds) {
+//             usedContourIds.erase(id);
+//         }
+//     }
+// }
+
+// 检查两个工件是否相交（提前剪枝用）
+bool EdgeAssembly::doWorkpiecesIntersect(const WorkpieceBoundingBox& wp1, const WorkpieceBoundingBox& wp2) const {
+    // 获取两个工件的中心线段集合
+    std::vector<std::pair<cv::Point2f, cv::Point2f>> segments1 = wp1.getCenterPointConnections();
+    std::vector<std::pair<cv::Point2f, cv::Point2f>> segments2 = wp2.getCenterPointConnections();
+
+    // 检查工件1的所有线段与工件2的所有线段是否有交点
+    for (const auto& seg1 : segments1) {
+        for (const auto& seg2 : segments2) {
+            if (doSegmentsIntersect(seg1.first, seg1.second, seg2.first, seg2.second)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// 检查组合是否合法：只检查线段相交情况（不检查轮廓ID重复，因为已经在生成过程中避免了）
+bool EdgeAssembly::isCombinationValidWithoutIdCheck(const std::vector<WorkpieceBoundingBox>& workpieces,
+                                                    const std::vector<int>& combination) {
+    // 遍历组合中所有两个工件的组合情况
+    // 检查不同工件之间的中心线段是否有交点
+    for (size_t i = 0; i < combination.size(); ++i) {
+        for (size_t j = i + 1; j < combination.size(); ++j) {
+            int index1 = combination[i];
+            int index2 = combination[j];
+
+            const WorkpieceBoundingBox& workpiece1 = workpieces[index1];
+            const WorkpieceBoundingBox& workpiece2 = workpieces[index2];
+
+            // 获取两个工件的中心线段集合
+            std::vector<std::pair<cv::Point2f, cv::Point2f>> segments1 = workpiece1.getCenterPointConnections();
+            std::vector<std::pair<cv::Point2f, cv::Point2f>> segments2 = workpiece2.getCenterPointConnections();
+
+            // 检查工件1的所有线段与工件2的所有线段是否有交点
+            for (const auto& seg1 : segments1) {
+                for (const auto& seg2 : segments2) {
+                    // 如果两条线段相交，则组合不合法
+                    if (doSegmentsIntersect(seg1.first, seg1.second, seg2.first, seg2.second)) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+
+// WorkpieceInfo 构造函数实现
+EdgeAssembly::WorkpieceInfo::WorkpieceInfo(int idx, const WorkpieceBoundingBox& wp) {
+    index = idx;
+    contourMask = 0;
+    contourCount = 0;
+
+    std::vector<int> ids = wp.getContourIds();
+    contourCount = ids.size();
+    for (int id : ids) {
+        if (id < 64) { // 假设最多64个轮廓
+            contourMask |= (1ULL << id);
+        }
+    }
+
+    // 计算边界框面积作为启发式信息
+    cv::RotatedRect rect = wp.getouterBoundingBox();
+    boundingBoxArea = rect.size.width * rect.size.height;
+}
+
+// 计算位掩码中1的个数（Windows兼容版本）
+int EdgeAssembly::countBits(ContourSet mask) const {
+    int count = 0;
+    while (mask) {
+        count += (mask & 1);
+        mask >>= 1;
+    }
+    return count;
+}
+
+// 创建目标轮廓掩码
+EdgeAssembly::ContourSet EdgeAssembly::createTargetMask() const {
+    ContourSet targetMask = 0;
+    for (const auto& cbb : m_cbbs) {
+        int id = cbb->getId();
+        if (id < 64) {
+            targetMask |= (1ULL << id);
+        }
+    }
+    return targetMask;
+}
+
+// 获取从指定位置开始的最大轮廓数
+int EdgeAssembly::getMaxContoursPerWorkpiece(const std::vector<WorkpieceInfo>& infos, int start) const {
+    int maxContours = 0;
+    for (int i = start; i < infos.size(); ++i) {
+        if (infos[i].contourCount > maxContours) {
+            maxContours = infos[i].contourCount;
+        }
+    }
+    return maxContours;
+}
+
+// 检查工件是否与已选工件相交
+bool EdgeAssembly::hasIntersectionWithSelected(const std::vector<int>& selected, int newIndex) const {
+    const WorkpieceBoundingBox& newWp = m_possibleWorkpieces[newIndex];
+
+    for (int idx : selected) {
+        const WorkpieceBoundingBox& existingWp = m_possibleWorkpieces[idx];
+        if (doWorkpiecesIntersect(newWp, existingWp)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// 动态规划+位运算优化的组合生成算法
+void EdgeAssembly::generateOptimizedCombinationsDP(int k, std::vector<std::vector<int>>& result) {
+    if (m_possibleWorkpieces.empty() || k <= 0) {
+        return;
+    }
+
+    // 预处理工件信息
+    std::vector<WorkpieceInfo> workpieceInfos;
+    for (int i = 0; i < m_possibleWorkpieces.size(); ++i) {
+        workpieceInfos.emplace_back(i, m_possibleWorkpieces[i]);
+    }
+
+    // 按轮廓数量降序排序（启发式：先选包含轮廓多的工件）
+    std::sort(workpieceInfos.begin(), workpieceInfos.end(),
+              [](const WorkpieceInfo& a, const WorkpieceInfo& b) {
+                  return a.contourCount > b.contourCount;
+              });
+
+    // 目标轮廓掩码（所有轮廓）
+    ContourSet targetMask = createTargetMask();
+
+    // 使用DFS+剪枝
+    std::vector<int> current;
+    ContourSet usedMask = 0;
+    dfsCombinations(workpieceInfos, 0, k, targetMask, usedMask, current, result);
+}
+
+// DFS搜索组合（动态规划核心）
+void EdgeAssembly::dfsCombinations(const std::vector<WorkpieceInfo>& infos, int start, int k,
+                                   ContourSet targetMask, ContourSet usedMask,
+                                   std::vector<int>& current, std::vector<std::vector<int>>& result) {
+    // 剪枝1：如果已经找到足够组合（限制最大组合数）
+    if (!result.empty() && result.size() >= 10) {
+        return;
+    }
+
+    // 剪枝2：如果当前组合已经包含所有轮廓
+    if ((usedMask & targetMask) == targetMask) {
+        if (current.size() <= k) {
+            // 检查线段相交
+            if (isCombinationValidWithoutIdCheck(m_possibleWorkpieces, current)) {
+                result.push_back(current);
+            }
+        }
+        return;
+    }
+
+    // 剪枝3：如果已经达到k个工件但还没覆盖所有轮廓
+    if (current.size() == k) {
+        return;
+    }
+
+    // 剪枝4：计算剩余轮廓和最大可能覆盖
+    int remainingContours = countBits(targetMask & ~usedMask);
+    int maxContoursPerWp = getMaxContoursPerWorkpiece(infos, start);
+    int remainingSlots = k - current.size();
+
+    // 如果剩余轮廓数大于剩余槽位能覆盖的最大轮廓数，剪枝
+    if (remainingContours > remainingSlots * maxContoursPerWp) {
+        return;
+    }
+
+    // 剪枝5：如果剩余工件数量不足
+    if (start >= infos.size()) {
+        return;
+    }
+
+    for (int i = start; i < infos.size(); ++i) {
+        const WorkpieceInfo& info = infos[i];
+
+        // 剪枝6：如果当前工件包含已使用的轮廓
+        if (info.contourMask & usedMask) {
+            continue;
+        }
+
+        // 剪枝7：如果当前工件与已选工件相交
+        if (hasIntersectionWithSelected(current, info.index)) {
+            continue;
+        }
+
+        // 剪枝8：如果添加当前工件后，剩余轮廓无法被剩余工件覆盖
+        ContourSet newUsedMask = usedMask | info.contourMask;
+        int newRemainingContours = countBits(targetMask & ~newUsedMask);
+        int newRemainingSlots = k - current.size() - 1;
+
+        if (newRemainingContours > 0 && newRemainingSlots == 0) {
+            continue;
+        }
+
+        if (newRemainingContours > newRemainingSlots * getMaxContoursPerWorkpiece(infos, i + 1)) {
+            continue;
+        }
+
+        current.push_back(info.index);
+        dfsCombinations(infos, i + 1, k, targetMask, newUsedMask, current, result);
+        current.pop_back();
+
+        // 剪枝9：如果已经找到足够组合，提前终止
+        if (!result.empty() && result.size() >= 10) {
+            break;
+        }
+    }
+}
+
+// 修改validateCombinations方法，使用新的优化算法
+void EdgeAssembly::validateCombinations(int n) {
+    if (m_possibleWorkpieces.empty() || n <= 0) {
+        return;
+    }
+
+    if (n > m_possibleWorkpieces.size()) {
+        return;
+    }
+
+    std::vector<std::vector<int>> validCombinations;
+
+    // 根据轮廓数量选择优化策略
+    if (m_cbbs.size() <= 64) { // 如果轮廓数不超过64，使用位运算优化
+        qDebug() << "使用动态规划+位运算优化算法";
+        generateOptimizedCombinationsDP(n, validCombinations);
+    } else {
+        // 回退到原来的算法（但使用更多剪枝）
+        qDebug() << "轮廓数量超过64，使用原始算法（带剪枝）";
+        std::vector<int> current;
+        std::set<int> usedContourIds;
+        generateOptimizedCombinations(0, n, current, usedContourIds, validCombinations);
+    }
+
+    m_validCombinations = validCombinations;
+
+    // 输出结果
+    qDebug() << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：" ;
+
+    for (size_t i = 0; i < validCombinations.size(); ++i) {
+        QString str1 = "组合 " + QString::number(i + 1) + ": [";
+        for (size_t j = 0; j < validCombinations[i].size(); ++j) {
+            str1 += QString::number(validCombinations[i][j]);
+            if (j < validCombinations[i].size() - 1) {
+                str1 += ", ";
+            }
+        }
+        str1 += "]";
+        qDebug() << str1;
+
+        // 输出每个组合中工件的轮廓id
+        QString str2 = "  轮廓id: ";
+        std::set<int> allIds;
+        for (int index : validCombinations[i]) {
+            std::vector<int> ids = m_possibleWorkpieces[index].getContourIds();
+            for (int id : ids) {
+                allIds.insert(id);
+            }
+        }
+        for (int id : allIds) {
+            str2 += QString::number(id);
+            str2 += ",";
+        };
+        qDebug() << str2;
+    }
+
+    // 新增：计算最有可能的工件组合
+    calculateMostLikelyCombination();
+}
+
+// 优化的组合生成算法：使用多种剪枝策略和启发式搜索
 void EdgeAssembly::generateOptimizedCombinations(int start, int k,
                                                  std::vector<int>& current,
                                                  std::set<int>& usedContourIds,
                                                  std::vector<std::vector<int>>& result) {
-    // 提前剪枝：如果剩余工件数量不足以完成组合，直接返回
+    // 提前剪枝1：如果剩余工件数量不足以完成组合，直接返回
     int remainingWorkpieces = m_possibleWorkpieces.size() - start;
     if (remainingWorkpieces < k - static_cast<int>(current.size())) {
         return;
     }
 
+    // 提前剪枝2：如果当前已使用的轮廓ID数量已经超过总轮廓数，直接返回
+    if (usedContourIds.size() > m_cbbs.size()) {
+        return;
+    }
+
+    // 提前剪枝3：如果剩余轮廓不足以覆盖所有轮廓，直接返回
+    int remainingContours = m_cbbs.size() - usedContourIds.size();
+    int maxPossibleContoursFromRemaining = 0;
+    for (int i = start; i < m_possibleWorkpieces.size(); ++i) {
+        maxPossibleContoursFromRemaining += m_possibleWorkpieces[i].getContourIds().size();
+    }
+    if (maxPossibleContoursFromRemaining < remainingContours) {
+        return;
+    }
+
     if (current.size() == k) {
         // 检查是否包含了所有轮廓
-        std::set<int> allExpectedContourIds;
-        for (const auto& cbb : m_cbbs) {
-            allExpectedContourIds.insert(cbb->getId());
-        }
-
-        if (usedContourIds == allExpectedContourIds) {
+        if (usedContourIds.size() == m_cbbs.size()) {
             // 检查线段相交情况
             if (isCombinationValidWithoutIdCheck(m_possibleWorkpieces, current)) {
                 result.push_back(current);
@@ -453,15 +833,15 @@ void EdgeAssembly::generateOptimizedCombinations(int start, int k,
         return;
     }
 
-    // 启发式排序：优先选择包含较少轮廓的工件（减少后续冲突）
+    // 启发式排序：优先选择包含较多轮廓的工件（更快覆盖所有轮廓）
     std::vector<int> indices;
     for (int i = start; i < m_possibleWorkpieces.size(); ++i) {
         indices.push_back(i);
     }
 
-    // 按工件包含的轮廓数量排序（少的在前）
+    // 按工件包含的轮廓数量排序（多的在前，更快覆盖所有轮廓）
     std::sort(indices.begin(), indices.end(), [this](int a, int b) {
-        return m_possibleWorkpieces[a].getContourIds().size() <
+        return m_possibleWorkpieces[a].getContourIds().size() >
                m_possibleWorkpieces[b].getContourIds().size();
     });
 
@@ -514,54 +894,10 @@ void EdgeAssembly::generateOptimizedCombinations(int start, int k,
         for (int id : contourIds) {
             usedContourIds.erase(id);
         }
-    }
-}
 
-// 检查两个工件是否相交（提前剪枝用）
-bool EdgeAssembly::doWorkpiecesIntersect(const WorkpieceBoundingBox& wp1, const WorkpieceBoundingBox& wp2) const {
-    // 获取两个工件的中心线段集合
-    std::vector<std::pair<cv::Point2f, cv::Point2f>> segments1 = wp1.getCenterPointConnections();
-    std::vector<std::pair<cv::Point2f, cv::Point2f>> segments2 = wp2.getCenterPointConnections();
-
-    // 检查工件1的所有线段与工件2的所有线段是否有交点
-    for (const auto& seg1 : segments1) {
-        for (const auto& seg2 : segments2) {
-            if (doSegmentsIntersect(seg1.first, seg1.second, seg2.first, seg2.second)) {
-                return true;
-            }
+        // 如果已经找到足够多的组合，可以提前终止
+        if (!result.empty() && result.size() >= 10) { // 限制最大组合数
+            break;
         }
     }
-    return false;
-}
-
-// 检查组合是否合法：只检查线段相交情况（不检查轮廓ID重复，因为已经在生成过程中避免了）
-bool EdgeAssembly::isCombinationValidWithoutIdCheck(const std::vector<WorkpieceBoundingBox>& workpieces,
-                                                    const std::vector<int>& combination) {
-    // 遍历组合中所有两个工件的组合情况
-    // 检查不同工件之间的中心线段是否有交点
-    for (size_t i = 0; i < combination.size(); ++i) {
-        for (size_t j = i + 1; j < combination.size(); ++j) {
-            int index1 = combination[i];
-            int index2 = combination[j];
-
-            const WorkpieceBoundingBox& workpiece1 = workpieces[index1];
-            const WorkpieceBoundingBox& workpiece2 = workpieces[index2];
-
-            // 获取两个工件的中心线段集合
-            std::vector<std::pair<cv::Point2f, cv::Point2f>> segments1 = workpiece1.getCenterPointConnections();
-            std::vector<std::pair<cv::Point2f, cv::Point2f>> segments2 = workpiece2.getCenterPointConnections();
-
-            // 检查工件1的所有线段与工件2的所有线段是否有交点
-            for (const auto& seg1 : segments1) {
-                for (const auto& seg2 : segments2) {
-                    // 如果两条线段相交，则组合不合法
-                    if (doSegmentsIntersect(seg1.first, seg1.second, seg2.first, seg2.second)) {
-                        return false;
-                    }
-                }
-            }
-        }
-    }
-
-    return true;
 }
