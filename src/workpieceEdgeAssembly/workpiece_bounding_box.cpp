@@ -5,34 +5,6 @@
 
 WorkpieceBoundingBox::WorkpieceBoundingBox() {}
 
-// 辅助函数：判断点是否在旋转矩形内
-bool isPointInRotatedRect(const cv::Point2f& point, const cv::RotatedRect& rotatedRect) {
-    // 获取旋转矩形的四个角点
-    cv::Point2f vertices[4];
-    rotatedRect.points(vertices);
-
-    // 计算点到四条边的向量积
-    // 如果点都在四条边的同一侧（内部），则点在矩形内
-    for (int i = 0; i < 4; i++) {
-        cv::Point2f edge = vertices[(i + 1) % 4] - vertices[i];
-        cv::Point2f pointToVertex = point - vertices[i];
-
-        // 计算叉积（向量积）
-        float crossProduct = edge.x * pointToVertex.y - edge.y * pointToVertex.x;
-
-        // 如果叉积为负，说明点在边的右侧（外部）
-        if (crossProduct < 0) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-#include <opencv2/core.hpp>
-#include <vector>
-#include <cmath>
-
 /**
  * @brief 将旋转矩形转换为其四个顶点构成的多边形（逆时针顺序）
  * @param rect 旋转矩形

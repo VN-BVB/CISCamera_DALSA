@@ -48,8 +48,8 @@ std::vector<cv::Point2f> TestEdgeAssembly::contourLeft(const cv::Point2f& offset
 
         // 将点平移回原坐标系，并应用偏移量
         contourPoints.push_back(cv::Point2f(
-            rotatedX + center.x + offset.x,
-            rotatedY + center.y + offset.y
+            static_cast<float>(rotatedX + center.x + offset.x),
+            static_cast<float>(rotatedY + center.y + offset.y)
             ));
     }
     return contourPoints;
@@ -100,8 +100,8 @@ std::vector<cv::Point2f> TestEdgeAssembly::contourRight(const cv::Point2f& offse
 
         // 将点平移回原坐标系，并应用偏移量
         contourPoints.push_back(cv::Point2f(
-            rotatedX + center.x + offset.x,
-            rotatedY + center.y + offset.y
+            static_cast<float>(rotatedX + center.x + offset.x),
+            static_cast<float>(rotatedY + center.y + offset.y)
             ));
     }
 
@@ -152,8 +152,8 @@ std::vector<cv::Point2f> TestEdgeAssembly::contourUp(const cv::Point2f& offset, 
 
         // 将点平移回原坐标系，并应用偏移量
         contourPoints.push_back(cv::Point2f(
-            rotatedX + center.x + offset.x,
-            rotatedY + center.y + offset.y
+            static_cast<float>(rotatedX + center.x + offset.x),
+            static_cast<float>(rotatedY + center.y + offset.y)
             ));
     }
     return contourPoints;
@@ -203,8 +203,8 @@ std::vector<cv::Point2f> TestEdgeAssembly::contourDown(const cv::Point2f& offset
 
         // 将点平移回原坐标系，并应用偏移量
         contourPoints.push_back(cv::Point2f(
-            rotatedX + center.x + offset.x,
-            rotatedY + center.y + offset.y
+            static_cast<float>(rotatedX + center.x + offset.x),
+            static_cast<float>(rotatedY + center.y + offset.y)
             ));
     }
     return contourPoints;
@@ -509,9 +509,7 @@ void TestEdgeAssembly::run()
 
 
     EdgeAssembly edgeAssembly = EdgeAssembly{cbbs};
-    edgeAssembly.generateWorkpiece();
-    edgeAssembly.validateCombinations(9);
-
+    edgeAssembly.run(9);
     // for (auto& workpiece : edgeAssembly.getpossibleWorkpieces())
     // {
     //     m_workpieceRotateRect.push_back(workpiece.getouterBoundingBox());
