@@ -17,7 +17,7 @@
 #include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
 #include "src/rail/rail_widget.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
-#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h";
+#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 class RailWidget;
 class AbstractCamera;
 class ExternalExeRunner;
