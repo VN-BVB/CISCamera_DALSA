@@ -15,6 +15,7 @@ void ContourBoundingBox::initContourData(int id, const ContourData& contourData)
     m_topRight = vertices[1];
     m_bottomRight = vertices[2];
     m_bottomLeft = vertices[3];
+    m_centerPoint = m_boundingRect.center;
     // 设置相背轮廓id
     m_oppositeId =  setOppositeTo(m_id);
 }

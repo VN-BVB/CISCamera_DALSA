@@ -407,7 +407,7 @@ void DisplayScene::whenDisplayRotateRects(const std::vector<cv::RotatedRect>& ro
 
     // 使用绿色绘制旋转矩形，与轮廓的红色区分开
     QPen pen(Qt::green);
-    pen.setWidthF(0.5);  // 设置线宽
+    pen.setWidthF(2);  // 设置线宽
     pen.setStyle(Qt::SolidLine);  // 实线
 
     for (const auto& rotatedRect : rotatedRects)

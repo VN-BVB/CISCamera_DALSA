@@ -1,0 +1,49 @@
+Crash time: 2025-11-06 21:42:39
+Exception code: 0xe06d7363
+Exception type: Unknown Exception
+Exception address: 0x7ffca00b804a
+Thread ID: 13772
+
+Crash function: RaiseException
+
+Call Stack:
+#0  RaiseException
+#1  CxxThrowException
+#2  __scrt_throw_std_bad_alloc [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\heap\throw_bad_alloc.cpp:35]
+#3  operator new [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\heap\new_scalar.cpp:48]
+#4  std::_Default_allocate_traits::_Allocate [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\xmemory0:53]
+#5  std::_Allocate_manually_vector_aligned<std::_Default_allocate_traits> [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\xmemory0:100]
+#6  std::_Allocate<16,std::_Default_allocate_traits,0> [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\xmemory0:184]
+#7  std::allocator<int>::allocate [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\xmemory0:998]
+#8  std::vector<int,std::allocator<int> >::_Buy [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:1887]
+#9  std::vector<int,std::allocator<int> >::vector<int,std::allocator<int> > [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:735]
+#10  TestEdgeAssembly::run [d:\qt_project\ciscamera_dalsa\src\test\test_edge_assembly.cpp:440]
+#11  test_FrmVisionDisplay::onBeginButtonClicked [d:\qt_project\ciscamera_dalsa\src\test\test_frmvisiondisplay.cpp:85]
+#12  QtPrivate::FunctorCall<QtPrivate::IndexesList<>,QtPrivate::List<>,void,void (__cdecl test_FrmVisionDisplay::*)(void)>::call [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:152]
+#13  QtPrivate::FunctionPointer<void (__cdecl test_FrmVisionDisplay::*)(void)>::call<QtPrivate::List<>,void> [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:186]
+#14  QtPrivate::QSlotObject<void (__cdecl test_FrmVisionDisplay::*)(void),QtPrivate::List<>,void>::impl [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:419]
+#15  QMimeData::urls
+#16  QAbstractButton::clicked
+#17  QAbstractButton::click
+#18  QAbstractButton::mouseReleaseEvent
+#19  QWidget::event
+#20  QApplicationPrivate::notify_helper
+#21  QApplication::notify
+#22  QCoreApplication::notifyInternal2
+#23  QApplicationPrivate::sendMouseEvent
+#24  QSizePolicy::QSizePolicy
+#25  QSizePolicy::QSizePolicy
+#26  QApplicationPrivate::notify_helper
+#27  QApplication::notify
+#28  QCoreApplication::notifyInternal2
+#29  QGuiApplicationPrivate::processMouseEvent
+#30  QWindowSystemInterface::sendWindowSystemEvents
+#31  QEventDispatcherWin32::processEvents
+#32  qt_plugin_query_metadata
+#33  QEventLoop::exec
+#34  QCoreApplication::exec
+#35  main [d:\qt_project\ciscamera_dalsa\main.cpp:33]
+#36  WinMain
+#37  __scrt_common_main_seh [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288]
+#38  BaseThreadInitThunk
+#39  RtlUserThreadStart

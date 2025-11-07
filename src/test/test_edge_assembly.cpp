@@ -414,8 +414,9 @@ void TestEdgeAssembly::generateTiltedFiveSeams()
 
 void TestEdgeAssembly::run()
 {
+    generateNineSeams();
     // generateTiltedFiveSeams();
-    generateFiveSeams();
+    // generateFiveSeams();
     std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
     
     int i = 0;
@@ -429,14 +430,14 @@ void TestEdgeAssembly::run()
 
     EdgeAssembly edgeAssembly = EdgeAssembly{cbbs};
     edgeAssembly.generateWorkpiece();
-    edgeAssembly.validateCombinations(5);
+    edgeAssembly.validateCombinations(9);
 
     // for (auto& workpiece : edgeAssembly.getpossibleWorkpieces())
     // {
     //     m_workpieceRotateRect.push_back(workpiece.getouterBoundingBox());
     // }
     auto combinations = edgeAssembly.getValidCombinations();
-    auto combination = combinations[1];
+    auto combination = combinations[0];
     auto workpieces = edgeAssembly.getpossibleWorkpieces();
     for (auto& workpiecID :  combination)
     {
