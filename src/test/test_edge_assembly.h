@@ -14,6 +14,7 @@ public:
     ContourData setContourData(cv::Point2f offset, int direction, double rotationAngle = 0.0);
     void generateNineSeams();
     void generateFiveSeams();
+    void generateTiltedNineSeams();
     void generateTiltedFiveSeams();
     void run();
 

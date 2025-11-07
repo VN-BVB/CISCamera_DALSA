@@ -368,6 +368,85 @@ void TestEdgeAssembly::generateFiveSeams()
     m_cDatas = cDatas;
 }
 
+void TestEdgeAssembly::generateTiltedNineSeams()
+{
+    std::vector<ContourData> cDatas;
+    ContourData cd;
+    cv::Point2f offsetPoint;
+    // 拼缝1
+    offsetPoint = cv::Point2f(500,10);
+    cd = setContourData(offsetPoint,0,10);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(610,10);
+    cd = setContourData(offsetPoint,1,10);
+    cDatas.push_back(cd);
+    // 拼缝2
+    offsetPoint = cv::Point2f(1400,800);
+    cd = setContourData(offsetPoint,2,16);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(1400,910);
+    cd = setContourData(offsetPoint,3,16);
+    cDatas.push_back(cd);
+    // 拼缝3
+    offsetPoint = cv::Point2f(1000,1100);
+    cd = setContourData(offsetPoint,0,20);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(1110,1100);
+    cd = setContourData(offsetPoint,1,20);
+    cDatas.push_back(cd);
+    // 拼缝4
+    offsetPoint = cv::Point2f(1400,1400);
+    cd = setContourData(offsetPoint,2,-10);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(1400,1510);
+    cd = setContourData(offsetPoint,3,-10);
+    cDatas.push_back(cd);
+    // 拼缝5
+    offsetPoint = cv::Point2f(900,2400);
+    cd = setContourData(offsetPoint,0,-13);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(1010,2400);
+    cd = setContourData(offsetPoint,1,-13);
+    cDatas.push_back(cd);
+    // 拼缝6
+    offsetPoint = cv::Point2f(100,2000);
+    cd = setContourData(offsetPoint,2,-30);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(100,2110);
+    cd = setContourData(offsetPoint,3,-30);
+    cDatas.push_back(cd);
+    // 拼缝7
+    offsetPoint = cv::Point2f(100,1200);
+    cd = setContourData(offsetPoint,2);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(100,1310);
+    cd = setContourData(offsetPoint,3);
+    cDatas.push_back(cd);
+    // 拼缝8
+    offsetPoint = cv::Point2f(300,900);
+    cd = setContourData(offsetPoint,0,25);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(410,900);
+    cd = setContourData(offsetPoint,1,25);
+    cDatas.push_back(cd);
+    // 拼缝9
+    offsetPoint = cv::Point2f(100,600);
+    cd = setContourData(offsetPoint,2);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(100,710);
+    cd = setContourData(offsetPoint,3);
+    cDatas.push_back(cd);
+    // 拼缝10
+    offsetPoint = cv::Point2f(100,300);
+    cd = setContourData(offsetPoint,2,15);
+    cDatas.push_back(cd);
+    offsetPoint = cv::Point2f(100,410);
+    cd = setContourData(offsetPoint,3,15);
+    cDatas.push_back(cd);
+
+    m_cDatas = cDatas;
+}
+
 void TestEdgeAssembly::generateTiltedFiveSeams()
 {
     std::vector<ContourData> cDatas;
@@ -414,7 +493,8 @@ void TestEdgeAssembly::generateTiltedFiveSeams()
 
 void TestEdgeAssembly::run()
 {
-    generateNineSeams();
+    // generateNineSeams();
+    generateTiltedNineSeams();
     // generateTiltedFiveSeams();
     // generateFiveSeams();
     std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
@@ -438,6 +518,7 @@ void TestEdgeAssembly::run()
     // }
     auto combinations = edgeAssembly.getValidCombinations();
     auto combination = combinations[0];
+    combination = edgeAssembly.getMostLikelyCombination();
     auto workpieces = edgeAssembly.getpossibleWorkpieces();
     for (auto& workpiecID :  combination)
     {
