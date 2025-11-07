@@ -2,12 +2,12 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/score_corners.h"
-#include "libcbdetect/config.h"
-#include "libcbdetect/create_correlation_patch.h"
-#include "libcbdetect/find_corners.h"
-#include "libcbdetect/get_image_patch.h"
-#include "libcbdetect/weight_mask.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/score_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/create_correlation_patch.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/find_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/get_image_patch.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/weight_mask.h"
 
 namespace cbdetect {
 

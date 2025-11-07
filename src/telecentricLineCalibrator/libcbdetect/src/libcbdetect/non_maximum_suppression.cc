@@ -4,8 +4,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/non_maximum_suppression.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/non_maximum_suppression.h"
 /*遍历图像的网格区域（跳跃 n+1 个像素）：
 
 找到当前窗口内响应值最大的点 (maxi, maxj)；

@@ -2,7 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/get_image_patch.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/get_image_patch.h"
 
 namespace cbdetect {
 

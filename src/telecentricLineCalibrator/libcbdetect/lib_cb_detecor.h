@@ -7,11 +7,11 @@
 #include <string>
 #include <vector>
 
-#include "libcbdetect/boards_from_corners.h"
-#include "libcbdetect/config.h"
-#include "libcbdetect/find_corners.h"
-#include "libcbdetect/plot_boards.h"
-#include "libcbdetect/plot_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/boards_from_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/find_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/plot_boards.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/plot_corners.h"
 
 class LibCBDetector {
 public:

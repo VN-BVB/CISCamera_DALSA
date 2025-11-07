@@ -36,7 +36,7 @@
 
 #include <vector>
 
-#include "libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
 
 namespace cbdetect {
 

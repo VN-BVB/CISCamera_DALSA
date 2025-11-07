@@ -2,7 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/board_energy.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/board_energy.h"
 
 namespace cbdetect {
 

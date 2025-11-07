@@ -38,8 +38,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/grow_board.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/grow_board.h"
 
 namespace cbdetect {
 

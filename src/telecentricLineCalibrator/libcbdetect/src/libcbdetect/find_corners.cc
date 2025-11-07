@@ -5,16 +5,16 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/filter_corners.h"
-#include "libcbdetect/find_corners.h"
-#include "libcbdetect/get_init_location.h"
-#include "libcbdetect/image_normalization_and_gradients.h"
-#include "libcbdetect/non_maximum_suppression.h"
-#include "libcbdetect/plot_corners.h"
-#include "libcbdetect/polynomial_fit.h"
-#include "libcbdetect/refine_corners.h"
-#include "libcbdetect/score_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/filter_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/find_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/get_init_location.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/image_normalization_and_gradients.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/non_maximum_suppression.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/plot_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/polynomial_fit.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/refine_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/score_corners.h"
 
 namespace cbdetect {
 

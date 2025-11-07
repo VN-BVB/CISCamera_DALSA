@@ -1,7 +1,7 @@
 ﻿#include <math.h>
 
-#include "libcbdetect/create_correlation_patch.h"
-#include "libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/create_correlation_patch.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
 
 namespace cbdetect {
 

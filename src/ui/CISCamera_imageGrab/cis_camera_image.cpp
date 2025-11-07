@@ -10,6 +10,7 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     initCISCameraConfig();
     initCameraImageProcessor();
     initCamera();
+    initCameraCalibrator();
 }
 
 CISWidget::~CISWidget() {
@@ -42,7 +43,8 @@ void CISWidget::initCISCameraConfig() {
     configCISCamera = std::make_shared<ExternalExeRunner>();
     configCISCamera->moveToThread(cameraThreadConfig);
     cameraThreadConfig->start();
-    connect(configCISCamera.get(), &ExternalExeRunner::sendMessage2UI, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
+    connect(configCISCamera.get(), &ExternalExeRunner::sendMessage2UI, this, &CISWidget::whenAppendMessageLog,
+            Qt::QueuedConnection);
 }
 
 void CISWidget::initCamera() {
@@ -129,7 +131,10 @@ void CISWidget::initCameraImageProcessor() {
     connect(imageProcessor.get(), &CameraImageProcessor::text, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
     connect(imageProcessor.get(), &CameraImageProcessor::error, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
 }
-
+void CISWidget::initCameraCalibrator() {
+    libcbDetector = std::make_shared<LibCBDetector>();
+    telecentricLineCalibrator = std::make_shared<TelecentricLineCalibrator>();
+}
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
 // 在信息框推送信息
 void CISWidget::whenAppendMessageLog(const QString& message) { ui->textEdit->append(message); }
@@ -138,16 +143,18 @@ void CISWidget::tryStitchImages() {
     if (ui->ckbSplice->isChecked() && masterReady && slaveReady) {
         masterReady = slaveReady = false;
 
-        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection, Q_ARG(std::shared_ptr<cv::Mat>, masterImg),
-                                  Q_ARG(std::shared_ptr<cv::Mat>, slaveImg), Q_ARG(bool, true)  // 或 ui->ckbSplice->isChecked()
+        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection,
+                                  Q_ARG(std::shared_ptr<cv::Mat>, masterImg), Q_ARG(std::shared_ptr<cv::Mat>, slaveImg),
+                                  Q_ARG(bool, true)  // 或 ui->ckbSplice->isChecked()
         );
     }
 }
 void CISWidget::on_btnSave_clicked() {
     if (ui->ckbSplice->isChecked()) {
-        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection, Q_ARG(QString, "./data/CISCamera_Image"),
-                                  Q_ARG(QString, "Splice"), Q_ARG(QString, ".bmp"),  // 需要更高精度可改 ".tif" / ".exr"
-                                  Q_ARG(bool, false)                                 // 是否同时保存主/从
+        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection,
+                                  Q_ARG(QString, "./data/CISCamera_Image"), Q_ARG(QString, "Splice"),
+                                  Q_ARG(QString, ".bmp"),  // 需要更高精度可改 ".tif" / ".exr"
+                                  Q_ARG(bool, false)       // 是否同时保存主/从
         );
     } else {
         bool checked = true;
@@ -198,6 +205,9 @@ void CISWidget::on_btnContinue_clicked() {
 
 // 软件触发
 void CISWidget::on_btnSoftWareTrigger_clicked() {
+    startPos = ui->end_lineEdit->text().toDouble();
+    endPos = ui->end_lineEdit->text().toDouble();
+    speed = ui->speed_lineEdit->text().toDouble();
     if (triggerRunning) {
         whenAppendMessageLog(QString(u8"帧触发进行中"));
         return;
@@ -267,3 +277,7 @@ void CISWidget::on_btnCISConfig_clicked() {
         },
         Qt::QueuedConnection);
 }
+
+void CISWidget::on_btn_ChessboardDetector_clicked() {}
+
+void CISWidget::on_btnCameraCalibrate_clicked() {}

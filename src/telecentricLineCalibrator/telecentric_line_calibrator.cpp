@@ -748,112 +748,28 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     } else {
         PLOGD << "非线性优化前的初步估计参数已保存：" << calib_data_path_;
     }
-    // // Step 6. 调用非线性优化（C++的非线性优化存在问题，此处为解析解，数值优化解可由python程序得到）
-    // // 6.1 准备初始参数（从现有结果中提取，与之前一致）
-    // double init_m = m_;                        // 初始放大倍率
-    // double init_dx = dx_;                      // 水平像素尺寸（已知输入）
-    // double init_dy = dy_;                      // 垂直像素尺寸（已知输入）
-    // double init_u0 = u0_;                      // 主点x（从初始内参K_中提取）
-    // double init_v0 = v0_;                      // 主点y（从初始内参K_中提取）
-    // double init_theta = 0.0;                   // 倾斜角初始值（设0）
-    // double init_k = 0.0;                       // 畸变系数初始值（设0）
-    // std::vector<Pose> init_poses = poses_out;  // 初始外参
+    // -------------------------- 2. 新实例读取验证 --------------------------
+    CalibrationData calib_check;
+    if (!calib_check.load("./data/calibration_config/optimized_calib_data.json")) {
+        PLOGE << "读取验证失败：" << "./data/calibration_config/optimized_calib_data.json";
+        return false;
+    }
 
-    // // 6.2 创建优化器对象
-    // TelecentricLMOptimizer optimizer(all_imgPts,  // 所有图像点
-    //                                  worldPts,    // 世界点
-    //                                  init_poses,  // 外参初始值
-    //                                  init_m,      // m初始值
-    //                                  init_dx,     // dx初始值
-    //                                  init_dy,     // dy初始值
-    //                                  init_u0,     // u0初始值
-    //                                  init_v0,     // v0初始值
-    //                                  init_theta,  // theta初始值
-    //                                  init_k       // k初始值
-    // );
+    // -------------------------- 3. 打印检查 --------------------------
+    std::cout << "\n===== [校准参数验证输出] =====\n";
+    std::cout << "m   = " << calib_check.m << "\n";
+    std::cout << "dx  = " << calib_check.dx << "\n";
+    std::cout << "dy  = " << calib_check.dy << "\n";
+    std::cout << "u0  = " << calib_check.u0 << "\n";
+    std::cout << "v0  = " << calib_check.v0 << "\n";
+    std::cout << "K =\n" << calib_check.K << "\n";
+    std::cout << "coff_dis = " << calib_check.coff_dis << "\n";
 
-    // // 6.3 执行优化
-    // int max_iter = 1000;
-    // double eps_error = 1e-11;
-    // double eps_param = 1e-11;
-    // double init_lambda = 0.01;
-    // bool optimize_success = optimizer.optimize(max_iter, eps_error, eps_param, init_lambda);
-
-    // if (!optimize_success) {
-    //     std::cerr << "非线性优化失败，使用初始标定结果\n";
-    // } else {
-    //     // 6.4 关键修改：调用getOptimizedParams获取所有优化后参数
-    //     double opt_m, opt_dy, opt_u0, opt_v0, opt_theta, opt_k;
-    //     std::vector<Pose> opt_poses;
-    //     double opt_total_reprojErr;  // 优化后的总重投影误差
-    //     optimizer.getOptimizedParams(opt_m, opt_dy, opt_u0, opt_v0, opt_theta, opt_k, opt_poses, opt_total_reprojErr);
-
-    //     double tan_t = std::tan(opt_theta);
-    //     double cos_t = std::cos(opt_theta);
-
-    //     K_out.setZero();
-    //     K_out(0, 0) = opt_m / dx_;           // fx = m/dx
-    //     K_out(0, 1) = -opt_m * tan_t / dx_;  // skew = -m*tan(theta)/dx
-    //     K_out(0, 2) = opt_u0;
-    //     K_out(1, 0) = 0.0;
-    //     K_out(1, 1) = 1 / opt_dy * cos_t;  // fy = m/dy * cos(theta)
-    //     K_out(1, 2) = opt_v0 / opt_m;
-    //     K_out(2, 0) = 0.0;
-    //     K_out(2, 1) = 0.0;
-    //     K_out(2, 2) = 1.0;
-    //     poses_out.clear();
-    //     double totalErr = 0.0;
-    //     int count = 0;
-    //     for (size_t i = 0; i < all_imgPts.size(); ++i) {
-    //         Pose pose = opt_poses[i];
-    //         // Eigen::Matrix3d R;
-    //         // Eigen::AngleAxisd angle_axis(v_rot[i].norm(), v_rot[i].normalized());
-    //         // R = angle_axis.toRotationMatrix();
-    //         // pose.R = R;  // 赋值旋转矩阵
-
-    //         // // 2. 构造平移向量（注意：原v_trans是2D，这里扩展为3D，z分量设为0）
-    //         // pose.t = Eigen::Vector3d(v_trans[i].x(), v_trans[i].y(), 0.0);
-    //         double err = computeReprojectionError(worldPts, all_imgPts[i], pose, K_out);
-    //         pose.reprojErr = err;
-    //         poses_out.push_back(pose);
-    //         totalErr += err;
-    //         count++;
-    //     }
-    //     rmse_out = totalErr / std::max(1, count);
-
-    //     // ============================ 优化前后结果对比 ============================
-    //     std::cout << "\n================= 优化前后参数对比 =================\n";
-
-    //     // 格式化输出（并排对比 + Δ变化量）
-    //     auto printParam = [](const std::string& name, double before, double after, const std::string& unit = "") {
-    //         double delta = after - before;
-    //         std::cout << std::setw(12) << std::left << name << " : " << std::setw(15) << before << " | " << std::setw(15) <<
-    //         after
-    //                   << " | " << ((delta >= 0) ? " + " : " - ") << std::abs(delta) << " " << unit << "\n";
-    //     };
-
-    //     std::cout << std::fixed << std::setprecision(8);
-    //     std::cout << "\n参数名称        优化前值           | 优化后值           | 变化量 Δ\n";
-    //     std::cout << "---------------------------------------------------------------\n";
-    //     printParam("m (倍率)", init_m, opt_m);
-    //     printParam("dy (mm/pix)", init_dy, opt_dy);
-    //     printParam("u0 (pix)", init_u0, opt_u0);
-    //     printParam("v0 (pix)", init_v0, opt_v0);
-    //     printParam("theta (°)", init_theta * 180.0 / M_PI, opt_theta * 180.0 / M_PI);
-    //     printParam("k (畸变系数)", init_k, opt_k);
-    //     printParam("RMSE (px)", rmse_before, rmse_out);
-
-    //     std::cout << "---------------------------------------------------------------\n";
-    //     double improve_ratio = (rmse_before - rmse_out) / std::max(1e-12, rmse_before) * 100.0;
-    //     std::cout << "RMSE 改善幅度: " << improve_ratio << " %\n";
-
-    //     if (improve_ratio > 0.0)
-    //         std::cout << "✅ 优化后误差减小，拟合效果提升。\n";
-    //     else
-    //         std::cout << "⚠️ 优化后误差未改善或略有上升，建议检查初始值或模型设置。\n";
-
-    //     std::cout << "===============================================================\n";
-    // }
+    for (size_t i = 0; i < calib_check.v_rot.size(); ++i) {
+        std::cout << "Pose " << i << " rvec = " << calib_check.v_rot[i].transpose()
+                  << ", t = " << calib_check.v_trans[i].transpose() << "\n";
+    }
+    std::cout << "=================================\n";
     return true;
 }
 Eigen::Vector3d TelecentricLineCalibrator::rotMatToVec(const Eigen::Matrix3d& R) const {

@@ -8,12 +8,12 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/board_energy.h"
-#include "libcbdetect/boards_from_corners.h"
-#include "libcbdetect/config.h"
-#include "libcbdetect/filter_board.h"
-#include "libcbdetect/grow_board.h"
-#include "libcbdetect/init_board.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/board_energy.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/boards_from_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/filter_board.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/grow_board.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/init_board.h"
 
 namespace cbdetect {
 

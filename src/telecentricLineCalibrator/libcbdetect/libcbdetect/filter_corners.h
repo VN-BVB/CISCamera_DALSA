@@ -7,8 +7,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/find_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/find_corners.h"
 
 namespace cbdetect {
 

@@ -3,8 +3,8 @@
 #include <opencv2/core/hal/hal.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/image_normalization_and_gradients.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/image_normalization_and_gradients.h"
 
 namespace cbdetect {
 

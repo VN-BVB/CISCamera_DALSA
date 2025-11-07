@@ -8,11 +8,11 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/filter_corners.h"
-#include "libcbdetect/find_corners.h"
-#include "libcbdetect/find_modes_meanshift.h"
-#include "libcbdetect/weight_mask.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/filter_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/find_corners.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/find_modes_meanshift.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/weight_mask.h"
 
 namespace cbdetect {
 

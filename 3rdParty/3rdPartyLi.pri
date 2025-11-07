@@ -27,3 +27,11 @@ LIBS +=./3rdparty/libmodbus/X64/*.lib
 INCLUDEPATH += D:/ProgramData/eigen-git-mirror-master
 # ------------------cereal序列化反序列化库------------------
 INCLUDEPATH += ./3rdparty/cereal/include
+# ------------------Pybind11C++与Python双向绑定库------------------
+# ---------- Python 环境 ----------
+PYTHON_VER = 39
+PYTHON_ROOT = D:/anaconda/envs/Telecentric-Calibration
+
+INCLUDEPATH += $$PYTHON_ROOT/include
+LIBS += -L$$PYTHON_ROOT/libs -lpython$$PYTHON_VER
+INCLUDEPATH += D:/ProgramData/extern/pybind11/include

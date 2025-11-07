@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "libcbdetect/find_modes_meanshift.h"
-#include "libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/find_modes_meanshift.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
 
 namespace cbdetect {
 

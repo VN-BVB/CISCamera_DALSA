@@ -1,8 +1,8 @@
 ﻿
 #include <opencv2/opencv.hpp>
-#include "libcbdetect/config.h"
-#include "libcbdetect/get_image_patch.h"
-#include "libcbdetect/polynomial_fit.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/get_image_patch.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/polynomial_fit.h"
 
 namespace cbdetect {
 

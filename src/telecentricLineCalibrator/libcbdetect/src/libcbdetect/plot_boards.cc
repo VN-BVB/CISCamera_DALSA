@@ -1,9 +1,9 @@
-﻿#include "libcbdetect/plot_boards.h"
+﻿#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/plot_boards.h"
 
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include "libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
 
 namespace cbdetect {
 

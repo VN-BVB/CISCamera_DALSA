@@ -2,8 +2,11 @@ import cv2
 import json
 import numpy as np
 import os
+
+from numba import none
+
 from corner_detector import PatternInfo
-import calibrator_helper
+from Calibrator import calibrator_helper
 
 
 class Calibrator:
@@ -16,6 +19,11 @@ class Calibrator:
         """
         self.pattern_info = pattern_info
         self.m = m
+        self.dx = None
+        self.dy = None
+        self.theta = None
+        self.u0 = None
+        self.v0 = None
         self.visualization = visualization
         self.mat_intri = None  # intrinsic matrix
         self.coff_dis = None  # coefficients of distortion
@@ -67,13 +75,13 @@ class Calibrator:
                             continue
                 
                 if not points:
-                    print(f"文件 {path} 无有效点")
+                    print(f"file {path} no valid point")
                     return False, None
                 
                 print(f"读取 {path} 成功，共 {len(points)} 个点")
                 return True, np.array(points, dtype=np.float32)
         except Exception as e:
-            print(f"无法打开或读取文件 {path}: {str(e)}")
+            print(f"无法打开文件 {path}: {str(e)}")
             return False, None
 
     # 标定相机
@@ -91,7 +99,7 @@ class Calibrator:
                     points_pixel.append(cp_img2)
         
         if not points_pixel:
-            print("没有成功读取任何点数据")
+            print("无有效像素信息")
             return
         
         # 针孔相机标定得到外参
@@ -102,20 +110,19 @@ class Calibrator:
                                                                        None, None)
         
         if ret:
-            print("获取外参成功，针孔模型重投影误差为：", ret)
-            print(coff_dis)
+            print("针孔模型标定成功，以获取内参，重投影误差为：", ret)
             self.v_rot = np.array(v_rot).reshape(-1, 3)
             # 远心成像缺少t_z
             self.v_trans = np.array(v_rot).reshape(-1, 3)[:, :2]
         else:
-            print("针孔相机标定出错")
+            print("针孔模型标定失败")
             return
         
         # 远心成像模型内参初始化
         dx, dy = self.pattern_info.pixel_size
         dx = dx / 1000
         dy = dy / 1000
-        u0, v0 = mat_intri[0, 2], mat_intri[1, 2]
+        u0, v0 = 15344, 8050
         self.mat_intri = np.array([[self.m / dx, 0, u0],
                                    [0, self.m / dy, v0],
                                    [0, 0, 1]])
@@ -125,32 +132,62 @@ class Calibrator:
                                                                                             self.mat_intri, self.v_rot,
                                                                                             self.v_trans)
         if ret:
-            print("优化初始参数成功(无畸变），重投影误差为：", ret)
+            print("无畸变优化成功，重投影误差为:", ret)
         else:
-            print("优化初始参数出错")
+            print("无畸变参数优化失败")
         # ========== ✅ 在此处写入无畸变结果 ==========
-        self.m = (mat_intri[0, 0] + mat_intri[1, 1]) / 2 * dx
+        # 解析参数
+
+        self.dx = dx
+        self.m = mat_intri[0, 0] * self.dx
         self.points_pixel = points_pixel
         self.mat_intri = mat_intri
-        self.coff_dis = [0, 0, 0, 0, 0]  # 无畸变时仍占位保存
+        self.theta = np.arctan(-mat_intri[0, 1] / mat_intri[0, 0])
+        self.dy = 1.0 / (mat_intri[1, 1] * np.cos(self.theta))
+        self.u0 = mat_intri[0, 2]
+        self.v0 = self.m * mat_intri[1, 2]
+        self.coff_dis = [0, 0, 0, 0, 0]  # 占位
         self.v_rot = v_rot
         self.v_trans = v_trans
-
-        # 要写入的数据（与原格式完全一致）
-        data = {
-            'Magnification': self.m,
-            'mat_intri': self.mat_intri.tolist(),
-            'coff_dis': self.coff_dis,
-            'v_rot': self.v_rot.tolist(),
-            'v_trans': self.v_trans.tolist()
+        base_params = [self.m, self.dx, self.dy, self.theta, self.u0, self.v0]
+        # === 构造JSON结构 ===
+        optimized_data = {
+            "value0": {
+                "m": base_params[0],
+                "dx": base_params[1],
+                "dy": base_params[2],
+                "theta": base_params[3],
+                "u0": base_params[4],
+                "v0": base_params[5],
+                "K": {
+                    "rows": 3,
+                    "cols": 3,
+                    "val": mat_intri.flatten().tolist()
+                },
+                "coff_dis": {
+                    "rows": 1,
+                    "cols": 5,
+                    "val": self.coff_dis
+                },
+                "v_rot": [
+                    {"value0": rot[0], "value1": rot[1], "value2": rot[2]}
+                    for rot in v_rot
+                ],
+                "v_trans": [
+                    {"value0": trans[0], "value1": trans[1], "value2": 0.0}
+                    for trans in v_trans
+                ]
+            }
         }
-        json_file_path = 'calibrate_result1.json'
 
-        # 写入 JSON 文件
-        with open(json_file_path, 'w') as json_file:
-            json.dump(data, json_file)
-            print("标定成功（无畸变结果已保存） -> calibrate_result1.json")
-
+        # === 写入JSON ===
+        optimized_json_file_path = (
+            "D:/Code/CISCamera_DALSA/data/calibration_config/"
+            "optimized_calib_data_no_distortion.json"
+        )
+        with open(optimized_json_file_path, "w") as f:
+            json.dump(optimized_data, f, indent=4)
+        print(f"标定成功 (无畸变参数) -> {optimized_json_file_path}")
         # 优化带畸变的远心成像模型参数
         # 初始化畸变系数(k1,k2,p1,p2,k3)
         coff_dis = coff_dis[0]
@@ -160,28 +197,57 @@ class Calibrator:
                                                                                                    v_rot,
                                                                                                    v_trans)
         if ret:
-            print("优化初始参数成功(带畸变），重投影误差为：", ret)
+            print("带有畸变参数的标定参数优化成功，重投影误差为:", ret)
         else:
-            print("优化初始参数出错")
-            
-        self.m = (mat_intri[0, 0] + mat_intri[1, 1]) / 2 * dx
+            print("带有畸变参数的标定参数优化失败")
+
+        self.dx = dx
+        self.m = mat_intri[0, 0] * self.dx
         self.points_pixel = points_pixel
         self.mat_intri = mat_intri
-        self.coff_dis = coff_dis
+        self.theta = np.arctan(-mat_intri[0, 1] / mat_intri[0, 0])
+        self.dy = 1.0 / (mat_intri[1, 1] * np.cos(self.theta))
+        self.u0 = mat_intri[0, 2]
+        self.v0 = self.m * mat_intri[1, 2]
+        self.coff_dis = coff_dis # 占位
         self.v_rot = v_rot
         self.v_trans = v_trans
-        
-        # 要写入的数据
-        data = {
-            'Magnification': self.m,
-            'mat_intri': self.mat_intri.tolist(),
-            'coff_dis': self.coff_dis,
-            'v_rot': self.v_rot.tolist(),
-            'v_trans': self.v_trans.tolist()
+        base_params = [self.m, self.dx, self.dy, self.theta, self.u0, self.v0]
+        # === 构造JSON结构 ===
+        optimized_data_distorted = {
+            "value0": {
+                "m": base_params[0],
+                "dx": base_params[1],
+                "dy": base_params[2],
+                "theta": base_params[3],
+                "u0": base_params[4],
+                "v0": base_params[5],
+                "K": {
+                    "rows": 3,
+                    "cols": 3,
+                    "val": self.mat_intri.flatten().tolist()
+                },
+                "coff_dis": {
+                    "rows": 1,
+                    "cols": 5,
+                    "val": self.coff_dis
+                },
+                "v_rot": [
+                    {"value0": rot[0], "value1": rot[1], "value2": rot[2]}
+                    for rot in self.v_rot
+                ],
+                "v_trans": [
+                    {"value0": trans[0], "value1": trans[1], "value2": 0.0}
+                    for trans in self.v_trans
+                ]
+            }
         }
-        json_file_path = 'calibrate_result.json'
-        
-        # 写入 JSON 文件
-        with open(json_file_path, 'w') as json_file:
-            json.dump(data, json_file)
-            print("标定成功，结果保存在calibrate_result.json中")
+
+        # === 写入JSON ===
+        optimized_json_file_path = (
+            "D:/Code/CISCamera_DALSA/data/calibration_config/"
+            "optimized_calib_data_with_distortion.json"
+        )
+        with open(optimized_json_file_path, "w") as f:
+            json.dump(optimized_data_distorted, f, indent=4)
+        print(f"标定成功 (畸变参数) -> {optimized_json_file_path}")

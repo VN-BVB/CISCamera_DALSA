@@ -125,7 +125,7 @@ if __name__=="__main__":
     coff_dis = coff_dis[0]
     theta =0.0
     print("正在进行非线性优化...")
-    # 进行非线性优化
+    # # 进行非线性优化
     ret, K_opt, coff_dis_opt, v_rot_opt, v_trans_opt, base_params = calibrator_helper.refine_params_with_distortion_basic(points_world, points_pixel,
                                                                                                               m, dx, dy, theta, u0, v0,
                                                                                                               coff_dis, v_rot, v_trans)
@@ -135,6 +135,13 @@ if __name__=="__main__":
     # ret, K_opt, v_rot_opt, v_trans_opt = calibrator_helper.refine_params_without_distortion(
     #     points_world, points_pixel, K, v_rot, v_trans
     # )
+    m = K_opt[0, 0] * dx
+    points_pixel = points_pixel
+    theta = np.arctan(-K_opt[0, 1] / K_opt[0, 0])
+    dy = 1.0 / (K_opt[1, 1] * np.cos(theta))
+    u0 = K_opt[0, 2]
+    v0 = m * K_opt[1, 2]
+    base_params = [m, dx, dy, theta, u0, v0]
 
     if ret:
         print("非线性优化成功，重投影误差:", ret)

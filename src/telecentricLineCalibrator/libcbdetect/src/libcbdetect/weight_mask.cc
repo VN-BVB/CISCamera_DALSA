@@ -1,8 +1,8 @@
 ﻿
 
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/weight_mask.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/weight_mask.h"
 
 namespace cbdetect {
 //环形权重

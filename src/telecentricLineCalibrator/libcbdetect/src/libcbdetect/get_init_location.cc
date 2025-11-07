@@ -2,12 +2,12 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "libcbdetect/config.h"
-#include "libcbdetect/create_correlation_patch.h"
-#include "libcbdetect/get_image_patch.h"
-#include "libcbdetect/get_init_location.h"
-#include "libcbdetect/image_normalization_and_gradients.h"
-#include "libcbdetect/non_maximum_suppression.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/create_correlation_patch.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/get_image_patch.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/get_init_location.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/image_normalization_and_gradients.h"
+#include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/non_maximum_suppression.h"
 
 namespace cbdetect {
 
