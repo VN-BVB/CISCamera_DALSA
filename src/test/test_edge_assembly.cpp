@@ -494,8 +494,8 @@ void TestEdgeAssembly::generateTiltedFiveSeams()
 void TestEdgeAssembly::run()
 {
     // generateNineSeams();
-    generateTiltedNineSeams();
-    // generateTiltedFiveSeams();
+    // generateTiltedNineSeams();
+    generateTiltedFiveSeams();
     // generateFiveSeams();
     std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
     

@@ -79,9 +79,15 @@ void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& Rot
 void test_FrmVisionDisplay::onBeginButtonClicked()
 {
     // 这里实现按钮点击后的功能
+    // 创建计时器并开始计时
+    QElapsedTimer timer;
+    timer.start();
     qDebug() << "开始按钮被点击";
     TestEdgeAssembly tea;
     tea.run();
+    // 计算并输出耗时
+    qint64 elapsed = timer.elapsed();
+    qDebug() << "函数执行完成，耗时:" << elapsed << "毫秒";
     std::vector<std::vector<cv::Point2f>> contours;
     for (auto& cdata : tea.m_cDatas)
     {
@@ -90,6 +96,7 @@ void test_FrmVisionDisplay::onBeginButtonClicked()
     }
     displayRotateRects(tea.m_workpieceRotateRect);
     displayContours(contours);
+
 }
 
 

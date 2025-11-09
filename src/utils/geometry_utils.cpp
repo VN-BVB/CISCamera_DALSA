@@ -1,4 +1,5 @@
 #include "geometry_utils.h"
+#include <iostream>
 
 namespace GeometryUtils {
 
@@ -77,6 +78,64 @@ bool isPointInRotatedRect(const cv::Point2f& point, const cv::RotatedRect& rotat
     }
 
     return true;
+}
+
+/**
+ * @brief ImageProcessing_lineDetection     直线拟合Ransac
+ * @param points                            输入亚像素点集
+ * @param line                              输出直线参数(vx, vy, x0, y0), (vx, vy) 为方向向量, (x0, y0) 为直线上的一个点
+ * @param inlierPoints                      输出直线内点
+ * @param threshold                         阈值
+ * @param iterations                        最大迭代次数
+ */
+void lineRansac(const std::vector<cv::Point2f> &points,
+                                  cv::Vec4f &line,
+                                  std::vector<cv::Point2f> &inlierPoints,
+                                  const double &threshold,
+                                  const int &iterations)
+{
+    if(points.size() < 2){
+        std::cout<<"Input points is empty!"<<std::endl;
+        return;
+    }
+
+    cv::RNG rng;// 创建随机数生成器
+    double bestScore = -1.;
+    auto n = points.size();  // 获取点集大小
+    for(int iter = 0; iter < iterations; iter++){
+        // 随机选择两个不同的点
+        auto i1 = rng.uniform(0, static_cast<int>(n-1));
+        auto i2 = rng.uniform(0, static_cast<int>(n-1));
+        if (i1 == i2)
+            continue;
+
+        // 直线的方向向量
+        const cv::Point2f& p1 = points[i1];
+        const cv::Point2f& p2 = points[i2];
+        cv::Point2f dp = p2-p1;
+        dp *= 1.0/cv::norm(dp);
+
+        // 计算内点
+        double score = 0;
+        std::vector<cv::Point2f> inliers;
+        for(int i = 0; i< n; i++){
+            cv::Point2f v = points[i] - p1;
+            double d = v.y * dp.x - v.x * dp.y;//向量a与b叉乘/向量b的摸.||b||=1./norm(dp)
+            // 判断点到直线的距离是否小于阈值
+            if( std::fabs(d) < threshold){
+                score += 1;
+                inliers.push_back(points[i]);  // 存储内点
+            }
+        }
+
+        // 如果当前拟合得分更高，则更新最优结果
+        if(score > bestScore) {
+            line = cv::Vec4f(static_cast<float>(dp.x), static_cast<float>(dp.y),
+                             static_cast<float>(p1.x), static_cast<float>(p1.y));
+            bestScore = score;
+            inlierPoints = inliers;//更新内点
+        }
+    }
 }
 
 } // namespace GeometryUtils

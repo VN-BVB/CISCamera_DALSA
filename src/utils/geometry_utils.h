@@ -18,6 +18,12 @@ bool doSegmentsIntersect(const cv::Point2f& p1, const cv::Point2f& p2,
 // 判断点是否在旋转矩形内
 bool isPointInRotatedRect(const cv::Point2f& point, const cv::RotatedRect& rotatedRect);
 
+// Ransac直线拟合
+void lineRansac(const std::vector<cv::Point2f> &points,
+                cv::Vec4f &line,
+                std::vector<cv::Point2f> &inlierPoints,
+                const double &threshold,
+                const int &iterations);
 } // namespace GeometryUtils
 
 #endif // GEOMETRY_UTILS_H
