@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'cis_camera_image.ui'
 **
-** Created by: Qt User Interface Compiler version 5.15.2
+** Created by: Qt User Interface Compiler version 5.14.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -20,8 +20,8 @@
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QWidget>
+#include <src/ui/utils/display/frm_display.h>
 #include <src/ui/utils/display/openGLImageWidget.h>
-#include <src/ui/utils/imageWidget/openGLImageWidget.h>
 #include "src/rail/rail_widget.h"
 
 QT_BEGIN_NAMESPACE

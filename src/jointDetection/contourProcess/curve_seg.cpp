@@ -1,12 +1,11 @@
-#define _USE_MATH_DEFINES
+﻿#define _USE_MATH_DEFINES
 #include "curve_seg.h"
+
 #include <cmath>
 
-CurveSeg::CurveSeg() : m_minDomain(MIN_DOMAIN), m_maxDomain(MAX_DOMAIN){}
+CurveSeg::CurveSeg() : m_minDomain(MIN_DOMAIN), m_maxDomain(MAX_DOMAIN) {}
 
-void CurveSeg::initializeFromPoints(const std::vector<cv::Point2f>& points) {
-    m_points = points;
-}
+void CurveSeg::initializeFromPoints(const std::vector<cv::Point2f>& points) { m_points = points; }
 
 void CurveSeg::fitSplineCurve() {
     if (m_points.size() < 4) {
@@ -16,14 +15,14 @@ void CurveSeg::fitSplineCurve() {
 
     try {
         // 创建样条曲线：控制点数量，维度，阶数（3次样条）
-        int degree = 3; // 3次样条
+        int degree = 3;  // 3次样条
         m_spline = tinyspline::BSpline(static_cast<int>(m_points.size()), 2, degree, tinyspline::BSpline::Type::Opened);
 
         // 设置控制点
         std::vector<tinyspline::real> ctrlp = m_spline.controlPoints();
         for (size_t i = 0; i < m_points.size(); ++i) {
-            ctrlp[i * 2] = m_points[i].x;     // x坐标
-            ctrlp[i * 2 + 1] = m_points[i].y; // y坐标
+            ctrlp[i * 2] = m_points[i].x;      // x坐标
+            ctrlp[i * 2 + 1] = m_points[i].y;  // y坐标
         }
         m_spline.setControlPoints(ctrlp);
 
@@ -50,7 +49,6 @@ void CurveSeg::fitSplineCurve() {
             m_maxDomain = MAX_DOMAIN;
         }
 
-
         m_isFitted = true;
         std::cout << "样条曲线拟合成功，使用 " << m_points.size() << " 个控制点" << std::endl;
 
@@ -67,7 +65,7 @@ std::vector<cv::Point2f> CurveSeg::getFittedPoints(int numSamples) const {
     std::vector<cv::Point2f> fittedPoints;
 
     if (!m_isFitted) {
-        std::cout << "警告：样条曲线尚未拟合" << std::endl;
+        // std::cout << "警告：样条曲线尚未拟合" << std::endl;
         return fittedPoints;
     }
 
@@ -80,9 +78,7 @@ std::vector<cv::Point2f> CurveSeg::getFittedPoints(int numSamples) const {
     return fittedPoints;
 }
 
-std::vector<cv::Point2f> CurveSeg::getControlPoints() const {
-    return m_controlPoints;
-}
+std::vector<cv::Point2f> CurveSeg::getControlPoints() const { return m_controlPoints; }
 
 cv::Point2f CurveSeg::evaluate(float u) const {
     if (!m_isFitted) {
@@ -91,8 +87,7 @@ cv::Point2f CurveSeg::evaluate(float u) const {
 
     try {
         std::vector<tinyspline::real> result = m_spline.eval(u).result();
-        return cv::Point2f(static_cast<float>(result[0]),
-                           static_cast<float>(result[1]));
+        return cv::Point2f(static_cast<float>(result[0]), static_cast<float>(result[1]));
     } catch (const std::exception& e) {
         std::cout << "评估样条曲线失败: " << e.what() << std::endl;
         return cv::Point2f(0, 0);
@@ -110,9 +105,7 @@ cv::Vec4f CurveSeg::getTangent(float u) const {
         tinyspline::BSpline derivative = m_spline.derive();
         std::vector<tinyspline::real> tangent = derivative.eval(u).result();
         // return cv::Vec4f(point.x, point.y, tangent[0], tangent[1]);
-        return cv::Vec4f(static_cast<float>(tangent[0]),
-                         static_cast<float>(tangent[1]),
-                         point.x, point.y);
+        return cv::Vec4f(static_cast<float>(tangent[0]), static_cast<float>(tangent[1]), point.x, point.y);
     } catch (const std::exception& e) {
         std::cout << "计算切线失败: " << e.what() << std::endl;
         return cv::Vec4f(0, 0, 0, 0);
@@ -147,8 +140,7 @@ void CurveSeg::drawCurve(cv::Mat& image, const cv::Scalar& color, int thickness)
     }
 }
 
-void CurveSeg::drawControlPoints(cv::Mat& image, const cv::Scalar& pointColor,
-                                 const cv::Scalar& polygonColor) const {
+void CurveSeg::drawControlPoints(cv::Mat& image, const cv::Scalar& pointColor, const cv::Scalar& polygonColor) const {
     if (m_controlPoints.empty()) return;
 
     // 绘制控制多边形
@@ -158,27 +150,24 @@ void CurveSeg::drawControlPoints(cv::Mat& image, const cv::Scalar& pointColor,
     }
 
     for (size_t i = 0; i < intControlPoints.size() - 1; ++i) {
-        cv::line(image, intControlPoints[i], intControlPoints[i+1],
-                 polygonColor, 1, cv::LINE_AA);
+        cv::line(image, intControlPoints[i], intControlPoints[i + 1], polygonColor, 1, cv::LINE_AA);
     }
 
     // 绘制控制点
     for (const auto& pt : intControlPoints) {
-        cv::circle(image, pt, 4, pointColor, -1); // 实心圆
-        cv::circle(image, pt, 4, cv::Scalar(0, 0, 0), 1); // 黑色边框
+        cv::circle(image, pt, 4, pointColor, -1);          // 实心圆
+        cv::circle(image, pt, 4, cv::Scalar(0, 0, 0), 1);  // 黑色边框
     }
 }
 
 /**
-* @brief 判断点A是否在点B的顺时针方向（相对于参考点）
-* @param pointA 第一个点
-* @param pointB 第二个点
-* @param referencePoint 参考点
-* @return 如果点A在点B的顺时针方向返回true，否则返回false
-*/
-bool CurveSeg::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const
-{
-
+ * @brief 判断点A是否在点B的顺时针方向（相对于参考点）
+ * @param pointA 第一个点
+ * @param pointB 第二个点
+ * @param referencePoint 参考点
+ * @return 如果点A在点B的顺时针方向返回true，否则返回false
+ */
+bool CurveSeg::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const {
     // 将参考点作为原点，计算相对坐标
     cv::Point2f relA = pointA - referencePoint;
     cv::Point2f relB = pointB - referencePoint;
@@ -187,12 +176,10 @@ bool CurveSeg::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& 
     float det = relA.x * relB.y - relA.y * relB.x;
 
     // 如果叉积为正，b在a顺时针方向
-    if (det > 0)
-        return false;
+    if (det > 0) return false;
 
     // 如果叉积为负，a在b顺时针方向
-    if (det < 0)
-        return true;
+    if (det < 0) return true;
 
     // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
     float d1 = relA.x * relA.x + relA.y * relA.y;
@@ -201,16 +188,14 @@ bool CurveSeg::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& 
 }
 
 /**
-* @brief 以参考点为原点建立坐标系，将两个点按逆时针方向排序
-* @param pointA 第一个点
-* @param pointB 第二个点
-* @param referencePoint 参考点
-* @return 排序后的点对，第一个点在前，第二个点在后（按逆时针方向）
-*/
-std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const cv::Point2f& pointA,
-                                                                         const cv::Point2f& pointB,
-                                                                         const cv::Point2f& referencePoint)
-{
+ * @brief 以参考点为原点建立坐标系，将两个点按逆时针方向排序
+ * @param pointA 第一个点
+ * @param pointB 第二个点
+ * @param referencePoint 参考点
+ * @return 排序后的点对，第一个点在前，第二个点在后（按逆时针方向）
+ */
+std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const cv::Point2f& pointA, const cv::Point2f& pointB,
+                                                                         const cv::Point2f& referencePoint) {
     std::pair<cv::Point2f, cv::Point2f> pointPair;
     if (isPointClockwiseTo(pointA, pointB, referencePoint)) {
         pointPair.first = pointA;
@@ -223,17 +208,15 @@ std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const c
 }
 
 /**
-* @brief 自动获取轮廓端点并按参考点逆时针方向排序
-* @param referencePoint 参考点
-* @return 排序后的端点对，包含点的坐标和对应的u值
-*/
-std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f& referencePoint)
-{
+ * @brief 自动获取轮廓端点并按参考点逆时针方向排序
+ * @param referencePoint 参考点
+ * @return 排序后的端点对，包含点的坐标和对应的u值
+ */
+std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f& referencePoint) {
     // 检查轮廓是否已拟合
     if (!m_isFitted) {
         std::cout << "轮廓尚未拟合" << std::endl;
-        return std::make_pair(EndpointInfo(cv::Point2f(0, 0), 0.0f),
-                              EndpointInfo(cv::Point2f(0, 0), 0.0f));
+        return std::make_pair(EndpointInfo(cv::Point2f(0, 0), 0.0f), EndpointInfo(cv::Point2f(0, 0), 0.0f));
     }
 
     // 获取轮廓的两个端点（首尾点）及其对应的u值
@@ -254,33 +237,3 @@ std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f&
         return std::make_pair(ep2, ep1);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

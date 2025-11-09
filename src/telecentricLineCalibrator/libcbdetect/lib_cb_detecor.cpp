@@ -17,6 +17,7 @@ void LibCBDetector::detect(const std::string& image_path, cbdetect::CornerType c
     cbdetect::Corner corners;
     std::vector<cbdetect::Board> boards;
     cbdetect::Params params;
+    std::vector<std::vector<cv::Point2d>> board_points_sorted;
     params.corner_type = corner_type;
 
     cv::Mat img = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
@@ -52,10 +53,10 @@ void LibCBDetector::processImagesInDirectory(const std::string& dir_path) {
     QDir dir(QString::fromStdString(dir_path));
     QStringList filters;
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
-
+    PLOGD << "正在检测棋盘格 ";
     for (const QFileInfo& fileInfo : files) {
         std::string file_path = fileInfo.absoluteFilePath().toStdString();
-        std::cout << "正在检测第 " << file_counter++ << " 图像: " << file_path << std::endl;
+        PLOGD << "正在检测第 " << file_counter++ << " 图像: " << file_path;
         detect(file_path, cbdetect::SaddlePoint);  // 选择你需要的 CornerType
     }
 }
@@ -71,7 +72,7 @@ void LibCBDetector::saveBoardPoints(const std::vector<cv::Point2d>& points) {
 #endif
     char timestamp[64];
     std::strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tm);
-    std::string txtFile = "./example_data2/txt/Board1_Points_" + std::string(timestamp) + ".txt";
+    std::string txtFile = "./data/CISCamera_Image/txt/Board1_Points_" + std::string(timestamp) + ".txt";
 
     std::ofstream ofs(txtFile);
     if (ofs.is_open()) {

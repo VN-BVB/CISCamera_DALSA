@@ -1,4 +1,4 @@
-#include <plog/Init.h>
+﻿#include <plog/Init.h>
 #include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Initializers/RollingFileInitializer.h>
 #include <plog/Log.h>
@@ -9,12 +9,10 @@
 #include <windows.h>
 // clang-format on
 #include "src/crashHandler/CrashHandler.h"
-#include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
-#include "src/ui/ImageViewWindow.h"
-
 #include "src/test/test_tiny_spline.h"
+#include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 
-void initPlog(); // 初始化日志类
+void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
@@ -37,6 +35,7 @@ void initPlog() {
 // #include <fstream>
 // #include <iostream>
 // #include <vector>
+
 // #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 // namespace fs = std::filesystem;
 
@@ -96,7 +95,7 @@ void initPlog() {
 
 //     // 图像参数
 //     const double dx = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
-//     const double dy = 17 / 800;       // 正方像素 （2（D + 1 ） / M）
+//     const double dy = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）17.0 / 800.0
 //     const int width = 30688, height = 16100;
 
 //     // 输出结果
@@ -135,7 +134,7 @@ void initPlog() {
 //         )");
 
 //         std::string scriptPath =
-//             R"(D:\Code\CISCamera_DALSA\src\telecentricLineCalibrator\python\Telecentric-Calibration-main\main.py)";
+//             R"(D:\Code\CISCamera_DALSA\src\telecentricLineCalibrator\python\Telecentric-Calibration-main\load.py)";
 
 //         pybind11::eval_file(scriptPath);
 

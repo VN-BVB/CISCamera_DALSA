@@ -16,3 +16,4 @@ data/CISCamera_Image/
 *.png
 *.jpg
 *.pyc
+*.idea/

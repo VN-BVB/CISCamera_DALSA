@@ -660,7 +660,7 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     u0_ = width / 2.0;
     v0_ = height / 2.0;
 
-    std::cout << "初始化主点为图像中心 (" << u0_ << ", " << v0_ << ")\n";
+    std::cout << "初始化主点为图像中心 (" << u0_ << ", " << v0_ << ")\n" << std::endl;
 
     std::vector<Eigen::Matrix3d> homographies;
     std::vector<double> m_values, reprojErrors;
@@ -726,8 +726,8 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     double rmse_before = rmse_out;
     K_out = K_;
 
-    std::cout << "\n=== 点集标定完成 ===\n";
-    std::cout << "K = \n" << K_ << "\n平均重投影误差 = " << rmse_out << " 像素\n";
+    std::cout << "\n=== 点集标定完成 ===" << std::endl;
+    std::cout << "K = \n" << K_ << "\n平均重投影误差 = " << rmse_out << " 像素" << std::endl;
     // -------------------------- 非线性优化前保存【初步估计内参+外参】 --------------------------
     CalibrationData calib;
     calib.m = m_;
@@ -746,30 +746,12 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     if (!calib.save(calib_data_path_)) {
         PLOGE << "警告：保存初步估计参数失";
     } else {
-        PLOGD << "非线性优化前的初步估计参数已保存：" << calib_data_path_;
+        std::cout << "非线性优化前的初步估计参数已保存：" << calib_data_path_ << std::endl;
     }
-    // -------------------------- 2. 新实例读取验证 --------------------------
-    CalibrationData calib_check;
-    if (!calib_check.load("./data/calibration_config/optimized_calib_data.json")) {
-        PLOGE << "读取验证失败：" << "./data/calibration_config/optimized_calib_data.json";
-        return false;
+    TelecentricPYOptimizer opt;
+    if (!opt.invokeTelecentricCalibration()) {
+        PLOGE << "Python 调用失败！";
     }
-
-    // -------------------------- 3. 打印检查 --------------------------
-    std::cout << "\n===== [校准参数验证输出] =====\n";
-    std::cout << "m   = " << calib_check.m << "\n";
-    std::cout << "dx  = " << calib_check.dx << "\n";
-    std::cout << "dy  = " << calib_check.dy << "\n";
-    std::cout << "u0  = " << calib_check.u0 << "\n";
-    std::cout << "v0  = " << calib_check.v0 << "\n";
-    std::cout << "K =\n" << calib_check.K << "\n";
-    std::cout << "coff_dis = " << calib_check.coff_dis << "\n";
-
-    for (size_t i = 0; i < calib_check.v_rot.size(); ++i) {
-        std::cout << "Pose " << i << " rvec = " << calib_check.v_rot[i].transpose()
-                  << ", t = " << calib_check.v_trans[i].transpose() << "\n";
-    }
-    std::cout << "=================================\n";
     return true;
 }
 Eigen::Vector3d TelecentricLineCalibrator::rotMatToVec(const Eigen::Matrix3d& R) const {

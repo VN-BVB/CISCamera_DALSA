@@ -1,6 +1,7 @@
 ﻿#ifndef TELECENTRIC_LM_OPTIMIZER_H
 #define TELECENTRIC_LM_OPTIMIZER_H
 #define _USE_MATH_DEFINES
+
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <cmath>

@@ -1,8 +1,12 @@
 ﻿#ifndef TELECENTRIC_LINE_CALIBRATOR_H
 #define TELECENTRIC_LINE_CALIBRATOR_H
 #define _USE_MATH_DEFINES
+// clang-format off
+#include "py_telecentric_optimizer.h"
+// clang-format on
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <QObject>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -23,7 +27,8 @@ enum class PatternType { CHESSBOARD, CIRCLES_GRID, ASYMMETRIC_CIRCLES_GRID };
 //     Eigen::Vector3d t;
 //     double reprojErr;
 // };
-class TelecentricLineCalibrator {
+class TelecentricLineCalibrator : public QObject {
+    Q_OBJECT
 public:
     TelecentricLineCalibrator();
     Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d& R) const;

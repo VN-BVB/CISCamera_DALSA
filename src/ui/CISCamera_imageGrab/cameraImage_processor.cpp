@@ -1,4 +1,4 @@
-#include "cameraImage_processor.h"
+﻿#include "cameraImage_processor.h"
 
 CameraImageProcessor::CameraImageProcessor(QObject* parent) : QObject(parent) {}
 
@@ -11,7 +11,7 @@ void CameraImageProcessor::setSpliceEnabled(bool enabled) {
 
 void CameraImageProcessor::processSingle(std::shared_ptr<cv::Mat> image) {
     if (!image || image->empty()) {
-        emit error(QString(u8"单图处理：输入为空"));
+        // emit error(QString(u8"单图处理：输入为空"));
         return;
     }
     {
@@ -78,7 +78,8 @@ bool CameraImageProcessor::prepareForConcat(const cv::Mat& m, const cv::Mat& s, 
     return true;
 }
 
-void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave, bool spliceEnabledFromCaller) {
+void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave,
+                                       bool spliceEnabledFromCaller) {
     if (!master || master->empty()) {
         emit error(QString(u8"拼接：Master 为空"));
         return;
@@ -109,7 +110,7 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
     // 准备拼接
     cv::Mat mAligned, sAligned;
     if (!prepareForConcat(*master, *slave, mAligned, sAligned)) {
-        emit error(QString(u8"拼接前对齐失败：尺寸/通道/深度不兼容"));
+        // emit error(QString(u8"拼接前对齐失败：尺寸/通道/深度不兼容"));
         // 回退 master
         {
             QMutexLocker locker(&mtx_);
@@ -260,4 +261,28 @@ void CameraImageProcessor::clear() {
     lastSlave_.reset();
     lastResult_.reset();
     emit text(QString(u8"处理缓存已清空"));
+}
+bool CameraImageProcessor::readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pts) {
+    std::ifstream fin(path);
+    if (!fin.is_open()) {
+        std::cerr << "无法打开文件: " << path << std::endl;
+        return false;
+    }
+
+    std::string line;
+    pts.clear();
+    // 跳过第一行标题
+    std::getline(fin, line);
+
+    double idx, x, y;
+    while (fin >> idx >> x >> y) {
+        pts.emplace_back(x, y);
+    }
+
+    if (pts.empty()) {
+        std::cerr << "文件 " << path << " 无有效点。" << std::endl;
+        return false;
+    }
+    std::cout << "读取 " << path << " 成功，共 " << pts.size() << " 个点\n";
+    return true;
 }

@@ -1,10 +1,10 @@
 import os
+import time
 import json
 import numpy as np
-import calibrator_helper
-from Pattern_Info import PatternInfo
-
-
+from Calibrator.calibrator import Calibrator
+from Calibrator import calibrator_helper
+from corner_detector import PatternInfo
 def read_points_from_txt(path):
     """
     从txt文件中读取点数据
@@ -41,8 +41,6 @@ def read_points_from_txt(path):
     except Exception as e:
         print(f"无法打开或读取文件 {path}: {str(e)}")
         return False, None
-
-
 def load_calibration_from_cereal_json(path):
     with open(path, "r") as f:
         data = json.load(f)
@@ -91,10 +89,7 @@ def load_calibration_from_cereal_json(path):
 if __name__=="__main__":
     # 用法示例
     m, dx, dy, u0, v0, K, coff_dis, v_rot, v_trans = load_calibration_from_cereal_json("D:/Code/CISCamera_DALSA/data/calibration_config/before_optimization_calib_data.json")
-
-    # PatternInfo 示例，假设PatternInfo是你自定义的类
-    pattern_info = PatternInfo(0, (8, 11), 10, (dx * 1000 , dy * 1000), 0)
-
+    pattern_info = PatternInfo(0, (8,11), 10, (dx*1000,dy*1000),0)
     # 生成标定板的世界坐标
     w, h = pattern_info.shape
     cp_int = np.zeros((w * h, 3), np.float32)
@@ -117,18 +112,19 @@ if __name__=="__main__":
             if ret:
                 points_world.append(cp_world)
                 points_pixel.append(cp_img2)
-
     if not points_pixel:
         print("没有成功读取任何点数据")
     else:
         print(f"成功读取 {len(points_pixel)} 个点数据")
     coff_dis = coff_dis[0]
-    theta =0.0
+    theta = 0.0
     print("正在进行非线性优化...")
+    s=time.time()
     # # 进行非线性优化
-    ret, K_opt, coff_dis_opt, v_rot_opt, v_trans_opt, base_params = calibrator_helper.refine_params_with_distortion_basic(points_world, points_pixel,
-                                                                                                              m, dx, dy, theta, u0, v0,
-                                                                                                              coff_dis, v_rot, v_trans)
+    ret, K_opt, coff_dis_opt, v_rot_opt, v_trans_opt, base_params = calibrator_helper.refine_params_with_distortion_basic(
+        points_world, points_pixel,
+        m, dx, dy, theta, u0, v0,
+        coff_dis, v_rot, v_trans)
     # ret, K_opt, coff_dis_opt, v_rot_opt, v_trans_opt = calibrator_helper.refine_params_with_distortion(
     #     points_world, points_pixel, K, coff_dis, v_rot, v_trans
     # )
@@ -180,5 +176,8 @@ if __name__=="__main__":
     optimized_json_file_path = "D:/Code/CISCamera_DALSA/data/calibration_config/optimized_calib_data.json"
     with open(optimized_json_file_path, 'w') as f:
         json.dump(optimized_data, f, indent=4)
-    print(f"优化后的角度:{ base_params[3]}")
+    print(f"优化后的角度:{base_params[3]}")
     print(f"优化后的结果已保存到 {optimized_json_file_path}")
+    e=time.time()
+    print(f"耗费时间：{e-s}s")
+

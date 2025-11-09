@@ -1,13 +1,17 @@
 ﻿#ifndef CAMERAIMAGE_PROCESSOR_H
 #define CAMERAIMAGE_PROCESSOR_H
+#include <Eigen/Dense>
 #include <QDateTime>
 #include <QDir>
 #include <QMutex>
 #include <QObject>
 #include <QString>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <opencv2/opencv.hpp>
-
+#include <vector>
 class CameraImageProcessor : public QObject {
     Q_OBJECT
 public:
@@ -17,6 +21,7 @@ public:
     // 可选：开关拼接（也可在每次调用时传入）
     void setSpliceEnabled(bool enabled);
 
+    bool readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pts);
 signals:
     void imageReady(std::shared_ptr<cv::Mat> result);
     void text(const QString& msg);
@@ -31,7 +36,8 @@ public slots:
     // 保存最近一次处理结果（或回退到master/slave）
     // dir：目录；prefix：文件前缀；ext：后缀（".png" ".tif" ".exr" …）
     // alsoSaveSingles：是否同时保存 master/slave（若存在）
-    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png", bool alsoSaveSingles = false);
+    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png",
+                    bool alsoSaveSingles = false);
 
     // 清空内部缓存
     void clear();

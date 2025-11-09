@@ -63,7 +63,8 @@
         "cinttypes": "cpp",
         "typeindex": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "future": "cpp"
     },
     "cmake.sourceDirectory": "D:/Code/CISCamera_DALSA/3rdParty/plog"
 }

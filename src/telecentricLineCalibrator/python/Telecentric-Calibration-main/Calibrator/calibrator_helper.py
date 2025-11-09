@@ -328,13 +328,10 @@ def refine_params_with_distortion(points_world, points_pixel, mat_intri, coff_di
     return ret, K, [k1, k2,p1, p2, k3], v_rot, v_trans
 
 def refine_params_with_distortion_lm(points_world, points_pixel, mat_intri, coff_dis, v_rot, v_trans):
-    """
-    LM优化内参，畸变系数，所有外参
-    """
-    points_pixel = np.array(points_pixel)
-    points_world = np.array(points_world)
+    # 你的前半部分不变：打包参数等
+    points_pixel = np.array(points_pixel, dtype=np.float64)
+    points_world = np.array(points_world, dtype=np.float64)
 
-    # 打包所有参数
     packed_params = []
     alpha, beta, gamma, u_c, v_c = mat_intri[0, 0], mat_intri[1, 1], mat_intri[0, 1], mat_intri[0, 2], mat_intri[1, 2]
     k1, k2, p1, p2, k3 = coff_dis
@@ -344,77 +341,132 @@ def refine_params_with_distortion_lm(points_world, points_pixel, mat_intri, coff
         t_x, t_y = v_trans[i]
         packed_params.extend([rho_x, rho_y, rho_z, t_x, t_y])
 
-    # LM 不支持边界约束，所以忽略 bounds
-    x0 = np.array(packed_params)
+    x0 = np.array(packed_params, dtype=np.float64)
 
-    # 定义残差函数
+    # bounds（确保长度正确）
+    min_bounds = np.full_like(x0, -np.inf, dtype=np.float64)
+    max_bounds = np.full_like(x0, np.inf, dtype=np.float64)
+    # 限制 u_c, v_c（注意索引：0..）
+    min_bounds[3], max_bounds[3] = u_c - 2.0, u_c + 2.0
+    min_bounds[4], max_bounds[4] = v_c - 2.0, v_c + 2.0
+    # 建议限制畸变范围（可选，避免发散）
+    min_bounds[5:10] = [-0.5, -0.5, -0.05, -0.05, -0.5]
+    max_bounds[5:10] = [0.5, 0.5, 0.05, 0.05, 0.5]
+
+    bounds = (min_bounds, max_bounds)
+
+    # ---------- 定义残差函数，返回一维残差向量 ----------
     def residuals(params):
+        # 防护：参数中出现 NaN 或 inf 直接返回大残差
+        if np.any(np.isnan(params)) or np.any(np.isinf(params)):
+            return np.ones(points_pixel.size) * 1e6
+
         alpha, beta, gamma, u_c, v_c = params[:5]
         k1, k2, p1, p2, k3 = params[5:10]
-        coff_dis = [k1, k2, p1, p2, k3]
+        coff = np.array([k1, k2, p1, p2, k3], dtype=np.float64)
         v_RT = params[10:]
         res_list = []
 
+        # 逐视角投影并计算残差
         for i in range(len(points_world)):
-            world = np.array(points_world[i])
-            world[:, 2] = 1  # 齐次
-            rt = v_RT[i*5:(i+1)*5]
+            world = np.array(points_world[i], dtype=np.float64).reshape(-1, 3)
+            world[:, 2] = 1.0
+            rt = v_RT[i * 5:(i + 1) * 5]
+            # 防护：若 rt 有 NaN/inf 跳出
+            if np.any(np.isnan(rt)) or np.any(np.isinf(rt)):
+                return np.ones(points_pixel.size) * 1e6
             R, _ = cv2.Rodrigues(rt[:3])
-            RT_mat = np.eye(3)
+            RT_mat = np.eye(3, dtype=np.float64)
             RT_mat[:2, :2] = R[:2, :2]
             RT_mat[:2, 2] = rt[3:5]
-
-            y_pre = (RT_mat @ world.T).T
-            y_dis = distort(coff_dis, y_pre)
+            y_pre = (RT_mat @ world.T).T  # Nx3
+            y_dis = distort(coff, y_pre)  # 你的 distort 函数必须返回 Nx3 (齐次)
             K = np.array([[alpha, gamma, u_c],
                           [0., beta, v_c],
-                          [0., 0., 1.]])
-            y_pre = (K @ y_dis.T).T
-            y_pre2d = y_pre[:, :2]
-            res = (y_pre2d - points_pixel[i]).reshape(-1)
+                          [0., 0., 1.]], dtype=np.float64)
+            y_proj = (K @ y_dis.T).T  # Nx3
+            y2d = y_proj[:, :2]
+            # 保护：若出现 NaN/inf，返回大残差
+            if np.any(np.isnan(y2d)) or np.any(np.isinf(y2d)):
+                return np.ones(points_pixel.size) * 1e6
+            res = (y2d - points_pixel[i]).reshape(-1)
             res_list.append(res)
+
         return np.concatenate(res_list)
 
-    # 调用 LM
-    result = least_squares(residuals, x0, method='lm', max_nfev=200000)
+    # ---------- 每次迭代回调打印 & 写文件 ----------
+    iter_state = {'idx': 0}
+    loss_log_path = r"D:\Code\CISCamera_DALSA\data\CISCamera_Image\logs\lm_iter_loss.txt"
+    # 清空文件
+    import os
+    os.makedirs(os.path.dirname(loss_log_path), exist_ok=True)
+    with open(loss_log_path, 'w') as ff:
+        ff.write("iter,mse\n")
 
-    # 解包优化后的参数
+    def ls_callback(xk, *args, **kwargs):
+        iter_state['idx'] += 1
+        res = residuals(xk)
+        mse = np.mean(res ** 2)
+        msg = f"Iter {iter_state['idx']:04d} | MSE={mse:.6e}"
+        print(msg)
+        with open(loss_log_path, 'a') as ff:
+            ff.write(f"{iter_state['idx']},{mse:.12e}\n")
+
+    # ---------- 调用 least_squares（trf 更稳健且支持 bounds & callback） ----------
+    result = least_squares(residuals, x0, bounds=bounds, method='trf',
+                           max_nfev=200000, verbose=0, xtol=1e-12, ftol=1e-12,
+                           gtol=1e-12, callback=ls_callback)
+
+    if not result.success:
+        print("⚠️ least_squares 没有成功收敛：", result.message)
+
     params_refined = result.x
-    alpha, beta, gamma, u_c, v_c = params_refined[:5]
+
+    # ---------- 后处理（与你原来一致） ----------
+    intrinsics = params_refined[:5]
+    alpha, beta, gamma, u_c, v_c = intrinsics
     K = np.array([[alpha, gamma, u_c],
                   [0., beta, v_c],
                   [0., 0., 1.]])
     k1, k2, p1, p2, k3 = params_refined[5:10]
-
     rt_v = params_refined[10:]
-    m = len(rt_v) // 5
-    v_rot_refined = []
-    v_trans_refined = []
+    m = int(len(rt_v) / 5)
+    v_rot = []
+    v_trans = []
     for i in range(m):
-        v_rot_refined.append(rt_v[i*5:i*5+3])
-        v_trans_refined.append(rt_v[i*5+3:i*5+5])
-    v_rot_refined = np.array(v_rot_refined)
-    v_trans_refined = np.array(v_trans_refined)
+        v_rot.append(rt_v[i * 5:i * 5 + 3])
+        v_trans.append(rt_v[i * 5 + 3:(i + 1) * 5])
+    v_rot = np.array(v_rot)
+    v_trans = np.array(v_trans)
 
-    # 计算重投影误差
+    # 计算重投影误差并保存点（保持你原逻辑）
     loss_list = []
+    save_dir = r"D:\Code\CISCamera_DALSA\data\CISCamera_Image\txt3"
+    os.makedirs(save_dir, exist_ok=True)
     for i in range(len(points_world)):
-        world = points_world[i].reshape(-1,3)
-        world[:,2] = 1
-        pixel = points_pixel[i].reshape(-1,2)
-        r_m, _ = cv2.Rodrigues(v_rot_refined[i])
-        RT_mat = np.eye(3)
-        RT_mat[:2,:2] = r_m[:2,:2]
-        RT_mat[:2,2] = v_trans_refined[i].T
-        y_pre = (RT_mat @ world.T).T
-        y_dis = distort([k1,k2,p1,p2,k3], y_pre)
+        world = points_world[i].reshape(-1, 3)
+        world[:, 2] = 1
+        pixel = points_pixel[i].reshape(-1, 2)
+        r_m, _ = cv2.Rodrigues(v_rot[i])
+        rt_matri = np.eye(3)
+        rt_matri[:2, :2] = r_m[:2, :2]
+        rt_matri[:2, 2] = v_trans[i].T
+        y_pre = (rt_matri @ world.T).T
+        y_dis = distort([k1, k2, p1, p2, k3], y_pre)
         y_pre = (K @ y_dis.T).T
-        y_pre2d = y_pre[:,:2]
-        loss = np.linalg.norm(y_pre2d - pixel, axis=1)
+        y_pre = y_pre[:, :2]
+        txt_path = os.path.join(save_dir, f"img_{i + 1}_reproj_pts.txt")
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write("# Index\tX\tY\n")
+            for pt_idx in range(len(y_pre)):
+                x_reproj = y_pre[pt_idx, 0]
+                y_reproj = y_pre[pt_idx, 1]
+                f.write(f"{pt_idx}\t{x_reproj:.6f}\t{y_reproj:.6f}\n")
+        loss = np.linalg.norm(y_pre - pixel, axis=1)
         loss_list.append(np.mean(loss))
 
     ret = np.mean(loss_list)
-    return ret, K, [k1,k2,p1,p2,k3], v_rot_refined, v_trans_refined
+    return ret, K, [k1, k2, p1, p2, k3], v_rot, v_trans
 # 迭代优化法去畸变
 def undistort_points(points, K, D, criteria=None):
     """
@@ -481,3 +533,147 @@ def undistort_points(points, K, D, criteria=None):
         undistorted_points.append([x*fx+cx, y*fx+cy])
 
     return np.array(undistorted_points)
+
+
+def refine_params_with_distortion_basic(
+        points_world, points_pixel,
+        m, dx, dy, theta, u0, v0,
+        coff_dis, v_rot, v_trans
+):
+    points_pixel = np.array(points_pixel)
+    points_world = np.array(points_world)
+
+    # ---------------------- 打包参数（直接使用输入的基础参数作为初始值） ----------------------
+    packed_params = []
+    # 1. 6个内参基础参数（优化目标，初始值为输入值）
+    packed_params.extend([m, dx, dy, theta, u0, v0])
+    # 2. 5个畸变系数（优化目标）
+    k1, k2, p1, p2, k3 = coff_dis
+    packed_params.extend([k1, k2, p1, p2, k3])
+    # 3. 外参（每个视角：3旋转向量 + 2平移向量）
+    for i in range(len(v_rot)):
+        rho_x, rho_y, rho_z = v_rot[i]
+        t_x, t_y = v_trans[i]
+        packed_params.extend([rho_x, rho_y, rho_z, t_x, t_y])
+
+    # ---------------------- 设置参数边界（根据物理意义约束） ----------------------
+    min_bounds = [-np.inf] * len(packed_params)
+    max_bounds = [np.inf] * len(packed_params)
+    # 内参基础参数边界
+    print(m, dx, dy, theta, u0, v0)
+    min_bounds[4], max_bounds[4] = u0 - 2, u0 + 2
+    min_bounds[5], max_bounds[5] = v0 - 5, v0 + 5
+    # min_bounds[6], max_bounds[6] = v_c - 1, v_c + 1
+    # min_bounds[7], max_bounds[7] = u_c - 1, u_c + 1
+    # min_bounds[8], max_bounds[8] = v_c - 1, v_c + 1
+    # min_bounds[9], max_bounds[9] = u_c - 1, u_c + 1
+    bounds = (min_bounds, max_bounds)
+
+    # ---------------------- 投影函数（基础参数推导内参K） ----------------------
+    def project(x_data, *params):
+        # 解包参数
+        m_opt, dx_opt, dy_opt, theta_opt, u0_opt, v0_opt = params[:6]  # 优化后的基础参数
+        k1_opt, k2_opt, p1_opt, p2_opt, k3_opt = params[6:11]  # 优化后的畸变系数
+        v_RT_opt = params[11:]  # 优化后的外参
+
+        # 由基础参数推导内参矩阵K（严格对应公式）
+        K = np.eye(3)
+        K[0, 0] = m_opt / dx_opt  # α = m/dx
+        K[0, 1] = -m_opt * np.tan(theta_opt) / dx_opt  # γ = -m·tanθ/dx
+        K[0, 2] = u0_opt  # u₀
+        K[1, 1] = 1 / (dy_opt * np.cos(theta_opt))  # β = 1/(dy·cosθ)
+        K[1, 2] = v0_opt / m_opt  # v₀/m（公式对应项）
+        coff_dis_opt = np.array([k1_opt, k2_opt, p1_opt, p2_opt, k3_opt])
+
+        y_pre_list = []
+        for i in range(len(x_data)):
+            # 世界坐标（齐次化）
+            world = np.array(x_data[i]).reshape(-1, 3)
+            world[:, 2] = 1  # 齐次坐标z=1
+            # 当前视角外参
+            rt = v_RT_opt[i * 5: (i + 1) * 5]  # [rho_x, rho_y, rho_z, t_x, t_y]
+            # 旋转向量→旋转矩阵
+            rotation_matrix, _ = cv2.Rodrigues(rt[:3])
+            # 外参矩阵（3x3）
+            rt_matri = np.eye(3)
+            rt_matri[:2, :2] = rotation_matrix[:2, :2]  # 旋转部分
+            rt_matri[:2, 2] = rt[3:5]  # 平移部分（t_x, t_y）
+
+            # 投影计算：世界坐标→归一化平面→畸变→像素坐标
+            y_normalized = (rt_matri @ world.T).T  # 世界坐标→归一化平面（无畸变）
+            y_distorted = distort(coff_dis_opt, y_normalized)  # 畸变校正
+            y_pixel = (K @ y_distorted.T).T  # 归一化平面→像素坐标
+            y_pre_list.append(y_pixel[:, :2])  # 取前两列（u, v）
+
+        return np.array(y_pre_list).reshape(-1)  # 展平为1D数组（匹配curve_fit要求）
+
+    # ---------------------- 执行优化 ----------------------
+    popt, pcov = curve_fit(project, points_world, points_pixel.reshape(-1), packed_params, bounds=bounds,
+                           maxfev=10000000)
+
+    # ---------------------- 解包优化结果 ----------------------
+    # 1. 内参基础参数
+    m_refined, dx_refined, dy_refined, theta_refined, u0_refined, v0_refined = popt[:6]
+    print(
+        f"Refined params: m={m_refined:.6f}, dx={dx_refined:.6f}, dy={dy_refined:.6f}, theta={theta_refined:.6f}, u0={u0_refined:.6f}, v0={v0_refined:.6f}")
+    # 2. 由基础参数推导内参矩阵K
+    K_refined = np.array([
+        [m_refined / dx_refined, -m_refined * np.tan(theta_refined) / dx_refined, u0_refined],
+        [0., 1 / (dy_refined * np.cos(theta_refined)), v0_refined / m_refined],
+        [0., 0., 1.]
+    ])
+    print(f"Refined K:\n{K_refined}")
+    # 3. 畸变系数
+    k1_refined, k2_refined, p1_refined, p2_refined, k3_refined = popt[6:11]
+    # 4. 外参
+    rt_refined = popt[11:]
+    n_views = len(v_rot)
+    v_rot_refined = []
+    v_trans_refined = []
+    for i in range(n_views):
+        v_rot_refined.append(rt_refined[i * 5: i * 5 + 3])  # 旋转向量（3个）
+        v_trans_refined.append(rt_refined[i * 5 + 3: (i + 1) * 5])  # 平移向量（2个）
+    v_rot_refined = np.array(v_rot_refined)
+    v_trans_refined = np.array(v_trans_refined)
+
+    # ---------------------- 计算重投影误差并保存结果 ----------------------
+    loss_list = []
+    save_dir = r"D:\Code\CISCamera_DALSA\data\CISCamera_Image\txt3"
+    os.makedirs(save_dir, exist_ok=True)
+
+    for i in range(n_views):
+        # 世界坐标和像素坐标
+        world_points = points_world[i].reshape(-1, 3)
+        world_points[:, 2] = 1  # 齐次化
+        pixel_gt = points_pixel[i].reshape(-1, 2)
+        # 外参矩阵
+        rot_mat, _ = cv2.Rodrigues(v_rot_refined[i])
+        rt_matri = np.eye(3)
+        rt_matri[:2, :2] = rot_mat[:2, :2]
+        rt_matri[:2, 2] = v_trans_refined[i].T
+        # 重投影
+        y_normalized = (rt_matri @ world_points.T).T
+        y_distorted = distort([k1_refined, k2_refined, p1_refined, p2_refined, k3_refined], y_normalized)
+        y_reproj = (K_refined @ y_distorted.T).T[:, :2]
+        # 保存重投影点
+        txt_path = os.path.join(save_dir, f"img_{i + 1}_reproj_pts.txt")
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write("# Index\tX_reproj\tY_reproj\n")
+            for idx, (x, y) in enumerate(y_reproj):
+                f.write(f"{idx}\t{x:.6f}\t{y:.6f}\n")
+        # 计算单视角误差
+        loss = np.linalg.norm(y_reproj - pixel_gt, axis=1).mean()
+        loss_list.append(loss)
+
+    mean_loss = np.mean(loss_list)  # 平均重投影误差
+
+    # 返回优化结果（包含基础参数和推导的内参矩阵）
+    return (
+        mean_loss,
+        K_refined,  # 推导的内参矩阵
+        [k1_refined, k2_refined, p1_refined, p2_refined, k3_refined],  # 畸变系数
+        v_rot_refined,  # 旋转向量
+        v_trans_refined,  # 平移向量
+        # 额外返回优化后的基础参数（方便查看）
+        (m_refined, dx_refined, dy_refined, theta_refined, u0_refined, v0_refined)
+    )

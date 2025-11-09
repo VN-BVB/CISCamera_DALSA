@@ -117,8 +117,6 @@ void CISWidget::initCameraImageProcessor() {
     imageProcessor = std::make_shared<CameraImageProcessor>();
     processorThread = new QThread(this);
     imageProcessor->moveToThread(processorThread);
-    processorThread->start();
-
     // 信号连接
     connect(
         imageProcessor.get(), &CameraImageProcessor::imageReady, this,
@@ -134,6 +132,9 @@ void CISWidget::initCameraImageProcessor() {
 void CISWidget::initCameraCalibrator() {
     libcbDetector = std::make_shared<LibCBDetector>();
     telecentricLineCalibrator = std::make_shared<TelecentricLineCalibrator>();
+    libcbDetector->moveToThread(processorThread);
+    telecentricLineCalibrator->moveToThread(processorThread);
+    processorThread->start();
 }
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
 // 在信息框推送信息
@@ -278,6 +279,80 @@ void CISWidget::on_btnCISConfig_clicked() {
         Qt::QueuedConnection);
 }
 
-void CISWidget::on_btn_ChessboardDetector_clicked() {}
+void CISWidget::on_btn_ChessboardDetector_clicked() {
+    QMetaObject::invokeMethod(
+        libcbDetector.get(), [=]() { libcbDetector->processImagesInDirectory("./data/CISCamera_Image/qpg"); },
+        Qt::QueuedConnection);
+}
 
-void CISWidget::on_btnCameraCalibrate_clicked() {}
+void CISWidget::on_btnCameraCalibrate_clicked() {
+    all_image_points.clear();
+    std::string folder = "./data/CISCamera_Image/txt";
+
+    // 遍历文件夹读取所有txt
+    for (auto& entry : std::filesystem::directory_iterator(folder)) {
+        if (entry.path().extension() == ".txt") {
+            std::string filePath = entry.path().string();
+
+            QMetaObject::invokeMethod(
+                imageProcessor.get(),
+                [this, filePath]() {
+                    std::vector<Eigen::Vector2d> pts;
+                    if (imageProcessor->readPointsFromTxt(filePath, pts)) {
+                        QMetaObject::invokeMethod(
+                            this,
+                            [this, pts]() {
+                                this->all_image_points.push_back(pts);  // 主线程安全更新
+                            },
+                            Qt::QueuedConnection);
+                    }
+                },
+                Qt::QueuedConnection);
+        }
+    }
+
+    if (all_image_points.empty()) {
+        std::cerr << "没有读取到任何标定点文件！" << std::endl;
+    }
+
+    // 构造世界坐标系下圆心点
+    const int W = 8, H = 11;
+    const double spacingMM = 10.0;
+    std::vector<Eigen::Vector2d> worldPts;
+    worldPts.reserve(W * H);
+    for (int r = 0; r < H; ++r)
+        for (int c = 0; c < W; ++c) worldPts.emplace_back(c * spacingMM, r * spacingMM);
+
+    // 图像参数
+    const double dx = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
+    const double dy = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）
+    const int width = 30688, height = 16100;
+
+    // 输出结果
+    Eigen::Matrix3d K;
+    double rmse;
+    std::vector<Pose> poses;
+    QMetaObject::invokeMethod(
+        telecentricLineCalibrator.get(),
+        [this, worldPts, width, height, dx, dy, &K, &rmse, &poses]() {
+            // 直接调用普通函数
+            telecentricLineCalibrator->calibrateCameraFromPointsDemo(all_image_points, worldPts, width, height, dx, dy, K, rmse,
+                                                                     poses);
+        },
+        Qt::QueuedConnection);
+    // QString resultMsg;
+
+    // resultMsg += "\n========== 最终结果 ==========\n";
+    // resultMsg += "内参矩阵 K = \n";
+    // for (int i = 0; i < 3; ++i) {
+    //     resultMsg += QString("%1 %2 %3\n").arg(K(i, 0), 0, 'f', 6).arg(K(i, 1), 0, 'f', 6).arg(K(i, 2), 0, 'f', 6);
+    // }
+    // resultMsg += QString("平均重投影误差 RMSE = %1 px\n").arg(rmse, 0, 'f', 6);
+    // resultMsg += QString("共求得 %1 组外参\n").arg(poses.size());
+
+    // // 控制台输出
+    // std::cout << resultMsg.toStdString() << std::endl;
+
+    // // 推送到 UI 文本框
+    // whenAppendMessageLog(resultMsg);
+}
