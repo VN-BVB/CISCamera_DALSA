@@ -20,12 +20,16 @@ public:
     std::vector<std::vector<cv::Point>> removeDuplicateContourPoints(const std::vector<std::vector<cv::Point>> &contours);
     // 过滤轮廓
     std::vector<std::vector<cv::Point>> filterContours(const std::vector<std::vector<cv::Point>>& contours,
-                                                       double minLength = 1000.0,
+                                                       double minLength = 10.0,
                                                        int minHeight = 0,
                                                        int minWidth = 0,
                                                        double maxAspectRatio = 0);
     // 去除轮廓两端的一部分
     std::vector<cv::Point2f> trimContourEnds(const std::vector<cv::Point2f>& contour, float trimRatio);
+
+    // 根据方向向量格式 (vx, vy, x0, y0) 绘制直线并保存图像
+    void drawLineAndSave(cv::Mat& image, const cv::Vec4f& directionVector, const std::string& savePath = "");
+
 };
 
 #endif // IMAGE_TOOLS_H

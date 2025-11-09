@@ -27,8 +27,9 @@ private:
 
     // 计算中间缝隙中心线（中轴变换 + RANSAC）
     cv::Vec4f calculateCenterLineBySkeletonAndRANSAC(const cv::Mat& image);
-    // 根据方向向量格式 (vx, vy, x0, y0) 绘制直线
-    void drawLineFromDirectionVector(cv::Mat& image, const cv::Vec4f& directionVector);
+    // 根据中心线将轮廓分类到两侧
+    std::pair<std::vector<std::vector<cv::Point>>, std::vector<std::vector<cv::Point>>>
+    classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
 
 public:
     std::vector<ContourProcessor> getContourProcessor() const {return m_contourProcessor;}

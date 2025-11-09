@@ -176,3 +176,168 @@ std::vector<cv::Point2f> ImageTools::trimContourEnds(const std::vector<cv::Point
 
     return trimmedContour;
 }
+
+// 根据方向向量格式 (vx, vy, x0, y0) 绘制直线并保存图像
+void ImageTools::drawLineAndSave(cv::Mat& image, const cv::Vec4f& directionVector, const std::string& savePath) {
+    // 创建图像的副本，避免修改原始图像
+    cv::Mat resultImage = image.clone();
+
+    // 如果输入是灰度图，转换为彩色图以便绘制彩色标记
+    if (resultImage.channels() == 1) {
+        cv::cvtColor(resultImage, resultImage, cv::COLOR_GRAY2BGR);
+    }
+
+    // 提取直线参数
+    float vx = directionVector[0]; // 方向向量x分量
+    float vy = directionVector[1]; // 方向向量y分量
+    float x0 = directionVector[2]; // 直线上的点x坐标
+    float y0 = directionVector[3]; // 直线上的点y坐标
+
+    // 检查方向向量是否有效
+    float length = std::sqrt(vx * vx + vy * vy);
+    if (length < 1e-6) {
+        std::cout << "无效的方向向量" << std::endl;
+        return;
+    }
+
+    // 归一化方向向量
+    float nx = vx / length;
+    float ny = vy / length;
+
+    // 计算直线与图像边界的交点
+    std::vector<cv::Point2f> intersections;
+
+    // 使用参数方程：x = x0 + t * nx, y = y0 + t * ny
+    // 计算与图像边界的交点
+
+    // 与左边界 (x=0) 的交点
+    if (std::abs(nx) > 1e-6) {
+        float t_left = (0 - x0) / nx;
+        float y_left = y0 + t_left * ny;
+        if (y_left >= 0 && y_left < resultImage.rows) {
+            intersections.push_back(cv::Point2f(0, y_left));
+        }
+    }
+
+    // 与右边界 (x=resultImage.cols-1) 的交点
+    if (std::abs(nx) > 1e-6) {
+        float t_right = (resultImage.cols - 1 - x0) / nx;
+        float y_right = y0 + t_right * ny;
+        if (y_right >= 0 && y_right < resultImage.rows) {
+            intersections.push_back(cv::Point2f(resultImage.cols - 1, y_right));
+        }
+    }
+
+    // 与上边界 (y=0) 的交点
+    if (std::abs(ny) > 1e-6) {
+        float t_top = (0 - y0) / ny;
+        float x_top = x0 + t_top * nx;
+        if (x_top >= 0 && x_top < resultImage.cols) {
+            intersections.push_back(cv::Point2f(x_top, 0));
+        }
+    }
+
+    // 与下边界 (y=resultImage.rows-1) 的交点
+    if (std::abs(ny) > 1e-6) {
+        float t_bottom = (resultImage.rows - 1 - y0) / ny;
+        float x_bottom = x0 + t_bottom * nx;
+        if (x_bottom >= 0 && x_bottom < resultImage.cols) {
+            intersections.push_back(cv::Point2f(x_bottom, resultImage.rows - 1));
+        }
+    }
+
+    // 去重并确保有两个不同的交点
+    if (intersections.size() >= 2) {
+        // 去除重复点
+        std::vector<cv::Point2f> unique_intersections;
+        for (const auto& point : intersections) {
+            bool is_duplicate = false;
+            for (const auto& existing : unique_intersections) {
+                if (cv::norm(point - existing) < 1.0) {
+                    is_duplicate = true;
+                    break;
+                }
+            }
+            if (!is_duplicate) {
+                unique_intersections.push_back(point);
+            }
+        }
+
+        if (unique_intersections.size() >= 2) {
+            // 绘制直线（红色，线宽3像素）
+            cv::line(resultImage, unique_intersections[0], unique_intersections[1], cv::Scalar(0, 0, 255), 3);
+
+            // 绘制端点（绿色圆圈）
+            cv::circle(resultImage, unique_intersections[0], 5, cv::Scalar(0, 255, 0), -1);
+            cv::circle(resultImage, unique_intersections[1], 5, cv::Scalar(0, 255, 0), -1);
+
+            // 绘制直线上的参考点（蓝色圆圈）
+            cv::Point2f referencePoint(x0, y0);
+            cv::circle(resultImage, referencePoint, 3, cv::Scalar(255, 0, 0), -1);
+
+            // 添加文字标注
+            std::string lineInfo = "Line: vx=" + std::to_string(vx).substr(0, 6) +
+                                   ", vy=" + std::to_string(vy).substr(0, 6) +
+                                   ", x0=" + std::to_string(x0).substr(0, 6) +
+                                   ", y0=" + std::to_string(y0).substr(0, 6);
+            cv::putText(resultImage, lineInfo, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+
+            // 如果提供了保存路径，则保存图像
+            if (!savePath.empty()) {
+                bool success = cv::imwrite(savePath, resultImage);
+                if (success) {
+                    std::cout << "图像已保存到: " << savePath << std::endl;
+                } else {
+                    std::cout << "保存图像失败: " << savePath << std::endl;
+                }
+            }
+
+            // 将结果图像复制回原始图像
+            resultImage.copyTo(image);
+            return;
+        }
+    }
+
+    // 如果无法找到两个边界交点，使用默认方法：在直线上取两个距离较远的点
+    float half_diag = std::sqrt(resultImage.cols * resultImage.cols + resultImage.rows * resultImage.rows) / 2.0f;
+
+    cv::Point2f p1(x0 - half_diag * nx, y0 - half_diag * ny);
+    cv::Point2f p2(x0 + half_diag * nx, y0 + half_diag * ny);
+
+    // 确保点在图像范围内
+    p1.x = std::max(0.0f, std::min(static_cast<float>(resultImage.cols - 1), p1.x));
+    p1.y = std::max(0.0f, std::min(static_cast<float>(resultImage.rows - 1), p1.y));
+    p2.x = std::max(0.0f, std::min(static_cast<float>(resultImage.cols - 1), p2.x));
+    p2.y = std::max(0.0f, std::min(static_cast<float>(resultImage.rows - 1), p2.y));
+
+    // 绘制直线（红色，线宽3像素）
+    cv::line(resultImage, p1, p2, cv::Scalar(0, 0, 255), 3);
+
+    // 绘制端点（绿色圆圈）
+    cv::circle(resultImage, p1, 5, cv::Scalar(0, 255, 0), -1);
+    cv::circle(resultImage, p2, 5, cv::Scalar(0, 255, 0), -1);
+
+    // 绘制直线上的参考点（蓝色圆圈）
+    cv::Point2f referencePoint(x0, y0);
+    cv::circle(resultImage, referencePoint, 3, cv::Scalar(255, 0, 0), -1);
+
+    // 添加文字标注
+    std::string lineInfo = "Line: vx=" + std::to_string(vx).substr(0, 6) +
+                           ", vy=" + std::to_string(vy).substr(0, 6) +
+                           ", x0=" + std::to_string(x0).substr(0, 6) +
+                           ", y0=" + std::to_string(y0).substr(0, 6);
+    cv::putText(resultImage, lineInfo, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+
+    // 如果提供了保存路径，则保存图像
+    if (!savePath.empty()) {
+        bool success = cv::imwrite(savePath, resultImage);
+        if (success) {
+            std::cout << "图像已保存到: " << savePath << std::endl;
+        } else {
+            std::cout << "保存图像失败: " << savePath << std::endl;
+        }
+    }
+
+    // 将结果图像复制回原始图像
+    resultImage.copyTo(image);
+}

@@ -24,7 +24,7 @@ cv::Vec4f JointSeam::calculateCenterLineBySkeletonAndRANSAC(const cv::Mat& image
     cv::Mat binary;
     cv::threshold(grayImage, binary, 0, 255, cv::THRESH_BINARY_INV + cv::THRESH_OTSU);
     // 反转二值图（将黑色变为白色，白色变为黑色）(正光和背光不一样)
-    cv::bitwise_not(binary, binary);
+    // cv::bitwise_not(binary, binary);
 
     // 2. 中轴变换（Skeletonization）
     cv::Mat skel = cv::Mat::zeros(binary.size(), CV_8UC1);
@@ -56,7 +56,7 @@ cv::Vec4f JointSeam::calculateCenterLineBySkeletonAndRANSAC(const cv::Mat& image
         }
     }
 
-
+    // 4.RANSAC计算中心线直线方程
     cv::Vec4f centerLine;
     std::vector<cv::Point2f> inlierPoints;
     double threshold = 5;
@@ -66,7 +66,64 @@ cv::Vec4f JointSeam::calculateCenterLineBySkeletonAndRANSAC(const cv::Mat& image
     return centerLine;
 }
 
+// 根据中心线将轮廓分类到两侧
+std::pair<std::vector<std::vector<cv::Point>>, std::vector<std::vector<cv::Point>>>
+JointSeam::classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine) {
+    std::vector<std::vector<cv::Point>> leftContours;  // 中心线左侧的轮廓
+    std::vector<std::vector<cv::Point>> rightContours; // 中心线右侧的轮廓
 
+    // 提取直线参数：方向向量(vx, vy)和直线上点(x0, y0)
+    float vx = centerLine[0];
+    float vy = centerLine[1];
+    float x0 = centerLine[2];
+    float y0 = centerLine[3];
+
+    // 计算直线的法向量（用于判断点在直线的哪一侧）
+    // 法向量为(-vy, vx)或(vy, -vx)，这里使用(-vy, vx)
+    float nx = -vy;
+    float ny = vx;
+
+    // 归一化法向量
+    float length = std::sqrt(nx * nx + ny * ny);
+    if (length > 1e-6) {
+        nx /= length;
+        ny /= length;
+    }
+
+    // 遍历所有轮廓
+    for (const auto& contour : contours) {
+        if (contour.empty()) {
+            continue;
+        }
+
+        // 计算轮廓的重心（质心）
+        cv::Moments moments = cv::moments(contour);
+        if (moments.m00 == 0) {
+            continue;
+        }
+
+        float centroidX = moments.m10 / moments.m00;
+        float centroidY = moments.m01 / moments.m00;
+
+        // 计算重心到直线上点(x0, y0)的向量
+        float dx = centroidX - x0;
+        float dy = centroidY - y0;
+
+        // 计算向量与法向量的点积
+        float dotProduct = dx * nx + dy * ny;
+
+        // 根据点积的正负判断轮廓在直线的哪一侧
+        // 点积 > 0：在法向量方向（右侧）
+        // 点积 < 0：在法向量反方向（左侧）
+        if (dotProduct > 0) {
+            rightContours.push_back(contour);
+        } else {
+            leftContours.push_back(contour);
+        }
+    }
+
+    return std::make_pair(leftContours, rightContours);
+}
 
 void JointSeam::run() {
     ImageTools imageTools;
@@ -111,35 +168,27 @@ void JointSeam::run() {
     cv::multiply(edge, erodedBinary / 255.0, connectedEdge, 1, CV_8U);
     cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/connectedEdge.bmp", connectedEdge);
 
+    // 计算中间缝隙中心线
+    cv::Vec4f centerLine = calculateCenterLineBySkeletonAndRANSAC(m_image);
+    imageTools.drawLineAndSave(m_image, centerLine, "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/result_with_center_line.bmp");
+
 
     // 提取轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(connectedEdge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
     std::vector<std::vector<cv::Point>> filteredContours;
     filteredContours = imageTools.filterContours(contours); // 筛选出来拼缝两侧的轮廓
+    // 使用中心线将轮廓分类到两侧
+    auto [leftContours, rightContours] = classifyContoursByCenterLine(filteredContours, centerLine);
     imageTools.drawColorfulContoursAndSave(grayImage, filteredContours,
                                            "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/front_light_filted_edge_connected.bmp");
+    // 可选：保存分类后的轮廓用于调试
+    imageTools.drawColorfulContoursAndSave(grayImage, leftContours,
+                                           "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/left_contours.bmp");
+    imageTools.drawColorfulContoursAndSave(grayImage, rightContours,
+                                           "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/right_contours.bmp");
 
-    // 计算中间缝隙中心线并绘制在原图上
-    cv::Vec4f centerLine = calculateCenterLineBySkeletonAndRANSAC(m_image);
-    // 检查是否找到有效的中心线
-    if (centerLine[0] != 0 || centerLine[1] != 0 || centerLine[2] != 0 || centerLine[3] != 0) {
-        // 创建原图的彩色副本用于绘制
-        cv::Mat resultImage;
-        if (m_image.channels() == 1) {
-            cv::cvtColor(m_image, resultImage, cv::COLOR_GRAY2BGR);
-        } else {
-            resultImage = m_image.clone();
-        }
 
-        // 直接使用方向向量格式 (vx, vy, x0, y0) 绘制直线
-        drawLineFromDirectionVector(resultImage, centerLine);
-
-        // 保存带中心线的结果图像
-        cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/result_with_center_line.bmp", resultImage);
-    } else {
-        std::cout << "未找到有效的中心线" << std::endl;
-    }
 
     // 轮廓信息整理
     for (auto& contour : filteredContours) {
@@ -149,126 +198,6 @@ void JointSeam::run() {
         m_contourProcessor.push_back(cProcessor);
     }
 }
-
-// 新增方法：根据方向向量格式 (vx, vy, x0, y0) 绘制直线
-void JointSeam::drawLineFromDirectionVector(cv::Mat& image, const cv::Vec4f& directionVector) {
-    // 提取直线参数
-    float vx = directionVector[0]; // 方向向量x分量
-    float vy = directionVector[1]; // 方向向量y分量
-    float x0 = directionVector[2]; // 直线上的点x坐标
-    float y0 = directionVector[3]; // 直线上的点y坐标
-
-    // 检查方向向量是否有效
-    float length = std::sqrt(vx * vx + vy * vy);
-    if (length < 1e-6) {
-        std::cout << "无效的方向向量" << std::endl;
-        return;
-    }
-
-    // 归一化方向向量
-    float nx = vx / length;
-    float ny = vy / length;
-
-    // 计算直线与图像边界的交点
-    std::vector<cv::Point2f> intersections;
-
-    // 使用参数方程：x = x0 + t * nx, y = y0 + t * ny
-    // 计算与图像边界的交点
-
-    // 与左边界 (x=0) 的交点
-    if (std::abs(nx) > 1e-6) {
-        float t_left = (0 - x0) / nx;
-        float y_left = y0 + t_left * ny;
-        if (y_left >= 0 && y_left < image.rows) {
-            intersections.push_back(cv::Point2f(0, y_left));
-        }
-    }
-
-    // 与右边界 (x=image.cols-1) 的交点
-    if (std::abs(nx) > 1e-6) {
-        float t_right = (image.cols - 1 - x0) / nx;
-        float y_right = y0 + t_right * ny;
-        if (y_right >= 0 && y_right < image.rows) {
-            intersections.push_back(cv::Point2f(image.cols - 1, y_right));
-        }
-    }
-
-    // 与上边界 (y=0) 的交点
-    if (std::abs(ny) > 1e-6) {
-        float t_top = (0 - y0) / ny;
-        float x_top = x0 + t_top * nx;
-        if (x_top >= 0 && x_top < image.cols) {
-            intersections.push_back(cv::Point2f(x_top, 0));
-        }
-    }
-
-    // 与下边界 (y=image.rows-1) 的交点
-    if (std::abs(ny) > 1e-6) {
-        float t_bottom = (image.rows - 1 - y0) / ny;
-        float x_bottom = x0 + t_bottom * nx;
-        if (x_bottom >= 0 && x_bottom < image.cols) {
-            intersections.push_back(cv::Point2f(x_bottom, image.rows - 1));
-        }
-    }
-
-    // 去重并确保有两个不同的交点
-    if (intersections.size() >= 2) {
-        // 去除重复点
-        std::vector<cv::Point2f> unique_intersections;
-        for (const auto& point : intersections) {
-            bool is_duplicate = false;
-            for (const auto& existing : unique_intersections) {
-                if (cv::norm(point - existing) < 1.0) {
-                    is_duplicate = true;
-                    break;
-                }
-            }
-            if (!is_duplicate) {
-                unique_intersections.push_back(point);
-            }
-        }
-
-        if (unique_intersections.size() >= 2) {
-            // 绘制直线（红色，线宽3像素）
-            cv::line(image, unique_intersections[0], unique_intersections[1], cv::Scalar(0, 0, 255), 3);
-
-            // 绘制端点（绿色圆圈）
-            cv::circle(image, unique_intersections[0], 5, cv::Scalar(0, 255, 0), -1);
-            cv::circle(image, unique_intersections[1], 5, cv::Scalar(0, 255, 0), -1);
-
-            // 绘制直线上的参考点（蓝色圆圈）
-            cv::Point2f referencePoint(x0, y0);
-            cv::circle(image, referencePoint, 3, cv::Scalar(255, 0, 0), -1);
-
-            return;
-        }
-    }
-
-    // 如果无法找到两个边界交点，使用默认方法：在直线上取两个距离较远的点
-    float half_diag = std::sqrt(image.cols * image.cols + image.rows * image.rows) / 2.0f;
-
-    cv::Point2f p1(x0 - half_diag * nx, y0 - half_diag * ny);
-    cv::Point2f p2(x0 + half_diag * nx, y0 + half_diag * ny);
-
-    // 确保点在图像范围内
-    p1.x = std::max(0.0f, std::min(static_cast<float>(image.cols - 1), p1.x));
-    p1.y = std::max(0.0f, std::min(static_cast<float>(image.rows - 1), p1.y));
-    p2.x = std::max(0.0f, std::min(static_cast<float>(image.cols - 1), p2.x));
-    p2.y = std::max(0.0f, std::min(static_cast<float>(image.rows - 1), p2.y));
-
-    // 绘制直线（红色，线宽3像素）
-    cv::line(image, p1, p2, cv::Scalar(0, 0, 255), 3);
-
-    // 绘制端点（绿色圆圈）
-    cv::circle(image, p1, 5, cv::Scalar(0, 255, 0), -1);
-    cv::circle(image, p2, 5, cv::Scalar(0, 255, 0), -1);
-
-    // 绘制直线上的参考点（蓝色圆圈）
-    cv::Point2f referencePoint(x0, y0);
-    cv::circle(image, referencePoint, 3, cv::Scalar(255, 0, 0), -1);
-}
-
-
 
 
 

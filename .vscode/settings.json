@@ -50,6 +50,7 @@
         "map": "cpp",
         "functional": "cpp",
         "iterator": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "set": "cpp"
     }
 }
