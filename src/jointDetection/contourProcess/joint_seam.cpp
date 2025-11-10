@@ -11,18 +11,15 @@ JointSeam::JointSeam(const cv::Mat &image) : m_image(image)
 {}
 
 void JointSeam::run() {
+    // 拼缝两侧亚像素轮廓检测
     EdgeDetector ed(m_image);
-    std::vector<std::vector<cv::Point>> contours;
+    std::vector<std::vector<cv::Point2f>> contours;
     contours = ed.run();
-
-
-    // @TODO:将以上步骤放在edgeDetector中去，返回两条轮廓的亚像素点集，后续直接将这两条轮廓送到ContourProcessor中
 
     // 轮廓信息整理
     for (auto& contour : contours) {
         ContourProcessor cProcessor;
-        std::vector<cv::Point2f> subpixelContour = ed.getSubpixelContourZernike(m_image, contour);
-        cProcessor.processContour(subpixelContour);
+        cProcessor.processContour(contour);
         m_contourProcessor.push_back(cProcessor);
     }
 }

@@ -22,7 +22,7 @@ public:
     std::vector<std::vector<cv::Point>>
     classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
     // 执行拼缝两边轮廓检测
-    std::vector<std::vector<cv::Point>> run();
+    std::vector<std::vector<cv::Point2f>> run();
 private:
     cv::Mat m_image;
 };

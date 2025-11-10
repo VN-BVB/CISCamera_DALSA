@@ -386,7 +386,7 @@ EdgeDetector::classifyContoursByCenterLine(const std::vector<std::vector<cv::Poi
 }
 
 // 执行拼缝两边轮廓检测
-std::vector<std::vector<cv::Point>> EdgeDetector::run()
+std::vector<std::vector<cv::Point2f>> EdgeDetector::run()
 {
     ImageTools imageTools;
     cv::Mat grayImage;
@@ -449,8 +449,15 @@ std::vector<std::vector<cv::Point>> EdgeDetector::run()
     imageTools.drawColorfulContoursAndSave(grayImage, contoursLeftAndRight,
                                            "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/right_contours.bmp");
 
+    std::vector<std::vector<cv::Point2f>> subpixelConturs;
+    for (const auto& contour : contoursLeftAndRight)
+    {
+        std::vector<cv::Point2f> c;
+        c = getSubpixelContourZernike(m_image, contour);
+        subpixelConturs.push_back(c);
+    }
 
-    return contoursLeftAndRight;
+    return subpixelConturs;
 }
 
 // 根据中心线将轮廓分类到两侧（按点分类）
