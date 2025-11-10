@@ -547,5 +547,6 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
         subpixelConturs.push_back(c);
     }
 
+
     return subpixelConturs;
 }

@@ -10,7 +10,12 @@ public:
     static OpeningDirection calculateOpeningDirection(const std::vector<cv::Point2f>& contour);
     static std::vector<cv::Point2f> removeDuplicatePoints(const std::vector<cv::Point2f>& contour);
     static cv::Point2f calculateStartPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour);
+    static cv::Point2f calculateEndPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour);
+
     static std::vector<cv::Point2f> sortContour(const std::vector<cv::Point2f>& contour, int startIndex);
+    static std::vector<cv::Point2f> sortContourByCentroid(const std::vector<cv::Point2f>& contour);
+    static std::vector<cv::Point2f> sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int startIndex, int endIndex);
+
     static std::vector<cv::Point2f> detectCornerPoints(const std::vector<cv::Point2f>& contour);
     static std::vector<cv::Point2f> removePointsNearCorners(const std::vector<cv::Point2f>& contour,
                                                             const std::vector<cv::Point2f>& cornerPoints,

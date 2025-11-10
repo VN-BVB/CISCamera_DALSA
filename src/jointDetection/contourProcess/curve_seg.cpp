@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES
 #include "curve_seg.h"
+#include "contour_utils.h"
 #include <cmath>
 
 CurveSeg::CurveSeg() : m_minDomain(MIN_DOMAIN), m_maxDomain(MAX_DOMAIN){}
@@ -170,37 +171,6 @@ void CurveSeg::drawControlPoints(cv::Mat& image, const cv::Scalar& pointColor,
 }
 
 /**
-* @brief 判断点A是否在点B的顺时针方向（相对于参考点）
-* @param pointA 第一个点
-* @param pointB 第二个点
-* @param referencePoint 参考点
-* @return 如果点A在点B的顺时针方向返回true，否则返回false
-*/
-bool CurveSeg::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const
-{
-
-    // 将参考点作为原点，计算相对坐标
-    cv::Point2f relA = pointA - referencePoint;
-    cv::Point2f relB = pointB - referencePoint;
-
-    // 计算叉积 det = (ax * by - ay * bx)
-    float det = relA.x * relB.y - relA.y * relB.x;
-
-    // 如果叉积为正，b在a顺时针方向
-    if (det > 0)
-        return false;
-
-    // 如果叉积为负，a在b顺时针方向
-    if (det < 0)
-        return true;
-
-    // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
-    float d1 = relA.x * relA.x + relA.y * relA.y;
-    float d2 = relB.x * relB.x + relB.y * relB.y;
-    return d1 < d2;
-}
-
-/**
 * @brief 以参考点为原点建立坐标系，将两个点按逆时针方向排序
 * @param pointA 第一个点
 * @param pointB 第二个点
@@ -212,7 +182,7 @@ std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const c
                                                                          const cv::Point2f& referencePoint)
 {
     std::pair<cv::Point2f, cv::Point2f> pointPair;
-    if (isPointClockwiseTo(pointA, pointB, referencePoint)) {
+    if (ContourUtils::isPointClockwiseTo(pointA, pointB, referencePoint)) {
         pointPair.first = pointA;
         pointPair.second = pointB;
     } else {

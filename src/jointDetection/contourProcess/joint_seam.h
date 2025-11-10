@@ -15,8 +15,6 @@
 class JointSeam
 {
 public:
-    // std::vector<ContourCurve> getContourCurves() const {return m_contourCurves;}
-public:
     explicit JointSeam(const cv::Mat &image);
 
     void run();
@@ -26,12 +24,6 @@ private:
     cv::Point2f m_position;                         // 拼缝roi位置
     // std::vector<cv::Vec4f> m_lines;                 // 拼缝两侧直线
     std::vector<cv::Point2f> m_endPoints;           // 拼缝四个端点
-
-    // 计算中间缝隙中心线（中轴变换 + RANSAC）
-    cv::Vec4f calculateCenterLineBySkeletonAndRANSAC(const cv::Mat& image);
-    // 根据中心线将轮廓分类到两侧
-    std::pair<std::vector<std::vector<cv::Point>>, std::vector<std::vector<cv::Point>>>
-    classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
 
 public:
     std::vector<ContourProcessor> getContourProcessor() const {return m_contourProcessor;}

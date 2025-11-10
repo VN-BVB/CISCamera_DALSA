@@ -54,8 +54,6 @@ public:
     std::pair<cv::Point2f, cv::Point2f> sortPointsCounterClockwise(const cv::Point2f& point1,
                                                                    const cv::Point2f& point2,
                                                                    const cv::Point2f& referencePoint);
-    // 顺时针排序比较函数
-    bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) const;
     // 按照参考点的逆时针方向排序其两端点
     std::pair<EndpointInfo, EndpointInfo> sortEndpoints(const cv::Point2f& referencePoint);
 

@@ -17,10 +17,12 @@ void ContourProcessor::processContour(const std::vector<cv::Point2f>& contour) {
     auto direction = ContourFeatureCalculator::calculateOpeningDirection(deduplicated);
     m_data.setOpeningDirection(direction);
 
-    // 4. 排序轮廓（由起始点逆时针）
+    // 4. 排序轮廓（基于质心逆时针排序）
     auto startPoint = ContourFeatureCalculator::calculateStartPoint(direction, deduplicated);
     int startIndex = ContourUtils::findPointIndex(startPoint, deduplicated);
-    auto sortedContour = ContourFeatureCalculator::sortContour(deduplicated, startIndex);
+    auto endPoint = ContourFeatureCalculator::calculateEndPoint(direction, deduplicated);
+    int endIndex = ContourUtils::findPointIndex(endPoint, deduplicated);
+    auto sortedContour = ContourFeatureCalculator::sortContourByNearestNeighbor(deduplicated, startIndex, endIndex);
     m_data.setSortedContour(sortedContour);
 
     // 5. 检测角点
