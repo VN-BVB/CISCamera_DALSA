@@ -1,7 +1,7 @@
 #ifndef JOINT_SEAM_H
 #define JOINT_SEAM_H
 
-#include "src/jointDetection/edgeDetection/edge_detector.h"
+
 #include "src/utils/geometry_utils.h"
 #include "src/jointDetection/edgeDetection/abstract_contour_detector.h"
 #include "src/jointDetection/edgeDetection/contour_detector_context.h"

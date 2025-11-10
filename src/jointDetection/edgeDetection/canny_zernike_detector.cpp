@@ -130,7 +130,13 @@ CannyZernikeDetector::CannyZernikeDetector() {}
 //     return edgePoint; // 不满足条件时返回原坐标
 // }
 
-// 原始Zernike亚像素偏移计算辅助函数
+/**
+ * @brief 使用Zernike矩法计算亚像素级边缘点偏移
+ * @param gray 输入灰度图像
+ * @param edgePoint 原始边缘点坐标
+ * @param radius Zernike矩计算半径
+ * @return 亚像素级精度的边缘点坐标
+ */
 cv::Point2f CannyZernikeDetector::zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius) {
     // 检查边缘点是否在图像范围内
     if (edgePoint.x < 0 || edgePoint.x >= gray.cols || edgePoint.y < 0 || edgePoint.y >= gray.rows) {
@@ -197,6 +203,12 @@ cv::Point2f CannyZernikeDetector::zernikeSubpixel(const cv::Mat &gray, const cv:
     return edgePoint;  // 不满足条件时返回原坐标
 }
 
+/**
+ * @brief 使用Zernike矩法将像素级轮廓转换为亚像素级轮廓
+ * @param src 输入图像（彩色或灰度）
+ * @param contour 像素级轮廓点集
+ * @return 亚像素级精度的轮廓点集
+ */
 std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const cv::Mat &src, const std::vector<cv::Point> &contour) {
     cv::Mat gray;
     if (src.channels() > 1) {
@@ -219,7 +231,12 @@ std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const c
     return subpixelContour;
 }
 
-// Otsu算法自适应计算Canny阈值
+/**
+ * @brief 使用Otsu算法自适应计算Canny边缘检测的阈值
+ * @param srcImage 输入图像（彩色或灰度）
+ * @return 计算得到的Canny阈值
+ * @details 该方法通过计算图像的梯度幅值，应用非极大值抑制后，使用Otsu算法自动确定最佳阈值
+ */
 double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage) {
     cv::Mat grayImage;
     if (srcImage.channels() > 1) {
@@ -270,8 +287,45 @@ double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImag
     return TH;
 }
 
-// 计算中间缝隙中心线（中轴变换 + RANSAC）
-cv::Vec4f CannyZernikeDetector::calculateCenterLineBySkeletonAndRANSAC(const cv::Mat& image) {
+/**
+ * @brief 对边缘图像进行形态学处理，去除无关区域
+ * @param edge 输入的边缘图像
+ * @param grayImage 灰度图像，用于生成二值掩码
+ * @param outputPath 输出路径前缀，用于保存中间结果
+ * @return 处理后的连接边缘图像
+ * @details 该方法通过二值化、闭运算、腐蚀等形态学操作，去除边缘图像中的无关区域，保留与工件相关的有效边缘
+ */
+cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, const cv::Mat& grayImage) {
+    // 对背光图去除工件外杂乱边缘，对正光图去除工件内杂乱边缘
+    cv::Mat binaryImage;
+    cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    // 先进行闭运算去除二值图中白色区域的空洞，可处理工件外有少量杂物的情况
+    cv::Mat closedBinary;
+    cv::Mat closeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
+    cv::morphologyEx(binaryImage, closedBinary, cv::MORPH_CLOSE, closeKernel);
+    // 对二值图进行腐蚀，减小边缘无关区域面积，对背光和正光都有用
+    cv::Mat erodedBinary;
+    cv::Mat erodeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+    // 进行三次腐蚀，确保缩小边缘无关区域
+    cv::erode(closedBinary, erodedBinary, erodeKernel);
+    cv::erode(erodedBinary, erodedBinary, erodeKernel);
+    cv::erode(erodedBinary, erodedBinary, erodeKernel);
+    cv::bitwise_not(erodedBinary, erodedBinary);
+
+    // 将腐蚀后的二值图翻转，与edge相乘，保留边缘区域，去除无关区域
+    cv::Mat connectedEdge;
+    cv::multiply(edge, erodedBinary / 255.0, connectedEdge, 1, CV_8U);
+
+    return connectedEdge;
+}
+
+/**
+ * @brief 计算中间缝隙中心线（中轴变换 + RANSAC）
+ * @param image 输入图像（彩色或灰度）
+ * @return 中心线直线方程参数（vx, vy, x0, y0）
+ * @details 该方法通过图像二值化、中轴变换提取骨架，然后使用RANSAC算法拟合中心线
+ */
+cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& image) {
     cv::Mat grayImage;
     if (image.channels() > 1) {
         cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
@@ -282,7 +336,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineBySkeletonAndRANSAC(const cv:
     // 1. 图像二值化
     cv::Mat binary;
     cv::threshold(grayImage, binary, 0, 255, cv::THRESH_BINARY_INV + cv::THRESH_OTSU);
-    // 反转二值图（将黑色变为白色，白色变为黑色）(正光和背光不一样)
+    // 反转二值图(正光和背光不一样)
     // cv::bitwise_not(binary, binary);
 
     // 2. 中轴变换（Skeletonization）
@@ -325,7 +379,13 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineBySkeletonAndRANSAC(const cv:
     return centerLine;
 }
 
-// 根据中心线将轮廓分类到两侧
+/**
+ * @brief 根据中心线将轮廓分类到两侧（按轮廓重心分类）
+ * @param contours 输入轮廓集合
+ * @param centerLine 中心线直线方程参数（vx, vy, x0, y0）
+ * @return 包含左右两侧轮廓的pair，first为左侧轮廓，second为右侧轮廓
+ * @details 该方法通过计算每个轮廓的重心，利用中心线的法向量判断轮廓位置，将轮廓分为左侧和右侧两组
+ */
 std::pair<std::vector<std::vector<cv::Point>>, std::vector<std::vector<cv::Point>>>
 CannyZernikeDetector::classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine) {
     std::vector<std::vector<cv::Point>> leftContours;  // 中心线左侧的轮廓
@@ -361,8 +421,8 @@ CannyZernikeDetector::classifyContoursByCenterLine(const std::vector<std::vector
             continue;
         }
 
-        float centroidX = moments.m10 / moments.m00;
-        float centroidY = moments.m01 / moments.m00;
+        float centroidX = static_cast<float>(moments.m10 / moments.m00);
+        float centroidY = static_cast<float>(moments.m01 / moments.m00);
 
         // 计算重心到直线上点(x0, y0)的向量
         float dx = centroidX - x0;
@@ -384,7 +444,14 @@ CannyZernikeDetector::classifyContoursByCenterLine(const std::vector<std::vector
     return std::make_pair(leftContours, rightContours);
 }
 
-// 根据中心线将轮廓分类到两侧（按点分类）
+/**
+ * @brief 根据中心线将轮廓分类到两侧（按点分类）
+ * @param contours 输入轮廓集合
+ * @param centerLine 中心线直线方程参数（vx, vy, x0, y0）
+ * @return 包含左右两侧轮廓点的vector，第一个元素为右侧轮廓点，第二个元素为左侧轮廓点
+ * @details 该方法遍历轮廓中的每个点，利用中心线的法向量判断每个点的位置，
+ *          将轮廓点按位置分为左侧和右侧两组，适用于需要精细点级分类的场景
+ */
 std::vector<std::vector<cv::Point>>
 CannyZernikeDetector::classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine) {
     std::vector<std::vector<cv::Point>> contoursLeftAndRight;
@@ -437,11 +504,14 @@ CannyZernikeDetector::classifyContourPointsByCenterLine(const std::vector<std::v
     contoursLeftAndRight.push_back(rightContours);
     contoursLeftAndRight.push_back(leftContours);
 
-    // 返回包含两个vector的vector
     return contoursLeftAndRight;
 }
 
-// 执行拼缝两边轮廓检测
+/**
+ * @brief 执行拼缝两边轮廓检测
+ * @param inputImage 输入图像（彩色或灰度）
+ * @return 包含左右两侧亚像素轮廓的vector，第一个元素为右侧轮廓，第二个元素为左侧轮廓
+ */
 std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const cv::Mat& inputImage)
 {
     ImageTools imageTools;
@@ -452,64 +522,28 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
         grayImage = inputImage.clone();
     }
     cv::GaussianBlur(grayImage, grayImage, cv::Size(7, 7), 0, 0);
-    // 双阈值处理--根据Otsu算出的阈值确定为高阈值，取高阈值的一半记为低阈值
+
+    // 边缘检测
     double TH = adaptiveCannyThresholdByOtsu(grayImage);
     double TL = TH * 0.5;
-
     cv::Mat edge;
     cv::Canny(grayImage, edge, TL, TH);
-    cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/edge.bmp", edge);
-
-    // 对背光图去除工件外杂乱边缘，对正光图去除工件内杂乱边缘
-    cv::Mat binaryImage;
-    cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/binaryImage.bmp", binaryImage);
-
-    // 先进行闭运算去除二值图中白色区域的空洞，可处理工件外有少量杂物的情况
-    cv::Mat closedBinary;
-    cv::Mat closeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
-    cv::morphologyEx(binaryImage, closedBinary, cv::MORPH_CLOSE, closeKernel);
-    cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/closedBinary.bmp", closedBinary);
-
-    // 对二值图进行腐蚀，减小边缘无关区域面积，对背光和正光都有用
-    cv::Mat erodedBinary;
-    cv::Mat erodeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-    // 进行三次腐蚀，确保缩小边缘无关区域
-    cv::erode(closedBinary, erodedBinary, erodeKernel);
-    cv::erode(erodedBinary, erodedBinary, erodeKernel);
-    cv::erode(erodedBinary, erodedBinary, erodeKernel);
-    cv::bitwise_not(erodedBinary, erodedBinary);
-    cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/erodedBinary.bmp", erodedBinary);
-    // 将腐蚀后的二值图翻转，与edge相乘，保留边缘区域，去除无关区域
-    cv::Mat connectedEdge;
-    cv::multiply(edge, erodedBinary / 255.0, connectedEdge, 1, CV_8U);
-    cv::imwrite("E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/connectedEdge.bmp", connectedEdge);
-
+    // 形态学处理，去除无关区域的边缘
+    cv::Mat connectedEdge = removeIrrelevantEdgeRegions(edge, grayImage);
     // 计算中间缝隙中心线
-    cv::Vec4f centerLine = calculateCenterLineBySkeletonAndRANSAC(inputImage);
-    imageTools.drawLineAndSave(inputImage, centerLine, "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/result_with_center_line.bmp");
-
-
-    // 提取轮廓
+    cv::Vec4f centerLine = calculateCenterLine(inputImage);
+    // 提取并筛选轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(connectedEdge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-    std::vector<std::vector<cv::Point>> filteredContours;
-    filteredContours = imageTools.filterContours(contours); // 筛选出来拼缝两侧的轮廓
-    // 使用中心线将轮廓分类到两侧
+    std::vector<std::vector<cv::Point>> filteredContours = imageTools.filterContours(contours);
+    // 根据中心线分类轮廓
     auto contoursLeftAndRight = classifyContourPointsByCenterLine(filteredContours, centerLine);
-    imageTools.drawColorfulContoursAndSave(grayImage, filteredContours,
-                                           "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/front_light_filted_edge_connected.bmp");
-    // 保存分类后的轮廓用于调试
     imageTools.drawColorfulContoursAndSave(grayImage, contoursLeftAndRight,
                                            "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/left_contours.bmp");
-    imageTools.drawColorfulContoursAndSave(grayImage, contoursLeftAndRight,
-                                           "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/right_contours.bmp");
-
+    // 亚像素轮廓提取
     std::vector<std::vector<cv::Point2f>> subpixelConturs;
-    for (const auto& contour : contoursLeftAndRight)
-    {
-        std::vector<cv::Point2f> c;
-        c = getSubpixelContourZernike(inputImage, contour);
+    for (const auto& contour : contoursLeftAndRight) {
+        std::vector<cv::Point2f> c = getSubpixelContourZernike(inputImage, contour);
         subpixelConturs.push_back(c);
     }
 

@@ -1,6 +1,6 @@
 #include "contour_detector_context.h"
 
-ContourDetectorContext::ContourDetectorContext() : m_currentDetector(nullptr){}
+ContourDetectorContext::ContourDetectorContext() = default;
 
 ContourDetectorContext::~ContourDetectorContext() {}
 

@@ -3,7 +3,10 @@
 
 #include <opencv2/opencv.hpp>
 
-// @TODO:利用策略模式实现轮廓检测，便于切换算法
+/**
+ * @brief 策略模式---抽象轮廓检测器基类，定义轮廓检测的统一接口
+ * @details 所有轮廓检测算法提供统一的抽象接口，包括轮廓检测和算法描述功能
+ */
 class AbstractContourDetector
 {
 public:

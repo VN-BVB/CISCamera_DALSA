@@ -4,6 +4,10 @@
 #include "abstract_contour_detector.h"
 #include "canny_zernike_detector.h"
 
+/**
+ * @brief 轮廓检测器上下文类，实现策略模式管理不同的轮廓检测算法
+ * @details 该类作为策略模式的上下文，负责管理和切换不同的轮廓检测策略
+ */
 class ContourDetectorContext
 {
 public:
