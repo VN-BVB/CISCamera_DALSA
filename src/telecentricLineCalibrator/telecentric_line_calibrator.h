@@ -53,7 +53,7 @@ public:
 
     bool calibrateCameraFromPointsDemo(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
                                        const std::vector<Eigen::Vector2d>& worldPts, int width, int height, double dx, double dy,
-                                       Eigen::Matrix3d& K_out, double& rmse_out, std::vector<Pose>& poses_out);
+                                       Eigen::Matrix3d K_out, double rmse_out, std::vector<Pose> poses_out);
     // -------------------- 齐次坐标 --------------------
     Eigen::MatrixXd toHomogeneous(const Eigen::MatrixXd& points);
 
@@ -76,7 +76,7 @@ private:
     Pose extractPoseFromHomography(const Eigen::Matrix3d& H, const Eigen::Matrix3d& K,
                                    const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
                                    const double m);
-    Eigen::Matrix3d initIntrinsic(const Eigen::Matrix3d& H, double dx, double dy, double u0, double v0);
+    Eigen::Matrix3d initIntrinsic(double m, double dx, double dy, double u0, double v0);
     double computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
                                     const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath = " ");
     double computeReprojectionErrorFinal(const std::vector<Eigen::Vector2d>& worldPts,

@@ -79,7 +79,7 @@ bool CameraImageProcessor::prepareForConcat(const cv::Mat& m, const cv::Mat& s, 
 }
 
 void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave,
-                                       bool spliceEnabledFromCaller) {
+                                       bool spliceEnabledFromCaller, bool useColumnCheck) {
     if (!master || master->empty()) {
         emit error(QString(u8"拼接：Master 为空"));
         return;
@@ -110,7 +110,6 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
     // 准备拼接
     cv::Mat mAligned, sAligned;
     if (!prepareForConcat(*master, *slave, mAligned, sAligned)) {
-        // emit error(QString(u8"拼接前对齐失败：尺寸/通道/深度不兼容"));
         // 回退 master
         {
             QMutexLocker locker(&mtx_);
@@ -120,47 +119,77 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
         return;
     }
 
-    // 拼接
     try {
         auto result = std::make_shared<cv::Mat>();
         cv::hconcat(mAligned, sAligned, *result);
+
+        // 转为灰度图
         cv::Mat gray;
         if (result->channels() == 3)
             cv::cvtColor(*result, gray, cv::COLOR_BGR2GRAY);
         else
             gray = *result;
-        cv::Mat colMean;
-        cv::reduce(gray, colMean, 0, cv::REDUCE_AVG, CV_32F);
 
-        const float whiteThresh = 250.0f;
-        int left = 0, right = result->cols - 1;
-
-        // 从左找第一个非白列
-        for (int c = 0; c < colMean.cols; ++c) {
-            if (colMean.at<float>(0, c) < whiteThresh) {
-                left = c;
-                break;
+        const uchar whiteThresh = 250;
+        int left = 0, right = gray.cols - 1;
+        if (useColumnCheck) {
+            // 1. 从下往上处理全黑行，把全黑行置为白色
+            for (int r = gray.rows - 1; r >= 0; --r) {
+                cv::Mat row = gray.row(r);
+                double maxVal;
+                cv::minMaxLoc(row, nullptr, &maxVal);
+                if (maxVal == 0) {
+                    row.setTo(255);
+                } else {
+                    break;
+                }
             }
-        }
-        // 从右找第一个非白列
-        for (int c = colMean.cols - 1; c >= 0; --c) {
-            if (colMean.at<float>(0, c) < whiteThresh) {
-                right = c;
-                break;
+            // 2. 从左找第一个非白列
+            for (int c = 0; c < gray.cols; ++c) {
+                bool isWhiteCol = true;
+                for (int r = 0; r < gray.rows; ++r) {
+                    if (gray.at<uchar>(r, c) < whiteThresh) {
+                        isWhiteCol = false;
+                        break;
+                    }
+                }
+                if (!isWhiteCol) {
+                    left = c;
+                    break;
+                }
             }
+
+            // 3. 从右找第一个非白列
+            for (int c = gray.cols - 1; c >= 0; --c) {
+                bool isWhiteCol = true;
+                for (int r = 0; r < gray.rows; ++r) {
+                    if (gray.at<uchar>(r, c) < whiteThresh) {
+                        isWhiteCol = false;
+                        break;
+                    }
+                }
+                if (!isWhiteCol) {
+                    right = c;
+                    break;
+                }
+            }
+        } else {
+            // 直接用固定列
+            left = 208;
+            right = 30895;
         }
 
-        // 防止越界
+        // 防止越界，确保宽度大于10
         if (right > left + 10) {
             cv::Rect roi(left, 0, right - left + 1, result->rows);
             *result = (*result)(roi).clone();
         }
 
+        // 保存结果（线程安全）
         {
             QMutexLocker locker(&mtx_);
             lastResult_ = result;
         }
-
         emit text(QString(u8"拼接成功：%1x%2").arg(result->cols).arg(result->rows));
         emit imageReady(result);
     } catch (const cv::Exception& e) {
@@ -285,4 +314,36 @@ bool CameraImageProcessor::readPointsFromTxt(const std::string& path, std::vecto
     }
     std::cout << "读取 " << path << " 成功，共 " << pts.size() << " 个点\n";
     return true;
+}
+void CameraImageProcessor::whenCameraCalibrate() {
+    all_image_points.clear();
+    std::string folder = "./data/CISCamera_Image/txt";
+
+    // 遍历文件夹读取所有txt
+    for (auto& entry : std::filesystem::directory_iterator(folder)) {
+        if (entry.path().extension() == ".txt") {
+            std::vector<Eigen::Vector2d> pts;
+            if (readPointsFromTxt(entry.path().string(), pts)) {
+                all_image_points.push_back(pts);
+            }
+        }
+    }
+
+    if (all_image_points.empty()) {
+        std::cerr << "没有读取到任何标定点文件！" << std::endl;
+        return;
+    }
+
+    // 构造世界坐标系下圆心点
+    std::vector<Eigen::Vector2d> worldPts;
+    worldPts.reserve(W * H);
+    for (int r = 0; r < H; ++r)
+        for (int c = 0; c < W; ++c) worldPts.emplace_back(c * spacingMM, r * spacingMM);
+
+    // 输出结果
+    Eigen::Matrix3d K;
+    double rmse;
+    std::vector<Pose> poses;
+
+    sendSignalToCalibrate(all_image_points, worldPts, width, height, dx, dy, K, rmse, poses);
 }

@@ -332,22 +332,10 @@ Pose TelecentricLineCalibrator::extractPoseFromHomography(const Eigen::Matrix3d&
 // =========================================================
 // Step 3. 初始化内参
 // =========================================================
-Eigen::Matrix3d TelecentricLineCalibrator::initIntrinsic(const Eigen::Matrix3d& H, double dx, double dy, double u0, double v0_) {
-    double h11 = H(0, 0), h12 = H(0, 1), h13 = H(0, 2);
-    double h21 = H(1, 0), h22 = H(1, 1), h23 = H(1, 2);
-
-    // ===  计算放大倍率 m（论文公式 (10)）===
-    // 注意：此公式假设远心成像下的仿射单应矩阵 H'（第三行 [0 0 1]）
-    double numerator = (1.0 / (dy * dy)) * (h11 * h11 + h12 * h12) - (h11 * h22 - h12 * h21) * (h11 * h22 - h12 * h21);
-    double denominator = (1.0 / (dy * dy)) - (h21 * h21 + h22 * h22);
-    double m = std::sqrt(std::fabs(numerator / denominator)) * dx;
-    m_ = m;
-    std::cout << "\n--- 初始放大倍率 m = " << m << " ---\n";
+Eigen::Matrix3d TelecentricLineCalibrator::initIntrinsic(double m, double dx, double dy, double u0, double v0) {
     Eigen::Matrix3d K;
     // === 3️ 构建初始内参矩阵 ===
-    K << m / dx, 0.0, u0, 0.0, m / dy, v0_, 0.0, 0.0, 1.0;
-
-    std::cout << "初始内参矩阵 K (based on H):\n" << K_ << "\n";
+    K << m / dx, 0.0, u0, 0.0, 1 / dy, v0 / m, 0.0, 0.0, 1.0;
     return K;
 }
 bool TelecentricLineCalibrator::estimateIntrinsicsFromHomographies(const std::vector<Eigen::Matrix3d>& Hs, double dx, double dy,
@@ -381,7 +369,7 @@ bool TelecentricLineCalibrator::estimateIntrinsicsFromHomographies(const std::ve
     dx_ = dx;
     dy_ = dy;
 
-    K_ << m_ / dx_, 0.0, u0, 0.0, 1 / dy_, v0 / m_, 0.0, 0.0, 1.0;
+    K_ = initIntrinsic(m_, dx_, dy_, u0, v0);
 
     // std::cout << "\n--- 误差加权平均得到的放大倍率 m = " << m_ << " ---\n";
     // std::cout << "内参矩阵 K =\n" << K_ << "\n";
@@ -622,8 +610,8 @@ Eigen::MatrixXd TelecentricLineCalibrator::pixelToCameraCoordinates(const Eigen:
 // =========================================================
 bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
                                                               const std::vector<Eigen::Vector2d>& worldPts, int width, int height,
-                                                              double dx, double dy, Eigen::Matrix3d& K_out, double& rmse_out,
-                                                              std::vector<Pose>& poses_out) {
+                                                              double dx, double dy, Eigen::Matrix3d K_out, double rmse_out,
+                                                              std::vector<Pose> poses_out) {
     if (all_imgPts.empty()) {
         std::cerr << "输入点集为空！\n";
         return false;
@@ -657,9 +645,7 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
         }
 
         // Step 3. 临时内参与重投影
-        Eigen::Matrix3d K_i;
-        K_i << mi / dx, 0.0, u0_, 0.0, 1 / dy, v0_ / mi, 0.0, 0.0, 1.0;
-
+        Eigen::Matrix3d K_i = initIntrinsic(mi, dx, dy, u0_, v0_);
         Pose tmpPose = extractPoseFromHomography(Hi, K_i, worldPts, imgPts, mi);
         double e_i = computeReprojectionError(worldPts, imgPts, tmpPose, K_i);
 
@@ -722,7 +708,9 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     } else {
         std::cout << "非线性优化前的初步估计参数已保存：" << calib_data_path_ << std::endl;
     }
+
     TelecentricPYOptimizer opt;
+    PLOGD << " 开始非线性优化";
     if (!opt.invokeTelecentricCalibration()) {
         PLOGE << "Python 调用失败！";
     }

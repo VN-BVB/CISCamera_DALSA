@@ -63,7 +63,6 @@ private:
     double startPos;
     double endPos;
     double speed;
-    std::vector<std::vector<Eigen::Vector2d>> all_image_points;
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();
