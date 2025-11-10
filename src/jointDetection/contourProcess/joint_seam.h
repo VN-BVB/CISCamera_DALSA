@@ -3,6 +3,8 @@
 
 #include "src/jointDetection/edgeDetection/edge_detector.h"
 #include "src/utils/geometry_utils.h"
+#include "src/jointDetection/edgeDetection/abstract_contour_detector.h"
+#include "src/jointDetection/edgeDetection/contour_detector_context.h"
 #include "contour_processor.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>

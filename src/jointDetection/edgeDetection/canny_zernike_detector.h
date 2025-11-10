@@ -1,13 +1,17 @@
-#ifndef EDGE_DETECTOR_H
-#define EDGE_DETECTOR_H
+#ifndef CANNY_ZERNIKE_DETECTOR_H
+#define CANNY_ZERNIKE_DETECTOR_H
 
-#include <opencv2/opencv.hpp>
-#include "src/utils/geometry_utils.h"
+#include "abstract_contour_detector.h"
 
-class EdgeDetector
+class CannyZernikeDetector : public AbstractContourDetector
 {
 public:
-    EdgeDetector(cv::Mat image);
+    CannyZernikeDetector();
+    virtual ~CannyZernikeDetector() override = default;
+
+    virtual std::vector<std::vector<cv::Point2f>> detectContours(const cv::Mat& inputImage) override;
+    virtual std::string getDescription() const override {return "基于Canny_Zernike矩的亚像素边缘检测算法";}
+private:
     // Zernike矩法辅助函数
     cv::Point2f zernikeSubpixel(const cv::Mat &gray, const cv::Point2f &edgePoint, int radius);
     // Zernike矩法获取亚像素点
@@ -21,10 +25,6 @@ public:
     classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
     std::vector<std::vector<cv::Point>>
     classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
-    // 执行拼缝两边轮廓检测
-    std::vector<std::vector<cv::Point2f>> run();
-private:
-    cv::Mat m_image;
 };
 
-#endif // EDGE_DETECTOR_H
+#endif // CANNY_ZERNIKE_DETECTOR_H

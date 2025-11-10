@@ -178,7 +178,7 @@ std::vector<cv::Point2f> ImageTools::trimContourEnds(const std::vector<cv::Point
 }
 
 // 根据方向向量格式 (vx, vy, x0, y0) 绘制直线并保存图像
-void ImageTools::drawLineAndSave(cv::Mat& image, const cv::Vec4f& directionVector, const std::string& savePath) {
+void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directionVector, const std::string& savePath) {
     // 创建图像的副本，避免修改原始图像
     cv::Mat resultImage = image.clone();
 
@@ -292,8 +292,6 @@ void ImageTools::drawLineAndSave(cv::Mat& image, const cv::Vec4f& directionVecto
                 }
             }
 
-            // 将结果图像复制回原始图像
-            resultImage.copyTo(image);
             return;
         }
     }

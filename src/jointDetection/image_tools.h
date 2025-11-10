@@ -28,7 +28,7 @@ public:
     std::vector<cv::Point2f> trimContourEnds(const std::vector<cv::Point2f>& contour, float trimRatio);
 
     // 根据方向向量格式 (vx, vy, x0, y0) 绘制直线并保存图像
-    void drawLineAndSave(cv::Mat& image, const cv::Vec4f& directionVector, const std::string& savePath = "");
+    void drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directionVector, const std::string& savePath = "");
 
 };
 

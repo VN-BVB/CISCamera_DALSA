@@ -11,10 +11,16 @@ JointSeam::JointSeam(const cv::Mat &image) : m_image(image)
 {}
 
 void JointSeam::run() {
-    // 拼缝两侧亚像素轮廓检测
-    EdgeDetector ed(m_image);
+    std::unique_ptr<AbstractContourDetector> s1;
+    std::unique_ptr<ContourDetectorContext> c = std::make_unique<ContourDetectorContext>();
+    s1 = std::make_unique<CannyZernikeDetector>();
     std::vector<std::vector<cv::Point2f>> contours;
-    contours = ed.run();
+    c->setDetector(std::move(s1));
+    contours = c->detectContours(m_image);
+    // // 拼缝两侧亚像素轮廓检测
+    // EdgeDetector ed(m_image);
+    // std::vector<std::vector<cv::Point2f>> contours;
+    // contours = ed.run();
 
     // 轮廓信息整理
     for (auto& contour : contours) {
