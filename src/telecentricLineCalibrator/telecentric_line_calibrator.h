@@ -48,16 +48,25 @@ public:
      * @param poses_out      输出：每幅图像的外参（旋转 R，平移 t，及对应误差）
      * @return true 若标定成功
      */
-    bool calibrateCamera(const std::vector<cv::Mat>& images, cv::Size boardSize, double circleRadiusMM, double spacingMM,
-                         PatternType patternType, double dx, double dy, Eigen::Matrix3d& K_out, double& rmse_out,
-                         std::vector<Pose>& poses_out);
 
-    // 圆点检测函数（由你提供的版本）
     bool calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize, std::vector<cv::Point2d>& imagePoints);
 
     bool calibrateCameraFromPointsDemo(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
                                        const std::vector<Eigen::Vector2d>& worldPts, int width, int height, double dx, double dy,
                                        Eigen::Matrix3d& K_out, double& rmse_out, std::vector<Pose>& poses_out);
+    // -------------------- 齐次坐标 --------------------
+    Eigen::MatrixXd toHomogeneous(const Eigen::MatrixXd& points);
+
+    // -------------------- 正向畸变 --------------------
+    Eigen::MatrixXd distort(const Eigen::Matrix<double, 1, 5>& coff_dis, const Eigen::MatrixXd& normalized_proj);
+
+    // -------------------- 迭代去畸变 --------------------
+    Eigen::MatrixXd undistortPointsIter(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
+                                        const Eigen::Matrix<double, 1, 5>& coff_dis, int max_iter = 200, double tol = 1e-9);
+
+    // -------------------- 像素坐标 → 相机坐标 --------------------
+    Eigen::MatrixXd pixelToCameraCoordinates(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
+                                             const Eigen::Matrix<double, 1, 5>& coff_dis = {});
 
 private:
     Eigen::Matrix3d computeHomography(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts);
@@ -79,7 +88,6 @@ private:
     double u0_, v0_;
     Eigen::Matrix3d K_;
     Eigen::Matrix<double, 1, 5> coff_dis_;
-    const std::string calib_data_path_ =
-        "./data/calibration_config/before_optimization_calib_data.json";  // 文件名更清晰，区分内参+外参
+    const std::string calib_data_path_ = "./data/calibration_config/before_optimization_calib_data.json";
 };
 #endif  // TELECENTRIC_LINE_CALIBRATOR_H

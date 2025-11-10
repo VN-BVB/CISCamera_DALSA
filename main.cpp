@@ -31,114 +31,59 @@ void initPlog() {
     plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
 }
 // #include <Eigen/Dense>
-// #include <filesystem>
-// #include <fstream>
+// #include <cmath>
 // #include <iostream>
+// #include <opencv2/opencv.hpp>
 // #include <vector>
 
 // #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
-// namespace fs = std::filesystem;
 
-// // 读取一个 txt 文件中的点
-// bool readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pts) {
-//     std::ifstream fin(path);
-//     if (!fin.is_open()) {
-//         std::cerr << "无法打开文件: " << path << std::endl;
-//         return false;
-//     }
-
-//     std::string line;
-//     pts.clear();
-//     // 跳过第一行标题
-//     std::getline(fin, line);
-
-//     double idx, x, y;
-//     while (fin >> idx >> x >> y) {
-//         pts.emplace_back(x, y);
-//     }
-
-//     if (pts.empty()) {
-//         std::cerr << "文件 " << path << " 无有效点。" << std::endl;
-//         return false;
-//     }
-//     std::cout << "读取 " << path << " 成功，共 " << pts.size() << " 个点\n";
-//     return true;
-// }
-
-// // 主程序
+// // -------------------- 主函数测试 --------------------
 // int main() {
-//     std::string folder = "./data/CISCamera_Image/txt";
-//     std::vector<std::vector<Eigen::Vector2d>> all_image_points;
-
-//     // 遍历文件夹读取所有txt
-//     for (auto& entry : fs::directory_iterator(folder)) {
-//         if (entry.path().extension() == ".txt") {
-//             std::vector<Eigen::Vector2d> pts;
-//             if (readPointsFromTxt(entry.path().string(), pts)) {
-//                 all_image_points.push_back(pts);
-//             }
-//         }
-//     }
-
-//     if (all_image_points.empty()) {
-//         std::cerr << "没有读取到任何标定点文件！" << std::endl;
-//         return -1;
-//     }
-
-//     // 构造世界坐标系下圆心点
-//     const int W = 8, H = 11;
-//     const double spacingMM = 10.0;
-//     std::vector<Eigen::Vector2d> worldPts;
-//     worldPts.reserve(W * H);
-//     for (int r = 0; r < H; ++r)
-//         for (int c = 0; c < W; ++c) worldPts.emplace_back(c * spacingMM, r * spacingMM);
-
-//     // 图像参数
-//     const double dx = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
-//     const double dy = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）17.0 / 800.0
-//     const int width = 30688, height = 16100;
-
-//     // 输出结果
+//     // 内参矩阵
 //     Eigen::Matrix3d K;
-//     double rmse;
-//     std::vector<Pose> poses;
+//     K << 47.27, -0.5924188327343539, 15344.18, 0, 46.97, 8060.47, 0, 0, 1;
+
+//     // 畸变参数
+//     Eigen::Matrix<double, 1, 5> D;
+//     D << -7.3e-10, -7.0e-07, -3.1e-07, 2.1e-06, -2.0e-06;
+
+//     // 理想归一化坐标（齐次坐标）
+//     Eigen::MatrixXd ideal(3, 3);
+//     ideal << 0.1, 0.1, 1.0, 0.05, -0.05, 1.0, 0.0, 0.0, 1.0;
 
 //     TelecentricLineCalibrator calib;
-//     calib.calibrateCameraFromPointsDemo(all_image_points, worldPts, width, height, dx, dy, K, rmse, poses);
 
-//     std::cout << "\n========== 最终结果 ==========\n";
-//     std::cout << "内参矩阵 K = \n" << K << std::endl;
-//     std::cout << "平均重投影误差 RMSE = " << rmse << " px\n";
-//     std::cout << "共求得 " << poses.size() << " 组外参\n";
-//     return 0;
-// }
+//     // 正向畸变
+//     Eigen::MatrixXd distorted = calib.distort(D, ideal);
 
-// #include <pybind11/embed.h>
+//     // 转为像素坐标
+//     Eigen::MatrixXd points_px = (K * distorted.transpose()).transpose();
+//     points_px = points_px.leftCols(2);  // 提取 u, v
 
-// #include <iostream>
+//     // 去畸变
+//     Eigen::MatrixXd undistorted_px = calib.undistortPointsIter(points_px, K, D);
 
-// int main() {
-//     _putenv("PYTHONHOME=D:\\anaconda\\envs\\Telecentric-Calibration");
-//     _putenv(
-//         "PYTHONPATH=D:\\anaconda\\envs\\Telecentric-Calibration\\Lib;"
-//         "D:\\anaconda\\envs\\Telecentric-Calibration\\Lib\\site-packages;"
-//         ".\\src\\telecentricLineCalibrator\\python\\Telecentric-Calibration-main");
+//     // 输出结果
+//     std::cout << "原始像素:\n" << (K * ideal.transpose()).transpose().leftCols(2) << std::endl;
+//     std::cout << "畸变后:\n" << points_px << std::endl;
+//     std::cout << "去畸变后:\n" << undistorted_px << std::endl;
 
-//     try {
-//         pybind11::scoped_interpreter guard{};
+//     // 归一化坐标
+//     Eigen::MatrixXd normalized_2d = calib.pixelToCameraCoordinates(points_px, K, D);
+//     Eigen::MatrixXd original_2d = ideal.leftCols(2);
 
-//         pybind11::exec(R"(
-//             import sys
-//             print('Python from:', sys.executable)
-//             print('sys.path =', sys.path)
-//         )");
+//     std::cout << "\n去畸变后归一化坐标:\n" << normalized_2d << std::endl;
 
-//         std::string scriptPath =
-//             R"(D:\Code\CISCamera_DALSA\src\telecentricLineCalibrator\python\Telecentric-Calibration-main\load.py)";
-
-//         pybind11::eval_file(scriptPath);
-
-//     } catch (pybind11::error_already_set &e) {
-//         std::cerr << "❌ Python 执行错误:\n";
+//     // 误差计算
+//     Eigen::VectorXd errors(ideal.rows());
+//     for (int i = 0; i < ideal.rows(); i++) {
+//         errors(i) = std::sqrt(std::pow(normalized_2d(i, 0) - original_2d(i, 0), 2) +
+//                               std::pow(normalized_2d(i, 1) - original_2d(i, 1), 2));
 //     }
+
+//     std::cout << "\n每个点误差:\n" << errors.transpose() << std::endl;
+//     std::cout << "平均误差: " << errors.mean() << std::endl;
+
+//     return 0;
 // }

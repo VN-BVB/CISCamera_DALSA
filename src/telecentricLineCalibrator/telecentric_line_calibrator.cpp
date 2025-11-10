@@ -526,126 +526,100 @@ double TelecentricLineCalibrator::computeReprojectionErrorFinal(const std::vecto
 
     return rmse;
 }
+// -------------------- 齐次坐标 --------------------
+Eigen::MatrixXd TelecentricLineCalibrator::toHomogeneous(const Eigen::MatrixXd& points) {
+    if (points.cols() != 2 && points.cols() != 3) throw std::runtime_error("齐次坐标转换失败，输入应为 Nx2 或 Nx3");
+
+    Eigen::MatrixXd homo(points.rows(), points.cols() + 1);
+    homo.leftCols(points.cols()) = points;
+    homo.col(points.cols()).setOnes();
+    return homo;
+}
+
+// -------------------- 正向畸变 --------------------
+Eigen::MatrixXd TelecentricLineCalibrator::distort(const Eigen::Matrix<double, 1, 5>& coff_dis,
+                                                   const Eigen::MatrixXd& normalized_proj) {
+    double k1 = coff_dis(0), h1 = coff_dis(1), h2 = coff_dis(2), s1 = coff_dis(3), s2 = coff_dis(4);
+    Eigen::VectorXd x = normalized_proj.col(0);
+    Eigen::VectorXd y = normalized_proj.col(1);
+    Eigen::VectorXd r = x.array().square() + y.array().square();
+
+    Eigen::VectorXd deltaX = k1 * x.array() * r.array() + h1 * (3 * x.array().square() + y.array().square()) +
+                             2 * h2 * x.array() * y.array() + s1 * r.array();
+    Eigen::VectorXd deltaY = k1 * y.array() * r.array() + 2 * h1 * x.array() * y.array() +
+                             h2 * (x.array().square() + 3 * y.array().square()) + s2 * r.array();
+
+    Eigen::MatrixXd distorted(normalized_proj.rows(), 2);
+    distorted.col(0) = x + deltaX;
+    distorted.col(1) = y + deltaY;
+
+    return toHomogeneous(distorted);
+}
+
+// -------------------- 迭代去畸变 --------------------
+Eigen::MatrixXd TelecentricLineCalibrator::undistortPointsIter(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
+                                                               const Eigen::Matrix<double, 1, 5>& coff_dis, int max_iter,
+                                                               double tol) {
+    if (points_px.cols() != 2) throw std::runtime_error("输入点应为 Nx2");
+
+    Eigen::MatrixXd undistorted(points_px.rows(), 2);
+    double fx = K(0, 0), fy = K(1, 1), cx = K(0, 2), cy = K(1, 2);
+    double ifx = 1.0 / fx, ify = 1.0 / fy;
+    double k1 = coff_dis(0), h1 = coff_dis(1), h2 = coff_dis(2), s1 = coff_dis(3), s2 = coff_dis(4);
+
+    for (int i = 0; i < points_px.rows(); ++i) {
+        double u = points_px(i, 0), v = points_px(i, 1);
+        double x0 = (u - cx) * ifx;
+        double y0 = (v - cy) * ify;
+        double x = x0, y = y0;
+
+        double error = 1e9;
+        int iter = 0;
+
+        while (iter < max_iter && error > tol) {
+            double r = x * x + y * y;
+            double deltaX = k1 * x * r + h1 * (3 * x * x + y * y) + 2 * h2 * x * y + s1 * r;
+            double deltaY = k1 * y * r + 2 * h1 * x * y + h2 * (x * x + 3 * y * y) + s2 * r;
+
+            x = x0 - deltaX;
+            y = y0 - deltaY;
+
+            r = x * x + y * y;
+            double xd = x + k1 * x * r + h1 * (3 * x * x + y * y) + 2 * h2 * x * y + s1 * r;
+            double yd = y + k1 * y * r + 2 * h1 * x * y + h2 * (x * x + 3 * y * y) + s2 * r;
+
+            error = std::sqrt(std::pow(xd * fx + cx - u, 2) + std::pow(yd * fy + cy - v, 2));
+            iter++;
+        }
+        undistorted(i, 0) = x * fx + cx;
+        undistorted(i, 1) = y * fy + cy;
+    }
+
+    return undistorted;
+}
+
+// -------------------- 像素坐标 → 相机坐标 --------------------
+Eigen::MatrixXd TelecentricLineCalibrator::pixelToCameraCoordinates(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
+                                                                    const Eigen::Matrix<double, 1, 5>& coff_dis) {
+    Eigen::MatrixXd processed_px = points_px;
+
+    // 如果畸变系数存在有效值则去畸变
+    if (coff_dis.norm() > 1e-15) {
+        processed_px = undistortPointsIter(points_px, K, coff_dis);
+    }
+
+    Eigen::MatrixXd homo = toHomogeneous(processed_px);
+    Eigen::Matrix3d K_inv = K.inverse();
+    Eigen::MatrixXd cam_pts = (K_inv * homo.transpose()).transpose();
+
+    Eigen::MatrixXd result(cam_pts.rows(), 2);
+    result.col(0) = cam_pts.col(0).array() / cam_pts.col(2).array();
+    result.col(1) = cam_pts.col(1).array() / cam_pts.col(2).array();
+    return result;
+}
 // =========================================================
 // Step 5. 主函数：标定流程（DLT 初值）
 // =========================================================
-bool TelecentricLineCalibrator::calibrateCamera(const std::vector<cv::Mat>& images, cv::Size boardSize, double /*circleRadiusMM*/,
-                                                double spacingMM, PatternType patternType, double dx, double dy,
-                                                Eigen::Matrix3d& K_out, double& rmse_out, std::vector<Pose>& poses_out) {
-    if (images.empty()) {
-        std::cerr << "没有输入标定图像！\n";
-        return false;
-    }
-
-    dx_ = dx;
-    dy_ = dy;
-
-    const int width = images[0].cols;
-    const int height = images[0].rows;
-    const double u0 = width / 2.0;
-    const double v0 = height / 2.0;
-
-    std::cout << "初始化主点为图像中心 (" << u0 << ", " << v0 << ")\n";
-
-    // Step 0. 构造世界平面点 (Z=0)
-    const int W = boardSize.width;
-    const int H = boardSize.height;
-    std::vector<Eigen::Vector2d> worldPts;
-    worldPts.reserve(W * H);
-    for (int r = 0; r < H; ++r)
-        for (int c = 0; c < W; ++c) worldPts.emplace_back(c * spacingMM, r * spacingMM);
-
-    // Step 1. 逐图检测角点并求单应矩阵 H_i
-    std::vector<Eigen::Matrix3d> homographies;
-    std::vector<std::vector<Eigen::Vector2d>> all_imgPts;
-    std::vector<double> m_values, reprojErrors;
-
-    for (size_t i = 0; i < images.size(); ++i) {
-        std::vector<cv::Point2d> imagePoints;
-        if (!calculate_Image_Points(images[i], boardSize, imagePoints)) {
-            std::cerr << "图像 " << i << " 未检测到图案，跳过\n";
-            continue;
-        }
-
-        if ((int)imagePoints.size() != (int)worldPts.size()) {
-            std::cerr << "图像 " << i << " 棋盘点数量不匹配，跳过\n";
-            continue;
-        }
-
-        // 转为 Eigen 格式
-        std::vector<Eigen::Vector2d> imgPts;
-        imgPts.reserve(imagePoints.size());
-        for (const auto& p : imagePoints) imgPts.emplace_back(p.x, p.y);
-
-        // 求单应矩阵
-        Eigen::Matrix3d Hi = computeHomography(worldPts, imgPts);
-
-        // 根据论文公式(10)求当前图像放大倍率 m_i
-        double mi = compute_m_from_H(Hi, dx, dy);
-        if (!std::isfinite(mi) || mi <= 0.0) {
-            std::cerr << "图像 " << i << " 的放大倍率无效，跳过\n";
-            continue;
-        }
-
-        // 用临时内参计算外参与临时重投影误差
-        Eigen::Matrix3d K_i;
-        K_i << mi / dx, 0.0, u0, 0.0, mi / dy, v0, 0.0, 0.0, 1.0;
-
-        Pose tmpPose = extractPoseFromHomography(Hi, K_i, worldPts, imgPts, mi);
-        double e_i = computeReprojectionError(worldPts, imgPts, tmpPose, K_i);
-
-        // 保存中间结果
-        homographies.push_back(Hi);
-        all_imgPts.push_back(imgPts);
-        m_values.push_back(mi);
-        reprojErrors.push_back(e_i);
-
-        std::cout << "图像 " << i << " : m_i = " << mi << " , 临时重投影误差 e_i = " << e_i << " px\n";
-    }
-
-    if (homographies.empty()) {
-        std::cerr << "没有可用的单应矩阵。\n";
-        return false;
-    }
-
-    // Step 2. 使用误差加权平均法计算全局放大倍率 m（公式见论文 3.1）
-    if (!estimateIntrinsicsFromHomographies(homographies, dx, dy, u0, v0, reprojErrors)) {
-        PLOGE << "内参估计失败。\n";
-        return false;
-    }
-
-    // Step 3. 使用全局内参重新计算外参与最终 RMSE
-    poses_out.clear();
-    double totalRMSE = 0.0;
-    int validCount = 0;
-
-    for (size_t i = 0; i < homographies.size(); ++i) {
-        Pose pose = extractPoseFromHomography(homographies[i], K_, worldPts, all_imgPts[i], m_);
-        pose.reprojErr = computeReprojectionError(worldPts, all_imgPts[i], pose, K_);
-        poses_out.push_back(pose);
-
-        totalRMSE += pose.reprojErr;
-        ++validCount;
-
-        std::cout << "\n 图像 " << i << " 外参：\n"
-                  << "R =\n"
-                  << pose.R << "\nt = " << pose.t.transpose() << "\n误差 = " << pose.reprojErr << " px\n";
-    }
-
-    if (validCount == 0) {
-        std::cerr << "所有图像均求解外参失败。\n";
-        return false;
-    }
-
-    rmse_out = totalRMSE / static_cast<double>(validCount);
-    K_out = K_;
-
-    std::cout << "\n=== 初步（DLT）标定完成 ===\n"
-              << "全局内参矩阵 K =\n"
-              << K_ << "\n平均重投影误差 = " << rmse_out << " 像素\n";
-
-    return true;
-}
 bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
                                                               const std::vector<Eigen::Vector2d>& worldPts, int width, int height,
                                                               double dx, double dy, Eigen::Matrix3d& K_out, double& rmse_out,
