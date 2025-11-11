@@ -10,7 +10,7 @@
 #include <QtCharts/QChart>
 
 #include "tinysplinecxx.h"
-#include "src/jointDetection/contourProcess/curve_seg.h"
+#include "src/jointDetection/contourProcess/methods/curve_seg.h"
 
 class DisplayView;
 class DisplayImageItem;

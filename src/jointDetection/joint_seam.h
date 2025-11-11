@@ -5,7 +5,7 @@
 #include "src/utils/geometry_utils.h"
 #include "src/jointDetection/edgeDetection/abstract_contour_detector.h"
 #include "src/jointDetection/edgeDetection/contour_detector_context.h"
-#include "contourProcess/contour_processor.h"
+#include "contourProcess/methods/contour_data.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 
@@ -26,9 +26,9 @@ private:
     std::vector<cv::Point2f> m_endPoints;           // 拼缝四个端点
 
 public:
-    std::vector<ContourProcessor> getContourProcessor() const {return m_contourProcessor;}
+    std::vector<ContourData> getContourDatas() const {return m_contourDatas;}
 private:
-    std::vector<ContourProcessor> m_contourProcessor;
+    std::vector<ContourData> m_contourDatas;
 
 };
 

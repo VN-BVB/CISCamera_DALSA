@@ -1,7 +1,7 @@
 #ifndef CONTOUR_BOUNDING_BOX_H
 #define CONTOUR_BOUNDING_BOX_H
 
-#include "src/jointDetection/contourProcess/joint_seam.h"
+#include "src/jointDetection/joint_seam.h"
 
 /**
  * @brief 轮廓包围盒，接收一条拼缝一边轮廓信息，然后得出其包围盒

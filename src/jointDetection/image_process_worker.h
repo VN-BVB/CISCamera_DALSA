@@ -6,7 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "edgeDetection/canny_devernay.h"
-#include "contourProcess/curve_seg.h"
+#include "contourProcess/methods/curve_seg.h"
 #include "joint_seam.h"
 
 

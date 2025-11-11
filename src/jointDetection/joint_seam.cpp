@@ -1,6 +1,8 @@
 #include "joint_seam.h"
 #include "src/utils/image_tools.h"
 #include "src/jointDetection/edgeDetection/canny_zernike_detector.h"
+#include "contourProcess/contour_processor.h"
+#include <iostream>
 
 JointSeam::JointSeam(const cv::Mat &image) : m_image(image)
 {}
@@ -16,9 +18,14 @@ void JointSeam::run() {
 
     // 轮廓信息整处理
     for (auto& contour : contours) {
-        ContourProcessor cProcessor;
-        cProcessor.processContour(contour);
-        m_contourProcessor.push_back(cProcessor);
+        ContourProcessorV2 processor;
+        if(processor.processContour(contour))
+        {
+            // 获取处理结果
+            auto result = processor.getResult();
+            m_contourDatas.push_back(result);
+            std::cout << "dsafdsf" << std::endl;
+        }
     }
 }
 

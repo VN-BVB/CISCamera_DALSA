@@ -136,24 +136,20 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
 {
     m_currentImage = processedImage;
 
-    for (auto& cp : jointSeam->getContourProcessor()) {
-        m_subpixelContours.push_back(cp.getSortedContour());
-        for (auto& line : cp.getTangentLines())
-            m_fitTangentLines.push_back(line);
+    // contour_processor的结果获取方式
+    for (auto& cd : jointSeam->getContourDatas()) {
+        m_subpixelContours.push_back(cd.getSortedContour());
 
-        for (auto& [index, curveSeg] : cp.getCurveSegments())
+        for (auto& [index, curveSeg] : cd.getCurveSegments())
             m_fitCurves.push_back(curveSeg);
 
-        for (auto& line : cp.getTangentLines())
+        for (auto& line : cd.getTangentLines())
             m_fitTangentLines.push_back(line);
 
-        for (auto& point : cp.getEndPoints())
+        for (auto& point : cd.getEndPoints())
             m_endPointsByTangentLines.push_back(point);
 
-        for (auto& line : cp.getLines())
-            m_fitLines.push_back(line);
-
-        for (auto& point : cp.getEndPointsByFitedLines())
+        for (auto& point : cd.getEndPoints())
             m_endPointsByFittedLines.push_back(point);
     }
 

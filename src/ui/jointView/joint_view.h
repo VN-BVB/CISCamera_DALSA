@@ -13,8 +13,8 @@
 #include "src/jointDetection/image_process_worker.h"
 #include "src/jointDetection/edgeDetection/canny_devernay.h"
 #include "src/ui/utils/display/frm_display.h"
-#include "src/jointDetection/contourProcess/curve_seg.h"
-#include "src/jointDetection/contourProcess/joint_seam.h"
+#include "src/jointDetection/contourProcess/methods/curve_seg.h"
+#include "src/jointDetection/joint_seam.h"
 
 namespace Ui {
 class JointView;

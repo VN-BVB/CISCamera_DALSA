@@ -2,9 +2,12 @@
 #define CONTOUR_DATA_H
 
 #include "contour_utils.h"
+#include <map>
+#include "curve_seg.h"
+#include "line_seg.h"
 
 /**
- * @brief 轮廓数据容器类 - 只负责数据存储
+ * @brief 轮廓数据容器类 - 扩展支持策略模式
  */
 class ContourData {
 public:
@@ -36,6 +39,17 @@ public:
         m_counterClockwiseContours = segments;
     }
 
+    // 曲线和直线拟合结果存储
+    void setCurveSegments(const std::map<int, CurveSeg>& segments) { m_curveSegments = segments; }
+    void setLineSegments(const std::map<int, LineSeg>& segments) { m_lineSegments = segments; }
+    void setEndPoints(const std::vector<cv::Point2f>& points) { m_endPoints = points; }
+    void setTangentLines(const std::vector<cv::Vec4f>& lines) { m_tangentLines = lines; }
+
+    std::map<int, CurveSeg> getCurveSegments() const { return m_curveSegments; }
+    std::map<int, LineSeg> getLineSegments() const { return m_lineSegments; }
+    std::vector<cv::Point2f> getEndPoints() const { return m_endPoints; }
+    std::vector<cv::Vec4f> getTangentLines() const { return m_tangentLines; }
+
 private:
     std::vector<cv::Point> m_pixelContour;                                  // 像素级坐标轮廓
     std::vector<cv::Point2f> m_subpixelContour;                             // 亚像素级坐标轮廓
@@ -44,6 +58,12 @@ private:
     std::vector<cv::Point2f> m_cornerPoints;                                // 轮廓多边形拟合后的角点
     std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours;      // 分割后的轮廓
     std::map<int, std::vector<cv::Point2f>> m_counterClockwiseContours;     // 逆时针排序分割后的轮廓（一段一段的）
+
+    // 拟合结果
+    std::map<int, CurveSeg> m_curveSegments;                // 拟合曲线
+    std::map<int, LineSeg> m_lineSegments;                  // 拟合线段
+    std::vector<cv::Point2f> m_endPoints;                   // 端点
+    std::vector<cv::Vec4f> m_tangentLines;                  // 切线
 };
 
 #endif // CONTOUR_DATA_H
