@@ -31,11 +31,11 @@ struct Point2fEqual {
 };
 
 // 工具函数命名空间
-namespace ContourUtils {
+namespace ContourUtils
+{
 std::string openingDirectionToString(OpeningDirection direction);
 int findPointIndex(const cv::Point2f& point, const std::vector<cv::Point2f>& contour, float tolerance = 1e-5f);
-cv::Point2f calculateCentroid(const std::vector<cv::Point2f>& contour);
-bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint);
+cv::Point2f calculateCentralPoint(const std::vector<cv::Point2f>& contour);
 }
 
 #endif // CONTOUR_UTILS_H

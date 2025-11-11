@@ -11,12 +11,7 @@ class DeduplicationStrategy : public ContourProcessingStrategy
 {
 public:
     DeduplicationStrategy();
-    virtual bool process(ContourData &context) override {
-        auto contour = context.getSubpixelContour();
-        auto deduplicated = ContourFeatureCalculator::removeDuplicatePoints(contour);
-        context.setSubpixelContour(deduplicated);
-        return true;
-    }
+    virtual bool process(ContourData &context) override;
 
     std::string getName() const override {return "DeduplicationStrategy";}
 };

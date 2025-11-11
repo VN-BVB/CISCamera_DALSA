@@ -8,12 +8,7 @@ class DirectionCalculationStrategy : public ContourProcessingStrategy
 {
 public:
     DirectionCalculationStrategy();
-    bool process(ContourData& context) override {
-        auto contour = context.getSubpixelContour();
-        auto direction = ContourFeatureCalculator::calculateOpeningDirection(contour);
-        context.setOpeningDirection(direction);
-        return true;
-    }
+    bool process(ContourData& context) override;
 
     std::string getName() const override { return "DirectionCalculationStrategy"; }
 };

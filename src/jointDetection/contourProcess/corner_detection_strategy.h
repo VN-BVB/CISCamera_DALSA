@@ -8,12 +8,7 @@ class CornerDetectionStrategy : public ContourProcessingStrategy
 {
 public:
     CornerDetectionStrategy();
-    bool process(ContourData& context) override {
-        auto contour = context.getSortedContour();
-        auto cornerPoints = ContourFeatureCalculator::detectCornerPoints(contour);
-        context.setCornerPoints(cornerPoints);
-        return true;
-    }
+    bool process(ContourData& context) override;
 
     std::string getName() const override { return "CornerDetectionStrategy"; }
 };

@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #include "curve_seg.h"
 #include "contour_utils.h"
+#include "src/utils/geometry_utils.h"
 #include <cmath>
 
 CurveSeg::CurveSeg() : m_minDomain(MIN_DOMAIN), m_maxDomain(MAX_DOMAIN){}
@@ -9,6 +10,12 @@ void CurveSeg::initializeFromPoints(const std::vector<cv::Point2f>& points) {
     m_points = points;
 }
 
+/**
+  * @brief 使用样条曲线拟合轮廓点集
+  * @details 使用tinyspline库对输入的点集进行三次B样条曲线拟合，生成平滑的轮廓曲线。
+  *          拟合过程中会设置控制点并计算曲线的有效参数范围。
+  *          如果点集数量少于4个，将无法进行样条拟合并输出警告信息。
+  */
 void CurveSeg::fitSplineCurve() {
     if (m_points.size() < 4) {
         std::cout << "警告：点数太少 (" << m_points.size() << ")，至少需要4个点进行样条拟合" << std::endl;
@@ -64,6 +71,13 @@ void CurveSeg::fitSplineCurve() {
     }
 }
 
+/**
+  * @brief 获取拟合样条曲线的采样点集
+  * @param numSamples 采样点数量，控制曲线的平滑度和精度
+  * @return std::vector<cv::Point2f> 采样点集合，包含拟合曲线上均匀分布的坐标点
+  * @details 该函数在样条曲线的参数域内均匀采样，生成指定数量的点来近似表示拟合后的曲线。
+  *          如果曲线尚未拟合，将返回空集合并输出警告信息。
+  */
 std::vector<cv::Point2f> CurveSeg::getFittedPoints(int numSamples) const {
     std::vector<cv::Point2f> fittedPoints;
 
@@ -85,6 +99,13 @@ std::vector<cv::Point2f> CurveSeg::getControlPoints() const {
     return m_controlPoints;
 }
 
+/**
+  * @brief 在样条曲线上评估指定参数值对应的坐标点
+  * @param u 样条曲线的参数值，应在有效参数域[m_minDomain, m_maxDomain]范围内
+  * @return cv::Point2f 对应参数值u处的二维坐标点
+  * @details 该函数使用tinyspline库计算样条曲线在给定参数值处的坐标。
+  *          如果曲线尚未拟合或评估过程中出现异常，将返回原点(0,0)并输出错误信息。
+  */
 cv::Point2f CurveSeg::evaluate(float u) const {
     if (!m_isFitted) {
         return cv::Point2f(0, 0);
@@ -100,6 +121,13 @@ cv::Point2f CurveSeg::evaluate(float u) const {
     }
 }
 
+/**
+  * @brief 计算样条曲线在指定参数值处的切线向量
+  * @param u 样条曲线的参数值，应在有效参数域[m_minDomain, m_maxDomain]范围内
+  * @return cv::Vec4f 切线向量，格式为(tangent_x, tangent_y, point_x, point_y)
+  * @details 该函数通过计算样条曲线的一阶导数来获取切线方向，并返回包含切线向量和对应点坐标的四维向量。
+  *          如果曲线尚未拟合或计算过程中出现异常，将返回零向量并输出错误信息。
+  */
 cv::Vec4f CurveSeg::getTangent(float u) const {
     if (!m_isFitted) {
         return cv::Vec4f(0, 0, 0, 0);
@@ -120,6 +148,15 @@ cv::Vec4f CurveSeg::getTangent(float u) const {
     }
 }
 
+/**
+  * @brief 在图像上绘制拟合的样条曲线
+  * @param image 目标图像，曲线将绘制在此图像上
+  * @param color 曲线颜色
+  * @param thickness 曲线线宽，控制绘制线条的粗细
+  * @details 该函数通过采样拟合曲线上的点，使用OpenCV的polylines函数绘制连续的样条曲线。
+  *          采样点数量会根据控制点数量动态调整以确保曲线平滑度，同时会添加点标记增强可见性。
+  *          如果曲线尚未拟合，将输出警告信息并直接返回。
+  */
 void CurveSeg::drawCurve(cv::Mat& image, const cv::Scalar& color, int thickness) const {
     if (!m_isFitted) {
         std::cout << "警告：无法绘制未拟合的曲线" << std::endl;
@@ -148,6 +185,12 @@ void CurveSeg::drawCurve(cv::Mat& image, const cv::Scalar& color, int thickness)
     }
 }
 
+/**
+  * @brief 在图像上绘制样条曲线的控制点和控制多边形
+  * @param image 目标图像，控制点和多边形将绘制在此图像上
+  * @param pointColor 控制点颜色
+  * @param polygonColor 控制多边形颜色
+  */
 void CurveSeg::drawControlPoints(cv::Mat& image, const cv::Scalar& pointColor,
                                  const cv::Scalar& polygonColor) const {
     if (m_controlPoints.empty()) return;
@@ -182,7 +225,7 @@ std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const c
                                                                          const cv::Point2f& referencePoint)
 {
     std::pair<cv::Point2f, cv::Point2f> pointPair;
-    if (ContourUtils::isPointClockwiseTo(pointA, pointB, referencePoint)) {
+    if (GeometryUtils::isPointClockwiseTo(pointA, pointB, referencePoint)) {
         pointPair.first = pointA;
         pointPair.second = pointB;
     } else {

@@ -12,6 +12,13 @@ std::string ContourUtils::openingDirectionToString(OpeningDirection direction) {
     }
 }
 
+/**
+ * @brief 在轮廓中查找指定点的索引位置
+ * @param point 要查找的目标点
+ * @param contour 轮廓点集
+ * @param tolerance 容差范围，用于浮点数比较
+ * @return int 目标点在轮廓中的索引位置，如果未找到返回-1
+ */
 int ContourUtils::findPointIndex(const cv::Point2f& point, const std::vector<cv::Point2f>& contour, float tolerance) {
     for (int i = 0; i < contour.size(); ++i) {
         if (std::abs(contour[i].x - point.x) < tolerance && std::abs(contour[i].y - point.y) < tolerance) {
@@ -21,7 +28,12 @@ int ContourUtils::findPointIndex(const cv::Point2f& point, const std::vector<cv:
     return -1;
 }
 
-cv::Point2f ContourUtils::calculateCentroid(const std::vector<cv::Point2f>& contour) {
+/**
+ * @brief 计算轮廓的中心点坐标
+ * @param contour 输入轮廓点集
+ * @return cv::Point2f 轮廓的中心点坐标，如果轮廓为空返回(0,0)
+ */
+cv::Point2f ContourUtils::calculateCentralPoint(const std::vector<cv::Point2f>& contour) {
     if (contour.empty()) return cv::Point2f(0, 0);
 
     // 计算轮廓的最小外接矩形
@@ -35,33 +47,3 @@ cv::Point2f ContourUtils::calculateCentroid(const std::vector<cv::Point2f>& cont
     return centroid;
 }
 
-/**
-* @brief 判断点A是否在点B的顺时针方向（相对于参考点）
-* @param pointA 第一个点
-* @param pointB 第二个点
-* @param referencePoint 参考点
-* @return 如果点A在点B的顺时针方向返回true，否则返回false
-*/
-bool ContourUtils::isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint)
-{
-
-    // 将参考点作为原点，计算相对坐标
-    cv::Point2f relA = pointA - referencePoint;
-    cv::Point2f relB = pointB - referencePoint;
-
-    // 计算叉积 det = (ax * by - ay * bx)
-    float det = relA.x * relB.y - relA.y * relB.x;
-
-    // 如果叉积为正，b在a顺时针方向
-    if (det > 0)
-        return false;
-
-    // 如果叉积为负，a在b顺时针方向
-    if (det < 0)
-        return true;
-
-    // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
-    float d1 = relA.x * relA.x + relA.y * relA.y;
-    float d2 = relB.x * relB.x + relB.y * relB.y;
-    return d1 < d2;
-}

@@ -9,19 +9,7 @@ class SortingStrategy : public ContourProcessingStrategy
 {
 public:
     SortingStrategy();
-    bool process(ContourData& context) override {
-        auto contour = context.getSubpixelContour();
-        auto direction = context.getOpeningDirection();
-
-        auto startPoint = ContourFeatureCalculator::calculateStartPoint(direction, contour);
-        int startIndex = ContourUtils::findPointIndex(startPoint, contour);
-        auto endPoint = ContourFeatureCalculator::calculateEndPoint(direction, contour);
-        int endIndex = ContourUtils::findPointIndex(endPoint, contour);
-
-        auto sortedContour = ContourFeatureCalculator::sortContourByNearestNeighbor(contour, startIndex, endIndex);
-        context.setSortedContour(sortedContour);
-        return true;
-    }
+    bool process(ContourData& context) override;
 
     std::string getName() const override { return "SortingStrategy"; }
 };

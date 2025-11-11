@@ -1,22 +1,24 @@
 #include "contour_feature_calculator.h"
 #include "contour_segmenter.h"
+#include "src/utils/geometry_utils.h"
 #include <unordered_set>
 #include <cmath>
-// 定义π常量
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
+/**
+ * @brief 计算轮廓的开口方向
+ * @param contour 输入轮廓点集
+ * @return 开口方向枚举值
+ */
 OpeningDirection ContourFeatureCalculator::calculateOpeningDirection(const std::vector<cv::Point2f>& contour) {
     if (contour.empty()) return OpeningDirection::UNKNOWN;
 
-    float sumX = 0.0f, sumY = 0.0f;
-    for (const auto& point : contour) {
-        sumX += point.x;
-        sumY += point.y;
-    }
-    float avgX = sumX / contour.size();
-    float avgY = sumY / contour.size();
+    cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
+    float avgX = centroid.x;
+    float avgY = centroid.y;
 
     bool hasUp = false, hasDown = false, hasLeft = false, hasRight = false;
 
@@ -35,6 +37,11 @@ OpeningDirection ContourFeatureCalculator::calculateOpeningDirection(const std::
     return OpeningDirection::UNKNOWN;
 }
 
+/**
+ * @brief 去除轮廓中的重复点
+ * @param contour 输入轮廓点集
+ * @return 去除重复点后的轮廓点集
+ */
 std::vector<cv::Point2f> ContourFeatureCalculator::removeDuplicatePoints(const std::vector<cv::Point2f>& contour) {
     // 定义点比较结构体
     struct PointCompare {
@@ -56,6 +63,18 @@ std::vector<cv::Point2f> ContourFeatureCalculator::removeDuplicatePoints(const s
     return uniquePoints;
 }
 
+/**
+ * @brief 根据开口方向计算轮廓的起始点
+ * @param direction 开口方向
+ * @param contour 输入轮廓点集
+ * @return 起始点坐标，如果方向未知或轮廓为空则返回(-1, -1)
+ *
+ * @details 根据开口方向选择逆时针的起始点：
+ *    - 开口向上：左上角
+ *    - 开口向右：右上角
+ *    - 开口向下：右下角
+ *    - 开口向左：左下角
+ */
 cv::Point2f ContourFeatureCalculator::calculateStartPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour) {
     if (direction == OpeningDirection::UNKNOWN || contour.empty()) {
         return cv::Point2f(-1, -1);
@@ -129,6 +148,18 @@ cv::Point2f ContourFeatureCalculator::calculateStartPoint(OpeningDirection direc
     return startPoint;
 }
 
+/**
+ * @brief 根据开口方向计算轮廓的终点
+ * @param direction 开口方向
+ * @param contour 输入轮廓点集
+ * @return 终点坐标，如果方向未知或轮廓为空则返回(-1, -1)
+ *
+ * @details 根据开口方向选择逆时针的终止点：
+ *    - 开口向上：终点在右上角（右侧区域的最小Y值点）
+ *    - 开口向右：终点在右下角（下方区域的最大X值点）
+ *    - 开口向下：终点在左下角（左侧区域的最大Y值点）
+ *    - 开口向左：终点在左上角（上方区域的最小X值点）
+ */
 cv::Point2f ContourFeatureCalculator::calculateEndPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour) {
     if (direction == OpeningDirection::UNKNOWN || contour.empty()) {
         return cv::Point2f(-1, -1);
@@ -206,7 +237,22 @@ cv::Point2f ContourFeatureCalculator::calculateEndPoint(OpeningDirection directi
     return endPoint;
 }
 
-
+/**
+ * @brief 使用最近邻算法对轮廓点进行排序
+ * @param contour 输入轮廓点集
+ * @param firstPointIdx 起始点的索引
+ * @return 排序后的轮廓点集，如果轮廓为空则返回空向量
+ *
+ * @details 实现过程：
+ * 1. 首先检查输入轮廓是否为空
+ * 2. 初始化访问标记数组和排序结果数组
+ * 3. 从指定的起始点开始，将其添加到排序结果中
+ * 4. 使用最近邻搜索算法：
+ *    - 在当前点的所有未访问邻居中，找到距离最近的点
+ *    - 将该点添加到排序结果中，并标记为已访问
+ *    - 重复此过程直到所有点都被访问
+ * 5. 返回排序后的轮廓点集
+ */
 std::vector<cv::Point2f> ContourFeatureCalculator::sortContour(const std::vector<cv::Point2f>& contour, int firstPointIdx) {
     if (contour.empty()) return {};
 
@@ -242,12 +288,16 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContour(const std::vector
     return sortedContour;
 }
 
-// 基于质心的逆时针排序方法
+/**
+ * @brief 基于质心的逆时针排序方法对轮廓点进行排序
+ * @param contour 输入轮廓点集
+ * @return 按逆时针方向排序后的轮廓点集，如果轮廓为空则返回空向量
+ */
 std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByCentroid(const std::vector<cv::Point2f>& contour) {
     if (contour.empty()) return {};
 
     // 计算轮廓质心
-    cv::Point2f centroid = ContourUtils::calculateCentroid(contour);
+    cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
 
     // 创建点的副本用于排序
     std::vector<cv::Point2f> sortedContour = contour;
@@ -255,13 +305,27 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByCentroid(const s
     // 按逆时针方向排序（相对于质心，直接使用ContourUtils::isPointClockwiseTo函数）
     std::sort(sortedContour.begin(), sortedContour.end(),
               [&centroid](const cv::Point2f& a, const cv::Point2f& b) {
-                  return !ContourUtils::isPointClockwiseTo(a, b, centroid);
+                  return !GeometryUtils::isPointClockwiseTo(a, b, centroid);
               });
 
     return sortedContour;
 }
 
-// 基于最近邻搜索和角度排序的轮廓排序方法（支持终点停止）
+/**
+ * @brief 基于最近邻搜索和角度排序的轮廓排序方法
+ * @param contour 输入轮廓点集
+ * @param startIndex 起始点索引
+ * @param endIndex 终点索引（可选，如果有效则在到达该点时停止排序）
+ * @return std::vector<cv::Point2f> 排序后的轮廓点集
+ * @details 该函数结合最近邻搜索和角度优化策略对轮廓点进行排序，支持在指定终点处停止排序。
+ *          算法流程：
+ *          1. 参数有效性检查（空轮廓、起始点索引、终点索引）
+ *          2. 初始化访问标记数组和排序结果数组
+ *          3. 从起始点开始，通过最近邻搜索找到候选点
+ *          4. 在候选点中使用角度优化策略选择最合适的下一个点
+ *          5. 重复步骤3-4直到所有点被访问或到达指定终点
+ *          6. 返回排序后的轮廓点集
+ */
 std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int startIndex, int endIndex) {
     if (contour.empty()) return {};
 
@@ -288,7 +352,7 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
     }
 
     // 计算轮廓质心（用于角度计算）
-    cv::Point2f centroid = ContourUtils::calculateCentroid(contour);
+    cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
 
     while (sortedContour.size() < contour.size()) {
         // 检查是否到达终点
@@ -388,6 +452,12 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPoints(const std:
     return detectCornerPointsByRansac(contour);
 }
 
+/**
+ * @brief 使用RANSAC方法检测轮廓角点
+ * @param contour 输入轮廓点集
+ * @return std::vector<cv::Point2f> 检测到的角点集合
+ * @details 该函数通过RANSAC算法拟合三条直线，然后计算这些直线的交点作为角点。
+ */
 std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(const std::vector<cv::Point2f>& contour) {
     if (contour.size() < 6) {
         // 如果点数不足，使用默认方法
@@ -405,19 +475,13 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(co
     // 调用ContourSegmenter的RANSAC方法
     ContourSegmenter::sequentialRansac3Times(contour, segments, lines, threshold, maxIterations);
 
-    // 检查是否成功拟合了三条直线
-    if (lines.size() < 3) {
-        // 如果拟合失败，使用默认方法
-        return detectCornerPointsByDouglasPeucker(contour);
-    }
-
     // 计算三条直线的交点作为角点
     // 交点1: 直线1和直线2的交点
-    cv::Point2f corner1 = calculateLineIntersection(lines[0], lines[1]);
+    cv::Point2f corner1 = GeometryUtils::calculateLineIntersection(lines[0], lines[1]);
     // 交点2: 直线2和直线3的交点
-    cv::Point2f corner2 = calculateLineIntersection(lines[1], lines[2]);
+    cv::Point2f corner2 = GeometryUtils::calculateLineIntersection(lines[1], lines[2]);
     // 交点3: 直线3和直线1的交点
-    cv::Point2f corner3 = calculateLineIntersection(lines[2], lines[0]);
+    cv::Point2f corner3 = GeometryUtils::calculateLineIntersection(lines[2], lines[0]);
 
     // 检查交点是否有效（不是平行线）
     if (corner1.x >= 0 && corner1.y >= 0) {
@@ -433,24 +497,13 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(co
     return cornerPoints;
 }
 
-cv::Point2f ContourFeatureCalculator::calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2) {
-    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
-    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
-
-    // 计算交点
-    float denominator = vx1 * vy2 - vy1 * vx2;
-    if (std::abs(denominator) < 1e-10) {
-        return cv::Point2f(-1, -1); // 平行线
-    }
-
-    float t = ((x02 - x01) * vy2 - (y02 - y01) * vx2) / denominator;
-    float x = x01 + t * vx1;
-    float y = y01 + t * vy1;
-
-    return cv::Point2f(x, y);
-}
-
-
+/**
+ * @brief 使用Douglas-Peucker算法检测轮廓角点
+ * @param contour 输入轮廓点集
+ * @param epsilon 逼近精度参数，控制简化程度（值越大简化越严重）
+ * @return std::vector<cv::Point2f> 检测到的角点集合
+ * @details 该函数通过Douglas-Peucker多边形逼近算法简化轮廓，将多边形顶点作为角点。
+ */
 std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour, double epsilon) {
     if (contour.size() < 3) return {};
 
@@ -469,6 +522,13 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByDouglasPe
     return cornerPoints;
 }
 
+/**
+ * @brief 移除轮廓中靠近角点的点
+ * @param contour 输入轮廓点集
+ * @param cornerPoints 角点集合
+ * @param radius 过滤半径，指定角点周围的排除区域大小
+ * @return std::vector<cv::Point2f> 过滤后的轮廓点集（移除靠近角点的点）
+ */
 std::vector<cv::Point2f> ContourFeatureCalculator::removePointsNearCorners(const std::vector<cv::Point2f>& contour,
                                                                            const std::vector<cv::Point2f>& cornerPoints,
                                                                            double radius) {
@@ -493,31 +553,4 @@ std::vector<cv::Point2f> ContourFeatureCalculator::removePointsNearCorners(const
         }
     }
     return filteredContour;
-}
-
-cv::Rect ContourFeatureCalculator::calculateBoundingRect(const std::vector<cv::Point2f>& contour) {
-    return cv::boundingRect(contour);
-}
-
-double ContourFeatureCalculator::calculateArea(const std::vector<cv::Point2f>& contour) {
-    return cv::contourArea(contour);
-}
-
-double ContourFeatureCalculator::calculatePerimeter(const std::vector<cv::Point2f>& contour) {
-    return cv::arcLength(contour, true);
-}
-
-double ContourFeatureCalculator::calculateCurvature(const cv::Point2f& prev, const cv::Point2f& curr, const cv::Point2f& next) {
-    cv::Point2f v1 = curr - prev;
-    cv::Point2f v2 = next - curr;
-    double len1 = cv::norm(v1);
-    double len2 = cv::norm(v2);
-
-    if (len1 < 1e-10 || len2 < 1e-10) return 0.0;
-
-    v1 /= len1;
-    v2 /= len2;
-    double cosAngle = v1.dot(v2);
-    cosAngle = std::max(-1.0, std::min(1.0, cosAngle));
-    return std::acos(cosAngle);
 }

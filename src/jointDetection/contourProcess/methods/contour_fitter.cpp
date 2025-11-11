@@ -1,6 +1,15 @@
 #include "contour_fitter.h"
+#include "src/utils/geometry_utils.h"
 #include <QDebug>
 
+/**
+ * @brief 将轮廓段拟合为直线段
+ * @param segments 输入轮廓段集合，键为段索引，值为轮廓点集
+ * @return std::map<int, LineSeg> 拟合后的直线段集合，键为直线段索引
+ * @details 该函数遍历输入的轮廓段，对每个轮廓段进行直线拟合。对于索引为2的轮廓段，
+ *          会将其分为前100个点和后100个点分别进行直线拟合，生成两条直线段；
+ *          对于其他轮廓段，直接对整个轮廓进行直线拟合。
+ */
 std::map<int, LineSeg> ContourFitter::fitLinesToSegments(const std::map<int, std::vector<cv::Point2f>>& segments) {
     std::map<int, LineSeg> lineSegments;
     int key = 1;
@@ -24,6 +33,11 @@ std::map<int, LineSeg> ContourFitter::fitLinesToSegments(const std::map<int, std
     return lineSegments;
 }
 
+/**
+ * @brief 将轮廓段拟合为曲线段
+ * @param segments 输入轮廓段集合，键为段索引，值为轮廓点集
+ * @return std::map<int, CurveSeg> 拟合后的曲线段集合，键为曲线段索引
+ */
 std::map<int, CurveSeg> ContourFitter::fitCurvesToSegments(const std::map<int, std::vector<cv::Point2f>>& segments) {
     std::map<int, CurveSeg> curveSegments;
     for (const auto& [index, contour] : segments) {
@@ -35,10 +49,25 @@ std::map<int, CurveSeg> ContourFitter::fitCurvesToSegments(const std::map<int, s
     return curveSegments;
 }
 
-std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegments,
-                                                           const cv::Point2f centroid,
-                                                           std::vector<cv::Vec4f>& lines) {
-    std::vector<cv::Point2f> endPoints;
+/**
+ * @brief 基于曲线段计算端点
+ * @param curveSegments 输入曲线段集合，键为段索引，值为曲线段对象
+ * @param centroid 质心坐标，用于端点排序的参考点
+ * @param[out] endPoints 计算得到的端点集合
+ * @param[out] lines 计算过程中使用的平均直线方程
+ * @details 该函数使用逆时针排序的曲线段计算端点。首先获取三条关键曲线段，
+ *          然后以质心为参考点对每条曲线段的端点进行逆时针排序，获取端点附近区域
+ *          的平均直线，最后通过直线交点计算得到端点位置。
+ */
+void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegments,
+                                       const cv::Point2f centroid,
+                                       std::vector<cv::Point2f>& endPoints,
+                                       std::vector<cv::Vec4f>& lines)
+{
+    // 清空输出参数
+    endPoints.clear();
+    lines.clear();
+
     // 使用端点附近区域的平均直线代替单点切线
 
     // 优先使用逆时针排序的曲线段
@@ -78,9 +107,9 @@ std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, C
         lines.push_back(avgLine2_ccw);
 
         // 计算交点：键为1的曲线更逆时针端点的平均直线与键为2的曲线更顺时针端点的平均直线求交点
-        cv::Point2f cornerPoint1 = calculateLineIntersection(avgLine1, avgLine2_cw);
+        cv::Point2f cornerPoint1 = GeometryUtils::calculateLineIntersection(avgLine1, avgLine2_cw);
         // 计算交点：键为3的曲线更顺时针端点的平均直线与键为2的曲线更逆时针端点的平均直线求交点
-        cv::Point2f cornerPoint2 = calculateLineIntersection(avgLine3, avgLine2_ccw);
+        cv::Point2f cornerPoint2 = GeometryUtils::calculateLineIntersection(avgLine3, avgLine2_ccw);
 
         endPoints.push_back(cornerPoint1);
         endPoints.push_back(cornerPoint2);
@@ -92,9 +121,14 @@ std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, C
     } else {
         qDebug() << "警告：没有可用的曲线段数据，无法计算端点";
     }
-    return endPoints;
 }
 
+// ... existing code ...
+/**
+ * @brief 基于直线段计算端点
+ * @param lineSegments 输入直线段集合，键为段索引，值为直线段对象
+ * @return std::vector<cv::Point2f> 计算得到的端点集合
+ */
 std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, LineSeg>& lineSegments) {
     std::vector<cv::Point2f> endPoints;
     if (!lineSegments.empty()) {
@@ -102,28 +136,11 @@ std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, L
         LineSeg line2 = lineSegments.at(2);
         LineSeg line3 = lineSegments.at(3);
         LineSeg line4 = lineSegments.at(4);
-        cv::Point2f cornerPoint1 = calculateLineIntersection(line1.getLineEquation(), line2.getLineEquation());
-        cv::Point2f cornerPoint2 = calculateLineIntersection(line3.getLineEquation(), line4.getLineEquation());
+        cv::Point2f cornerPoint1 = GeometryUtils::calculateLineIntersection(line1.getLineEquation(), line2.getLineEquation());
+        cv::Point2f cornerPoint2 = GeometryUtils::calculateLineIntersection(line3.getLineEquation(), line4.getLineEquation());
         endPoints.push_back(cornerPoint1);
         endPoints.push_back(cornerPoint2);
     }
     return endPoints;
-}
-
-cv::Point2f ContourFitter::calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2) {
-    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
-    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
-
-    // 计算交点
-    float denominator = vx1 * vy2 - vy1 * vx2;
-    if (std::abs(denominator) < 1e-10) {
-        return cv::Point2f(-1, -1); // 平行线
-    }
-
-    float t = ((x02 - x01) * vy2 - (y02 - y01) * vx2) / denominator;
-    float x = x01 + t * vx1;
-    float y = y01 + t * vy1;
-
-    return cv::Point2f(x, y);
 }
 

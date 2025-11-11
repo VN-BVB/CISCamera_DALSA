@@ -24,7 +24,6 @@ void JointSeam::run() {
             // 获取处理结果
             auto result = processor.getResult();
             m_contourDatas.push_back(result);
-            std::cout << "dsafdsf" << std::endl;
         }
     }
 }

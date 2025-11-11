@@ -9,9 +9,10 @@ bool CurveFittingStrategy::process(ContourData& context) {
     auto curveSegments = ContourFitter::fitCurvesToSegments(sortedSegments);
 
     // 计算端点
-    auto centroid = ContourUtils::calculateCentroid(context.getSortedContour());
+    auto centroid = ContourUtils::calculateCentralPoint(context.getSortedContour());
     std::vector<cv::Vec4f> tangentLines;
-    auto endPoints = ContourFitter::calculateEndPoints(curveSegments, centroid, tangentLines);
+    std::vector<cv::Point2f> endPoints;
+    ContourFitter::calculateEndPoints(curveSegments, centroid, endPoints, tangentLines);
 
     // 存储结果到上下文
     context.setCurveSegments(curveSegments);

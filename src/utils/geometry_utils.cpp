@@ -138,4 +138,44 @@ void lineRansac(const std::vector<cv::Point2f> &points,
     }
 }
 
+cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2) {
+    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
+    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
+
+    // 计算交点
+    float denominator = vx1 * vy2 - vy1 * vx2;
+    if (std::abs(denominator) < 1e-10) {
+        return cv::Point2f(-1, -1); // 平行线
+    }
+
+    float t = ((x02 - x01) * vy2 - (y02 - y01) * vx2) / denominator;
+    float x = x01 + t * vx1;
+    float y = y01 + t * vy1;
+
+    return cv::Point2f(x, y);
+}
+
+bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) {
+    // 将参考点作为原点，计算相对坐标
+    cv::Point2f relA = pointA - referencePoint;
+    cv::Point2f relB = pointB - referencePoint;
+
+    // 计算叉积 det = (ax * by - ay * bx)
+    float det = relA.x * relB.y - relA.y * relB.x;
+
+    // 如果叉积为正，b在a顺时针方向
+    if (det > 0)
+        return false;
+
+    // 如果叉积为负，a在b顺时针方向
+    if (det < 0)
+        return true;
+
+    // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
+    float d1 = relA.x * relA.x + relA.y * relA.y;
+    float d2 = relB.x * relB.x + relB.y * relB.y;
+    return d1 < d2;
+}
+
+
 } // namespace GeometryUtils

@@ -24,6 +24,10 @@ void lineRansac(const std::vector<cv::Point2f> &points,
                 std::vector<cv::Point2f> &inlierPoints,
                 const double &threshold,
                 const int &iterations);
+
+cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2);
+
+bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint);
 } // namespace GeometryUtils
 
 #endif // GEOMETRY_UTILS_H

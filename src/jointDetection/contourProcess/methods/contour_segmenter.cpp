@@ -1,5 +1,12 @@
 #include "contour_segmenter.h"
+#include "src/utils/geometry_utils.h"
 
+/**
+ * @brief 将轮廓分割为三段子轮廓
+ * @param contour 输入轮廓点集
+ * @return std::vector<std::vector<cv::Point2f>> 分割后的三段子轮廓集合
+ * @details 通过三次RANSAC直线拟合，每次拟合后移除内点，最终得到三个轮廓段。
+ */
 std::vector<std::vector<cv::Point2f>> ContourSegmenter::segmentContour(const std::vector<cv::Point2f>& contour) {
     std::vector<std::vector<cv::Point2f>> segmentedContours;
     std::vector<cv::Vec4f> lines;
@@ -10,6 +17,16 @@ std::vector<std::vector<cv::Point2f>> ContourSegmenter::segmentContour(const std
     return segmentedContours;
 }
 
+/**
+ * @brief 将轮廓段按逆时针方向排序并确定三条关键轮廓
+ * @param segments 输入轮廓段集合，包含多个轮廓点集
+ * @param referencePoint 参考点坐标，用于逆时针排序的基准点
+ * @return std::map<int, std::vector<cv::Point2f>> 排序后的轮廓段集合，键为轮廓索引(1,2,3)
+ * @details 该函数将输入轮廓段按逆时针方向排序，并确定三条关键轮廓：
+ *          索引1：点数最多的轮廓的前一个轮廓
+ *          索引2：点数最多的轮廓（中间轮廓）
+ *          索引3：点数最多的轮廓的后一个轮廓
+ */
 std::map<int, std::vector<cv::Point2f>> ContourSegmenter::sortSegmentsCounterClockwise(
     const std::vector<std::vector<cv::Point2f>>& segments,
     const cv::Point2f& referencePoint) {
@@ -34,7 +51,7 @@ std::map<int, std::vector<cv::Point2f>> ContourSegmenter::sortSegmentsCounterClo
             const cv::Point2f& pointA = contoursWithMidPoints[j].first;
             const cv::Point2f& pointB = contoursWithMidPoints[j + 1].first;
             // 如果pointA在pointB的顺时针方向，交换位置
-            if (isPointClockwiseTo(pointA, pointB, referencePoint)) {
+            if (GeometryUtils::isPointClockwiseTo(pointA, pointB, referencePoint)) {
                 std::swap(contoursWithMidPoints[j], contoursWithMidPoints[j + 1]);
             }
         }
@@ -60,77 +77,6 @@ std::map<int, std::vector<cv::Point2f>> ContourSegmenter::sortSegmentsCounterClo
     sortedContours[3] = circularList[thirdIndex].second;
 
     return sortedContours;
-}
-
-bool ContourSegmenter::isPointClockwiseTo(const cv::Point2f& a, const cv::Point2f& b, const cv::Point2f& reference) {
-    cv::Point2f relA = a - reference;
-    cv::Point2f relB = b - reference;
-    float det = relA.x * relB.y - relA.y * relB.x;
-
-    if (det > 0) return false;
-    if (det < 0) return true;
-
-    float d1 = relA.x * relA.x + relA.y * relA.y;
-    float d2 = relB.x * relB.x + relB.y * relB.y;
-    return d1 < d2;
-}
-
-/**
- * @brief ImageProcessing_lineDetection     直线拟合Ransac
- * @param points                            输入亚像素点集
- * @param line                              输出直线参数(vx, vy, x0, y0), (vx, vy) 为方向向量, (x0, y0) 为直线上的一个点
- * @param inlierPoints                      输出直线内点
- * @param threshold                         阈值
- * @param iterations                        最大迭代次数
- */
-void ContourSegmenter::lineRansac(const std::vector<cv::Point2f> &points,
-                                cv::Vec4f &line,
-                                std::vector<cv::Point2f> &inlierPoints,
-                                const double &threshold,
-                                const int &iterations)
-{
-    if(points.size() < 2){
-        std::cerr<<"Input points is empty!"<<std::endl;
-        return;
-    }
-
-    cv::RNG rng;// 创建随机数生成器
-    double bestScore = -1.;
-    auto n = points.size();  // 获取点集大小
-    for(int iter = 0; iter < iterations; iter++){
-        // 随机选择两个不同的点
-        auto i1 = rng.uniform(0, static_cast<int>(n-1));
-        auto i2 = rng.uniform(0, static_cast<int>(n-1));
-        if (i1 == i2)
-            continue;
-
-        // 直线的方向向量
-        const cv::Point2f& p1 = points[i1];
-        const cv::Point2f& p2 = points[i2];
-        cv::Point2f dp = p2-p1;
-        dp *= 1.0/cv::norm(dp);
-
-        // 计算内点
-        double score = 0;
-        std::vector<cv::Point2f> inliers;
-        for(int i = 0; i< n; i++){
-            cv::Point2f v = points[i] - p1;
-            double d = v.y * dp.x - v.x * dp.y;//向量a与b叉乘/向量b的摸.||b||=1./norm(dp)
-            // 判断点到直线的距离是否小于阈值
-            if( std::fabs(d) < threshold){
-                score += 1;
-                inliers.push_back(points[i]);  // 存储内点
-            }
-        }
-
-        // 如果当前拟合得分更高，则更新最优结果
-        if(score > bestScore) {
-            line = cv::Vec4f(static_cast<float>(dp.x), static_cast<float>(dp.y),
-                             static_cast<float>(p1.x), static_cast<float>(p1.y));
-            bestScore = score;
-            inlierPoints = inliers;//更新内点
-        }
-    }
 }
 
 /**
@@ -170,7 +116,7 @@ void ContourSegmenter::sequentialRansac3Times(const std::vector<cv::Point2f>& po
         cv::Vec4f currentLine;
         std::vector<cv::Point2f> currentInliers;
 
-        lineRansac(remainingPoints, currentLine, currentInliers, threshold, maxIterations);
+        GeometryUtils::lineRansac(remainingPoints, currentLine, currentInliers, threshold, maxIterations);
 
 
         // 存储结果
