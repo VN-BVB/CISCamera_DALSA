@@ -56,6 +56,9 @@ public:
                                                                    const cv::Point2f& referencePoint);
     // 按照参考点的逆时针方向排序其两端点
     std::pair<EndpointInfo, EndpointInfo> sortEndpoints(const cv::Point2f& referencePoint);
+    // 获取端点附近区域的平均直线
+    cv::Vec4f getAverageLineNearEndpoint(float endpointU, float regionSize = 0.1f, int numSamples = 10) const;
+
 
 private:
     std::vector<cv::Point2f> m_points;

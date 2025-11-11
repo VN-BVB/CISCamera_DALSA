@@ -86,7 +86,7 @@ void JointView::on_pb_open_clicked()
 
     // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
     // QString path = "E:/work/车门门环拼接/image/背面打光/Splice_20251027_092312509.bmp";
-    QString path = "E:/work/车门门环拼接/image/正面打光/normal/厚/5/2/9351_22700.bmp";
+    QString path = "E:/work/车门门环拼接/image/正面打光/normal/厚/5/2/8638_26573.bmp";
     if(path.isEmpty())
         return;
 
@@ -204,7 +204,7 @@ void JointView::updateDisplay() {
     }
 
     if (m_showFitLines && !m_fitTangentLines.empty()) {
-        scene->whenDrawLines(m_fitTangentLines, 0.05, Qt::blue);
+        scene->whenDrawLines(m_fitTangentLines, 100, Qt::blue);
     }
 
     if (m_showFitCurves && !m_fitCurves.empty()) {

@@ -39,7 +39,7 @@ std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, C
                                                            const cv::Point2f centroid,
                                                            std::vector<cv::Vec4f>& lines) {
     std::vector<cv::Point2f> endPoints;
-    // 先按逆时针标记线，再获得每条线端点的逆时针标记，最后根据这个确定选取轮廓的哪端切线进行计算
+    // 使用端点附近区域的平均直线代替单点切线
 
     // 优先使用逆时针排序的曲线段
     if (!curveSegments.empty()) {
@@ -65,22 +65,22 @@ std::vector<cv::Point2f> ContourFitter::calculateEndPoints(const std::map<int, C
         // 键为2的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
         EndpointInfo endpoint2_ccw = sortedEndpoints2.first;  // 更逆时针的端点
 
-        // 获取对应端点的切线
-        cv::Vec4f tangent1 = curve1.getTangent(endpoint1_ccw.u);  // 键为1的曲线更逆时针端点的切线
-        cv::Vec4f tangent2_cw = curve2.getTangent(endpoint2_cw.u);  // 键为2的曲线更顺时针端点的切线
-        cv::Vec4f tangent3 = curve3.getTangent(endpoint3_ccw.u);  // 键为3的曲线更顺时针端点的切线
-        cv::Vec4f tangent2_ccw = curve2.getTangent(endpoint2_ccw.u);  // 键为2的曲线更逆时针端点的切线
+        // 获取端点附近区域的平均直线（改进方法）
+        cv::Vec4f avgLine1 = curve1.getAverageLineNearEndpoint(endpoint1_ccw.u, 0.9f, 150);
+        cv::Vec4f avgLine2_cw = curve2.getAverageLineNearEndpoint(endpoint2_cw.u, 0.1f, 150);
+        cv::Vec4f avgLine3 = curve3.getAverageLineNearEndpoint(endpoint3_ccw.u, 0.9f, 150);
+        cv::Vec4f avgLine2_ccw = curve2.getAverageLineNearEndpoint(endpoint2_ccw.u, 0.1f, 150);
 
-        // 保存切线用于后续使用
-        lines.push_back(tangent1);
-        lines.push_back(tangent2_cw);
-        lines.push_back(tangent3);
-        lines.push_back(tangent2_ccw);
+        // 保存平均直线用于后续使用
+        lines.push_back(avgLine1);
+        lines.push_back(avgLine2_cw);
+        lines.push_back(avgLine3);
+        lines.push_back(avgLine2_ccw);
 
-        // 计算交点：键为1的曲线更逆时针端点的切线与键为2的曲线更顺时针端点的切线求交点
-        cv::Point2f cornerPoint1 = calculateLineIntersection(tangent1, tangent2_cw);
-        // 计算交点：键为3的曲线更顺时针端点的切线与键为2的曲线更逆时针端点的切线求交点
-        cv::Point2f cornerPoint2 = calculateLineIntersection(tangent3, tangent2_ccw);
+        // 计算交点：键为1的曲线更逆时针端点的平均直线与键为2的曲线更顺时针端点的平均直线求交点
+        cv::Point2f cornerPoint1 = calculateLineIntersection(avgLine1, avgLine2_cw);
+        // 计算交点：键为3的曲线更顺时针端点的平均直线与键为2的曲线更逆时针端点的平均直线求交点
+        cv::Point2f cornerPoint2 = calculateLineIntersection(avgLine3, avgLine2_ccw);
 
         endPoints.push_back(cornerPoint1);
         endPoints.push_back(cornerPoint2);

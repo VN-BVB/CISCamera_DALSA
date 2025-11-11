@@ -3,7 +3,7 @@
 std::vector<std::vector<cv::Point2f>> ContourSegmenter::segmentContour(const std::vector<cv::Point2f>& contour) {
     std::vector<std::vector<cv::Point2f>> segmentedContours;
     std::vector<cv::Vec4f> lines;
-    double threshold = 8;
+    double threshold = 5;
     int maxIterations = 100;
 
     sequentialRansac3Times(contour, segmentedContours, lines, threshold, maxIterations);

@@ -225,7 +225,116 @@ std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f&
     }
 }
 
+/**
+* @brief 获取端点附近区域的平均直线
+* @param endpointU 端点对应的u值
+* @param regionSize 采样区域大小（占整个参数域的比例，默认0.1表示10%）
+* @param numSamples 采样点数量
+* @return 拟合的平均直线方程 (vx, vy, x0, y0)
+*/
+cv::Vec4f CurveSeg::getAverageLineNearEndpoint(float endpointU, float regionSize, int numSamples) const {
+    if (!m_isFitted) {
+        std::cout << "警告：样条曲线尚未拟合" << std::endl;
+        return cv::Vec4f(0, 0, 0, 0);
+    }
 
+    // 计算采样区域范围
+    float uStart, uEnd;
+    if (endpointU == m_minDomain) {
+        // 如果是起始端点，采样区域为 [m_minDomain, m_minDomain + regionSize * (m_maxDomain - m_minDomain)]
+        uStart = m_minDomain;
+        uEnd = m_minDomain + regionSize * (m_maxDomain - m_minDomain);
+    } else {
+        // 如果是结束端点，采样区域为 [m_maxDomain - regionSize * (m_maxDomain - m_minDomain), m_maxDomain]
+        uStart = m_maxDomain - regionSize * (m_maxDomain - m_minDomain);
+        uEnd = m_maxDomain;
+    }
+
+    // 确保采样范围在有效域内
+    uStart = std::max(uStart, m_minDomain);
+    uEnd = std::min(uEnd, m_maxDomain);
+
+    // 在采样区域内均匀采样点
+    std::vector<cv::Point2f> samplePoints;
+    for (int i = 0; i < numSamples; ++i) {
+        float u = uStart + (uEnd - uStart) * (static_cast<float>(i) / (numSamples - 1));
+        cv::Point2f point = evaluate(u);
+        samplePoints.push_back(point);
+    }
+
+    // 使用最小二乘法拟合直线
+    if (samplePoints.size() < 2) {
+        std::cout << "警告：采样点数量不足，无法拟合直线" << std::endl;
+        return cv::Vec4f(0, 0, 0, 0);
+    }
+
+    // 计算点的均值
+    cv::Point2f meanPoint(0, 0);
+    for (const auto& pt : samplePoints) {
+        meanPoint.x += pt.x;
+        meanPoint.y += pt.y;
+    }
+    meanPoint.x /= samplePoints.size();
+    meanPoint.y /= samplePoints.size();
+
+    // 计算协方差矩阵
+    float xx = 0, xy = 0, yy = 0;
+    for (const auto& pt : samplePoints) {
+        float dx = pt.x - meanPoint.x;
+        float dy = pt.y - meanPoint.y;
+        xx += dx * dx;
+        xy += dx * dy;
+        yy += dy * dy;
+    }
+
+    // 计算特征向量（直线方向）
+    float det = xx * yy - xy * xy;
+    if (std::abs(det) < 1e-10) {
+        // 如果协方差矩阵奇异，使用端点切线方向
+        cv::Vec4f tangent = getTangent(endpointU);
+        return tangent;
+    }
+
+    // 计算特征值和特征向量
+    float trace = xx + yy;
+    float lambda1 = (trace + std::sqrt(trace * trace - 4 * det)) / 2;
+    float lambda2 = (trace - std::sqrt(trace * trace - 4 * det)) / 2;
+
+    // 选择最大特征值对应的特征向量
+    float vx, vy;
+    if (lambda1 > lambda2) {
+        vx = yy - lambda1;
+        vy = -xy;
+    } else {
+        vx = yy - lambda2;
+        vy = -xy;
+    }
+
+    // 归一化方向向量
+    float norm = std::sqrt(vx * vx + vy * vy);
+    if (norm > 0) {
+        vx /= norm;
+        vy /= norm;
+    } else {
+        // 如果方向向量为零，使用默认方向
+        vx = 1;
+        vy = 0;
+    }
+
+    // 确保方向向量指向正确的方向（从端点向外）
+    cv::Point2f endpoint = evaluate(endpointU);
+    cv::Point2f samplePoint = evaluate((endpointU == m_minDomain) ? uEnd : uStart);
+    cv::Point2f direction = samplePoint - endpoint;
+
+    // 检查方向是否一致
+    float dotProduct = vx * direction.x + vy * direction.y;
+    if (dotProduct < 0) {
+        vx = -vx;
+        vy = -vy;
+    }
+
+    return cv::Vec4f(vx, vy, endpoint.x, endpoint.y);
+}
 
 
 
