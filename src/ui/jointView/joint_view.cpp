@@ -215,9 +215,9 @@ void JointView::updateDisplay() {
         scene->whenDrawPoints(m_endPointsByTangentLines, Qt::green);
     }
 
-    if (!m_fitLines.empty()) {
-        scene->whenDrawLines(m_fitLines, 1000, Qt::yellow);
-    }
+    // if (!m_fitLines.empty()) {
+    //     scene->whenDrawLines(m_fitLines, 1000, Qt::yellow);
+    // }
 
     // if (!m_endPointsByFittedLines.empty()) {
     //     scene->whenDrawPoints(m_endPointsByFittedLines, Qt::red);

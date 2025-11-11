@@ -29,6 +29,8 @@ public:
 private:
     static double calculateCurvature(const cv::Point2f& prev, const cv::Point2f& curr, const cv::Point2f& next);
     static std::vector<cv::Point2f> detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour, double epsilon = 10.0);
+    static std::vector<cv::Point2f> detectCornerPointsByRansac(const std::vector<cv::Point2f>& contour);
+    static cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2);
 };
 
 #endif // CONTOUR_FEATURE_CALCULATOR_H

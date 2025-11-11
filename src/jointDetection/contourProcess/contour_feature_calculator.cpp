@@ -1,4 +1,5 @@
 #include "contour_feature_calculator.h"
+#include "contour_segmenter.h"
 #include <unordered_set>
 #include <cmath>
 // 定义π常量
@@ -381,8 +382,74 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
 }
 
 std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPoints(const std::vector<cv::Point2f>& contour) {
-    return detectCornerPointsByDouglasPeucker(contour);
+    // 使用DouglasPeucker多边形拟合算法
+    // return detectCornerPointsByDouglasPeucker(contour);
+    // 使用RANSAC方法检测角点
+    return detectCornerPointsByRansac(contour);
 }
+
+std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(const std::vector<cv::Point2f>& contour) {
+    if (contour.size() < 6) {
+        // 如果点数不足，使用默认方法
+        return detectCornerPointsByDouglasPeucker(contour);
+    }
+
+    std::vector<cv::Point2f> cornerPoints;
+
+    // 使用ContourSegmenter中的RANSAC方法拟合三条直线
+    std::vector<std::vector<cv::Point2f>> segments;
+    std::vector<cv::Vec4f> lines;
+    double threshold = 8.0;
+    int maxIterations = 100;
+
+    // 调用ContourSegmenter的RANSAC方法
+    ContourSegmenter::sequentialRansac3Times(contour, segments, lines, threshold, maxIterations);
+
+    // 检查是否成功拟合了三条直线
+    if (lines.size() < 3) {
+        // 如果拟合失败，使用默认方法
+        return detectCornerPointsByDouglasPeucker(contour);
+    }
+
+    // 计算三条直线的交点作为角点
+    // 交点1: 直线1和直线2的交点
+    cv::Point2f corner1 = calculateLineIntersection(lines[0], lines[1]);
+    // 交点2: 直线2和直线3的交点
+    cv::Point2f corner2 = calculateLineIntersection(lines[1], lines[2]);
+    // 交点3: 直线3和直线1的交点
+    cv::Point2f corner3 = calculateLineIntersection(lines[2], lines[0]);
+
+    // 检查交点是否有效（不是平行线）
+    if (corner1.x >= 0 && corner1.y >= 0) {
+        cornerPoints.push_back(corner1);
+    }
+    if (corner2.x >= 0 && corner2.y >= 0) {
+        cornerPoints.push_back(corner2);
+    }
+    if (corner3.x >= 0 && corner3.y >= 0) {
+        cornerPoints.push_back(corner3);
+    }
+
+    return cornerPoints;
+}
+
+cv::Point2f ContourFeatureCalculator::calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2) {
+    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
+    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
+
+    // 计算交点
+    float denominator = vx1 * vy2 - vy1 * vx2;
+    if (std::abs(denominator) < 1e-10) {
+        return cv::Point2f(-1, -1); // 平行线
+    }
+
+    float t = ((x02 - x01) * vy2 - (y02 - y01) * vx2) / denominator;
+    float x = x01 + t * vx1;
+    float y = y01 + t * vy1;
+
+    return cv::Point2f(x, y);
+}
+
 
 std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour, double epsilon) {
     if (contour.size() < 3) return {};
