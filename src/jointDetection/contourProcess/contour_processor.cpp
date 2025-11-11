@@ -1,10 +1,10 @@
 #include "contour_processor.h"
-#include "deduplication_strategy.h"
-#include "direction_calculation_strategy.h"
-#include "sorting_strategy.h"
-#include "corner_detection_strategy.h"
-#include "segmentation_strategy.h"
-#include "curve_fitting_strategy.h"
+#include "strategies/deduplication_strategy.h"
+#include "strategies/direction_calculation_strategy.h"
+#include "strategies/sorting_strategy.h"
+#include "strategies/corner_detection_strategy.h"
+#include "strategies/segmentation_strategy.h"
+#include "strategies/curve_fitting_strategy.h"
 
 ContourProcessorV2::ContourProcessorV2() {
     m_pipeline = std::make_unique<ContourProcessingPipeline>();

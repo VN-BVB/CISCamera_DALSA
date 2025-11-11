@@ -4,6 +4,9 @@
 #include <opencv2/opencv.hpp>
 #include "methods/contour_data.h"
 
+/**
+ * @brief 轮廓处理策略 - 这里有点过渡使用设计模式了，增加了代码量
+ */
 class ContourProcessingStrategy
 {
 public:

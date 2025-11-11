@@ -336,8 +336,8 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& image) {
     // 1. 图像二值化
     cv::Mat binary;
     cv::threshold(grayImage, binary, 0, 255, cv::THRESH_BINARY_INV + cv::THRESH_OTSU);
-    // 反转二值图(正光和背光不一样)
-    // cv::bitwise_not(binary, binary);
+    // 反转二值图(正光和背光不一样,因为骨架提取算法是利用腐蚀，因此背光需要反转)
+    cv::bitwise_not(binary, binary);
 
     // 2. 中轴变换（Skeletonization）
     cv::Mat skel = cv::Mat::zeros(binary.size(), CV_8UC1);
