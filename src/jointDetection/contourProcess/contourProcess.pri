@@ -6,7 +6,6 @@ HEADERS += \
     $$PWD/contour_segmenter.h \
     $$PWD/contour_utils.h \
     $$PWD/curve_seg.h \
-    $$PWD/joint_seam.h \
     $$PWD/line_seg.h
 
 
@@ -18,6 +17,5 @@ SOURCES += \
     $$PWD/contour_segmenter.cpp \
     $$PWD/contour_utils.cpp \
     $$PWD/curve_seg.cpp \
-    $$PWD/joint_seam.cpp \
     $$PWD/line_seg.cpp
 

@@ -7,7 +7,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "edgeDetection/canny_devernay.h"
 #include "contourProcess/curve_seg.h"
-#include "contourProcess/joint_seam.h"
+#include "joint_seam.h"
 
 
 class ImageProcessWorker : public QObject
