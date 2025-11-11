@@ -1,5 +1,5 @@
 #include "joint_seam.h"
-#include "src/jointDetection/image_tools.h"
+#include "src/utils/image_tools.h"
 #include "src/jointDetection/edgeDetection/canny_zernike_detector.h"
 
 JointSeam::JointSeam(const cv::Mat &image) : m_image(image)

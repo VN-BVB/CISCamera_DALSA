@@ -1,5 +1,5 @@
 #include "canny_zernike_detector.h"
-#include "src/jointDetection/image_tools.h"
+#include "src/utils/image_tools.h"
 #include "src/utils/geometry_utils.h"
 #include <vector>
 #include <algorithm>

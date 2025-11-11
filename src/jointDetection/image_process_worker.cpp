@@ -1,5 +1,5 @@
 #include "image_process_worker.h"
-#include "image_tools.h"
+#include "src/utils/image_tools.h"
 #include <QDebug>
 
 #include "src/test/test_curve_seg.cpp"
