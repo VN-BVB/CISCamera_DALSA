@@ -1,0 +1,32 @@
+Crash time: 2025-10-17 20:48:42
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ff6ed11eb7a
+Thread ID: 1796
+
+Crash function: cv::Point_<float>::Point_<float>
+Source file: d:\programdata\opencv\build\include\opencv2\core\types.hpp
+Line: 1169
+
+Call Stack:
+#0  cv::Point_<float>::Point_<float> [d:\programdata\opencv\build\include\opencv2\core\types.hpp:1169]
+#1  std::_Default_allocator_traits<std::allocator<cv::Point_<float> > >::construct<cv::Point_<float>,cv::Point_<float> const &> [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\xmemory0:882]
+#2  std::vector<cv::Point_<float>,std::allocator<cv::Point_<float> > >::_Emplace_back_with_unused_capacity<cv::Point_<float> const &> [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:903]
+#3  std::vector<cv::Point_<float>,std::allocator<cv::Point_<float> > >::emplace_back<cv::Point_<float> const &> [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:919]
+#4  std::vector<cv::Point_<float>,std::allocator<cv::Point_<float> > >::push_back [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:933]
+#5  ImageProcessWorker::processImage [d:\qt_project\ciscamera_dalsa\src\jointdetection\imageprocessworker.cpp:330]
+#6  QtPrivate::FunctorCall<QtPrivate::IndexesList<0>,QtPrivate::List<std::shared_ptr<cv::Mat> >,void,void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>)>::call [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:152]
+#7  QtPrivate::FunctionPointer<void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>)>::call<QtPrivate::List<std::shared_ptr<cv::Mat> >,void> [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:186]
+#8  QtPrivate::QSlotObject<void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>),QtPrivate::List<std::shared_ptr<cv::Mat> >,void>::impl [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:419]
+#9  QMetaCallEvent::placeMetaCall
+#10  QObject::event
+#11  QApplicationPrivate::notify_helper
+#12  QApplication::notify
+#13  QCoreApplication::notifyInternal2
+#14  QCoreApplicationPrivate::sendPostedEvents
+#15  QEventDispatcherWin32::processEvents
+#16  QEventLoop::exec
+#17  QThread::exec
+#18  QThread::start
+#19  BaseThreadInitThunk
+#20  RtlUserThreadStart

@@ -1,7 +1,9 @@
 HEADERS += \
-    $$PWD/AbstractSubpixelContourDetector.h \
-    $$PWD/CannyDevernay.h
+    $$PWD/abstract_subpixel_contour_detector.h \
+    $$PWD/canny_devernay.h \
+    $$PWD/edge_detector.h
 
 SOURCES += \
-    $$PWD/AbstractSubpixelContourDetector.cpp \
-    $$PWD/CannyDevernay.cpp
+    $$PWD/abstract_subpixel_contour_detector.cpp \
+    $$PWD/canny_devernay.cpp \
+    $$PWD/edge_detector.cpp

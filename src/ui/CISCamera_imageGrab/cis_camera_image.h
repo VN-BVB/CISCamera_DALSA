@@ -16,6 +16,8 @@
 #include "src/cameraFactory/abstract_camera_factory.h"
 #include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
 #include "src/rail/rail_widget.h"
+#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
+#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 class RailWidget;
 class AbstractCamera;
 class ExternalExeRunner;
@@ -41,7 +43,7 @@ private:
     void initregisterMetaType();
     void initCameraImageProcessor();
     void initCISCameraConfig();
-
+    void initCameraCalibrator();
     void tryStitchImages();
     Ui::CISWidget* ui;
     QThread* cameraThreadMaster = new QThread;
@@ -52,14 +54,15 @@ private:
     std::shared_ptr<AbstractCamera> masterCISCamera{nullptr};
     std::shared_ptr<AbstractCamera> slaveCISCamera{nullptr};
     std::shared_ptr<ExternalExeRunner> configCISCamera{nullptr};
-
+    std::shared_ptr<LibCBDetector> libcbDetector{nullptr};
+    std::shared_ptr<TelecentricLineCalibrator> telecentricLineCalibrator{nullptr};
     std::shared_ptr<cv::Mat> masterImg, slaveImg;
     bool masterReady = false;
     bool slaveReady = false;
     bool triggerRunning = false;
-    const double startPos = -80.0;
-    const double endPos = 270.0;
-    const double speed = 30.0;
+    double startPos;
+    double endPos;
+    double speed;
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();
@@ -74,5 +77,7 @@ private slots:
     void on_btnCISConfig_clicked();
     void on_btnSave_clicked();
     void on_btnStopTrigger_clicked();
+    void on_btn_ChessboardDetector_clicked();
+    void on_btnCameraCalibrate_clicked();
 };
 #endif  // CIS_CAMERA_IMAGE_H

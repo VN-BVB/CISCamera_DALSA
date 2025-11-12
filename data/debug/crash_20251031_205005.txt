@@ -1,0 +1,27 @@
+Crash time: 2025-10-31 20:50:05
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ffc665d9a2c
+Thread ID: 16728
+
+Crash function: QLabel::setText
+
+Call Stack:
+#0  QLabel::setText
+#1  InteractiveDisplayManager::onPixelColorReady [d:\qt_project\ciscamera_dalsa\src\ui\utils\imagewidget\interactive_display_manager.cpp:169]
+#2  InteractiveDisplayManager::qt_static_metacall [d:\qt_project\ciscamera_dalsa\release\moc_interactive_display_manager.cpp:81]
+#3  QObject::event
+#4  QApplicationPrivate::notify_helper
+#5  QApplication::notify
+#6  QCoreApplication::notifyInternal2
+#7  QCoreApplicationPrivate::sendPostedEvents
+#8  qt_plugin_query_metadata
+#9  QEventDispatcherWin32::processEvents
+#10  qt_plugin_query_metadata
+#11  QEventLoop::exec
+#12  QCoreApplication::exec
+#13  main [d:\qt_project\ciscamera_dalsa\main.cpp:34]
+#14  WinMain
+#15  __scrt_common_main_seh [d:\agent\_work\2\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288]
+#16  BaseThreadInitThunk
+#17  RtlUserThreadStart

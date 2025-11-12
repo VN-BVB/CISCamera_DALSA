@@ -5,39 +5,33 @@
 SOURCES += \
     $$PWD/CISCamera_imageGrab/cameraImage_processor.cpp \
     $$PWD/CISCamera_imageGrab/cis_camera_image.cpp \
-    $$PWD/ImageViewWindow.cpp \
-    $$PWD/test_frmVisionDisplay.cpp \
-    $$PWD/utils/imageWidget/baseWidget.cpp \
-    $$PWD/utils/imageWidget/frmVisionDisplay.cpp \
-    $$PWD/utils/imageWidget/interactiveDisplayManager.cpp \
-    $$PWD/utils/imageWidget/interactiveImageItem.cpp \
-    $$PWD/utils/imageWidget/interactiveScene.cpp \
-    $$PWD/utils/imageWidget/interactiveView.cpp \
-    $$PWD/utils/imageWidget/openGLImageWidget.cpp
+    $$PWD/jointView/joint_view.cpp \
+    $$PWD/utils/display/base_widget.cpp \
+    $$PWD/utils/display/display_image_item.cpp \
+    $$PWD/utils/display/display_manager.cpp \
+    $$PWD/utils/display/display_scene.cpp \
+    $$PWD/utils/display/display_view.cpp \
+    $$PWD/utils/display/frm_display.cpp \
+    $$PWD/utils/display/openGLImageWidget.cpp
 
 
 
 HEADERS += \
     $$PWD/CISCamera_imageGrab/cameraImage_processor.h \
     $$PWD/CISCamera_imageGrab/cis_camera_image.h \
-    $$PWD/ImageViewWindow.h \
-    $$PWD/test_frmVisionDisplay.h \
-    $$PWD/utils/imageWidget/baseWidget.h \
-    $$PWD/utils/imageWidget/frmVisionDisplay.h \
-    $$PWD/utils/imageWidget/interactiveDisplayManager.h \
-    $$PWD/utils/imageWidget/interactiveGlobal.h \
-    $$PWD/utils/imageWidget/interactiveImageItem.h \
-    $$PWD/utils/imageWidget/interactiveScene.h \
-    $$PWD/utils/imageWidget/interactiveView.h \
-    $$PWD/utils/stateLight/StateLight.h \
-    $$PWD/utils/imageWidget/openGLImageWidget.h
+    $$PWD/jointView/joint_view.h \
+    $$PWD/utils/display/base_widget.h \
+    $$PWD/utils/display/display_global.h \
+    $$PWD/utils/display/display_image_item.h \
+    $$PWD/utils/display/display_manager.h \
+    $$PWD/utils/display/display_scene.h \
+    $$PWD/utils/display/display_view.h \
+    $$PWD/utils/display/frm_display.h \
+    $$PWD/utils/display/openGLImageWidget.h \
+    $$PWD/utils/stateLight/StateLight.h
 
 FORMS += \
     $$PWD/CISCamera_imageGrab/cis_camera_image.ui \
-    $$PWD/ImageViewWindow.ui \
-    $$PWD/test_frmVisionDisplay.ui
-    $$PWD/utils/imageWidget/openGLImageWidget.cpp
-
-
+    $$PWD/jointView/joint_view.ui
 
 
