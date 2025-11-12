@@ -57,8 +57,8 @@ private:
     bool masterReady = false;
     bool slaveReady = false;
     bool triggerRunning = false;
-    const double startPos = 380.0;
-    const double endPos = 720.0;
+    const double startPos = -80.0;
+    const double endPos = 270.0;
     const double speed = 30.0;
 public slots:
     void whenAppendMessageLog(const QString& message);
