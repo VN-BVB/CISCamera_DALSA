@@ -1,10 +1,10 @@
 #ifndef SEGMENTATION_STRATEGY_H
 #define SEGMENTATION_STRATEGY_H
 
-#include "contour_processing_strategy.h"
-#include "methods/contour_feature_calculator.h"
-#include "methods/contour_segmenter.h"
-#include "methods/contour_utils.h"
+#include "src/jointDetection/contourProcess/contour_processing_strategy.h"
+#include "src/jointDetection/contourProcess/methods/contour_feature_calculator.h"
+#include "src/jointDetection/contourProcess/methods/contour_segmenter.h"
+#include "src/jointDetection/contourProcess/methods/contour_utils.h"
 
 class SegmentationStrategy : public ContourProcessingStrategy
 {

@@ -24,16 +24,16 @@ INCLUDEPATH += ./3rdParty/plog/include
 INCLUDEPATH +=./3rdparty/libmodbus/include
 LIBS +=./3rdparty/libmodbus/X64/*.lib
 # ------------------Eigen矩阵运算库------------------
-INCLUDEPATH += D:/ProgramData/eigen-git-mirror-master
+INCLUDEPATH += ./3rdparty/eigen-git-mirror-master
 # ------------------cereal序列化反序列化库------------------
 INCLUDEPATH += ./3rdparty/cereal/include
 # ------------------Pybind11C++与Python双向绑定库------------------
 # ---------- Python 环境 ----------
 PYTHON_VER = 39
-PYTHON_ROOT = D:/anaconda/envs/Telecentric-Calibration
+PYTHON_ROOT = E:/apps/Anaconda/envs/Telecentric-Calibration
 INCLUDEPATH += $$PYTHON_ROOT/include
 LIBS += -L$$PYTHON_ROOT/libs -lpython$$PYTHON_VER
-INCLUDEPATH += D:/ProgramData/extern/pybind11/include
+INCLUDEPATH += ./3rdparty/extern/pybind11/include
 # ------------------tinyspline库------------------
 CONFIG(debug, debug|release) {
     INCLUDEPATH += $$PWD/tinyspline/debug/include

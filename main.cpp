@@ -1,4 +1,4 @@
-﻿#include <plog/Init.h>
+#include <plog/Init.h>
 #include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Initializers/RollingFileInitializer.h>
 #include <plog/Log.h>
@@ -11,6 +11,7 @@
 #include "src/crashHandler/CrashHandler.h"
 #include "src/test/test_tiny_spline.h"
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
+#include "src/ui/jointView/joint_view.h"
 
 void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {

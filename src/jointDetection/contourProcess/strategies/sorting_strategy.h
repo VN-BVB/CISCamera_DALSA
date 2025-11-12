@@ -1,9 +1,9 @@
 #ifndef SORTING_STRATEGY_H
 #define SORTING_STRATEGY_H
 
-#include "contour_processing_strategy.h"
-#include "methods/contour_feature_calculator.h"
-#include "methods/contour_utils.h"
+#include "src/jointDetection/contourProcess/contour_processing_strategy.h"
+#include "src/jointDetection/contourProcess/methods/contour_feature_calculator.h"
+#include "src/jointDetection/contourProcess/methods/contour_utils.h"
 
 class SortingStrategy : public ContourProcessingStrategy
 {

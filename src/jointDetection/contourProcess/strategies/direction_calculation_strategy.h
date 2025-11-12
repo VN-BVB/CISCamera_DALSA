@@ -1,8 +1,8 @@
 #ifndef DIRECTION_CALCULATION_STRATEGY_H
 #define DIRECTION_CALCULATION_STRATEGY_H
 
-#include "contour_processing_strategy.h"
-#include "methods/contour_feature_calculator.h"
+#include "src/jointDetection/contourProcess/contour_processing_strategy.h"
+#include "src/jointDetection/contourProcess/methods/contour_feature_calculator.h"
 
 class DirectionCalculationStrategy : public ContourProcessingStrategy
 {

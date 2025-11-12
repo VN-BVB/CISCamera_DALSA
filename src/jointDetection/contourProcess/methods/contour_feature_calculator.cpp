@@ -302,7 +302,7 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByCentroid(const s
     // 创建点的副本用于排序
     std::vector<cv::Point2f> sortedContour = contour;
 
-    // 按逆时针方向排序（相对于质心，直接使用ContourUtils::isPointClockwiseTo函数）
+    // 按逆时针方向排序（相对于质心）
     std::sort(sortedContour.begin(), sortedContour.end(),
               [&centroid](const cv::Point2f& a, const cv::Point2f& b) {
                   return !GeometryUtils::isPointClockwiseTo(a, b, centroid);
