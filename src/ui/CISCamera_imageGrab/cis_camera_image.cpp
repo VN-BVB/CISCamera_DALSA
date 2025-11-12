@@ -11,6 +11,10 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     initCameraImageProcessor();
     initCamera();
     initCameraCalibrator();
+    std::string filePath = R"(D:\Code\CISCamera_DALSA\data\CISCamera_Image\qpg\Splice_20251108_160731447.bmp)";
+    // 读取图像
+    cv::Mat img = cv::imread(filePath, cv::IMREAD_GRAYSCALE);
+    ui->imgSplice->displayImage(img, true);
 }
 
 CISWidget::~CISWidget() {

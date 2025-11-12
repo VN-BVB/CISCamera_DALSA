@@ -562,7 +562,7 @@ def refine_params_with_distortion_basic(
     # 内参基础参数边界
     print(m, dx, dy, theta, u0, v0)
     min_bounds[4], max_bounds[4] = u0 - 2, u0 + 2
-    min_bounds[5], max_bounds[5] = v0 - 5, v0 + 5
+    min_bounds[5], max_bounds[5] = v0 - 2, v0 + 2
     # min_bounds[6], max_bounds[6] = v_c - 1, v_c + 1
     # min_bounds[7], max_bounds[7] = u_c - 1, u_c + 1
     # min_bounds[8], max_bounds[8] = v_c - 1, v_c + 1

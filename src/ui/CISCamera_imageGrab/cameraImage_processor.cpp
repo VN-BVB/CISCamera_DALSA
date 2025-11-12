@@ -317,7 +317,7 @@ bool CameraImageProcessor::readPointsFromTxt(const std::string& path, std::vecto
 }
 void CameraImageProcessor::whenCameraCalibrate() {
     all_image_points.clear();
-    std::string folder = "./data/CISCamera_Image/txt";
+    std::string folder = "./data/CISCamera_Image/halcon";
 
     // 遍历文件夹读取所有txt
     for (auto& entry : std::filesystem::directory_iterator(folder)) {

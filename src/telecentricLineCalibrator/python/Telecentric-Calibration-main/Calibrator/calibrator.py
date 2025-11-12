@@ -42,7 +42,7 @@ class Calibrator:
         self.cp_world = cp_int * pattern_info.distance
         # 标定板图片路径
         # 修改：从 txt 文件目录获取点数据
-        self.txt_dir = "D:/Code/CISCamera_DALSA/data/CISCamera_Image/txt"
+        self.txt_dir = "D:/Code/CISCamera_DALSA/data/CISCamera_Image/mattxt"
         # 检查目录是否存在
         if not os.path.exists(self.txt_dir):
             raise ValueError(f"指定的txt目录不存在: {self.txt_dir}")

@@ -97,7 +97,7 @@ if __name__=="__main__":
     cp_world = cp_int * pattern_info.distance
 
     # 标定板图片路径
-    txt_dir = "D:/Code/CISCamera_DALSA/data/CISCamera_Image/txt"
+    txt_dir = "D:/Code/CISCamera_DALSA/data/CISCamera_Image/mattxt"
     if not os.path.exists(txt_dir):
         raise ValueError(f"指定的txt目录不存在: {txt_dir}")
 
@@ -131,13 +131,6 @@ if __name__=="__main__":
     # ret, K_opt, v_rot_opt, v_trans_opt = calibrator_helper.refine_params_without_distortion(
     #     points_world, points_pixel, K, v_rot, v_trans
     # )
-    m = K_opt[0, 0] * dx
-    points_pixel = points_pixel
-    theta = np.arctan(-K_opt[0, 1] / K_opt[0, 0])
-    dy = 1.0 / (K_opt[1, 1] * np.cos(theta))
-    u0 = K_opt[0, 2]
-    v0 = m * K_opt[1, 2]
-    base_params = [m, dx, dy, theta, u0, v0]
 
     if ret:
         print("非线性优化成功，重投影误差:", ret)

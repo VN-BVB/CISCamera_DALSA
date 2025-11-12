@@ -1,5 +1,5 @@
 % 定义要处理的图像文件夹路径
-imageFolder = 'D:\Code\cameracalib\libcbdetect\libdectectc++2\example_data2\qbg\';
+imageFolder = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\qpg\';
 
 % 获取文件夹下所有的 .bmp 文件
 imageFileNames = dir(fullfile(imageFolder, '*.bmp'));
@@ -10,7 +10,7 @@ imageFileNames = fullfile(imageFolder, {imageFileNames.name});
 imageFileNames = imageFileNames(imagesUsed);
 
 % ==== 保存角点到txt文件 ====
-saveDir = 'D:\Code\cameracalib\libcbdetect\libdectectc++2\example_data2\txt2\';
+saveDir = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\mattxt\';
 if ~exist(saveDir, 'dir')
     mkdir(saveDir);
 end
@@ -24,7 +24,7 @@ for i = 1:size(imagePoints, 3)
     fid = fopen(txtFile, 'w');
     if fid ~= -1
         fprintf(fid, '# Index\tX\tY\n');
-        for j = 1:size(pts, 1)
+        for j = 0:size(pts, 1)
             fprintf(fid, '%d\t%.6f\t%.6f\n', j, pts(j,1), pts(j,2));
         end
         fclose(fid);
