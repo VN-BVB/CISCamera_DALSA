@@ -1,4 +1,4 @@
-#include "cameraImage_processor.h"
+﻿#include "cameraImage_processor.h"
 
 CameraImageProcessor::CameraImageProcessor(QObject* parent) : QObject(parent) {}
 
@@ -11,7 +11,7 @@ void CameraImageProcessor::setSpliceEnabled(bool enabled) {
 
 void CameraImageProcessor::processSingle(std::shared_ptr<cv::Mat> image) {
     if (!image || image->empty()) {
-        emit error(QString(u8"单图处理：输入为空"));
+        // emit error(QString(u8"单图处理：输入为空"));
         return;
     }
     {
@@ -78,7 +78,8 @@ bool CameraImageProcessor::prepareForConcat(const cv::Mat& m, const cv::Mat& s, 
     return true;
 }
 
-void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave, bool spliceEnabledFromCaller) {
+void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave,
+                                       bool spliceEnabledFromCaller, bool useColumnCheck) {
     if (!master || master->empty()) {
         emit error(QString(u8"拼接：Master 为空"));
         return;
@@ -109,7 +110,6 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
     // 准备拼接
     cv::Mat mAligned, sAligned;
     if (!prepareForConcat(*master, *slave, mAligned, sAligned)) {
-        emit error(QString(u8"拼接前对齐失败：尺寸/通道/深度不兼容"));
         // 回退 master
         {
             QMutexLocker locker(&mtx_);
@@ -119,16 +119,77 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
         return;
     }
 
-    // 拼接
     try {
         auto result = std::make_shared<cv::Mat>();
         cv::hconcat(mAligned, sAligned, *result);
 
+        // 转为灰度图
+        cv::Mat gray;
+        if (result->channels() == 3)
+            cv::cvtColor(*result, gray, cv::COLOR_BGR2GRAY);
+        else
+            gray = *result;
+
+        const uchar whiteThresh = 250;
+        int left = 0, right = gray.cols - 1;
+        if (useColumnCheck) {
+            // 1. 从下往上处理全黑行，把全黑行置为白色
+            for (int r = gray.rows - 1; r >= 0; --r) {
+                cv::Mat row = gray.row(r);
+                double maxVal;
+                cv::minMaxLoc(row, nullptr, &maxVal);
+                if (maxVal == 0) {
+                    row.setTo(255);
+                } else {
+                    break;
+                }
+            }
+            // 2. 从左找第一个非白列
+            for (int c = 0; c < gray.cols; ++c) {
+                bool isWhiteCol = true;
+                for (int r = 0; r < gray.rows; ++r) {
+                    if (gray.at<uchar>(r, c) < whiteThresh) {
+                        isWhiteCol = false;
+                        break;
+                    }
+                }
+                if (!isWhiteCol) {
+                    left = c;
+                    break;
+                }
+            }
+
+            // 3. 从右找第一个非白列
+            for (int c = gray.cols - 1; c >= 0; --c) {
+                bool isWhiteCol = true;
+                for (int r = 0; r < gray.rows; ++r) {
+                    if (gray.at<uchar>(r, c) < whiteThresh) {
+                        isWhiteCol = false;
+                        break;
+                    }
+                }
+                if (!isWhiteCol) {
+                    right = c;
+                    break;
+                }
+            }
+        } else {
+            // 直接用固定列
+            left = 208;
+            right = 30895;
+        }
+
+        // 防止越界，确保宽度大于10
+        if (right > left + 10) {
+            cv::Rect roi(left, 0, right - left + 1, result->rows);
+            *result = (*result)(roi).clone();
+        }
+
+        // 保存结果（线程安全）
         {
             QMutexLocker locker(&mtx_);
             lastResult_ = result;
         }
-
         emit text(QString(u8"拼接成功：%1x%2").arg(result->cols).arg(result->rows));
         emit imageReady(result);
     } catch (const cv::Exception& e) {
@@ -145,6 +206,7 @@ void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::sha
 bool CameraImageProcessor::imwriteSmart(const QString& path, const cv::Mat& img, QString& err) {
     std::vector<int> params;
     const QString lower = path.toLower();
+    cv::Mat img_to_save = img;  // 默认使用原图
 
     if (lower.endsWith(".png")) {
         params = {cv::IMWRITE_PNG_COMPRESSION, 1};  // 轻压缩，快
@@ -156,11 +218,17 @@ bool CameraImageProcessor::imwriteSmart(const QString& path, const cv::Mat& img,
     } else if (lower.endsWith(".bmp")) {
         // BMP 无参数
     } else if (lower.endsWith(".exr")) {
-        // OpenEXR：半浮点/无损；OpenCV 默认可写
+        // OpenEXR 只支持 CV_16U / CV_32F，不支持 CV_8U
+        if (img.depth() == CV_8U) {
+            img.convertTo(img_to_save, CV_32F, 1.0 / 255.0);
+        } else if (img.depth() == CV_16U) {
+            img.convertTo(img_to_save, CV_32F, 1.0 / 65535.0);
+        }
+        // 不设置压缩参数时，OpenEXR 默认使用 ZIP 无损压缩
     }
 
     try {
-        return cv::imwrite(path.toStdString(), img, params);
+        return cv::imwrite(path.toStdString(), img_to_save, params);
     } catch (const cv::Exception& e) {
         err = QString::fromUtf8(e.what());
         return false;
@@ -168,9 +236,11 @@ bool CameraImageProcessor::imwriteSmart(const QString& path, const cv::Mat& img,
 }
 
 void CameraImageProcessor::saveResult(const QString& dir, const QString& prefix, const QString& ext, bool alsoSaveSingles) {
+    emit text(QString(u8"正在进行保存，请稍等..."));
     std::shared_ptr<cv::Mat> toSave, m, s;
     {
         QMutexLocker locker(&mtx_);
+        // cv::bitwise_not(*lastResult_, *toSave);
         toSave = lastResult_;
         m = lastMaster_;
         s = lastSlave_;
@@ -191,7 +261,7 @@ void CameraImageProcessor::saveResult(const QString& dir, const QString& prefix,
     QString err;
     if (imwriteSmart(mainPath, *toSave, err)) {
         emit text(QString(u8"已保存：%1").arg(mainPath));
-        emit saved(mainPath);
+        std::cout << u8"检测是否能发送";
     } else {
         emit error(QString(u8"保存失败：%1 （%2）").arg(mainPath, err));
     }
@@ -200,14 +270,14 @@ void CameraImageProcessor::saveResult(const QString& dir, const QString& prefix,
         if (m && !m->empty()) {
             QString mp = base + "_master" + ext;
             if (imwriteSmart(mp, *m, err))
-                emit saved(mp);
+                emit text(QString(u8"已保存：%1").arg(mp));
             else
                 emit error(QString(u8"保存Master失败：%1 （%2）").arg(mp, err));
         }
         if (s && !s->empty()) {
             QString sp = base + "_slave" + ext;
             if (imwriteSmart(sp, *s, err))
-                emit saved(sp);
+                emit text(QString(u8"已保存：%1").arg(sp));
             else
                 emit error(QString(u8"保存Slave失败：%1 （%2）").arg(sp, err));
         }
@@ -220,4 +290,60 @@ void CameraImageProcessor::clear() {
     lastSlave_.reset();
     lastResult_.reset();
     emit text(QString(u8"处理缓存已清空"));
+}
+bool CameraImageProcessor::readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pts) {
+    std::ifstream fin(path);
+    if (!fin.is_open()) {
+        std::cerr << "无法打开文件: " << path << std::endl;
+        return false;
+    }
+
+    std::string line;
+    pts.clear();
+    // 跳过第一行标题
+    std::getline(fin, line);
+
+    double idx, x, y;
+    while (fin >> idx >> x >> y) {
+        pts.emplace_back(x, y);
+    }
+
+    if (pts.empty()) {
+        std::cerr << "文件 " << path << " 无有效点。" << std::endl;
+        return false;
+    }
+    std::cout << "读取 " << path << " 成功，共 " << pts.size() << " 个点\n";
+    return true;
+}
+void CameraImageProcessor::whenCameraCalibrate() {
+    all_image_points.clear();
+    std::string folder = "./data/CISCamera_Image/halcon";
+
+    // 遍历文件夹读取所有txt
+    for (auto& entry : std::filesystem::directory_iterator(folder)) {
+        if (entry.path().extension() == ".txt") {
+            std::vector<Eigen::Vector2d> pts;
+            if (readPointsFromTxt(entry.path().string(), pts)) {
+                all_image_points.push_back(pts);
+            }
+        }
+    }
+
+    if (all_image_points.empty()) {
+        std::cerr << "没有读取到任何标定点文件！" << std::endl;
+        return;
+    }
+
+    // 构造世界坐标系下圆心点
+    std::vector<Eigen::Vector2d> worldPts;
+    worldPts.reserve(W * H);
+    for (int r = 0; r < H; ++r)
+        for (int c = 0; c < W; ++c) worldPts.emplace_back(c * spacingMM, r * spacingMM);
+
+    // 输出结果
+    Eigen::Matrix3d K;
+    double rmse;
+    std::vector<Pose> poses;
+
+    sendSignalToCalibrate(all_image_points, worldPts, width, height, dx, dy, K, rmse, poses);
 }

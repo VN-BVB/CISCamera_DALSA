@@ -47,10 +47,24 @@
         "typeinfo": "cpp",
         "unordered_set": "cpp",
         "iomanip": "cpp",
-        "map": "cpp",
+        "codecvt": "cpp",
+        "filesystem": "cpp",
         "functional": "cpp",
         "iterator": "cpp",
-        "future": "cpp",
-        "set": "cpp"
-    }
+        "numeric": "cpp",
+        "set": "cpp",
+        "bitset": "cpp",
+        "complex": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "random": "cpp",
+        "regex": "cpp",
+        "cinttypes": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp",
+        "variant": "cpp",
+        "future": "cpp"
+    },
+    "cmake.sourceDirectory": "D:/Code/CISCamera_DALSA/3rdParty/plog"
 }
