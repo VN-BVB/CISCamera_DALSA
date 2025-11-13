@@ -63,7 +63,7 @@ void CISWidget::initCamera() {
         whenAppendMessageLog(QString(u8"DALSA采集卡初始化中"));
         // Master
         masterCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
-        if (!masterCISCamera->initCamera("./data/CISConfig/MasterInternal.ccf", 0)) {
+        if (!masterCISCamera->initCamera("./data/CISConfig/MasterEncoder.ccf", 0)) {
             PLOGE << "Master 初始化失败";
             whenAppendMessageLog(QString(u8"Master 初始化失败"));
             return;
@@ -74,7 +74,7 @@ void CISWidget::initCamera() {
 
         // Slave
         slaveCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
-        if (!slaveCISCamera->initCamera("./data/CISConfig/SlaveInternal.ccf", 1)) {
+        if (!slaveCISCamera->initCamera("./data/CISConfig/SlaveEncoder.ccf", 1)) {
             PLOGE << "Slave 初始化失败";
             whenAppendMessageLog(QString(u8"Slave 初始化失败"));
             return;

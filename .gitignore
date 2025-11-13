@@ -12,6 +12,7 @@ data/CISCamera_Image/
 data/debug/
 data/CISCamera_Image/
 *.pro.user.*
+src/rail/PLCCode/Temp/
 *.bmp
 *.png
 *.jpg
