@@ -9,7 +9,7 @@ class TelecentricPYOptimizer {
 public:
     TelecentricPYOptimizer() = default;
     bool invokeTelecentricCalibration() {
-        std::cout << "正在进行非线性优化" << std::endl;
+        PLOGD << "正在进行非线性优化";
         _putenv("PYTHONHOME=D:\\anaconda\\envs\\Telecentric-Calibration");
         _putenv(
             "PYTHONPATH=D:\\anaconda\\envs\\Telecentric-Calibration\\Lib;"

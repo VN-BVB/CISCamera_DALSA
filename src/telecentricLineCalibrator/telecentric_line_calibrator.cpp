@@ -9,6 +9,17 @@ TelecentricLineCalibrator::TelecentricLineCalibrator() {
     K_.setIdentity();
     coff_dis_ = Eigen::VectorXd::Zero(5);
 }
+Eigen::Vector3d TelecentricLineCalibrator::rotMatToVec(const Eigen::Matrix3d& R) const {
+    cv::Mat R_cv(3, 3, CV_64F);
+    cv::Mat rvec_cv;
+    // Eigen矩阵转OpenCV矩阵
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) R_cv.at<double>(i, j) = R(i, j);
+    // Rodrigues变换（旋转矩阵→旋转向量）
+    cv::Rodrigues(R_cv, rvec_cv);
+    // OpenCV矩阵转Eigen向量
+    return Eigen::Vector3d(rvec_cv.at<double>(0), rvec_cv.at<double>(1), rvec_cv.at<double>(2));
+}
 bool TelecentricLineCalibrator::calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize,
                                                        std::vector<cv::Point2d>& imagePoints) {
     // ---------- 1. 灰度化与反色 ----------
@@ -395,7 +406,8 @@ bool TelecentricLineCalibrator::estimateIntrinsicsFromHomographies(const std::ve
 // =========================================================
 double TelecentricLineCalibrator::computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts,
                                                            const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose,
-                                                           const Eigen::Matrix3d& K, const std::string& savePath) {
+                                                           const Eigen::Matrix3d& K, const std::string& savePath,
+                                                           const Eigen::Matrix<double, 1, 5>& coff_dis) {
     const int n = static_cast<int>(worldPts.size());
     if (n == 0) return 0.0;
     double totalErr = 0.0;
@@ -414,19 +426,24 @@ double TelecentricLineCalibrator::computeReprojectionError(const std::vector<Eig
         }
     }
     for (int i = 0; i < n; ++i) {
-        // 世界坐标点（Z=0）
-
-        // 仿射成像模型： [u v 1]^T ~ K * [R|t] * [X Y 1]^T
+        // ---------- 仿射成像 + 畸变 ----------
         Eigen::Vector3d xy1;
         xy1 << worldPts[i].x(), worldPts[i].y(), 1.0;
 
-        Eigen::Vector3d img_affine;
-        img_affine.head<2>() = R2 * xy1.head<2>() + t2;
-        img_affine(2) = 1.0;
+        // 1. 仿射到相机归一化坐标（平面）
+        Eigen::Vector2d cam_xy = R2 * xy1.head<2>() + t2;
+        // 2. 转为 Nx2 矩阵，方便调用 distort
+        Eigen::MatrixXd camPt(1, 2);
+        camPt.row(0) = cam_xy.transpose();
 
-        Eigen::Vector3d uvw = K * img_affine;
+        // 3. 畸变，返回 Nx3（齐次坐标）
+        Eigen::MatrixXd distortedH = distort(coff_dis, camPt);
+
+        // 4. 乘相机内参
+        Eigen::Vector3d uvw = K * distortedH.row(0).transpose();
+
+        // 5. 像素坐标
         Eigen::Vector2d uv_hat(uvw(0) / uvw(2), uvw(1) / uvw(2));
-
         Eigen::Vector2d uv(imagePts[i].x(), imagePts[i].y());
         totalErr += std::sqrt((uv - uv_hat).squaredNorm());
         if (ofs.is_open()) {
@@ -619,140 +636,52 @@ Eigen::MatrixXd TelecentricLineCalibrator::pixelToCameraCoordinates(const Eigen:
     return result;
 }
 Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
-                                                        const std::vector<Eigen::Vector2d>& worldPts,
+                                                        const double m, const std::vector<Eigen::Vector2d>& worldPts,
                                                         const std::vector<Eigen::Vector2d>& imgPts) {
-    if (worldPts.size() != imgPts.size() || worldPts.size() < 3) {
-        throw std::runtime_error("点数不足或数量不匹配！");
-    }
+    std::cout << "======== [estimateTelecentricPose] 开始求解外参 ========" << std::endl;
 
-    // ---------- 1. 转为 Eigen 矩阵 ----------
-    Eigen::MatrixXd pts_px(worldPts.size(), 2);
-    Eigen::MatrixXd pts_w(worldPts.size(), 2);
-    for (size_t i = 0; i < worldPts.size(); ++i) {
-        pts_px.row(i) = imgPts[i].transpose();
-        pts_w.row(i) = worldPts[i].transpose();
-    }
+    if (worldPts.size() != imgPts.size() || worldPts.size() < 4)
+        throw std::runtime_error("estimateTelecentricPose: 输入点数量不足或不匹配");
 
-    // ---------- 2. 像素 → 相机坐标 ----------
-    Eigen::MatrixXd camPts = pixelToCameraCoordinates(pts_px, K, coff_dis);
+    std::cout << "Step 1. 输入点数量: " << worldPts.size() << " 对" << std::endl;
+    std::cout << "Step 1. 相机内参:\n" << K << std::endl;
+    std::cout << "Step 1. 畸变系数: " << coff_dis << std::endl;
 
-    // ---------- 3. 构造线性方程求仿射 ----------
-    Eigen::MatrixXd A(2 * worldPts.size(), 6);
-    Eigen::VectorXd b(2 * worldPts.size());
-    for (int i = 0; i < pts_w.rows(); ++i) {
-        double X = pts_w(i, 0), Y = pts_w(i, 1);
-        A.row(2 * i) << X, Y, 1, 0, 0, 0;
-        A.row(2 * i + 1) << 0, 0, 0, X, Y, 1;
-        b(2 * i) = camPts(i, 0);
-        b(2 * i + 1) = camPts(i, 1);
-    }
+    // ---------- Step 1. 像素坐标去畸变 ----------
+    std::cout << "[1] 正在执行去畸变..." << std::endl;
+    Eigen::MatrixXd imgPtsMat(imgPts.size(), 2);
+    for (size_t i = 0; i < imgPts.size(); ++i) imgPtsMat.row(i) = imgPts[i].transpose();
 
-    // ---------- 4. 最小二乘解 ----------
-    Eigen::VectorXd x = A.colPivHouseholderQr().solve(b);
+    Eigen::MatrixXd undistorted = undistortPointsIter(imgPtsMat, K, coff_dis, 2000, 1e-12);
+    std::cout << "[1] 去畸变完成，前3个结果：" << std::endl;
+    for (int i = 0; i < std::min<int>(3, undistorted.rows()); ++i)
+        std::cout << "  原: " << imgPtsMat.row(i) << " → 去畸变: " << undistorted.row(i) << std::endl;
 
-    // ---------- 5. 提取 R 和 t ----------
-    Eigen::Matrix2d R2;
-    Eigen::Vector2d t2;
-    R2 << x(0), x(1), x(3), x(4);
-    t2 << x(2), x(5);
+    std::vector<Eigen::Vector2d> undistortedPts(undistorted.rows());
+    for (int i = 0; i < undistorted.rows(); ++i) undistortedPts[i] = undistorted.row(i).transpose();
 
-    // ---------- 6. 正交化旋转 ----------
-    Eigen::JacobiSVD<Eigen::Matrix2d> svd(R2, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::Matrix2d R_ortho = svd.matrixU() * svd.matrixV().transpose();
+    // ---------- Step 2. 求单应矩阵 ----------
+    std::cout << "[2] 正在计算单应矩阵..." << std::endl;
+    Eigen::Matrix3d Hi = computeHomography(worldPts, undistortedPts);
+    std::cout << "[2] 单应矩阵 H:\n" << Hi << std::endl;
 
-    // ---------- 7. 扩展为 3x3 ----------
-    Pose pose;
-    pose.R.setIdentity();
-    pose.R.block<2, 2>(0, 0) = R_ortho;
-    pose.t.setZero();
-    pose.t.head<2>() = t2;
+    // ---------- Step 3. 提取外参 ----------
+    std::cout << "[3] 从单应矩阵提取外参..." << std::endl;
+    Pose pose = extractPoseFromHomography(Hi, K, worldPts, undistortedPts, m);
+    std::cout << "[3] 旋转矩阵 R:\n" << pose.R << std::endl;
+    std::cout << "[3] 平移向量 t: " << pose.t.transpose() << std::endl;
+    // ---------- Step 3.1 打印旋转向量 ----------
+    Eigen::Vector3d rvec = rotMatToVec(pose.R);
+    std::cout << "[3] Rodrigues 旋转向量 (rx, ry, rz): " << rvec.transpose() << std::endl;
+    // ---------- Step 4. 计算重投影误差 ----------
+    std::cout << "[4] 正在计算重投影误差..." << std::endl;
+    pose.reprojErr = computeReprojectionError(worldPts, undistortedPts, pose, K, " ", coff_dis);
+    std::cout << "[4] 平均重投影误差 = " << pose.reprojErr << std::endl;
 
-    // ---------- ✅ 新增：计算旋转向量 ----------
-    cv::Mat R_cv, rvec;
-    cv::eigen2cv(pose.R, R_cv);
-    cv::Rodrigues(R_cv, rvec);
-
-    // ---------- 8. 打印结果 ----------
-    std::cout << "\n=== Telecentric Pose ===" << std::endl;
-    std::cout << "R = \n" << pose.R << std::endl;
-    std::cout << "t = \n" << pose.t.transpose() << std::endl;
-    std::cout << "rvec = " << rvec.t() << std::endl;  // <--- 打印旋转向量
-
-    // ---------- 9. 计算重投影误差 ----------
-    double totalErr = 0.0;
-    for (int i = 0; i < pts_w.rows(); ++i) {
-        Eigen::Vector3d xy1(pts_w(i, 0), pts_w(i, 1), 1.0);
-        Eigen::Vector2d proj = (R_ortho * xy1.head<2>() + t2);
-        Eigen::Vector2d cam = camPts.row(i);
-        double err = (proj - cam).norm();
-        totalErr += err;
-        std::cout << "点 " << i << "  世界: [" << pts_w(i, 0) << ", " << pts_w(i, 1) << "]  → 投影: [" << proj.x() << ", "
-                  << proj.y() << "]  误差: " << err << std::endl;
-    }
-
-    std::cout << "平均重投影误差: " << totalErr / pts_w.rows() << std::endl;
-
+    std::cout << "======== [estimateTelecentricPose] 结束 ========" << std::endl;
     return pose;
 }
-void TelecentricLineCalibrator::estimatePosePnP(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
-                                                const std::vector<Eigen::Vector2d>& worldPts,
-                                                const std::vector<Eigen::Vector2d>& imgPts) {
-    if (worldPts.size() != imgPts.size() || worldPts.size() < 4) {
-        std::cerr << "点数量不足或不匹配！" << std::endl;
-        return;
-    }
 
-    // ---------- 1. 构造输入点 ----------
-    std::vector<cv::Point3f> objPts;
-    objPts.reserve(worldPts.size());
-    for (const auto& p : worldPts) objPts.emplace_back(static_cast<float>(p.x()), static_cast<float>(p.y()), 0.0f);  // Z=0 平面
-
-    std::vector<cv::Point2f> imgPts_cv;
-    imgPts_cv.reserve(imgPts.size());
-    for (const auto& p : imgPts) imgPts_cv.emplace_back(static_cast<float>(p.x()), static_cast<float>(p.y()));
-
-    // ---------- 2. 转换内参 ----------
-    cv::Mat cameraMatrix, distCoeffs;
-    cv::eigen2cv(K, cameraMatrix);
-    cv::eigen2cv(coff_dis, distCoeffs);
-
-    // ---------- 3. 求解 PnP ----------
-    cv::Mat rvec, tvec;
-    bool success = cv::solvePnP(objPts, imgPts_cv, cameraMatrix, distCoeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
-
-    if (!success) {
-        std::cerr << "solvePnP 失败！" << std::endl;
-        return;
-    }
-
-    // ---------- 4. 输出结果 ----------
-    std::cout << "\n=== OpenCV solvePnP 结果 ===" << std::endl;
-    std::cout << "rvec = " << rvec.t() << std::endl;
-    std::cout << "tvec = " << tvec.t() << std::endl;
-
-    // ---------- 5. 转换为旋转矩阵 ----------
-    cv::Mat R;
-    cv::Rodrigues(rvec, R);
-    std::cout << "R = \n" << R << std::endl;
-
-    // ---------- 6. 重投影 ----------
-    std::vector<cv::Point2f> projectedPts;
-    cv::projectPoints(objPts, rvec, tvec, cameraMatrix, distCoeffs, projectedPts);
-
-    // ---------- 7. 计算重投影误差 ----------
-    double totalErr = 0.0;
-    for (size_t i = 0; i < imgPts_cv.size(); ++i) {
-        cv::Point2f diff = imgPts_cv[i] - projectedPts[i];
-        double err = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-        totalErr += err;
-        std::cout << "点 " << i << " 世界: [" << objPts[i].x << ", " << objPts[i].y << "]" << " 投影: [" << projectedPts[i].x
-                  << ", " << projectedPts[i].y << "]" << " 观测: [" << imgPts_cv[i].x << ", " << imgPts_cv[i].y << "]"
-                  << " 误差: " << err << std::endl;
-    }
-
-    double meanErr = totalErr / imgPts_cv.size();
-    std::cout << "平均重投影误差: " << meanErr << std::endl;
-}
 // =========================================================
 // Step 5. 主函数：标定流程（DLT 初值）
 // =========================================================
@@ -864,23 +793,27 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     } else {
         std::cout << "非线性优化前的初步估计参数已保存：" << calib_data_path_ << std::endl;
     }
-    Pose pos1e = estimateTelecentricPose(K_, coff_dis_, worldPts, all_imgPts[3]);
-    estimatePosePnP(K_, coff_dis_, worldPts, all_imgPts[3]);
+    Pose pos2e = estimateTelecentricPose(K_, coff_dis_, m_, worldPts, all_imgPts[3]);
+    CalibrationData calib2;
+    if (!calib2.load("./data/calibration_config/optimized_calib_data.json")) {
+        throw std::runtime_error("无法加载标定文件");
+    }
+
+    // 从标定数据中读取参数
+    Eigen::Matrix3d K1 = calib2.K;
+    Eigen::Matrix<double, 1, 5> coff_dis1 = calib2.coff_dis;
+    double m1 = calib2.m;
+    u0_ = calib2.u0;
+    v0_ = calib2.v0;
+    dx_ = calib2.dx;
+    dy_ = calib2.dy;
+    // 调用姿态估计函数
+    Pose pos1e = estimateTelecentricPose(K1, coff_dis1, m1, worldPts, all_imgPts[3]);
+
     // TelecentricPYOptimizer opt;
     // PLOGD << " 开始非线性优化";
     // if (!opt.invokeTelecentricCalibration()) {
     //     PLOGE << "Python 调用失败！";
     // }
     return true;
-}
-Eigen::Vector3d TelecentricLineCalibrator::rotMatToVec(const Eigen::Matrix3d& R) const {
-    cv::Mat R_cv(3, 3, CV_64F);
-    cv::Mat rvec_cv;
-    // Eigen矩阵转OpenCV矩阵
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j) R_cv.at<double>(i, j) = R(i, j);
-    // Rodrigues变换（旋转矩阵→旋转向量）
-    cv::Rodrigues(R_cv, rvec_cv);
-    // OpenCV矩阵转Eigen向量
-    return Eigen::Vector3d(rvec_cv.at<double>(0), rvec_cv.at<double>(1), rvec_cv.at<double>(2));
 }

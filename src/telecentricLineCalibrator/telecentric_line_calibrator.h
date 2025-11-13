@@ -69,10 +69,8 @@ public:
     Eigen::MatrixXd pixelToCameraCoordinates(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
                                              const Eigen::Matrix<double, 1, 5>& coff_dis = {});
 
-    Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
+    Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
                                  const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
-    void estimatePosePnP(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
-                         const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
 
 private:
     Eigen::Matrix3d computeHomography(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts);
@@ -84,7 +82,8 @@ private:
                                    const double m);
     Eigen::Matrix3d initIntrinsic(double m, double dx, double dy, double u0, double v0);
     double computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
-                                    const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath = " ");
+                                    const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath = " ",
+                                    const Eigen::Matrix<double, 1, 5>& coff_dis = {0.0, 0.0, 0.0, 0.0, 0.0});
     double computeReprojectionErrorFinal(const std::vector<Eigen::Vector2d>& worldPts,
                                          const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose, const Eigen::Matrix3d& K,
                                          double k);
