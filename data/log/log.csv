@@ -45646,3 +45646,4 @@
 2025/11/11;21:47:18.625;ERROR;34064;0000000000000000;DalsaCamera::initCamera@45;"SapManager::GetServerName 获取失败"
 2025/11/11;21:47:18.626;ERROR;34064;0000000000000000;CISWidget::initCamera::<lambda_d52847b36a6befa3d0dfd2122e745dca>::operator ()@67;"Master 初始化失败"
 2025/11/11;22:29:49.523;DEBUG;13784;0000000000000000;DalsaCamera::stopGrab@189;" 相机停止采集图像"
+2025/11/12;22:14:28.470;DEBUG;13184;0000000000000000;ImageProcessWorker::processImage@12;"开始处理数据: "

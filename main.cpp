@@ -32,9 +32,19 @@ int main(int argc, char *argv[]) {
 }
 // 初始化日志类
 void initPlog() {
+    // 生成带日期的日志文件名
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm;
+    localtime_s(&tm, &time_t);
+
+    std::ostringstream filename;
+    filename << "./data/log/log_"
+             << std::put_time(&tm, "%Y%m%d")
+             << ".txt";
     // 日志信息分类等级: none = 0, fatal = 1, error = 2, warning = 3, info = 4, debug = 5, verbose = 6
     // 设置初始化等级后, 等级『数值大于』设置值的日志信息就会被『忽略』
-    plog::init(plog::debug, "./data/log/log.csv", 1000000000, 100);
+    plog::init(plog::debug, filename.str().c_str(), 1000000000, 100);
     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
     plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
 }

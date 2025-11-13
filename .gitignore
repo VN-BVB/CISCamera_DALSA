@@ -11,6 +11,7 @@ Makefile.Debug
 data/CISCamera_Image/
 data/debug/
 data/CISCamera_Image/
+data/log/
 *.pro.user.*
 src/rail/PLCCode/Temp/
 *.bmp
