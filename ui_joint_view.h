@@ -26,6 +26,7 @@ public:
     QWidget *layoutWidget;
     QVBoxLayout *verticalLayout;
     QPushButton *pb_open;
+    QPushButton *pb_openSharedMemoryImages;
     QCheckBox *ckb_pixelContoursSquare;
     QCheckBox *ckb_pixelContoursLine;
     QCheckBox *ckb_subpixelContours;
@@ -51,6 +52,11 @@ public:
         pb_open->setObjectName(QString::fromUtf8("pb_open"));
 
         verticalLayout->addWidget(pb_open);
+
+        pb_openSharedMemoryImages = new QPushButton(layoutWidget);
+        pb_openSharedMemoryImages->setObjectName(QString::fromUtf8("pb_openSharedMemoryImages"));
+
+        verticalLayout->addWidget(pb_openSharedMemoryImages);
 
         ckb_pixelContoursSquare = new QCheckBox(layoutWidget);
         ckb_pixelContoursSquare->setObjectName(QString::fromUtf8("ckb_pixelContoursSquare"));
@@ -92,6 +98,7 @@ public:
     {
         JointView->setWindowTitle(QCoreApplication::translate("JointView", "Form", nullptr));
         pb_open->setText(QCoreApplication::translate("JointView", "\346\211\223\345\274\200\345\233\276\345\203\217", nullptr));
+        pb_openSharedMemoryImages->setText(QCoreApplication::translate("JointView", "\346\211\223\345\274\200\345\205\261\344\272\253\345\206\205\345\255\230\347\232\204\345\233\276\345\203\217", nullptr));
         ckb_pixelContoursSquare->setText(QCoreApplication::translate("JointView", "\345\203\217\347\264\240\347\272\247\350\275\256\345\273\223\357\274\210\346\226\271\345\235\227\357\274\211", nullptr));
         ckb_pixelContoursLine->setText(QCoreApplication::translate("JointView", "\345\203\217\347\264\240\347\272\247\350\275\256\345\273\223\357\274\210\347\272\277\346\235\241\357\274\211", nullptr));
         ckb_subpixelContours->setText(QCoreApplication::translate("JointView", "\344\272\232\345\203\217\347\264\240\347\272\247\350\275\256\345\273\223", nullptr));

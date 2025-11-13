@@ -1,4 +1,4 @@
-﻿#ifndef JOINT_VIEW_H
+#ifndef JOINT_VIEW_H
 #define JOINT_VIEW_H
 
 #include <QGraphicsView>
@@ -28,6 +28,7 @@ public:
 
 signals:
     void startImageRead(const QString &path);
+    void startImageReadFromSharedMemory(int processId, int timeoutMs = 30000);
     void startImageProcess(std::shared_ptr<cv::Mat> image);
 
 private slots:
@@ -49,6 +50,8 @@ private slots:
     void on_ckb_fitlines_toggled(bool checked);
     void on_ckb_endPoints_toggled(bool checked);
     void on_ckb_fitCurves_toggled(bool checked);
+
+    void on_pb_openSharedMemoryImages_clicked();
 
 private:
     Ui::JointView *ui;

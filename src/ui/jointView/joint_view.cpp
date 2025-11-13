@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QGraphicsPathItem>
 #include <QPainterPath>
+#include <QInputDialog>
 #include <plog/Log.h>
 
 JointView::JointView(QWidget *parent)
@@ -29,6 +30,7 @@ JointView::JointView(QWidget *parent)
     readWorker->moveToThread(&readThread);
     connect(&readThread, &QThread::finished, readWorker, &QObject::deleteLater);
     connect(this, &JointView::startImageRead, readWorker, &ImageReadWorker::readImage);
+    connect(this, &JointView::startImageReadFromSharedMemory, readWorker, &ImageReadWorker::readImageFromSharedMemory);
     connect(readWorker, &ImageReadWorker::imageRead, this, &JointView::handleImageRead);
     connect(readWorker, &ImageReadWorker::errorOccurred, this, &JointView::handleError);
 
@@ -251,3 +253,15 @@ void JointView::on_ckb_fitCurves_toggled(bool checked) {
     m_showFitCurves = checked;
     updateDisplay();
 }
+
+void JointView::on_pb_openSharedMemoryImages_clicked()
+{
+    bool ok;
+    int imageSenderProcessID = QInputDialog::getInt(this, tr("输入发送方进程ID"),
+                                                    tr("请输入发送共享内存图像的进程ID:"),
+                                                    0, 0, 2147483647, 1, &ok);
+    if (ok) {
+        emit startImageReadFromSharedMemory(imageSenderProcessID, 30000);
+    }
+}
+
