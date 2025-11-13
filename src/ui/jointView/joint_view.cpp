@@ -4,9 +4,9 @@
 #include "src/ui/utils/display/display_manager.h"
 
 #include <QFileDialog>
-#include <QDebug>
 #include <QGraphicsPathItem>
 #include <QPainterPath>
+#include <plog/Log.h>
 
 JointView::JointView(QWidget *parent)
     : QWidget(parent), 
@@ -128,7 +128,7 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
     auto endTime = std::chrono::high_resolution_clock::now();
     // 计算并输出时间差
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    qDebug() << "Total processing time: " << duration.count() << " ms";
+    PLOG_INFO << "Total processing time: " << duration.count() << " ms";
 }
 
 void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
@@ -159,7 +159,7 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
     auto endTime = std::chrono::high_resolution_clock::now();
     // 计算并输出时间差
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    qDebug() << "Total processing time: " << duration.count() << " ms";
+    PLOG_INFO << "Total processing time: " << duration.count() << " ms";
 }
 
 // CannyDevenay算法对应槽函数
@@ -170,7 +170,7 @@ void JointView::handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> proces
 
 void JointView::handleError(const QString &error)
 {
-    qDebug() << "错误:" << error;
+    PLOG_INFO << "错误:" << error;
 }
 
 // 更新显示函数

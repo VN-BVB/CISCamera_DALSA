@@ -1,8 +1,3 @@
-#include <plog/Init.h>
-#include <plog/Initializers/ConsoleInitializer.h>
-#include <plog/Initializers/RollingFileInitializer.h>
-#include <plog/Log.h>
-
 #include <QApplication>
 // clang-format off
 #include <winsock2.h>
@@ -12,12 +7,12 @@
 #include "src/test/test_tiny_spline.h"
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/ui/jointView/joint_view.h"
+#include "src/utils/plog_utils.h"
 
-void initPlog();  // 初始化日志类
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
-    initPlog();                         // 初始化日志类
+    PlogUtils::initPlog();                         // 初始化日志类
 
     // TinySplineqqq testSpline;
     // testSpline.runcv();
@@ -30,21 +25,4 @@ int main(int argc, char *argv[]) {
 
     return a.exec();
 }
-// 初始化日志类
-void initPlog() {
-    // 生成带日期的日志文件名
-    auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
-    std::tm tm;
-    localtime_s(&tm, &time_t);
 
-    std::ostringstream filename;
-    filename << "./data/log/log_"
-             << std::put_time(&tm, "%Y%m%d")
-             << ".txt";
-    // 日志信息分类等级: none = 0, fatal = 1, error = 2, warning = 3, info = 4, debug = 5, verbose = 6
-    // 设置初始化等级后, 等级『数值大于』设置值的日志信息就会被『忽略』
-    plog::init(plog::debug, filename.str().c_str(), 1000000000, 100);
-    static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-    plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
-}

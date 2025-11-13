@@ -3,7 +3,7 @@
 #include "display_view.h"
 #include "display_scene.h"
 #include <QVBoxLayout>
-#include <QDebug>
+#include <plog/Log.h>
 
 FrmVisionDisplay::FrmVisionDisplay(QWidget *parent):BaseWidget(parent)
 {
@@ -75,7 +75,7 @@ void FrmVisionDisplay::displayImage(const cv::Mat &image, bool autoFit)
 void FrmVisionDisplay::displayImage(std::shared_ptr<cv::Mat> image, bool autoFit)
 {
     if (!image || image->empty()) {
-        qDebug() << "智能指针图像为空";
+        PLOG_WARNING << "显示时传入的图像为空";
         return;
     }
 

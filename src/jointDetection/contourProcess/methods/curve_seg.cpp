@@ -3,6 +3,7 @@
 #include "contour_utils.h"
 #include "src/utils/geometry_utils.h"
 #include <cmath>
+#include <plog/Log.h>
 
 CurveSeg::CurveSeg() : m_minDomain(MIN_DOMAIN), m_maxDomain(MAX_DOMAIN) {}
 
@@ -16,7 +17,7 @@ void CurveSeg::initializeFromPoints(const std::vector<cv::Point2f>& points) { m_
   */
 void CurveSeg::fitSplineCurve() {
     if (m_points.size() < 4) {
-        std::cout << "警告：点数太少 (" << m_points.size() << ")，至少需要4个点进行样条拟合" << std::endl;
+        PLOG_WARNING << "警告：点数太少 (" << m_points.size() << ")，至少需要4个点进行样条拟合";
         return;
     }
 
@@ -45,22 +46,17 @@ void CurveSeg::fitSplineCurve() {
             auto domain_tuple = m_spline.domain();
             m_minDomain = static_cast<float>(domain_tuple.min());
             m_maxDomain = static_cast<float>(domain_tuple.max());
-
-            std::cout << "样条曲线拟合成功，使用 " << m_points.size() << " 个控制点" << std::endl;
-            std::cout << "实际Domain范围: [" << m_minDomain << ", " << m_maxDomain << "]" << std::endl;
-
         } catch (const std::exception& e) {
-            std::cout << "获取domain范围失败，使用默认范围: " << e.what() << std::endl;
+            PLOG_WARNING << "获取domain范围失败，使用默认范围: " << e.what();
             // 使用默认的安全范围
             m_minDomain = MIN_DOMAIN;
             m_maxDomain = MAX_DOMAIN;
         }
 
         m_isFitted = true;
-        std::cout << "样条曲线拟合成功，使用 " << m_points.size() << " 个控制点" << std::endl;
 
     } catch (const std::exception& e) {
-        std::cout << "样条曲线拟合失败: " << e.what() << std::endl;
+        PLOG_WARNING << "样条曲线拟合失败: " << e.what();
         m_isFitted = false;
         // 拟合失败时重置domain范围
         m_minDomain = MIN_DOMAIN;
@@ -79,7 +75,6 @@ std::vector<cv::Point2f> CurveSeg::getFittedPoints(int numSamples) const {
     std::vector<cv::Point2f> fittedPoints;
 
     if (!m_isFitted) {
-        // std::cout << "警告：样条曲线尚未拟合" << std::endl;
         return fittedPoints;
     }
 
@@ -110,7 +105,7 @@ cv::Point2f CurveSeg::evaluate(float u) const {
         std::vector<tinyspline::real> result = m_spline.eval(u).result();
         return cv::Point2f(static_cast<float>(result[0]), static_cast<float>(result[1]));
     } catch (const std::exception& e) {
-        std::cout << "评估样条曲线失败: " << e.what() << std::endl;
+        PLOG_ERROR << "评估样条曲线失败: " << e.what();
         return cv::Point2f(0, 0);
     }
 }
@@ -135,7 +130,7 @@ cv::Vec4f CurveSeg::getTangent(float u) const {
         // return cv::Vec4f(point.x, point.y, tangent[0], tangent[1]);
         return cv::Vec4f(static_cast<float>(tangent[0]), static_cast<float>(tangent[1]), point.x, point.y);
     } catch (const std::exception& e) {
-        std::cout << "计算切线失败: " << e.what() << std::endl;
+        PLOG_ERROR << "计算切线失败: " << e.what();
         return cv::Vec4f(0, 0, 0, 0);
     }
 }
@@ -151,7 +146,7 @@ cv::Vec4f CurveSeg::getTangent(float u) const {
   */
 void CurveSeg::drawCurve(cv::Mat& image, const cv::Scalar& color, int thickness) const {
     if (!m_isFitted) {
-        std::cout << "警告：无法绘制未拟合的曲线" << std::endl;
+        PLOG_WARNING << "警告：无法绘制未拟合的曲线";
         return;
     }
 
@@ -233,7 +228,7 @@ std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const c
 std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f& referencePoint) {
     // 检查轮廓是否已拟合
     if (!m_isFitted) {
-        std::cout << "轮廓尚未拟合" << std::endl;
+        PLOG_WARNING << "轮廓尚未拟合";
         return std::make_pair(EndpointInfo(cv::Point2f(0, 0), 0.0f), EndpointInfo(cv::Point2f(0, 0), 0.0f));
     }
 
@@ -265,7 +260,7 @@ std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f&
 */
 cv::Vec4f CurveSeg::getAverageLineNearEndpoint(float endpointU, float regionSize, int numSamples) const {
     if (!m_isFitted) {
-        std::cout << "警告：样条曲线尚未拟合" << std::endl;
+        PLOG_WARNING << "警告：样条曲线尚未拟合";
         return cv::Vec4f(0, 0, 0, 0);
     }
 
@@ -295,7 +290,7 @@ cv::Vec4f CurveSeg::getAverageLineNearEndpoint(float endpointU, float regionSize
 
     // 使用最小二乘法拟合直线
     if (samplePoints.size() < 2) {
-        std::cout << "警告：采样点数量不足，无法拟合直线" << std::endl;
+        PLOG_WARNING << "警告：采样点数量不足，无法拟合直线";
         return cv::Vec4f(0, 0, 0, 0);
     }
 

@@ -1,11 +1,9 @@
-﻿#include "test_frmVisionDisplay.h"
-
-#include <QDebug>
+#include "test_frmVisionDisplay.h"
+#include "ui_test_frmVisionDisplay.h"
 #include <QVBoxLayout>
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
-
-#include "ui_test_frmVisionDisplay.h"
+#include <plog/Log.h>
 
 test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     : QWidget(parent),
@@ -75,12 +73,12 @@ void test_FrmVisionDisplay::onBeginButtonClicked() {
     // 创建计时器并开始计时
     QElapsedTimer timer;
     timer.start();
-    qDebug() << "开始按钮被点击";
+    PLOG_INFO << "开始按钮被点击";
     TestEdgeAssembly tea;
     tea.run();
     // 计算并输出耗时
     qint64 elapsed = timer.elapsed();
-    qDebug() << "函数执行完成，耗时:" << elapsed << "毫秒";
+    PLOG_INFO << "函数执行完成，耗时:" << elapsed << "毫秒";
     std::vector<std::vector<cv::Point2f>> contours;
     for (auto& cdata : tea.m_cDatas) {
         std::vector<cv::Point2f> contour = cdata.getSubpixelContour();

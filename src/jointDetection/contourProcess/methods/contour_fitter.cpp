@@ -1,6 +1,6 @@
 #include "contour_fitter.h"
 #include "src/utils/geometry_utils.h"
-#include <QDebug>
+#include <plog/Log.h>
 
 /**
  * @brief 将轮廓段拟合为直线段
@@ -94,10 +94,10 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
         // 键为2的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
         EndpointInfo endpoint2_ccw = sortedEndpoints2.first;  // 更逆时针的端点
 
-        // 获取端点附近区域的平均直线（改进方法）
-        cv::Vec4f avgLine1 = curve1.getAverageLineNearEndpoint(endpoint1_ccw.u, 0.9f, 150);
+        // 获取端点附近区域的平均直线
+        cv::Vec4f avgLine1 = curve1.getAverageLineNearEndpoint(endpoint1_ccw.u, 0.5f, 150);
         cv::Vec4f avgLine2_cw = curve2.getAverageLineNearEndpoint(endpoint2_cw.u, 0.1f, 150);
-        cv::Vec4f avgLine3 = curve3.getAverageLineNearEndpoint(endpoint3_ccw.u, 0.9f, 150);
+        cv::Vec4f avgLine3 = curve3.getAverageLineNearEndpoint(endpoint3_ccw.u, 0.5f, 150);
         cv::Vec4f avgLine2_ccw = curve2.getAverageLineNearEndpoint(endpoint2_ccw.u, 0.1f, 150);
 
         // 保存平均直线用于后续使用
@@ -114,12 +114,11 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
         endPoints.push_back(cornerPoint1);
         endPoints.push_back(cornerPoint2);
 
-        qDebug() << "使用逆时针排序曲线段计算端点完成";
-        qDebug() << "端点1坐标: (" << cornerPoint1.x << ", " << cornerPoint1.y << ")";
-        qDebug() << "端点2坐标: (" << cornerPoint2.x << ", " << cornerPoint2.y << ")";
-
+        PLOG_INFO << "使用逆时针排序曲线段计算端点完成";
+        PLOG_INFO << "端点1坐标: (" << cornerPoint1.x << ", " << cornerPoint1.y << ")";
+        PLOG_INFO << "端点2坐标: (" << cornerPoint2.x << ", " << cornerPoint2.y << ")";
     } else {
-        qDebug() << "警告：没有可用的曲线段数据，无法计算端点";
+        PLOG_INFO << "警告：没有可用的曲线段数据，无法计算端点";
     }
 }
 

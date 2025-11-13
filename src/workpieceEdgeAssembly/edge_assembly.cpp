@@ -1,9 +1,8 @@
-﻿#include "edge_assembly.h"
-
-#include <QDebug>
-#include <iostream>
-
+#include "edge_assembly.h"
 #include "src/utils/geometry_utils.h"
+#include <plog/Log.h>
+#include <iostream>
+#include <QString>
 
 EdgeAssembly::EdgeAssembly(const std::vector<std::shared_ptr<ContourBoundingBox>> cbbs) { m_cbbs = cbbs; }
 
@@ -94,7 +93,7 @@ void EdgeAssembly::generateWorkpiece() {
         }
     }
 
-    // qDebug() << "可能的工件组合";
+    // PLOG_INFO << "可能的工件组合";
     int i = 0;
     for (auto& workPiece : m_possibleWorkpieces) {
         std::vector<int> ids = workPiece.getContourIds();
@@ -102,7 +101,7 @@ void EdgeAssembly::generateWorkpiece() {
         for (auto& id : ids) {
             str += QString("%1,").arg(id);
         }
-        qDebug() << str;
+        PLOG_INFO << str.toStdString();
     }
 }
 
@@ -169,9 +168,9 @@ void EdgeAssembly::calculateMostLikelyCombination() {
     m_mostLikelyCombination = bestCombination;
 
     // 输出结果
-    // qDebug() << "最有可能的工件组合（总线段长度最小）：";
-    qDebug() << "总线段长度：" << minTotalLength;
-    // qDebug() << "组合索引：" << bestCombination;
+    // PLOG_INFO << "最有可能的工件组合（总线段长度最小）：";
+    PLOG_INFO << "总线段长度：" << minTotalLength;
+    // PLOG_INFO << "组合索引：" << bestCombination;
 
     // 输出组合中每个工件的轮廓ID
     QString contourIdsStr = "ID：";
@@ -185,7 +184,7 @@ void EdgeAssembly::calculateMostLikelyCombination() {
     for (int id : allIds) {
         contourIdsStr += QString::number(id) + ",";
     }
-    qDebug() << contourIdsStr;
+    PLOG_INFO << contourIdsStr.toStdString();
 }
 
 /**
@@ -619,11 +618,11 @@ void EdgeAssembly::generateValidateCombinations(int n) {
 
     // 根据轮廓数量选择优化策略
     if (m_cbbs.size() <= 64) {  // 如果轮廓数不超过64，使用位运算优化
-        // qDebug() << "使用动态规划+位运算优化算法";
+        // PLOG_INFO << "使用动态规划+位运算优化算法";
         generateOptimizedCombinationsDP(n, validCombinations);
     } else {
         // 回退到原来的算法（但使用更多剪枝）
-        qDebug() << "轮廓数量超过64，使用原始算法（带剪枝）";
+        PLOG_INFO << "轮廓数量超过64，使用原始算法（带剪枝）";
         std::vector<int> current;
         std::set<int> usedContourIds;
         generateOptimizedCombinations(0, n, current, usedContourIds, validCombinations);
@@ -632,7 +631,7 @@ void EdgeAssembly::generateValidateCombinations(int n) {
     m_validCombinations = validCombinations;
 
     // 输出结果
-    // qDebug() << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：" ;
+    // PLOG_INFO << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：" ;
 
     for (size_t i = 0; i < validCombinations.size(); ++i) {
         QString str1 = "组合 " + QString::number(i + 1) + ": [";
@@ -643,7 +642,7 @@ void EdgeAssembly::generateValidateCombinations(int n) {
             }
         }
         str1 += "]";
-        qDebug() << str1;
+        PLOG_INFO << str1.toStdString();
 
         // 输出每个组合中工件的轮廓id
         QString str2 = "  轮廓id: ";
@@ -658,7 +657,7 @@ void EdgeAssembly::generateValidateCombinations(int n) {
             str2 += QString::number(id);
             str2 += ",";
         };
-        qDebug() << str2;
+        PLOG_INFO << str2.toStdString();
     }
 }
 
