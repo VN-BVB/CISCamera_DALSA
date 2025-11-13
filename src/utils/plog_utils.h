@@ -20,6 +20,9 @@ namespace PlogUtils {
  * - 控制台日志：只显示消息内容，不包含时间戳等前缀信息
  *
  * @param logLevel 日志级别 (debug=5, info=4, warning=3, error=2, fatal=1, none=0)
+ * @details 使用内联函数可避免多重定义错误：在头文件中定义普通函数，并且这个头文件被多个源文件包含时，
+ *                                     每个源文件都会有一份该函数的定义，链接时会产生"多重定义"错误。内联函数可以避免这个问题。
+ *                                     内联函数允许在头文件中定义函数体，而不会引起链接错误
  */
 inline void initPlog(plog::Severity logLevel = plog::debug) {
     // 生成带日期的日志文件名
@@ -34,7 +37,7 @@ inline void initPlog(plog::Severity logLevel = plog::debug) {
              << ".txt";
 
     // 初始化文件日志
-    plog::init(logLevel, filename.str().c_str(), 1000000000, 100);
+    plog::init(logLevel, filename.str().c_str(), 1000000, 100);
 
     // 添加控制台日志
     static plog::ColorConsoleAppender<plog::MessageOnlyFormatter> consoleAppender;

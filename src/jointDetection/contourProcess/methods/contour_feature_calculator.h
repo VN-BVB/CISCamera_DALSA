@@ -20,7 +20,7 @@ public:
     static std::vector<cv::Point2f> detectCornerPoints(const std::vector<cv::Point2f>& contour);
     static std::vector<cv::Point2f> removePointsNearCorners(const std::vector<cv::Point2f>& contour,
                                                             const std::vector<cv::Point2f>& cornerPoints,
-                                                            double radius = 15.0);
+                                                            double radius = 10.0);
 
 private:
     static std::vector<cv::Point2f> detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour, double epsilon = 10.0);
