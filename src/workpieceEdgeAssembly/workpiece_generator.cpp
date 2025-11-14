@@ -84,10 +84,12 @@ std::vector<std::vector<int>> WorkpieceGenerator::createNearestIndices(
  * @param unpairedContours 未配对的轮廓列表
  * @return 分区后的索引列表（优先区域和其他区域）
  */
-std::pair<std::vector<int>, std::vector<int>> WorkpieceGenerator::partitionCandidatesByDirection(
-    int currentIndex, OpeningDirection currentDirection, const cv::Point2f& currentCenter,
-    const std::vector<int>& candidateIndices,
-    const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours) {
+std::pair<std::vector<int>, std::vector<int>>
+WorkpieceGenerator::partitionCandidatesByDirection(int currentIndex,
+                                                   OpeningDirection currentDirection,
+                                                   const cv::Point2f& currentCenter,
+                                                   const std::vector<int>& candidateIndices,
+                                                   const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours) {
 
     std::vector<int> preferredIndices;
     std::vector<int> otherIndices;
@@ -137,10 +139,10 @@ std::pair<std::vector<int>, std::vector<int>> WorkpieceGenerator::partitionCandi
  * @param generatedCombinations 已生成的组合集合
  * @return 是否成功生成组合
  */
-bool WorkpieceGenerator::tryGenerateTwoContourCombination(
-    int currentIndex, const std::vector<int>& candidateIndices,
-    const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
-    std::set<std::set<int>>& generatedCombinations) {
+bool WorkpieceGenerator::tryGenerateTwoContourCombination(int currentIndex,
+                                                          const std::vector<int>& candidateIndices,
+                                                          const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
+                                                          std::set<std::set<int>>& generatedCombinations) {
 
     for (int j : candidateIndices) {
         WorkpieceBoundingBox wp2;
@@ -168,10 +170,11 @@ bool WorkpieceGenerator::tryGenerateTwoContourCombination(
  * @param generatedCombinations 已生成的组合集合
  * @return 是否成功生成组合
  */
-bool WorkpieceGenerator::tryGenerateThreeContourCombination(
-    int currentIndex, int secondIndex, const std::vector<int>& candidateIndices,
-    const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
-    std::set<std::set<int>>& generatedCombinations) {
+bool WorkpieceGenerator::tryGenerateThreeContourCombination(int currentIndex,
+                                                            int secondIndex,
+                                                            const std::vector<int>& candidateIndices,
+                                                            const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
+                                                            std::set<std::set<int>>& generatedCombinations) {
 
     for (int k : candidateIndices) {
         if (k == currentIndex || k == secondIndex) continue;
@@ -201,10 +204,10 @@ bool WorkpieceGenerator::tryGenerateThreeContourCombination(
  * @param nearestIndices 最近邻索引列表
  * @param generatedCombinations 已生成的组合集合
  */
-void WorkpieceGenerator::searchAndGenerateCombinations(
-    int currentIndex, const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
-    const std::vector<std::vector<int>>& nearestIndices,
-    std::set<std::set<int>>& generatedCombinations) {
+void WorkpieceGenerator::searchAndGenerateCombinations(int currentIndex,
+                                                       const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
+                                                       const std::vector<std::vector<int>>& nearestIndices,
+                                                       std::set<std::set<int>>& generatedCombinations) {
 
     // 获取当前轮廓信息
     OpeningDirection currentDirection = unpairedContours[currentIndex]->getOpeningDirection();

@@ -501,8 +501,8 @@ void TestEdgeAssembly::generateTiltedFiveSeams()
 void TestEdgeAssembly::run()
 {
     // generateNineSeams();
-    generateTiltedNineSeams();
-    // generateTiltedFiveSeams();
+    // generateTiltedNineSeams();
+    generateTiltedFiveSeams();
     // generateFiveSeams();
     std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
     
@@ -516,7 +516,7 @@ void TestEdgeAssembly::run()
 
 
     EdgeAssembly edgeAssembly = EdgeAssembly{cbbs};
-    edgeAssembly.run(9);
+    edgeAssembly.run(5);
     auto combinations = edgeAssembly.getValidCombinations();
     auto combination = combinations[0];
     combination = edgeAssembly.getMostLikelyCombination();
