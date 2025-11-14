@@ -33,6 +33,8 @@ struct ROIHeader
     bool dataReady; // 数据是否准备好
 };
 
+// @TODO:实现循环等待读图功能，并且在读完图后发送所有ROI给图像处理线程处理
+// @TODO:采用文件读取进程ID，而不是手动输入pid
 class ImageReadWorker : public QObject
 {
     Q_OBJECT

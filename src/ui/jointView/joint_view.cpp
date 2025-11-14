@@ -38,20 +38,6 @@ JointView::JointView(QWidget *parent)
     processWorker->moveToThread(&processThread);
     connect(&processThread, &QThread::finished, processWorker, &QObject::deleteLater);
     connect(this, &JointView::startImageProcess, processWorker, &ImageProcessWorker::processImage);
-    // 连接第一个信号重载到第一个槽函数重载（5个参数版本）
-    connect(processWorker,
-            QOverload<std::shared_ptr<cv::Mat>,
-                      std::vector<std::vector<cv::Point2f>>,
-                      std::vector<std::vector<cv::Point>>,
-                      std::vector<cv::Vec4f>,
-                      std::vector<CurveSeg>>::of(&ImageProcessWorker::imageProcessed),
-            this,
-            QOverload<std::shared_ptr<cv::Mat>,
-                      std::vector<std::vector<cv::Point2f>>,
-                      std::vector<std::vector<cv::Point>>,
-                      std::vector<cv::Vec4f>,
-                      std::vector<CurveSeg>>::of(&JointView::handleImageProcessed));
-    // 连接第二个信号重载到第二个槽函数重载（2个参数版本）
     connect(processWorker,
             QOverload<std::shared_ptr<cv::Mat>, std::shared_ptr<JointSeam>>::of(&ImageProcessWorker::imageProcessed),
             this,
@@ -86,9 +72,9 @@ void JointView::on_pb_open_clicked()
 {
     startTime = std::chrono::high_resolution_clock::now();
 
-    // QString path = QFileDialog::getOpenFileName(this, "Select Image", "", "(*.png *.jpg *.bmp)");
-    // QString path = "E:/work/车门门环拼接/image/背面打光/Splice_20251027_092312509.bmp";
-    QString path = "E:/work/车门门环拼接/image/背面打光/9/1/6984_5772.bmp";
+    QString folderPath = "E:/work/车门门环拼接/image/背面打光/5/1";
+    QString path = QFileDialog::getOpenFileName(this, "Select Image", folderPath, "(*.png *.jpg *.bmp)");
+    // QString path = "E:/work/车门门环拼接/image/背面打光/9/1/6984_5772.bmp";
     if(path.isEmpty())
         return;
 
@@ -98,39 +84,6 @@ void JointView::on_pb_open_clicked()
 void JointView::handleImageRead(std::shared_ptr<cv::Mat> image)
 {
     emit startImageProcess(image);
-}
-
-// Zernike矩对应槽函数
-void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
-                                     std::vector<std::vector<cv::Point2f>> subpixelContours,
-                                     std::vector<std::vector<cv::Point>> pixelContours,
-                                     std::vector<cv::Vec4f> lines,
-                                     std::vector<CurveSeg> curves)
-{
-    // 保存当前数据
-    m_currentImage = processedImage;
-    m_subpixelContours = subpixelContours;
-    m_pixelContours = pixelContours;
-    m_fitTangentLines = lines;
-    m_fitCurves = curves;
-    // 计算角点（拼缝端点）
-    m_endPointsByTangentLines.clear();
-    if (lines.size() >= 2) {
-        // 计算前两条直线的交点作为角点
-        cv::Point2f corner = cv::Point2f(4, 5);
-        if (corner.x >= 0 && corner.y >= 0) {
-            m_endPointsByTangentLines.push_back(corner);
-        }
-    }
-
-    // 更新显示
-    updateDisplay();
-
-
-    auto endTime = std::chrono::high_resolution_clock::now();
-    // 计算并输出时间差
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    PLOG_INFO << "Total processing time: " << duration.count() << " ms";
 }
 
 void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
