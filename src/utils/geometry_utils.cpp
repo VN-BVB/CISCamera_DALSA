@@ -177,5 +177,31 @@ bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, co
     return d1 < d2;
 }
 
+cv::Vec4f fitLine(const std::vector<cv::Point> &points)
+{
+    if (points.empty()) {
+        return cv::Vec4f(0, 0, 0, 0);
+    }
 
+    cv::Vec4f lineParams;
+    cv::fitLine(points, lineParams, cv::DIST_L2, 0, 0.01, 0.01);
+
+    // lineParams格式: [vx, vy, x0, y0]
+    // 其中(vx, vy)是单位方向向量，(x0, y0)是直线上的一个点
+    return lineParams;
+}
+
+cv::Vec4f fitLine(const std::vector<cv::Point2f> &points)
+{
+    if (points.empty()) {
+        return cv::Vec4f(0, 0, 0, 0);
+    }
+
+    cv::Vec4f lineParams;
+    cv::fitLine(points, lineParams, cv::DIST_L2, 0, 0.01, 0.01);
+
+    // lineParams格式: [vx, vy, x0, y0]
+    // 其中(vx, vy)是单位方向向量，(x0, y0)是直线上的一个点
+    return lineParams;
+}
 } // namespace GeometryUtils

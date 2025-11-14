@@ -1,4 +1,5 @@
 #include "line_seg.h"
+#include "src/utils/geometry_utils.h"
 
 /******************************
  *********LineSeg*********
@@ -12,7 +13,7 @@ LineSeg::LineSeg(): m_length(0.0), m_angle(0.0) {}
 void LineSeg::initializeFromPoints(const std::vector<cv::Point>& pixelPoints) {
     m_pixelPoints = pixelPoints;
     calculateBasicFeatures();
-    m_lineEquation = fitLine(m_pixelPoints);
+    m_lineEquation = GeometryUtils::fitLine(m_pixelPoints);
 }
 
 /**
@@ -22,7 +23,7 @@ void LineSeg::initializeFromPoints(const std::vector<cv::Point>& pixelPoints) {
 void LineSeg::initializeFromPoints(const std::vector<cv::Point2f>& subpixelPoints) {
     m_subpixelPoints = subpixelPoints;
     calculateBasicFeatures();
-    m_lineEquation = fitLine(m_subpixelPoints);
+    m_lineEquation = GeometryUtils::fitLine(m_subpixelPoints);
 }
 
 /**
@@ -82,35 +83,6 @@ std::string LineSeg::getSummary() const {
     summary += "终点: (" + std::to_string(m_endPoint.x) + ", " + std::to_string(m_endPoint.y) + ")\n";
     return summary;
 }
-
-cv::Vec4f LineSeg::fitLine(const std::vector<cv::Point> &points)
-{
-    if (points.empty()) {
-        return cv::Vec4f(0, 0, 0, 0);
-    }
-
-    cv::Vec4f lineParams;
-    cv::fitLine(points, lineParams, cv::DIST_L2, 0, 0.01, 0.01);
-
-    // lineParams格式: [vx, vy, x0, y0]
-    // 其中(vx, vy)是单位方向向量，(x0, y0)是直线上的一个点
-    return lineParams;
-}
-
-cv::Vec4f LineSeg::fitLine(const std::vector<cv::Point2f> &points)
-{
-    if (points.empty()) {
-        return cv::Vec4f(0, 0, 0, 0);
-    }
-
-    cv::Vec4f lineParams;
-    cv::fitLine(points, lineParams, cv::DIST_L2, 0, 0.01, 0.01);
-
-    // lineParams格式: [vx, vy, x0, y0]
-    // 其中(vx, vy)是单位方向向量，(x0, y0)是直线上的一个点
-    return lineParams;
-}
-
 
 
 

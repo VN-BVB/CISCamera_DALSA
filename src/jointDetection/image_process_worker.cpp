@@ -16,6 +16,7 @@ void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
 
         auto jointSeam = std::make_shared<JointSeam>(croppedImg);
         jointSeam->run();
+        PLOG_INFO << "===================结束处理数据:=================== ";
         emit imageProcessed(image, jointSeam);
     } catch (const cv::Exception &e) {
         emit errorOccurred(QString("处理图像时出错: ") + e.what());

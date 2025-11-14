@@ -20,8 +20,6 @@ public:
 
 private:
     void calculateBasicFeatures();
-    cv::Vec4f fitLine(const std::vector<cv::Point> &points);
-    cv::Vec4f fitLine(const std::vector<cv::Point2f> &points);
 
 private:
     // 线段上的点集

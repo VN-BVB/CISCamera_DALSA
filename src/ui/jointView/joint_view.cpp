@@ -70,8 +70,6 @@ JointView::~JointView()
 
 void JointView::on_pb_open_clicked()
 {
-    startTime = std::chrono::high_resolution_clock::now();
-
     QString folderPath = "E:/work/车门门环拼接/image/背面打光/5/1";
     QString path = QFileDialog::getOpenFileName(this, "Select Image", folderPath, "(*.png *.jpg *.bmp)");
     // QString path = "E:/work/车门门环拼接/image/背面打光/9/1/6984_5772.bmp";
@@ -110,11 +108,6 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
 
     // 更新显示
     updateDisplay();
-
-    auto endTime = std::chrono::high_resolution_clock::now();
-    // 计算并输出时间差
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    PLOG_INFO << "Total processing time: " << duration.count() << " ms";
 }
 
 // CannyDevenay算法对应槽函数
