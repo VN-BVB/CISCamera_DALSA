@@ -198,10 +198,13 @@ cv::Vec4f fitLine(const std::vector<cv::Point2f> &points)
     }
 
     cv::Vec4f lineParams;
-    cv::fitLine(points, lineParams, cv::DIST_L2, 0, 0.01, 0.01);
-
-    // lineParams格式: [vx, vy, x0, y0]
-    // 其中(vx, vy)是单位方向向量，(x0, y0)是直线上的一个点
+    // 使用 M-估计算法拟合点集到直线，通过最小化点到直线的距离代价函数实现。
+    // 多种距离类型：DIST_L2（标准最小二乘法，速度快但对异常值敏感）；
+    // DIST_L1（最小绝对值误差，对异常值更具鲁棒性）；
+    // DIST_HUBER、DIST_FAIR和 DIST_WELSCH（使用权重函数降低异常值影响，鲁棒性递增）；
+    // DIST_L12（L1-L2混合度量）。
+    // 拟合结果返回一个 Vec4f向量，格式为 (vx, vy, x0, y0)，其中 (vx, vy)是单位方向向量，(x0, y0)是直线上一点
+    cv::fitLine(points, lineParams, cv::DIST_HUBER, 0, 0.01, 0.01);
     return lineParams;
 }
 } // namespace GeometryUtils
