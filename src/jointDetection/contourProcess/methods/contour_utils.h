@@ -36,6 +36,10 @@ namespace ContourUtils
 std::string openingDirectionToString(OpeningDirection direction);
 int findPointIndex(const cv::Point2f& point, const std::vector<cv::Point2f>& contour, float tolerance = 1e-5f);
 cv::Point2f calculateCentralPoint(const std::vector<cv::Point2f>& contour);
+
+// 半径滤波（Radius Outlier Removal）
+std::vector<cv::Point2f> radiusOutlierRemoval(const std::vector<cv::Point2f>& points, float radius, int minPts);
+
 }
 
 #endif // CONTOUR_UTILS_H

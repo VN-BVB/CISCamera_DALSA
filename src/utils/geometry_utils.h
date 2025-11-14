@@ -35,6 +35,8 @@ bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, co
 // 最小二乘法拟合直线
 cv::Vec4f fitLine(const std::vector<cv::Point> &points);
 cv::Vec4f fitLine(const std::vector<cv::Point2f> &points);
+
+
 } // namespace GeometryUtils
 
 #endif // GEOMETRY_UTILS_H

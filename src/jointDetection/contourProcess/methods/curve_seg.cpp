@@ -1,9 +1,12 @@
 #define _USE_MATH_DEFINES
+#include <cmath>
+
+#include <plog/Log.h>
+
 #include "curve_seg.h"
 #include "contour_utils.h"
 #include "src/utils/geometry_utils.h"
-#include <cmath>
-#include <plog/Log.h>
+#include "contour_utils.h"
 
 CurveSeg::CurveSeg() : m_minDomain(MIN_DOMAIN), m_maxDomain(MAX_DOMAIN) {}
 
@@ -20,6 +23,10 @@ void CurveSeg::fitSplineCurve() {
         PLOG_WARNING << "警告：点数太少 (" << m_points.size() << ")，至少需要4个点进行样条拟合";
         return;
     }
+
+    // 对轮廓点进行半径滤波，去除离散噪声点
+    std::vector<cv::Point2f> filteredPoints = ContourUtils::radiusOutlierRemoval(m_points, 5.0f, 4);
+    m_points = filteredPoints;
 
     try {
         // 创建样条曲线：控制点数量，维度，阶数（3次样条）

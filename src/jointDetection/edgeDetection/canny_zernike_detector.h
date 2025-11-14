@@ -31,7 +31,6 @@ private:
     classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
     std::vector<std::vector<cv::Point>>
     classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
-    // @TODO:将线段分类后，通过统计滤波或半径滤波过滤掉离散点
 };
 
 #endif // CANNY_ZERNIKE_DETECTOR_H

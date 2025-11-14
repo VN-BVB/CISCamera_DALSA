@@ -70,7 +70,7 @@ JointView::~JointView()
 
 void JointView::on_pb_open_clicked()
 {
-    QString folderPath = "E:/work/车门门环拼接/image/背面打光/5/1";
+    QString folderPath = "E:/work/车门门环拼接/image/背面打光/9/1";
     QString path = QFileDialog::getOpenFileName(this, "Select Image", folderPath, "(*.png *.jpg *.bmp)");
     // QString path = "E:/work/车门门环拼接/image/背面打光/9/1/6984_5772.bmp";
     if(path.isEmpty())
