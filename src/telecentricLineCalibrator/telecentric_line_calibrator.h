@@ -68,7 +68,9 @@ public:
     // -------------------- 像素坐标 → 相机坐标 --------------------
     Eigen::MatrixXd pixelToCameraCoordinates(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
                                              const Eigen::Matrix<double, 1, 5>& coff_dis = {});
-
+    // -------------------- 相机坐标 → 世界坐标 --------------------
+    Eigen::MatrixXd cameraToWorldCoordinates(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
+                                             const Eigen::Vector3d& v_trans);
     Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
                                  const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
 

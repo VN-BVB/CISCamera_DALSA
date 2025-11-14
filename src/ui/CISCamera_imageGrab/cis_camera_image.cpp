@@ -218,7 +218,7 @@ void CISWidget::on_btnContinue_clicked() {
 
 // 软件触发
 void CISWidget::on_btnSoftWareTrigger_clicked() {
-    startPos = ui->end_lineEdit->text().toDouble();
+    startPos = ui->start_lineEdit->text().toDouble();
     endPos = ui->end_lineEdit->text().toDouble();
     speed = ui->speed_lineEdit->text().toDouble();
     if (triggerRunning) {

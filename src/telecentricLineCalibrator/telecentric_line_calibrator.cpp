@@ -635,6 +635,35 @@ Eigen::MatrixXd TelecentricLineCalibrator::pixelToCameraCoordinates(const Eigen:
     result.col(1) = cam_pts.col(1).array() / cam_pts.col(2).array();
     return result;
 }
+
+// -------------------- 相机坐标 → 世界坐标 --------------------
+Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
+                                                                    const Eigen::Vector3d& v_trans) {
+    // -------- 1. Rodrigues旋转向量转旋转矩阵 --------
+    cv::Mat rvec(3, 1, CV_64F);
+    cv::Mat R_cv(3, 3, CV_64F);
+    for (int i = 0; i < 3; ++i) rvec.at<double>(i, 0) = v_rot(i);
+    cv::Rodrigues(rvec, R_cv);
+
+    Eigen::Matrix3d R;
+    cv::cv2eigen(R_cv, R);
+    std::cout << "r  " << R << std::endl;
+    // -------- 2. 取平面部分 --------
+    Eigen::Matrix2d R2 = R.block<2, 2>(0, 0);
+    Eigen::Vector2d t2 = v_trans.head<2>();
+
+    // -------- 3. 平面逆变换（相机 -> 世界）--------
+    Eigen::MatrixXd world_pts(cam_pts.rows(), 2);
+    Eigen::Matrix2d R2_inv = R2.inverse();
+
+    for (int i = 0; i < cam_pts.rows(); ++i) {
+        Eigen::Vector2d Xc = cam_pts.row(i);
+        Eigen::Vector2d Xw = R2_inv * (Xc - t2);
+        world_pts.row(i) = Xw.transpose();
+    }
+
+    return world_pts;
+}
 Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
                                                         const double m, const std::vector<Eigen::Vector2d>& worldPts,
                                                         const std::vector<Eigen::Vector2d>& imgPts) {

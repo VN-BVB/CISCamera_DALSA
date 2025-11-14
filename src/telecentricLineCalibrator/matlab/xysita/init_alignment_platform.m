@@ -53,7 +53,7 @@ end
 % 假设主平台有 10 个点
 platforms_with_chess = [1];         % 第2和第5个平台生成棋盘格
 offsets = [-25, 25];             % 第2个平台偏移(2,-1)，第5个(-3,0)
-rotations = [-pi/4];           % 第2个平台旋转30度，第5个旋转-15度
+rotations = [0];           % 第2个平台旋转30度，第5个旋转-15度
 
 chess_pts3 = generate_chess_on_platform2(X_world, Y_world, ...
                                         platforms_with_chess, ...

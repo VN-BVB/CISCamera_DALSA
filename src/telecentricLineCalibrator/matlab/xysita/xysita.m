@@ -24,15 +24,35 @@ for i = 1:length(chess_pts3)
         chess_pts3{i}(1,:), chess_pts3{i}(2,:), chess_pts3{i}(3,:), true(size(chess_pts3{i},2),1));
 
 end
+% for i = 1:length(chess_pts3)
+%     if isempty(chess_pts3{i})
+%         fprintf('平台 %d 没有棋盘格角点，跳过保存\n', i);
+%         continue;
+%     end
+% 
+%     % 投影棋盘格角点
+%     [u_chess, v_chess, in_img_chess] = camera_model_projection( ...
+%         chess_pts3{i}(1,:), chess_pts3{i}(2,:), chess_pts3{i}(3,:), true(size(chess_pts3{i},2),1));
+% 
+%     % 生成文件名，例如 chessboard_platform0.txt
+%     filename = sprintf('chessboard_platform%d.txt', i-1);  % Index 从 0 开始
+% 
+%     % 打开文件写入
+%     fid = fopen(filename, 'w');
+%     fprintf(fid, '# Index\tX\tY\n');
+% 
+%     for j = 1:length(u_chess)
+%         fprintf(fid, '%d\t%.6f\t%.6f\n', j-1, u_chess(j), v_chess(j));
+%     end
+% 
+%     fclose(fid);
+%     fprintf('平台 %d 投影角点已保存到 %s\n', i, filename);
+% end
 for i = 1:length(chess_pts3)
     if isempty(chess_pts3{i})
         fprintf('平台 %d 没有棋盘格角点，跳过保存\n', i);
         continue;
     end
-
-    % 投影棋盘格角点
-    [u_chess, v_chess, in_img_chess] = camera_model_projection( ...
-        chess_pts3{i}(1,:), chess_pts3{i}(2,:), chess_pts3{i}(3,:), true(size(chess_pts3{i},2),1));
 
     % 生成文件名，例如 chessboard_platform0.txt
     filename = sprintf('chessboard_platform%d.txt', i-1);  % Index 从 0 开始
@@ -41,12 +61,14 @@ for i = 1:length(chess_pts3)
     fid = fopen(filename, 'w');
     fprintf(fid, '# Index\tX\tY\n');
 
-    for j = 1:length(u_chess)
-        fprintf(fid, '%d\t%.6f\t%.6f\n', j-1, u_chess(j), v_chess(j));
+    % 保存三维坐标
+    pts = chess_pts3{i};
+    for j = 1:size(pts, 2)
+        fprintf(fid, '%d\t%.6f\t%.6f\n', j-1, pts(1,j), pts(2,j));
     end
 
     fclose(fid);
-    fprintf('平台 %d 投影角点已保存到 %s\n', i, filename);
+    fprintf('平台 %d 原始三维角点已保存到 %s\n', i, filename);
 end
 %% ===================== 可视化 =====================
 figure('Color','w', 'Position', [100, 100, 1600, 800]);
@@ -109,13 +131,13 @@ grid on; box on;
 % 绘制投影点（不再区分 inside / in_image）
 scatter(pixel_u, pixel_v, 100, 'b', 'filled');
 
-% 绘制每个小平台的矩形投影
-for i = 1:length(platform_pts3)
-    [u_square, v_square, ~] = camera_model_projection( ...
-        platform_pts3{i}(1,:), platform_pts3{i}(2,:), platform_pts3{i}(3,:), true(size(platform_pts3{i},2),1));
-    patch('XData', u_square, 'YData', v_square, ...
-          'FaceColor', [0.6,0.9,0.6], 'EdgeColor', 'g', 'FaceAlpha', 0.4, 'LineWidth', 1.2);
-end
+% % 绘制每个小平台的矩形投影
+% for i = 1:length(platform_pts3)
+%     [u_square, v_square, ~] = camera_model_projection( ...
+%         platform_pts3{i}(1,:), platform_pts3{i}(2,:), platform_pts3{i}(3,:), true(size(platform_pts3{i},2),1));
+%     patch('XData', u_square, 'YData', v_square, ...
+%           'FaceColor', [0.6,0.9,0.6], 'EdgeColor', 'g', 'FaceAlpha', 0.4, 'LineWidth', 1.2);
+% end
 
 % 绘制每个棋盘格角点投影
 for i = 1:length(chess_pts3)
