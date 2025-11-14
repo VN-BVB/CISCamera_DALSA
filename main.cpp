@@ -8,6 +8,7 @@
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/test/test_tiny_spline.h"
 #include "src/ui/jointView/joint_view.h"
+#include "src/test/test_frmVisionDisplay.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -17,11 +18,11 @@ int main(int argc, char *argv[]) {
     // TinySplineqqq testSpline;
     // testSpline.runcv();
 
-    // test_FrmVisionDisplay testDisplay;
-    // testDisplay.show();
+    test_FrmVisionDisplay testDisplay;
+    testDisplay.show();
 
-    JointView w;
-    w.show();
+    // JointView w;
+    // w.show();
 
     return a.exec();
 }

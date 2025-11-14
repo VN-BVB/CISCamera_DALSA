@@ -19,81 +19,224 @@ void EdgeAssembly::generateWorkpiece() {
         }
     }
 
-    // 生成2轮廓组合
+    // 计算所有轮廓中心点之间的距离矩阵
+    std::vector<std::vector<float>> distanceMatrix(unpairedContours.size(),
+                                                   std::vector<float>(unpairedContours.size(), 0.0f));
+
     for (int i = 0; i < unpairedContours.size(); ++i) {
-        // 如果当前轮廓已配对，跳过
-        if (unpairedContours[i]->getIsPaired()) {
-            continue;
-        }
+        cv::Point2f center1 = unpairedContours[i]->getCenterPoint();
         for (int j = i + 1; j < unpairedContours.size(); ++j) {
-            // 如果目标轮廓已配对，跳过
-            if (unpairedContours[j]->getIsPaired()) {
-                continue;
+            cv::Point2f center2 = unpairedContours[j]->getCenterPoint();
+            float dx = center2.x - center1.x;
+            float dy = center2.y - center1.y;
+            float distance = std::sqrt(dx * dx + dy * dy);
+            distanceMatrix[i][j] = distance;
+            distanceMatrix[j][i] = distance;
+        }
+    }
+
+    // 为每个轮廓创建距离排序的索引列表
+    std::vector<std::vector<int>> nearestIndices(unpairedContours.size());
+    for (int i = 0; i < unpairedContours.size(); ++i) {
+        std::vector<std::pair<float, int>> distances;
+        for (int j = 0; j < unpairedContours.size(); ++j) {
+            if (i != j) {
+                distances.emplace_back(distanceMatrix[i][j], j);
+            }
+        }
+        // 按距离从小到大排序
+        std::sort(distances.begin(), distances.end());
+        for (const auto& dist : distances) {
+            nearestIndices[i].push_back(dist.second);
+        }
+    }
+
+    // 使用集合来跟踪已经生成的组合，避免重复
+    std::set<std::set<int>> generatedCombinations;
+
+    // 优先搜索最近邻组合
+    for (int i = 0; i < unpairedContours.size(); ++i) {
+        // 获取当前轮廓的开口方向
+        OpeningDirection currentDirection = unpairedContours[i]->getOpeningDirection();
+        cv::Point2f currentCenter = unpairedContours[i]->getCenterPoint();
+
+        // 根据开口方向对候选轮廓进行分区
+        std::vector<int> preferredIndices;  // 优先区域
+        std::vector<int> otherIndices;      // 其他区域
+
+        for (int j : nearestIndices[i]) {
+            if (i >= j) continue; // 避免重复组合
+
+            cv::Point2f candidateCenter = unpairedContours[j]->getCenterPoint();
+            float dx = candidateCenter.x - currentCenter.x;
+            float dy = candidateCenter.y - currentCenter.y;
+
+            // 根据开口方向判断候选轮廓的位置
+            bool isInPreferredArea = false;
+            switch (currentDirection) {
+            case OpeningDirection::LEFT:
+                // 开口向左，优先在左侧区域寻找
+                isInPreferredArea = (dx < 0); // 候选轮廓在当前轮廓左侧
+                break;
+            case OpeningDirection::RIGHT:
+                // 开口向右，优先在右侧区域寻找
+                isInPreferredArea = (dx > 0); // 候选轮廓在当前轮廓右侧
+                break;
+            case OpeningDirection::UP:
+                // 开口向上，优先在上方区域寻找
+                isInPreferredArea = (dy < 0); // 候选轮廓在当前轮廓上方
+                break;
+            case OpeningDirection::DOWN:
+                // 开口向下，优先在下方区域寻找
+                isInPreferredArea = (dy > 0); // 候选轮廓在当前轮廓下方
+                break;
+            case OpeningDirection::UNKNOWN:
+            default:
+                // 未知方向，不分区
+                isInPreferredArea = true;
+                break;
             }
 
-            WorkpieceBoundingBox wp;
-            wp.addContourBoundingBox(unpairedContours[i]);
-            wp.addContourBoundingBox(unpairedContours[j]);
+            if (isInPreferredArea) {
+                preferredIndices.push_back(j);
+            } else {
+                otherIndices.push_back(j);
+            }
+        }
+
+        // 先尝试2轮廓组合：优先在优先区域搜索
+        bool foundInPreferredArea = false;
+
+        // 在优先区域搜索
+        for (int j : preferredIndices) {
+            WorkpieceBoundingBox wp2;
+            wp2.addContourBoundingBox(unpairedContours[i]);
+            wp2.addContourBoundingBox(unpairedContours[j]);
 
             // 检查组合是否合法：遍历所有未组合轮廓，判断是否能合法加入
             bool isLegalCombination = true;
             for (const auto& candidate : m_cbbs) {
-                if (!wp.isLegal(candidate)) {
+                if (!wp2.isLegal(candidate)) {
                     isLegalCombination = false;
                     break;
                 }
             }
 
             if (isLegalCombination) {
-                m_possibleWorkpieces.push_back(wp);
-            }
-        }
-    }
-
-    // 生成3轮廓组合
-    for (int i = 0; i < unpairedContours.size(); ++i) {
-        // 如果当前轮廓已配对，跳过
-        if (unpairedContours[i]->getIsPaired()) {
-            continue;
-        }
-        for (int j = i + 1; j < unpairedContours.size(); ++j) {
-            // 如果目标轮廓已配对，跳过
-            if (unpairedContours[j]->getIsPaired()) {
-                continue;
-            }
-            for (int k = j + 1; k < unpairedContours.size(); ++k) {
-                // 如果目标轮廓已配对，跳过
-                if (unpairedContours[k]->getIsPaired()) {
-                    continue;
+                // 检查是否已经生成了相同的组合
+                std::set<int> combination = {i, j};
+                if (generatedCombinations.find(combination) == generatedCombinations.end()) {
+                    m_possibleWorkpieces.push_back(wp2);
+                    generatedCombinations.insert(combination);
+                    foundInPreferredArea = true;
                 }
+                break; // 找到合法组合后，不再继续搜索更远的轮廓
+            }
+        }
 
-                WorkpieceBoundingBox wp;
-                wp.addContourBoundingBox(unpairedContours[i]);
-                wp.addContourBoundingBox(unpairedContours[j]);
-                wp.addContourBoundingBox(unpairedContours[k]);
+        // 如果在优先区域没找到，再在其他区域搜索
+        if (!foundInPreferredArea) {
+            for (int j : otherIndices) {
+                WorkpieceBoundingBox wp2;
+                wp2.addContourBoundingBox(unpairedContours[i]);
+                wp2.addContourBoundingBox(unpairedContours[j]);
 
                 // 检查组合是否合法：遍历所有未组合轮廓，判断是否能合法加入
                 bool isLegalCombination = true;
-                for (const auto& candidate : unpairedContours) {
-                    if (!wp.isLegal(candidate)) {
+                for (const auto& candidate : m_cbbs) {
+                    if (!wp2.isLegal(candidate)) {
                         isLegalCombination = false;
                         break;
                     }
                 }
 
                 if (isLegalCombination) {
-                    m_possibleWorkpieces.push_back(wp);
-                    // 标记这三个轮廓为已配对
-                    // unpairedContours[i]->setIsPaired(true);
-                    // unpairedContours[j]->setIsPaired(true);
-                    // unpairedContours[k]->setIsPaired(true);
-                    // break; // 跳出内层循环
+                    // 检查是否已经生成了相同的组合
+                    std::set<int> combination = {i, j};
+                    if (generatedCombinations.find(combination) == generatedCombinations.end()) {
+                        m_possibleWorkpieces.push_back(wp2);
+                        generatedCombinations.insert(combination);
+                    }
+                    break; // 找到合法组合后，不再继续搜索更远的轮廓
+                }
+            }
+        }
+
+        // 同时尝试3轮廓组合：同样按开口方向优先搜索
+        // 在优先区域搜索
+        foundInPreferredArea = false;
+        for (int j : preferredIndices) {
+            // 对第二个轮廓，也按距离排序搜索第三个轮廓
+            for (int k : nearestIndices[j]) {
+                if (k == i || k == j) continue;
+                if (i >= k || j >= k) continue; // 确保i < j < k，避免重复组合
+
+                WorkpieceBoundingBox wp3;
+                wp3.addContourBoundingBox(unpairedContours[i]);
+                wp3.addContourBoundingBox(unpairedContours[j]);
+                wp3.addContourBoundingBox(unpairedContours[k]);
+
+                // 检查组合是否合法：遍历所有未组合轮廓，判断是否能合法加入
+                bool isLegalCombination = true;
+                for (const auto& candidate : m_cbbs) {
+                    if (!wp3.isLegal(candidate)) {
+                        isLegalCombination = false;
+                        break;
+                    }
+                }
+
+                if (isLegalCombination) {
+                    // 检查是否已经生成了相同的组合
+                    std::set<int> combination = {i, j, k};
+                    if (generatedCombinations.find(combination) == generatedCombinations.end()) {
+                        m_possibleWorkpieces.push_back(wp3);
+                        generatedCombinations.insert(combination);
+                        foundInPreferredArea = true;
+                    }
+                    break; // 找到合法组合后，跳出内层循环
+                }
+            }
+            if (foundInPreferredArea) break;
+        }
+
+        // 如果在优先区域没找到，再在其他区域搜索
+        if (!foundInPreferredArea) {
+            for (int j : otherIndices) {
+                // 对第二个轮廓，也按距离排序搜索第三个轮廓
+                for (int k : nearestIndices[j]) {
+                    if (k == i || k == j) continue;
+                    if (i >= k || j >= k) continue; // 确保i < j < k，避免重复组合
+
+                    WorkpieceBoundingBox wp3;
+                    wp3.addContourBoundingBox(unpairedContours[i]);
+                    wp3.addContourBoundingBox(unpairedContours[j]);
+                    wp3.addContourBoundingBox(unpairedContours[k]);
+
+                    // 检查组合是否合法：遍历所有未组合轮廓，判断是否能合法加入
+                    bool isLegalCombination = true;
+                    for (const auto& candidate : m_cbbs) {
+                        if (!wp3.isLegal(candidate)) {
+                            isLegalCombination = false;
+                            break;
+                        }
+                    }
+
+                    if (isLegalCombination) {
+                        // 检查是否已经生成了相同的组合
+                        std::set<int> combination = {i, j, k};
+                        if (generatedCombinations.find(combination) == generatedCombinations.end()) {
+                            m_possibleWorkpieces.push_back(wp3);
+                            generatedCombinations.insert(combination);
+                        }
+                        break; // 找到合法组合后，跳出内层循环
+                    }
                 }
             }
         }
     }
 
-    // PLOG_INFO << "可能的工件组合";
+    // 输出可能的工件组合
+    PLOG_INFO << "可能的工件组合";
     int i = 0;
     for (auto& workPiece : m_possibleWorkpieces) {
         std::vector<int> ids = workPiece.getContourIds();
@@ -104,7 +247,6 @@ void EdgeAssembly::generateWorkpiece() {
         PLOG_INFO << str.toStdString();
     }
 }
-
 void EdgeAssembly::outputResult() {
     // ... existing code ...
 }
