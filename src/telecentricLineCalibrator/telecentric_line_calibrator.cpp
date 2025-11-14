@@ -647,7 +647,6 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen:
 
     Eigen::Matrix3d R;
     cv::cv2eigen(R_cv, R);
-    std::cout << "r  " << R << std::endl;
     // -------- 2. 取平面部分 --------
     Eigen::Matrix2d R2 = R.block<2, 2>(0, 0);
     Eigen::Vector2d t2 = v_trans.head<2>();
