@@ -62,16 +62,24 @@ Eigen::Vector3d TelecentricPlatformCalib::computeDirectionLS(const std::vector<E
                                                              const std::vector<Eigen::Vector2d>& ptsB) {
     if (ptsA.size() != ptsB.size() || ptsA.empty()) return Eigen::Vector3d::Zero();
 
+    // 1. 构造差分矩阵 D
     Eigen::MatrixXd D(ptsA.size(), 2);
     for (int i = 0; i < ptsA.size(); i++) {
         D(i, 0) = ptsB[i].x() - ptsA[i].x();
         D(i, 1) = ptsB[i].y() - ptsA[i].y();
     }
 
+    // 2. 用 SVD 求最小二乘拟合方向
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(D, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    Eigen::Vector2d d2 = svd.matrixV().col(0);
+    Eigen::Vector2d dir = svd.matrixV().col(0);
 
-    return Eigen::Vector3d(d2.x(), d2.y(), 0).normalized();
+    // 3. 判断正负：用 D 的平均位移方向投影
+    Eigen::Vector2d avg_disp = D.colwise().mean();
+    if (dir.dot(avg_disp) < 0) {
+        dir = -dir;  // 方向反转
+    }
+
+    return Eigen::Vector3d(dir.x(), dir.y(), 0.0).normalized();
 }
 
 Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterSequential(const std::vector<std::vector<Eigen::Vector2d>>& pts) {
@@ -223,4 +231,46 @@ void TelecentricPlatformCalib::run() {
     Eigen::Vector2d C = computeRotationCenterSequential(ptsRot);
 
     std::cout << "旋转中心 = " << C.transpose() << "\n";
+    // -------------------- 5. 构建平台坐标系在临时世界下的旋转矩阵 --------------------
+    Eigen::Vector3d zdir = xdir.cross(ydir).normalized();
+    Eigen::Matrix3d R_plat_world;
+    R_plat_world.col(0) = xdir.normalized();
+    R_plat_world.col(1) = ydir.normalized();
+    R_plat_world.col(2) = zdir;
+    Eigen::Vector3d t_plat_world(C.x(), C.y(), 0.0);
+
+    // -------------------- 6. 临时世界 -> 相机坐标系 --------------------
+    Eigen::Matrix3d R_world_cam;
+    cv::Mat rvec_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
+    for (int i = 0; i < 3; ++i) rvec_cv.at<double>(i, 0) = v_rot_(i);
+    cv::Rodrigues(rvec_cv, R_cv);
+    cv::cv2eigen(R_cv, R_world_cam);
+    Eigen::Vector3d t_world_cam = v_trans_;
+
+    // -------------------- 7. 平台坐标系 -> 相机坐标系 --------------------
+    Eigen::Matrix3d R_plat_cam = R_world_cam * R_plat_world;
+    Eigen::Vector3d t_plat_cam = R_world_cam * t_plat_world + t_world_cam;
+    std::cout << "平台 -> 相机旋转矩阵 = \n" << R_plat_cam << "\n";
+    std::cout << "平台 -> 相机平移向量 = " << t_plat_cam.transpose() << "\n";
+
+    // -------------------- 8. 平台到相机旋转向量 --------------------
+    cv::Mat R_plat_cv, rvec_plat_cv;
+    cv::eigen2cv(R_plat_cam, R_plat_cv);
+    cv::Rodrigues(R_plat_cv, rvec_plat_cv);
+    Eigen::Vector3d rvec_plat;
+    for (int i = 0; i < 3; ++i) rvec_plat(i) = rvec_plat_cv.at<double>(i, 0);
+
+    // -------------------- 9. 给定像素点转换到平台坐标系 --------------------
+    Eigen::MatrixXd px(1, 2);
+    px(0, 0) = 6937.323892;
+    px(0, 1) = 2816.240515;
+
+    // 像素 -> 相机平面坐标
+    Eigen::MatrixXd cam_norm = lineCalib_->pixelToCameraCoordinates(px, K_, dist_);
+
+    // 直接用平台到相机的外参进行相机 -> 平台坐标系转换
+    Eigen::MatrixXd plat_pts = lineCalib_->cameraToWorldCoordinates(cam_norm, rvec_plat, t_plat_cam);
+
+    // 输出结果
+    std::cout << "像素点在平台坐标系 = " << plat_pts(0, 0) << ", " << plat_pts(0, 1) << "\n";
 }
