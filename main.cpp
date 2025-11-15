@@ -18,11 +18,11 @@ int main(int argc, char *argv[]) {
     // TinySplineqqq testSpline;
     // testSpline.runcv();
 
-    test_FrmVisionDisplay testDisplay;
-    testDisplay.show();
+    // test_FrmVisionDisplay testDisplay;
+    // testDisplay.show();
 
-    // JointView w;
-    // w.show();
+    JointView w;
+    w.show();
 
     return a.exec();
 }

@@ -265,7 +265,7 @@ void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directio
 
         if (unique_intersections.size() >= 2) {
             // 绘制直线（红色，线宽3像素）
-            cv::line(resultImage, unique_intersections[0], unique_intersections[1], cv::Scalar(0, 0, 255), 3);
+            cv::line(resultImage, unique_intersections[0], unique_intersections[1], cv::Scalar(0, 0, 255), 1);
 
             // 绘制端点（绿色圆圈）
             cv::circle(resultImage, unique_intersections[0], 5, cv::Scalar(0, 255, 0), -1);
@@ -308,8 +308,8 @@ void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directio
     p2.x = std::max(0.0f, std::min(static_cast<float>(resultImage.cols - 1), p2.x));
     p2.y = std::max(0.0f, std::min(static_cast<float>(resultImage.rows - 1), p2.y));
 
-    // 绘制直线（红色，线宽3像素）
-    cv::line(resultImage, p1, p2, cv::Scalar(0, 0, 255), 3);
+    // 绘制直线（红色，线宽1像素）
+    cv::line(resultImage, p1, p2, cv::Scalar(0, 0, 255), 1);
 
     // 绘制端点（绿色圆圈）
     cv::circle(resultImage, p1, 5, cv::Scalar(0, 255, 0), -1);

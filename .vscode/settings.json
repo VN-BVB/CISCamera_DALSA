@@ -65,7 +65,10 @@
         "valarray": "cpp",
         "variant": "cpp",
         "future": "cpp",
-        "hash_map": "cpp"
+        "hash_map": "cpp",
+        "bvh": "cpp",
+        "fft": "cpp",
+        "matrixfunctions": "cpp"
     },
     "cmake.sourceDirectory": "D:/Code/CISCamera_DALSA/3rdParty/plog"
 }

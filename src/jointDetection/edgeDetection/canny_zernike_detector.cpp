@@ -1,11 +1,15 @@
-#include "canny_zernike_detector.h"
-#include "src/utils/image_tools.h"
-#include "src/utils/geometry_utils.h"
 #include <vector>
 #include <algorithm>
 #include <cmath>
 #include <queue>
 #include <set>
+
+#include <plog/Log.h>
+
+#include "canny_zernike_detector.h"
+#include "src/utils/image_tools.h"
+#include "src/utils/geometry_utils.h"
+
 
 CannyZernikeDetector::CannyZernikeDetector() {}
 
@@ -303,15 +307,11 @@ cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, c
     // 对背光图去除工件外杂乱边缘，对正光图去除工件内杂乱边缘
     cv::Mat binaryImage;
     cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    // 先进行闭运算去除二值图中白色区域的空洞，可处理工件外有少量杂物的情况
-    cv::Mat closedBinary;
-    cv::Mat closeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
-    cv::morphologyEx(binaryImage, closedBinary, cv::MORPH_CLOSE, closeKernel);
     // 对二值图进行腐蚀，减小边缘无关区域面积，对背光和正光都有用
     cv::Mat erodedBinary;
     cv::Mat erodeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
     // 进行三次腐蚀，确保缩小边缘无关区域
-    cv::erode(closedBinary, erodedBinary, erodeKernel);
+    cv::erode(binaryImage, erodedBinary, erodeKernel);
     cv::erode(erodedBinary, erodedBinary, erodeKernel);
     cv::erode(erodedBinary, erodedBinary, erodeKernel);
     cv::bitwise_not(erodedBinary, erodedBinary);
@@ -341,7 +341,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& image) {
     cv::Mat binary;
     cv::threshold(grayImage, binary, 0, 255, cv::THRESH_BINARY_INV + cv::THRESH_OTSU);
     // 反转二值图(正光和背光不一样,因为骨架提取算法是利用腐蚀，因此背光需要反转)
-    cv::bitwise_not(binary, binary);
+    // cv::bitwise_not(binary, binary);
 
     // 2. 中轴变换（Skeletonization）
     cv::Mat skel = cv::Mat::zeros(binary.size(), CV_8UC1);
@@ -362,6 +362,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& image) {
             done = true;
         }
     }
+    cv::imwrite("E:/work/车门门环拼接/image/test/1114/eroded.bmp", skel);
 
     // 3. 提取中心线坐标点
     std::vector<cv::Point2f> centerLinePoints;
@@ -376,7 +377,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& image) {
     // 4.RANSAC计算中心线直线方程
     cv::Vec4f centerLine;
     std::vector<cv::Point2f> inlierPoints;
-    double threshold = 5;
+    double threshold = 3;
     int iterations = 100;
     GeometryUtils::lineRansac(centerLinePoints, centerLine, inlierPoints, threshold, iterations);
 
@@ -457,7 +458,8 @@ CannyZernikeDetector::classifyContoursByCenterLine(const std::vector<std::vector
  *          将轮廓点按位置分为左侧和右侧两组，适用于需要精细点级分类的场景
  */
 std::vector<std::vector<cv::Point>>
-CannyZernikeDetector::classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine) {
+CannyZernikeDetector::classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine)
+{
     std::vector<std::vector<cv::Point>> contoursLeftAndRight;
     std::vector<cv::Point> leftContours;  // 中心线左侧的轮廓
     std::vector<cv::Point> rightContours; // 中心线右侧的轮廓
@@ -512,6 +514,77 @@ CannyZernikeDetector::classifyContourPointsByCenterLine(const std::vector<std::v
 }
 
 /**
+ * @brief 计算二值图中亮连通域（255像素）的数量
+ * @param binImg 输入的二值图像（单通道，CV_8UC1，0表示黑，255表示亮）
+ * @param is8Neighbor 是否使用8邻域（true=8邻域，false=4邻域）
+ * @return 连通域数量
+ */
+int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& grayImage, bool is8Neighbor) {
+    // 检查输入图像是否有效
+    cv::Mat binImg;
+    cv::threshold(grayImage, binImg, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    if (binImg.empty() || binImg.channels() != 1) {
+        std::cerr << "错误：输入图像为空或不是单通道二值图！" << std::endl;
+        return -1;
+    }
+
+    int rows = binImg.rows;    // 图像高度（行数）
+    int cols = binImg.cols;    // 图像宽度（列数）
+    cv::Mat visited = cv::Mat::zeros(rows, cols, CV_8UC1);  // 标记已访问的像素（0=未访问，1=已访问）
+    int componentCount = 0;    // 连通域数量
+
+    // 定义邻域方向（4邻域：上下左右；8邻域：加对角线）
+    std::vector<cv::Point> dirs;
+    if (is8Neighbor) {
+        dirs = {cv::Point(-1, -1), cv::Point(-1, 0), cv::Point(-1, 1),
+                cv::Point(0, -1),          cv::Point(0, 1),
+                cv::Point(1, -1),  cv::Point(1, 0), cv::Point(1, 1)};
+    } else {
+        dirs = {cv::Point(-1, 0),  // 上
+                cv::Point(1, 0),   // 下
+                cv::Point(0, -1),  // 左
+                cv::Point(0, 1)};  // 右
+    }
+
+    // 遍历图像每个像素
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            // 若当前像素是亮区（255）且未被访问，则开始BFS标记连通域
+            if (binImg.at<uchar>(i, j) == 255 && visited.at<uchar>(i, j) == 0) {
+                componentCount++;  // 连通域数量+1
+
+                // BFS队列，存储待访问的像素坐标
+                std::queue<cv::Point> q;
+                q.push(cv::Point(j, i));  // 注意：OpenCV中Point(x,y)，x=列，y=行
+                visited.at<uchar>(i, j) = 1;  // 标记当前像素为已访问
+
+                // 遍历当前连通域的所有像素
+                while (!q.empty()) {
+                    cv::Point curr = q.front();
+                    q.pop();
+
+                    // 检查所有邻域像素
+                    for (const cv::Point& dir : dirs) {
+                        int x = curr.x + dir.x;  // 邻域列坐标
+                        int y = curr.y + dir.y;  // 邻域行坐标
+
+                        // 确保邻域像素在图像范围内，且是亮区且未访问
+                        if (x >= 0 && x < cols && y >= 0 && y < rows) {
+                            if (binImg.at<uchar>(y, x) == 255 && visited.at<uchar>(y, x) == 0) {
+                                visited.at<uchar>(y, x) = 1;  // 标记为已访问
+                                q.push(cv::Point(x, y));      // 加入队列继续遍历
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return componentCount;
+}
+
+/**
  * @brief 执行拼缝两边轮廓检测
  * @param inputImage 输入图像（彩色或灰度）
  * @return 包含左右两侧亚像素轮廓的vector，第一个元素为右侧轮廓，第二个元素为左侧轮廓
@@ -527,23 +600,38 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
     }
     cv::GaussianBlur(grayImage, grayImage, cv::Size(7, 7), 0, 0);
 
+    // 连通域分析：检查工件是否发生碰撞
+    // 使用BFS算法计算亮区连通域数量（使用8邻域）
+    int brightComponentCount = countBrightConnectedComponents(grayImage, true);
+    // 如果亮区连通域数量大于1，说明工件可能发生碰撞
+    if (countBrightConnectedComponents(grayImage, true) > 1) {
+        PLOG_INFO << "警告：检测到 " << brightComponentCount << " 个亮区连通域，工件可能已发生碰撞！";
+    }
+
     // 边缘检测
     double TH = adaptiveCannyThresholdByOtsu(grayImage);
     double TL = TH * 0.5;
     cv::Mat edge;
     cv::Canny(grayImage, edge, TL, TH);
+    cv::imwrite("E:/work/车门门环拼接/image/test/1114/edge.bmp", edge);
     // 形态学处理，去除无关区域的边缘
     cv::Mat connectedEdge = removeIrrelevantEdgeRegions(edge, grayImage);
+    cv::imwrite("E:/work/车门门环拼接/image/test/1114/connectedEdge.bmp", connectedEdge);
     // 计算中间缝隙中心线
     cv::Vec4f centerLine = calculateCenterLine(inputImage);
+    imageTools.drawLineAndSave(grayImage, centerLine, "E:/work/车门门环拼接/image/test/1114/centerLine.bmp");
     // 提取并筛选轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(connectedEdge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+    imageTools.drawColorfulContoursAndSave(grayImage, contours,
+                                           "E:/work/车门门环拼接/image/test/1114/allContours.bmp");
     std::vector<std::vector<cv::Point>> filteredContours = imageTools.filterContours(contours);
+    imageTools.drawColorfulContoursAndSave(grayImage, filteredContours,
+                                           "E:/work/车门门环拼接/image/test/1114/filterContours.bmp");
     // 根据中心线分类轮廓
     auto contoursLeftAndRight = classifyContourPointsByCenterLine(filteredContours, centerLine);
     imageTools.drawColorfulContoursAndSave(grayImage, contoursLeftAndRight,
-                                           "E:/work/车门门环拼接/image/test/frontLight/1107/正normal5/left_contours.bmp");
+                                           "E:/work/车门门环拼接/image/test/1114/left_contours.bmp");
     // 亚像素轮廓提取
     std::vector<std::vector<cv::Point2f>> subpixelConturs;
     for (const auto& contour : contoursLeftAndRight) {
