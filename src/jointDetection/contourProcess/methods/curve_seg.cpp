@@ -47,9 +47,9 @@ void CurveSeg::fitSplineCurve() {
             m_controlPoints.push_back(m_points[i]);
         }
 
-        // 使用tinyspline的C++接口获取实际的domain范围
+        // 获取实际的domain范围
         try {
-            // 方法1：使用domain()方法获取元组
+            // 使用domain()方法获取元组
             auto domain_tuple = m_spline.domain();
             m_minDomain = static_cast<float>(domain_tuple.min());
             m_maxDomain = static_cast<float>(domain_tuple.max());
@@ -69,6 +69,8 @@ void CurveSeg::fitSplineCurve() {
         m_minDomain = MIN_DOMAIN;
         m_maxDomain = MAX_DOMAIN;
     }
+    // 拟合完成后计算曲线长度
+    calculateCurveLength();
 }
 
 /**
@@ -307,7 +309,25 @@ cv::Vec4f CurveSeg::getAverageLineNearEndpoint(float endpointU, float regionSize
     return lineParams;
 }
 
+void CurveSeg::calculateCurveLength() {
+    if (m_isFitted) {
+        try {
+            // 使用ChordLengths类计算弦长
+            tinyspline::ChordLengths lengths = m_spline.chordLengths();
 
+            // 获取总弧长
+            tinyspline::real totalLength = lengths.arcLength();
+
+            // 转换为float类型存储
+            m_curveLength = static_cast<float>(totalLength);
+        } catch (const std::exception& e) {
+            std::cerr << "Error calculating curve length: " << e.what() << std::endl;
+            m_curveLength = 0.0f;
+        }
+    } else {
+        m_curveLength = 0.0f;
+    }
+}
 
 
 

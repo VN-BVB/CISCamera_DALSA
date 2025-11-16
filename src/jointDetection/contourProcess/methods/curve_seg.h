@@ -60,13 +60,20 @@ public:
     cv::Vec4f getAverageLineNearEndpoint(float endpointU, float regionSize = 0.1f, int numSamples = 10) const;
 
 
+    // 获取曲线长度
+    float getCurveLength() const { return m_curveLength; }
+
+    // 计算曲线长度
+    void calculateCurveLength();
+
 private:
     std::vector<cv::Point2f> m_points;
-    tinyspline::BSpline m_spline;             // 拟合的样条曲线
-    bool m_isFitted;                          // 是否已经拟合
-    std::vector<cv::Point2f> m_controlPoints; // 控制点（用于显示）
-    float m_minDomain;                         // 样条曲线参数U的最小值
-    float m_maxDomain;                         // 样条曲线参数U的最大值
+    tinyspline::BSpline m_spline;               // 拟合的样条曲线
+    bool m_isFitted;                            // 是否已经拟合
+    std::vector<cv::Point2f> m_controlPoints;   // 控制点（用于显示）
+    float m_minDomain;                          // 样条曲线参数U的最小值
+    float m_maxDomain;                          // 样条曲线参数U的最大值
+    float m_curveLength;                        // 曲线长度
 };
 
 #endif // CURVE_SEG_H

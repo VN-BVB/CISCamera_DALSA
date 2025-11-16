@@ -95,10 +95,16 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
         EndpointInfo endpoint2_ccw = sortedEndpoints2.first;  // 更逆时针的端点
 
         // 获取端点附近区域的平均直线
-        cv::Vec4f avgLine1 = curve1.getAverageLineNearEndpoint(endpoint1_ccw.u, 0.5f, 150);
-        cv::Vec4f avgLine2_cw = curve2.getAverageLineNearEndpoint(endpoint2_cw.u, 0.1f, 150);
-        cv::Vec4f avgLine3 = curve3.getAverageLineNearEndpoint(endpoint3_ccw.u, 0.5f, 150);
-        cv::Vec4f avgLine2_ccw = curve2.getAverageLineNearEndpoint(endpoint2_ccw.u, 0.1f, 150);
+        // 根据曲线长度决定区域大小：长度小于50用99%区域，大于50用50%区域
+        float regionSize1 = (curve1.getCurveLength() < 50.0f) ? 0.99f : 0.50f;
+        float regionSize2_cw = (curve2.getCurveLength() < 50.0f) ? 0.99f : 0.1f;
+        float regionSize3 = (curve3.getCurveLength() < 50.0f) ? 0.99f : 0.50f;
+        float regionSize2_ccw = (curve2.getCurveLength() < 50.0f) ? 0.99f : 0.1f;
+        cv::Vec4f avgLine1 = curve1.getAverageLineNearEndpoint(endpoint1_ccw.u, regionSize1, 150);
+        cv::Vec4f avgLine2_cw = curve2.getAverageLineNearEndpoint(endpoint2_cw.u, regionSize2_cw, 150);
+        cv::Vec4f avgLine3 = curve3.getAverageLineNearEndpoint(endpoint3_ccw.u, regionSize3, 150);
+        cv::Vec4f avgLine2_ccw = curve2.getAverageLineNearEndpoint(endpoint2_ccw.u, regionSize2_ccw, 150);
+
 
         // 保存平均直线用于后续使用
         lines.push_back(avgLine1);
