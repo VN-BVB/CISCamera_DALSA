@@ -366,7 +366,6 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
 
         for (int i = 0; i < contour.size(); ++i) {
             if (!visited[i]) {
-                // 正常计算距离，不给终点特殊优先级
                 double distance = cv::norm(contour[currentIndex] - contour[i]);
                 candidates.push_back({i, distance});
             }
