@@ -307,22 +307,24 @@ cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, c
     // 对背光图去除工件外杂乱边缘，对正光图去除工件内杂乱边缘
     cv::Mat binaryImage;
     cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    // 先进行闭运算去除二值图中白色区域的空洞，可处理工件外有少量杂物的情况
-    cv::Mat closedBinary;
-    cv::Mat closeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
-    cv::morphologyEx(binaryImage, closedBinary, cv::MORPH_CLOSE, closeKernel);
+
     // 对二值图进行腐蚀，减小边缘无关区域面积，对背光和正光都有用
     cv::Mat erodedBinary;
     cv::Mat erodeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
     // 进行三次腐蚀，确保缩小边缘无关区域
-    cv::erode(closedBinary, erodedBinary, erodeKernel);
+    cv::erode(binaryImage, erodedBinary, erodeKernel);
     cv::erode(erodedBinary, erodedBinary, erodeKernel);
     cv::erode(erodedBinary, erodedBinary, erodeKernel);
-    cv::bitwise_not(erodedBinary, erodedBinary);
 
-    // 将腐蚀后的二值图翻转，与edge相乘，保留边缘区域，去除无关区域
+    // 先进行闭运算去除腐蚀图中白色区域的空洞，可处理工件外有少量杂物的情况
+    cv::Mat closedBinary;
+    cv::Mat closeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7,7));
+    cv::morphologyEx(erodedBinary, closedBinary, cv::MORPH_CLOSE, closeKernel);
+
+    // 将处理后的二值图翻转，与edge相乘，保留边缘区域，去除无关区域
+    cv::bitwise_not(closedBinary, closedBinary);
     cv::Mat connectedEdge;
-    cv::multiply(edge, erodedBinary / 255.0, connectedEdge, 1, CV_8U);
+    cv::multiply(edge, closedBinary / 255.0, connectedEdge, 1, CV_8U);
 
     return connectedEdge;
 }
