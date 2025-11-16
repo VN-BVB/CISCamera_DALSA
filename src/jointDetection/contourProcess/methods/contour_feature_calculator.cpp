@@ -312,36 +312,105 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByCentroid(const s
 }
 
 /**
- * @brief 基于最近邻搜索和角度排序的轮廓排序方法
- * @param contour 输入轮廓点集
- * @param startIndex 起始点索引
- * @param endIndex 终点索引（可选，如果有效则在到达该点时停止排序）
- * @return std::vector<cv::Point2f> 排序后的轮廓点集
- * @details 该函数结合最近邻搜索和角度优化策略对轮廓点进行排序，支持在指定终点处停止排序。
- *          算法流程：
- *          1. 参数有效性检查（空轮廓、起始点索引、终点索引）
- *          2. 初始化访问标记数组和排序结果数组
- *          3. 从起始点开始，通过最近邻搜索找到候选点
- *          4. 在候选点中使用角度优化策略选择最合适的下一个点
- *          5. 重复步骤3-4直到所有点被访问或到达指定终点
- *          6. 返回排序后的轮廓点集
+ * @brief 获取当前点的所有未访问候选点（按距离排序）
+ * @param contour 轮廓点集
+ * @param currentIndex 当前点索引
+ * @param visited 访问标记数组
+ * @return std::vector<std::pair<int, double>> 候选点列表<索引, 距离>
  */
-std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int startIndex, int endIndex) {
-    if (contour.empty()) return {};
+std::vector<std::pair<int, double>> ContourFeatureCalculator::getSortedCandidatesByDistance(const std::vector<cv::Point2f>& contour,
+                                                                                            int currentIndex,
+                                                                                            const std::vector<bool>& visited,
+                                                                                            int k) {
+    std::vector<std::pair<int, double>> candidates;
 
-    // 验证起始点索引
-    if (startIndex < 0 || startIndex >= contour.size()) {
-        // 如果索引无效，使用默认排序方法
-        return sortContour(contour, 0);
+    for (int i = 0; i < contour.size(); ++i) {
+        if (!visited[i]) {
+            double distance = cv::norm(contour[currentIndex] - contour[i]);
+            candidates.push_back({i, distance});
+        }
     }
 
+    // 按距离排序（从近到远）
+    std::sort(candidates.begin(), candidates.end(),
+              [](const auto& a, const auto& b) {
+                  return a.second < b.second;
+              });
+
+    // 只返回最近的k个点
+    if (k > 0 && k < candidates.size()) {
+        candidates.resize(k);
+    }
+
+    return candidates;
+}
+
+/**
+ * @brief 选择下一个合适的候选点（优先选择逆时针方向的点）
+ * @param contour 轮廓点集
+ * @param currentIndex 当前点索引
+ * @param candidates 候选点列表
+ * @param centroid 轮廓质心
+ * @return int 选择的候选点索引，-1表示没有找到合适的点
+ */
+int ContourFeatureCalculator::selectNextCandidate(const std::vector<cv::Point2f>& contour,
+                                                  int currentIndex,
+                                                  const std::vector<std::pair<int, double>>& candidates,
+                                                  const cv::Point2f& centroid) {
+    if (candidates.empty()) return -1;
+
+    cv::Point2f currentPoint = contour[currentIndex];
+
+    // 初始化最近的逆时针方向点索引和距离
+    int nearestCounterclockwiseIndex = -1;
+    double minDistance = std::numeric_limits<double>::max();
+
+    // 遍历所有候选点，找出最近的逆时针方向点
+    for (const auto& candidate : candidates) {
+        int candidateIndex = candidate.first;
+        cv::Point2f candidatePoint = contour[candidateIndex];
+        double candidateDistance = candidate.second;
+
+        // 检查是否在逆时针方向
+        if (!GeometryUtils::isPointClockwiseTo(candidatePoint, currentPoint, centroid)) {
+            // 如果是逆时针方向且距离更近，则更新
+            if (candidateDistance < minDistance) {
+                minDistance = candidateDistance;
+                nearestCounterclockwiseIndex = candidateIndex;
+            }
+        }
+    }
+
+    // 如果找到逆时针方向的点，则返回最近的那个
+    if (nearestCounterclockwiseIndex != -1) {
+        return nearestCounterclockwiseIndex;
+    }
+
+    // 如果没有找到逆时针方向的点，返回最近的点（即第一个候选点）
+    return candidates[0].first;
+}
+
+/**
+ * @brief 使用最近邻算法对轮廓点进行排序，优先选择逆时针方向的点
+ * @param contour 输入轮廓点集
+ * @param startIndex 起始点索引
+ * @param endIndex 终点索引（可选，如果为-1则排序所有点）
+ * @return std::vector<cv::Point2f> 排序后的轮廓点集
+ * @details 该函数通过最近邻算法对轮廓点进行排序，优先选择位于当前点逆时针方向的点。
+ *          如果逆时针方向的点距离超过阈值，则选择最近的点。
+ */
+std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int startIndex, int endIndex) {
+    // 验证参数有效性
+    if (contour.empty()) return {};
+    // 验证起始点索引
+    if (startIndex < 0 || startIndex >= contour.size()) {
+        return sortContour(contour, 0);
+    }
     // 验证终点索引，如果无效则排序所有点
     bool hasValidEndIndex = (endIndex >= 0 && endIndex < contour.size() && endIndex != startIndex);
 
     std::vector<cv::Point2f> sortedContour;
     std::vector<bool> visited(contour.size(), false);
-
-    // 添加起始点
     int currentIndex = startIndex;
     sortedContour.push_back(contour[currentIndex]);
     visited[currentIndex] = true;
@@ -351,93 +420,33 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
         return sortedContour;
     }
 
-    // 计算轮廓质心（用于角度计算）
+    // 计算轮廓中心点
     cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
 
+    // 主排序循环
     while (sortedContour.size() < contour.size()) {
         // 检查是否到达终点
         if (hasValidEndIndex && currentIndex == endIndex) {
             break;
         }
 
-        // 找到当前点的最近邻候选点（最近的k个点）
-        const int k = 1; // 考虑最近的1个点
-        std::vector<std::pair<int, double>> candidates; // <索引, 距离>
-
-        for (int i = 0; i < contour.size(); ++i) {
-            if (!visited[i]) {
-                double distance = cv::norm(contour[currentIndex] - contour[i]);
-                candidates.push_back({i, distance});
-            }
-        }
+        // 获取排序后的候选点
+        auto candidates = getSortedCandidatesByDistance(contour, currentIndex, visited, 10);
 
         // 如果没有候选点，结束循环
         if (candidates.empty()) break;
 
-        // 按距离排序，取最近的k个点
-        std::sort(candidates.begin(), candidates.end(),
-                  [](const auto& a, const auto& b) {
-                      return a.second < b.second;
-                  });
+        // 选择下一个合适的候选点
+        int selectedCandidateIndex = selectNextCandidate(contour, currentIndex, candidates, centroid);
 
-        if (candidates.size() > k) {
-            candidates.resize(k);
-        }
+        // 添加选中的点到结果中
+        sortedContour.push_back(contour[selectedCandidateIndex]);
+        visited[selectedCandidateIndex] = true;
+        currentIndex = selectedCandidateIndex;
 
-        // 在最近的k个点中，按角度选择最合适的下一个点
-        int bestCandidateIndex = -1;
-        double bestAngleScore = std::numeric_limits<double>::max();
-
-        cv::Point2f currentPoint = contour[currentIndex];
-
-        for (const auto& candidate : candidates) {
-            int candidateIndex = candidate.first;
-            cv::Point2f candidatePoint = contour[candidateIndex];
-
-            // 计算从当前点到候选点的向量
-            cv::Point2f direction = candidatePoint - currentPoint;
-
-            // 计算角度（相对于水平方向）
-            double angle = std::atan2(direction.y, direction.x);
-            if (angle < 0) angle += 2 * M_PI; // 归一化到 [0, 2π)
-
-            // 计算角度得分（我们希望保持逆时针方向）
-            // 使用当前点到质心的向量作为参考方向
-            cv::Point2f toCentroid = centroid - currentPoint;
-            double referenceAngle = std::atan2(toCentroid.y, toCentroid.x);
-            if (referenceAngle < 0) referenceAngle += 2 * M_PI;
-
-            // 计算角度差异（考虑逆时针方向）
-            double angleDiff = angle - referenceAngle;
-            if (angleDiff < 0) angleDiff += 2 * M_PI;
-
-            // 选择角度差异最小的点（保持平滑的逆时针方向）
-            if (angleDiff < bestAngleScore) {
-                bestAngleScore = angleDiff;
-                bestCandidateIndex = candidateIndex;
-            }
-        }
-
-        if (bestCandidateIndex != -1) {
-            sortedContour.push_back(contour[bestCandidateIndex]);
-            visited[bestCandidateIndex] = true;
-            currentIndex = bestCandidateIndex;
-
-            // 检查是否到达终点
-            if (hasValidEndIndex && currentIndex == endIndex) {
-                break;
-            }
-        } else {
-            // 如果没有找到合适的候选点，选择最近的点
-            int nearestIndex = candidates[0].first;
-            sortedContour.push_back(contour[nearestIndex]);
-            visited[nearestIndex] = true;
-            currentIndex = nearestIndex;
-
-            // 检查是否到达终点
-            if (hasValidEndIndex && currentIndex == endIndex) {
-                break;
-            }
+        // 检查是否到达终点
+        if (hasValidEndIndex && currentIndex == endIndex) {
+            break;
         }
     }
 
