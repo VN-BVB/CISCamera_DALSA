@@ -14,11 +14,11 @@ public:
               double size = 10,
               double zValue = 15.0);
 
-    // 仅实现必要的getGraphicsItems方法
     QList<QGraphicsItem*> getGraphicsItems() const override;
 
 private:
-    QList<QGraphicsItem*> m_graphicsItems;
+    double m_size; // 点的大小
+    std::vector<cv::Point2f> m_points;
 };
 
 #endif // POINT_ITEM_H

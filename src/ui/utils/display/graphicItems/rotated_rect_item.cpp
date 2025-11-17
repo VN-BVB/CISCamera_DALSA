@@ -1,34 +1,33 @@
 #include "rotated_rect_item.h"
 #include <QGraphicsPathItem>
 #include <QPainterPath>
+#include <QPen>
 
 RotatedRectItem::RotatedRectItem(const std::vector<cv::RotatedRect>& rotatedRects,
                                  const QColor& color,
                                  double lineWidth,
                                  double zValue)
-    : m_rotatedRects(rotatedRects),
-    m_color(color),
-    m_lineWidth(lineWidth),
-    m_zValue(zValue)
+    : GraphicsItemComponent(color, lineWidth, Qt::SolidLine, zValue), // 调用基类构造函数
+    m_rotatedRects(rotatedRects)
 {
 }
 
 RotatedRectItem::~RotatedRectItem()
 {
     // 清理创建的图形项
-    for (auto item : m_items) {
+    for (auto item : m_graphicsItems) {
         delete item;
     }
-    m_items.clear();
+    m_graphicsItems.clear();
 }
 
 QList<QGraphicsItem*> RotatedRectItem::getGraphicsItems() const
 {
-    if (m_items.isEmpty()) {
-        // 创建画笔
-        QPen pen(m_color);
-        pen.setWidthF(m_lineWidth);
-        pen.setStyle(Qt::SolidLine);
+    if (m_graphicsItems.isEmpty()) {
+        // 创建画笔，使用基类提供的属性
+        QPen pen(getColor());
+        pen.setWidthF(getLineWidth());
+        pen.setStyle(getLineStyle());
 
         // 遍历所有旋转矩形
         for (const auto& rotatedRect : m_rotatedRects) {
@@ -49,11 +48,11 @@ QList<QGraphicsItem*> RotatedRectItem::getGraphicsItems() const
             // 创建路径图元
             QGraphicsPathItem *rectItem = new QGraphicsPathItem(path);
             rectItem->setPen(pen);
-            rectItem->setZValue(m_zValue);  // 设置Z值，确保显示在图像上方
+            rectItem->setZValue(getZValue());  // 设置Z值，确保显示在图像上方
 
-            m_items.append(rectItem);
+            m_graphicsItems.append(rectItem);
         }
     }
 
-    return m_items;
+    return m_graphicsItems;
 }

@@ -174,8 +174,8 @@ void DisplayScene::whenDrawLines(const std::vector<cv::Vec4f> &lines, const doub
     for (const auto& line : lines) {
         auto lineComponent = std::make_shared<LineItem>(line, length, color);
         addGraphicComponent(lineComponent);
-        showAllGraphicComponents();
     }
+    showAllGraphicComponents();
 }
 
 // 修改绘制单个B样条曲线的方法

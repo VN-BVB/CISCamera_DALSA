@@ -20,10 +20,6 @@ public:
 
 private:
     std::vector<cv::RotatedRect> m_rotatedRects;  // 旋转矩形数据
-    QColor m_color;                               // 绘制颜色
-    double m_lineWidth;                           // 线宽
-    double m_zValue;                              // Z值
-    mutable QList<QGraphicsItem*> m_items;        // 存储创建的图形项
 };
 
 #endif // ROTATED_RECT_ITEM_H

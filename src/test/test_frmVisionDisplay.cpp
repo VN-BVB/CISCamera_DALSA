@@ -183,7 +183,7 @@ void test_FrmVisionDisplay::onDrawPointsBtnClicked()
 {
     std::vector<cv::Point2f> points1 = {{0,0}, {100,0}, {100,100}, {0,100}};
     displayPoints(points1);
-    LOG_INFO << "绘制了" << points1.size() << "条点";
+    LOG_INFO << "绘制了" << points1.size() << "个点";
 }
 
 void test_FrmVisionDisplay::onDrawBSplineBtnClicked()

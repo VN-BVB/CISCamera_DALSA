@@ -4,8 +4,18 @@
 #include <QGraphicsPathItem>
 
 LineItem::LineItem(const cv::Vec4f& line, double length, const QColor color)
+    : GraphicsItemComponent() // 调用基类构造函数
 {
-    // 实现直线绘制逻辑
+    // 保存特有属性
+    m_line = line;
+    m_length = length;
+
+    // 使用基类方法设置共同属性
+    setColor(color);
+    setLineWidth(0.1); // 原代码中设置的线宽
+    setZValue(10);    // 原代码中设置的z值
+
+    // 创建图形项并添加到基类的m_graphicsItems中
     double vx = line[0];
     double vy = line[1];
     double x0 = line[2];
@@ -22,16 +32,15 @@ LineItem::LineItem(const cv::Vec4f& line, double length, const QColor color)
     path.lineTo(x2, y2);
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
-    QPen pen(color);
-    pen.setWidthF(0.1);
-    pathItem->setPen(pen);
-    pathItem->setZValue(10);
 
+    applyProperties();
+
+    // 添加到基类的容器中
     m_graphicsItems.append(pathItem);
 }
 
-
 QList<QGraphicsItem*> LineItem::getGraphicsItems() const
 {
+    // 直接返回基类中的容器
     return m_graphicsItems;
 }

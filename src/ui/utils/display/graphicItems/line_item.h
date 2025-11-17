@@ -9,14 +9,14 @@ class LineItem : public GraphicsItemComponent
 {
 public:
     LineItem(const cv::Vec4f& line,
-             double lenth = 1.0,
+             double length = 1.0,
              const QColor = Qt::blue);
 
-    // 仅实现必要的getGraphicsItems方法
     QList<QGraphicsItem*> getGraphicsItems() const override;
 
 private:
-    QList<QGraphicsItem*> m_graphicsItems;
+    double m_length;  // 线段长度
+    cv::Vec4f m_line; // 直线参数
 };
 
 #endif // LINE_ITEM_H

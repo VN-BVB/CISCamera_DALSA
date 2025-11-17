@@ -24,12 +24,9 @@ public:
                 Qt::PenStyle lineStyle = Qt::SolidLine,
                 double zValue = 12.0);
 
-    // 仅实现必要的getGraphicsItems方法
     QList<QGraphicsItem*> getGraphicsItems() const override;
 
 private:
-    QList<QGraphicsItem*> m_graphicsItems;
-
     // 从tinyspline创建路径的辅助方法
     QPainterPath createPathFromBSpline(const tinyspline::BSpline& spline);
     // 从控制点创建路径的辅助方法
