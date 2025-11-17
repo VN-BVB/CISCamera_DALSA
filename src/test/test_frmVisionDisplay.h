@@ -23,17 +23,20 @@ public:
 public slots:
     void displayImage(const QString &imagePath);
     void displayContours(std::vector<std::vector<cv::Point2f>> contours);
+    void displayPoints(std::vector<cv::Point2f> points);
     void displayRotateRects(std::vector<cv::RotatedRect>& RotatedRects);
     void displayLines(std::vector<cv::Vec4f> lines);
     void onBeginButtonClicked();
     void onDrawLinesBtnClicked();
     void onDrawContoursBtnClicked();
+    void onDrawPointsBtnClicked();
 private:
     Ui::test_FrmVisionDisplay *ui;
     FrmVisionDisplay *m_frmDisplay;
     QPushButton* m_btn_begin;
     QPushButton* m_btn_draw_lines;
     QPushButton* m_btn_draw_contours;
+    QPushButton* m_btn_draw_points;
 };
 
 #endif // TEST_FRMVISIONDISPLAY_H

@@ -7,6 +7,7 @@
 #include "graphicItems/graphic_item_component.h"
 #include "graphicItems/graphic_item_composite.h"
 #include "graphicItems/line_item.h"
+#include "graphicItems/point_item.h"
 
 
 /*******************************/
@@ -120,22 +121,7 @@ void DisplayScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 }
 
 
-void DisplayScene::whenDrawPoints(const std::vector<cv::Point2f> &points,const QColor &color)
-{
-    if (points.empty())
-        return;
 
-    double size = 0.5;
-    for (const auto& point : points) {
-        // 创建圆形标记点
-        QGraphicsEllipseItem *pointItem = new QGraphicsEllipseItem(point.x - size/2, point.y - size/2, size, size);
-        pointItem->setBrush(QBrush(color)); // 粉色
-        pointItem->setPen(QPen(Qt::NoPen)); // 黑色边框
-        pointItem->setZValue(15); // 设置较高的Z值，确保显示在最上层
-
-        this->addItem(pointItem);
-    }
-}
 
 // B样条曲线绘制函数实现
 void DisplayScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints)
@@ -356,6 +342,18 @@ void DisplayScene::whenDrawContours(const std::vector<std::vector<cv::Point2f>> 
             showAllGraphicComponents();
         }
     }
+}
+
+void DisplayScene::whenDrawPoints(const std::vector<cv::Point2f> &points,
+                                  const QColor& color,
+                                  double size,
+                                  double zValue)
+{
+    if (points.empty()) return;
+
+    auto pointComponent = std::make_shared<PointItem>(points);
+    addGraphicComponent(pointComponent);
+    showAllGraphicComponents();
 }
 
 void DisplayScene::whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length, const QColor &color)

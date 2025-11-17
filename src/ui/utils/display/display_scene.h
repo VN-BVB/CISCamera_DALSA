@@ -58,8 +58,6 @@ public slots:
 
     // =====================================图形显示槽函数=====================================
 public slots:
-    // 绘制点集
-    void whenDrawPoints(const std::vector<cv::Point2f> &Points, const QColor &color);
     // 绘制B样条曲线
     void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints);
     void whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline);
@@ -69,14 +67,17 @@ public slots:
     void whenDisplayRotateRects(const std::vector<cv::RotatedRect>& RotatedRects);
 
     // ==========================图形组件系统绘制===================
+    // @TODO:这里好像有点不好，每回都在调用槽函数时指定绘制属性，应该将这些属性抽象到component基类中实现
     void whenDrawContours(const std::vector<std::vector<cv::Point2f>> &contours,
                           const QColor& color = Qt::transparent,
                           double lineWidth = -1.0,
                           Qt::PenStyle lineStyle = Qt::SolidLine,
                           double zValue = 10.0);
+    void whenDrawPoints(const std::vector<cv::Point2f> &points,
+                        const QColor& color = Qt::red,
+                        double size = 0.5,
+                        double zValue = 15.0);
     void whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
-
-    // @TODO:将轮廓显示全整理成图元类
 
 protected:
     // 设置显示图像图元

@@ -14,11 +14,13 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     m_btn_begin = new QPushButton("start", this);
     m_btn_draw_lines = new QPushButton("draw lines",this);
     m_btn_draw_contours = new QPushButton("draw contours",this);
+    m_btn_draw_points = new QPushButton("draw points",this);
 
     // 设置按钮属性
     m_btn_begin->setFixedSize(80, 30);
     m_btn_draw_lines->setFixedSize(200, 30);
     m_btn_draw_contours->setFixedSize(200, 30);
+    m_btn_draw_points->setFixedSize(200, 30);
 
     // 创建主布局
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -30,6 +32,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     buttonLayout->addWidget(m_btn_begin);
     buttonLayout->addWidget(m_btn_draw_lines);
     buttonLayout->addWidget(m_btn_draw_contours);
+    buttonLayout->addWidget(m_btn_draw_points);
     buttonLayout->addStretch();  // 将按钮推到左侧
 
     // 添加按钮布局和显示控件到主布局
@@ -44,6 +47,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     connect(m_btn_begin, &QPushButton::clicked, this, &test_FrmVisionDisplay::onBeginButtonClicked);
     connect(m_btn_draw_lines, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawLinesBtnClicked);
     connect(m_btn_draw_contours, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawContoursBtnClicked);
+    connect(m_btn_draw_points, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawPointsBtnClicked);
 }
 
 test_FrmVisionDisplay::~test_FrmVisionDisplay() { delete ui; }
@@ -65,6 +69,16 @@ void test_FrmVisionDisplay::displayContours(std::vector<std::vector<cv::Point2f>
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
     scene->whenDrawContours(contours);
+}
+
+void test_FrmVisionDisplay::displayPoints(std::vector<cv::Point2f> points)
+{
+    DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
+    if (!displayMgr) return;
+
+    DisplayScene* scene = displayMgr->displayScene();
+    if (!scene) return;
+    scene->whenDrawPoints(points);
 }
 
 void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& RotatedRects) {
@@ -147,7 +161,12 @@ void test_FrmVisionDisplay::onDrawContoursBtnClicked()
     PLOG_INFO << "绘制了" << contours.size() << "条轮廓";
 }
 
-
+void test_FrmVisionDisplay::onDrawPointsBtnClicked()
+{
+    std::vector<cv::Point2f> points1 = {{0,0}, {100,0}, {100,100}, {0,100}};
+    displayPoints(points1);
+    LOG_INFO << "绘制了" << points1.size() << "条点";
+}
 
 
 
