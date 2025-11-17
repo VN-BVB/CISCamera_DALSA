@@ -5,9 +5,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <QtCharts/QChartView>
-#include <QtCharts/QSplineSeries>
-#include <QtCharts/QChart>
 
 #include "tinysplinecxx.h"
 #include "src/jointDetection/contourProcess/methods/curve_seg.h"
@@ -58,15 +55,6 @@ public slots:
 
     // =====================================图形显示槽函数=====================================
 public slots:
-    // 绘制B样条曲线
-    void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints);
-    void whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline);
-    void whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines);
-    void whenDrawBSplineCurves(const std::vector<CurveSeg> &curves);
-    // 绘制旋转矩形
-    void whenDisplayRotateRects(const std::vector<cv::RotatedRect>& RotatedRects);
-
-    // ==========================图形组件系统绘制===================
     // @TODO:这里好像有点不好，每回都在调用槽函数时指定绘制属性，应该将这些属性抽象到component基类中实现
     void whenDrawContours(const std::vector<std::vector<cv::Point2f>> &contours,
                           const QColor& color = Qt::transparent,
@@ -77,7 +65,16 @@ public slots:
                         const QColor& color = Qt::red,
                         double size = 0.5,
                         double zValue = 15.0);
+
+    void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints);
+    void whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline);
+    void whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines);
+    void whenDrawBSplineCurves(const std::vector<CurveSeg> &curves);
+
     void whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
+
+    // 绘制旋转矩形
+    void whenDisplayRotateRects(const std::vector<cv::RotatedRect>& RotatedRects);
 
 protected:
     // 设置显示图像图元
@@ -101,7 +98,6 @@ protected:
     // 图形图元组合管理器
     std::shared_ptr<GraphicItemComposite> m_graphicItemComposite;
 protected:
-    QList<QtCharts::QChartView*> m_chartViews; // 存储图表视图
     const QScopedPointer<DisplayScenePrivate> d_ptr;    // Qt的智能指针
 private:
     Q_DECLARE_PRIVATE(DisplayScene) // PIMPL设计模式，将类的实现细节隐藏在一个单独的私有类中，隐藏实现细节，加快编译速度

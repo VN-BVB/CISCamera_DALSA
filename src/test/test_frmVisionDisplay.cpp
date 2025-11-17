@@ -15,12 +15,16 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     m_btn_draw_lines = new QPushButton("draw lines",this);
     m_btn_draw_contours = new QPushButton("draw contours",this);
     m_btn_draw_points = new QPushButton("draw points",this);
+    m_btn_draw_bspline = new QPushButton("draw bspline",this);
+    m_btn_draw_rotated_rect = new QPushButton("draw rotated rect",this);
 
     // 设置按钮属性
     m_btn_begin->setFixedSize(80, 30);
     m_btn_draw_lines->setFixedSize(200, 30);
     m_btn_draw_contours->setFixedSize(200, 30);
     m_btn_draw_points->setFixedSize(200, 30);
+    m_btn_draw_bspline->setFixedSize(200, 30);
+    m_btn_draw_rotated_rect->setFixedSize(200, 30);
 
     // 创建主布局
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -33,6 +37,8 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     buttonLayout->addWidget(m_btn_draw_lines);
     buttonLayout->addWidget(m_btn_draw_contours);
     buttonLayout->addWidget(m_btn_draw_points);
+    buttonLayout->addWidget(m_btn_draw_bspline);
+    buttonLayout->addWidget(m_btn_draw_rotated_rect);
     buttonLayout->addStretch();  // 将按钮推到左侧
 
     // 添加按钮布局和显示控件到主布局
@@ -48,6 +54,8 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     connect(m_btn_draw_lines, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawLinesBtnClicked);
     connect(m_btn_draw_contours, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawContoursBtnClicked);
     connect(m_btn_draw_points, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawPointsBtnClicked);
+    connect(m_btn_draw_bspline, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawBSplineBtnClicked);
+    connect(m_btn_draw_rotated_rect, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawRotatedRectBtnClicked);
 }
 
 test_FrmVisionDisplay::~test_FrmVisionDisplay() { delete ui; }
@@ -79,6 +87,16 @@ void test_FrmVisionDisplay::displayPoints(std::vector<cv::Point2f> points)
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
     scene->whenDrawPoints(points);
+}
+
+void test_FrmVisionDisplay::displayBSpline(std::vector<cv::Point2f> controlPoints)
+{
+    DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
+    if (!displayMgr) return;
+
+    DisplayScene* scene = displayMgr->displayScene();
+    if (!scene) return;
+    scene->whenDrawSingleBSplineCurve(controlPoints);
 }
 
 void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& RotatedRects) {
@@ -168,9 +186,69 @@ void test_FrmVisionDisplay::onDrawPointsBtnClicked()
     LOG_INFO << "绘制了" << points1.size() << "条点";
 }
 
+void test_FrmVisionDisplay::onDrawBSplineBtnClicked()
+{
+    // 构造B样条曲线的控制点
+    std::vector<cv::Point2f> controlPoints;
 
+    // 添加一些控制点，形成一个简单的曲线
+    controlPoints.push_back(cv::Point2f(0, 0));
+    controlPoints.push_back(cv::Point2f(100, 50));
+    controlPoints.push_back(cv::Point2f(200, -50));
+    controlPoints.push_back(cv::Point2f(300, 100));
+    controlPoints.push_back(cv::Point2f(400, 0));
 
+    displayBSpline(controlPoints);
 
+    // 同时绘制控制点，方便查看
+    displayPoints(controlPoints);
+
+    PLOG_INFO << "绘制了一条B样条曲线，控制点数量：" << controlPoints.size();
+}
+
+// 添加旋转矩形按钮点击槽函数实现
+void test_FrmVisionDisplay::onDrawRotatedRectBtnClicked()
+{
+    // 构造几个旋转矩形用于测试
+    std::vector<cv::RotatedRect> rotatedRects;
+
+    // 创建第一个旋转矩形：中心在(200, 200)，宽度100，高度50，角度0度（不旋转）
+    cv::Point2f center1(200, 200);
+    cv::Size2f size1(100, 50);
+    float angle1 = 0.0f;
+    rotatedRects.push_back(cv::RotatedRect(center1, size1, angle1));
+
+    // 创建第二个旋转矩形：中心在(400, 200)，宽度100，高度50，角度45度
+    cv::Point2f center2(400, 200);
+    cv::Size2f size2(100, 50);
+    float angle2 = 45.0f;
+    rotatedRects.push_back(cv::RotatedRect(center2, size2, angle2));
+
+    // 创建第三个旋转矩形：中心在(200, 400)，宽度150，高度80，角度30度
+    cv::Point2f center3(200, 400);
+    cv::Size2f size3(150, 80);
+    float angle3 = 30.0f;
+    rotatedRects.push_back(cv::RotatedRect(center3, size3, angle3));
+
+    // 创建第四个旋转矩形：中心在(400, 400)，宽度80，高度120，角度-30度
+    cv::Point2f center4(400, 400);
+    cv::Size2f size4(80, 120);
+    float angle4 = -30.0f;
+    rotatedRects.push_back(cv::RotatedRect(center4, size4, angle4));
+
+    // 显示旋转矩形
+    displayRotateRects(rotatedRects);
+
+    // 同时显示矩形中心点，方便查看
+    std::vector<cv::Point2f> centers;
+    centers.push_back(center1);
+    centers.push_back(center2);
+    centers.push_back(center3);
+    centers.push_back(center4);
+    displayPoints(centers);
+
+    PLOG_INFO << "绘制了" << rotatedRects.size() << "个旋转矩形";
+}
 
 
 
