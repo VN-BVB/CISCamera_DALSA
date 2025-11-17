@@ -50,22 +50,6 @@ ContourItem::ContourItem(const std::vector<cv::Point>& contour, ContourType type
     m_graphicsItems.append(pathItem);
 }
 
-void ContourItem::addToScene(QGraphicsScene* scene)
-{
-    for (auto item : m_graphicsItems) {
-        scene->addItem(item);
-    }
-}
-
-void ContourItem::removeFromScene(QGraphicsScene* scene)
-{
-    for (auto item : m_graphicsItems) {
-        scene->removeItem(item);
-        delete item;
-    }
-    m_graphicsItems.clear();
-}
-
 QList<QGraphicsItem*> ContourItem::getGraphicsItems() const
 {
     return m_graphicsItems;

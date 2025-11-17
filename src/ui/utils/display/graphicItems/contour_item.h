@@ -18,8 +18,7 @@ public:
     ContourItem(const std::vector<cv::Point2f>& contour, ContourType type);
     ContourItem(const std::vector<cv::Point> &contour, ContourType type);
 
-    void addToScene(QGraphicsScene* scene) override;
-    void removeFromScene(QGraphicsScene* scene) override;
+    // 仅实现必要的getGraphicsItems方法
     QList<QGraphicsItem*> getGraphicsItems() const override;
 
 private:

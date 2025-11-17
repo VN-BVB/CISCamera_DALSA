@@ -66,7 +66,7 @@ void DisplayScene::whenClearImage()
 }
 
 void DisplayScene::whenAddDisplayText(const QString &text, const QPointF &pt, const double &size,
-                        const QColor &color, const bool &clear)
+                                      const QColor &color, const bool &clear)
 {
     if (!m_displayImageItem) return;
     m_displayImageItem->addDisplayText(text, pt, size, color, clear);
@@ -451,24 +451,23 @@ void DisplayScene::whenDisplayRotateRects(const std::vector<cv::RotatedRect>& ro
 
 void DisplayScene::addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
 {
-    if (component) {
-        m_graphicItemComposite->addComponent(component);
-        component->addToScene(this);
-    }
+    m_graphicItemComposite->addComponent(component);
 }
 
 void DisplayScene::removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
 {
-    if (component) {
-        component->removeFromScene(this);
-        m_graphicItemComposite->removeComponent(component);
-    }
+    m_graphicItemComposite->removeComponent(component);
+}
+
+// 显示所有图形组件
+void DisplayScene::showAllGraphicComponents()
+{
+    m_graphicItemComposite->addToScene(this);
 }
 
 void DisplayScene::clearAllGraphicComponents()
 {
     m_graphicItemComposite->removeFromScene(this);
-    m_graphicItemComposite->clearComponents();
 }
 
 void DisplayScene::whenDrawLinesComponent(const std::vector<cv::Vec4f> &lines, const double length, const QColor &color)
@@ -476,6 +475,7 @@ void DisplayScene::whenDrawLinesComponent(const std::vector<cv::Vec4f> &lines, c
     for (const auto& line : lines) {
         auto lineComponent = std::make_shared<LineItem>(line, length, color);
         addGraphicComponent(lineComponent);
+        showAllGraphicComponents();
     }
 }
 

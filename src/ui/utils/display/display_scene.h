@@ -38,8 +38,8 @@ public:
     // 图形组件管理方法
     void addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
     void removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
+    void showAllGraphicComponents();
     void clearAllGraphicComponents();
-
     // 获取图形组件组合
     std::shared_ptr<GraphicItemComposite> getGraphicItemComposite() const { return m_graphicItemComposite; }
 

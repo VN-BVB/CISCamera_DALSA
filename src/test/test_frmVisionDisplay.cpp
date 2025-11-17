@@ -78,7 +78,8 @@ void test_FrmVisionDisplay::displayLines(std::vector<cv::Vec4f> lines) {
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDrawLinesComponent(lines, 1000000);
+    scene->whenDrawLinesComponent(lines, 100);
+    scene->whenDrawLinesComponent(lines, 10, Qt::yellow);
 }
 
 // 开始按钮点击槽函数实现

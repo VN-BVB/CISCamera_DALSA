@@ -9,12 +9,14 @@ class GraphicItemComposite : public GraphicsItemComponent
 {
 public:
     GraphicItemComposite();
-    void addComponent(std::shared_ptr<GraphicsItemComponent> component);
-    void removeComponent(std::shared_ptr<GraphicsItemComponent> component);
-    void clearComponents();
+    void addComponent(std::shared_ptr<GraphicsItemComponent> component) override;
+    void removeComponent(std::shared_ptr<GraphicsItemComponent> component) override;
+    void clearComponents() override;
 
-    void addToScene(QGraphicsScene* scene) override;
-    void removeFromScene(QGraphicsScene* scene) override;
+    // 仅在复合类中实现场景管理
+    void addToScene(QGraphicsScene* scene);
+    void removeFromScene(QGraphicsScene* scene);
+
     QList<QGraphicsItem*> getGraphicsItems() const override;
 
 private:

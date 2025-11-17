@@ -12,8 +12,7 @@ public:
              double lenth = 1.0,
              const QColor = Qt::blue);
 
-    void addToScene(QGraphicsScene* scene) override;
-    void removeFromScene(QGraphicsScene* scene) override;
+    // 仅实现必要的getGraphicsItems方法
     QList<QGraphicsItem*> getGraphicsItems() const override;
 
 private:

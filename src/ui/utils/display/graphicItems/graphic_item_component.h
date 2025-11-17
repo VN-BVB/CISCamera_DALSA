@@ -13,11 +13,10 @@ public:
     GraphicsItemComponent();
     virtual ~GraphicsItemComponent() = default;
 
-    // 添加到场景
-    virtual void addToScene(QGraphicsScene* scene) = 0;
-
-    // 从场景移除
-    virtual void removeFromScene(QGraphicsScene* scene) = 0;
+    // 组件管理方法
+    virtual void addComponent(std::shared_ptr<GraphicsItemComponent> component) {}
+    virtual void removeComponent(std::shared_ptr<GraphicsItemComponent> component) {}
+    virtual void clearComponents() {}
 
     // 获取所有图形图元项
     virtual QList<QGraphicsItem*> getGraphicsItems() const = 0;

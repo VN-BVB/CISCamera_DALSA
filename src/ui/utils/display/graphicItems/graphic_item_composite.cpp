@@ -22,14 +22,24 @@ void GraphicItemComposite::clearComponents()
 void GraphicItemComposite::addToScene(QGraphicsScene *scene)
 {
     for (auto& component : m_components) {
-        component->addToScene(scene);
+        QList<QGraphicsItem*> items = component->getGraphicsItems();
+        for (auto& item : items) {
+            if (item && !scene->items().contains(item)) {
+                scene->addItem(item);
+            }
+        }
     }
 }
 
 void GraphicItemComposite::removeFromScene(QGraphicsScene *scene)
 {
     for (auto& component : m_components) {
-        component->removeFromScene(scene);
+        QList<QGraphicsItem*> items = component->getGraphicsItems();
+        for (auto& item : items) {
+            if (item && scene->items().contains(item)) {
+                scene->removeItem(item);
+            }
+        }
     }
 }
 

@@ -30,21 +30,6 @@ LineItem::LineItem(const cv::Vec4f& line, double length, const QColor color)
     m_graphicsItems.append(pathItem);
 }
 
-void LineItem::addToScene(QGraphicsScene* scene)
-{
-    for (auto item : m_graphicsItems) {
-        scene->addItem(item);
-    }
-}
-
-void LineItem::removeFromScene(QGraphicsScene* scene)
-{
-    for (auto item : m_graphicsItems) {
-        scene->removeItem(item);
-        delete item;
-    }
-    m_graphicsItems.clear();
-}
 
 QList<QGraphicsItem*> LineItem::getGraphicsItems() const
 {
