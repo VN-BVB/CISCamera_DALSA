@@ -706,3 +706,136 @@ def refine_params_with_distortion_basic(
         # 额外返回优化后的基础参数（方便查看）
         (m_refined, dx_refined, dy_refined, theta_refined, u0_refined, v0_refined)
     )
+# 只优化外参的函数
+def refine_params_with_distortion_external_only(
+        points_world, points_pixel,K,
+        coff_dis, v_rot, v_trans
+):
+    points_pixel = np.array(points_pixel)
+    points_world = np.array(points_world)
+
+    n_views = len(v_rot)
+
+    print("\n-- K (camera matrix) --")
+    print(K)
+    coff_dis_opt = np.array(coff_dis)
+    print("===== Inputs =====")
+    print("-- points_world --")
+    print("type:", type(points_world))
+    print("shape:", points_world.shape)
+
+    print("\n-- points_pixel --")
+    print("type:", type(points_pixel))
+    print("shape:", points_pixel.shape)
+
+    print("\n-- K (camera matrix) --")
+    print("type:", type(K))
+    print("shape:", K.shape)
+
+    print("\n-- coff_dis (distortion coefficients) --")
+    print("type:", type(coff_dis))
+    print("shape:", coff_dis.shape)
+
+    print("\n-- v_rot --")
+    print("type:", type(v_rot))
+    print("shape:", v_rot.shape)
+
+    print("\n-- v_trans --")
+    print("type:", type(v_trans))
+    print("shape:", v_trans.shape)
+    print("==================\n")
+    # ---------------------- 优化前计算重投影误差 ----------------------
+    def compute_reproj_loss(v_rot_list, v_trans_list):
+        """
+        计算当前外参下的平均重投影误差（仅旋转和平移优化，内参和畸变固定）。
+        v_rot_list: n_views x 3 旋转向量列表
+        v_trans_list: n_views x 2 平移向量列表
+        """
+        total_err = 0.0
+        total_points = 0
+        for i in range(n_views):
+            world_points = points_world[i].reshape(-1, 3)
+            world_points[:, 2] = 1
+            pixel_gt = points_pixel[i].reshape(-1, 2)
+
+            # 旋转向量 -> 旋转矩阵
+            rot_mat, _ = cv2.Rodrigues(np.array(v_rot_list[i], dtype=np.float64).reshape(3))
+            R2 = rot_mat[:2, :2]  # 取平面旋转部分
+            t2 = np.array(v_trans_list[i], dtype=np.float64).reshape(2)
+
+            for pt_idx in range(world_points.shape[0]):
+                # 单点仿射投影
+                xy = world_points[pt_idx, :2]
+                cam_xy = R2 @ xy + t2  # 平面仿射变换
+
+                # 畸变，返回 Nx3（齐次坐标）
+                camPt = cam_xy.reshape(1, 2)
+                distortedH = distort(coff_dis_opt, camPt)
+                uvw = K @ distortedH[0].T
+                uv_hat = np.array([uvw[0] / uvw[2], uvw[1] / uvw[2]])
+
+                # 误差累加
+                total_err += np.linalg.norm(uv_hat - pixel_gt[pt_idx])
+                total_points += 1
+
+        mean_loss = total_err / total_points
+        return mean_loss
+
+    initial_loss = compute_reproj_loss(v_rot, v_trans)
+    print(f"Initial reprojection error: {initial_loss:.6f}")
+
+    # ---------------------- 打包外参 ----------------------
+    packed_params = []
+    for i in range(n_views):
+        packed_params.extend(list(v_rot[i]))
+        packed_params.extend(list(v_trans[i]))
+    packed_params = np.array(packed_params, dtype=np.float64)
+
+    # ---------------------- 投影函数（只使用外参） ----------------------
+    def project_external_only(x_data, *params):
+        y_pre_list = []
+        for i in range(n_views):
+            idx = i * 5
+            rt = params[idx: idx + 5]
+            rot_vec = np.array(rt[:3], dtype=np.float64).reshape(3)
+            trans_vec = np.array(rt[3:], dtype=np.float64).reshape(2)
+
+            world_points = np.array(x_data[i]).reshape(-1, 3)
+            world_points[:, 2] = 1
+
+            rot_mat, _ = cv2.Rodrigues(rot_vec)
+            rt_matri = np.eye(3)
+            rt_matri[:2, :2] = rot_mat[:2, :2]
+            rt_matri[:2, 2] = trans_vec
+
+            y_normalized = (rt_matri @ world_points.T).T
+            y_distorted = distort(coff_dis_opt, y_normalized)
+            y_pixel = (K @ y_distorted.T).T
+            y_pre_list.append(y_pixel[:, :2])
+        return np.array(y_pre_list).reshape(-1)
+
+    # ---------------------- 执行优化 ----------------------
+    popt, _ = curve_fit(
+        project_external_only,
+        points_world,
+        points_pixel.reshape(-1),
+        p0=packed_params,
+        maxfev=10000000
+    )
+
+    # ---------------------- 解包优化结果 ----------------------
+    v_rot_refined = []
+    v_trans_refined = []
+    for i in range(n_views):
+        v_rot_refined.append(popt[i * 5: i * 5 + 3])
+        v_trans_refined.append(popt[i * 5 + 3: (i + 1) * 5])
+    v_rot_refined = np.array(v_rot_refined)
+    v_trans_refined = np.array(v_trans_refined)
+
+    # ---------------------- 优化后误差 ----------------------
+    final_loss = compute_reproj_loss(v_rot_refined, v_trans_refined)
+    print(f"Final reprojection error: {final_loss:.6f}")
+    print(f"Error improvement: {initial_loss - final_loss:.6f}")
+
+    # ---------------------- 返回结果 ----------------------
+    return final_loss, v_rot_refined, v_trans_refined

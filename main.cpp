@@ -30,36 +30,50 @@
 //     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
 //     plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
 // }
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-#include <direct.h>
+#include <pybind11/embed.h>
+#include <pybind11/numpy.h>
 
 #include <Eigen/Dense>
-#include <QDateTime>
-#include <QDir>
-#include <QMutex>
-#include <QObject>
-#include <QString>
-#include <filesystem>
-#include <fstream>
+#include <cmath>
 #include <iostream>
-#include <memory>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include "src/telecentricLineCalibrator/telecentricplatform_calib.h"
+#include "src/telecentricLineCalibrator/py_telecentric_optimizer.h"
+#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
+#include "src/ui/CISCamera_imageGrab/cameraImage_processor.h"
 int main() {
-    Eigen::Matrix3d K;
-    K << 47.283237490301396, -0.657929607742621, 15551.964431991371, 0.0, 47.05230788272559, 8043.186819107249, 0.0, 0.0, 1.0;
+    // ------------------ 加载标定 ------------------
+    CalibrationData calib, calib2;
+    CameraImageProcessor reader;
+    TelecentricPYOptimizer calib3;
 
-    Eigen::Matrix<double, 1, 5> coff_dis;
-    coff_dis << -5.363602460785097e-10, -6.586873205793823e-07, -3.9297031624526706e-07, 2.075287196873092e-06,
-        -2.0074419972225162e-06;
+    if (!calib.load("./data/calibration_config/optimized_calib_data.json")) {
+        std::cerr << "无法加载 optimized_calib_data.json\n";
+        return -1;
+    }
+    if (!calib2.load("./data/calibration_config/before_optimization_calib_data.json")) {
+        std::cerr << "无法加载 before_optimization_calib_data.json\n";
+        return -1;
+    }
 
-    Eigen::Vector3d v_rot(2.074776703520814, 2.0584407379860554, -0.21906585124567024);
-    Eigen::Vector3d v_trans(-249.01625128531074, -134.99191717289557, 0.0);
-    TelecentricPlatformCalib calib(K, coff_dis, v_rot, v_trans);
-    calib.run();
+    Eigen::Matrix3d K = calib.K;
+    Eigen::Matrix<double, 1, 5> coff_dis = calib.coff_dis;
+
+    Eigen::Vector3d v_rot = calib2.v_rot[3];
+    Eigen::Vector3d v_trans = calib2.v_trans[3];
+
+    // ------------------ 读取像素点 ------------------
+    std::vector<Eigen::Vector2d> imgPts;
+    if (!reader.readPointsFromTxt("./data/CISCamera_Image/test/Board1_Points_20251111_170637.txt", imgPts)) {
+        std::cerr << "读取像素点失败\n";
+        return -1;
+    }
+
+    // ------------------ 构造世界点 ------------------
+    const int W = 8, H = 11;
+    const double spacingMM = 10.0;
+
+    bool a = calib3.optTelecentricExtrinsicParameters(K, coff_dis, imgPts, v_rot, v_trans, W, H, spacingMM);
     return 0;
 }

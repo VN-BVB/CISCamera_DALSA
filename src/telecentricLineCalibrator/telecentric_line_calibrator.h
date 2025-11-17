@@ -23,11 +23,7 @@
 #include "src/config/calibration_data_io.h"
 #include "telecentric_lm_optimizer.h"
 enum class PatternType { CHESSBOARD, CIRCLES_GRID, ASYMMETRIC_CIRCLES_GRID };
-// struct Pose {
-//     Eigen::Matrix3d R;
-//     Eigen::Vector3d t;
-//     double reprojErr;
-// };
+
 class TelecentricLineCalibrator : public QObject {
     Q_OBJECT
 public:
@@ -73,6 +69,12 @@ public:
                                              const Eigen::Vector3d& v_trans);
     Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
                                  const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
+
+    Pose estimateTelecentricPosePnP(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
+                                    const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
+    double computeReprojectionErrorDemo(const std::vector<Eigen::Vector2d>& worldPts,
+                                        const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose, const Eigen::Matrix3d& K,
+                                        const std::string& savePath, const Eigen::Matrix<double, 1, 5>& coff_dis);
 
 private:
     Eigen::Matrix3d computeHomography(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts);

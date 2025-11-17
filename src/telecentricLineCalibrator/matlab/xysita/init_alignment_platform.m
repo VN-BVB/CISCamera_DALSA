@@ -51,11 +51,11 @@ end
 
 %% ===================== 棋盘格角点生成 =====================
 % 假设主平台有 10 个点
-platforms_with_chess = [1];         % 第2和第5个平台生成棋盘格
-offsets = [-25, 25];             % 第2个平台偏移(2,-1)，第5个(-3,0)
-rotations = [0];           % 第2个平台旋转30度，第5个旋转-15度
+platforms_with_chess = [1;1;1;1];        
+offsets = [25, -25;-25, -25;-25, 25;-25, 25];             
+rotations = [0;0;0;-pi/4];           % 第2个平台旋转30度，第5个旋转-15度
 
-chess_pts3 = generate_chess_on_platform2(X_world, Y_world, ...
+chess_pts3 = generate_multichess_on_platforms2(X_world, Y_world, ...
                                         platforms_with_chess, ...
                                         7, 3, offsets, rotations);
                                     
@@ -104,53 +104,40 @@ for i = 1:length(X_world)
 end
 end
 %% ===================== 增强棋盘格角点生成 平移+原地=====================
-function chess_pts3 = generate_chess_on_platform2(X_world, Y_world, ...
-                                                 platforms_with_chess, ...
-                                                 grid_n, grid_d, ...
-                                                 offsets, rotations)
-% X_world, Y_world: 主平台坐标向量
-% platforms_with_chess: 放棋盘格的平台编号数组，例如 [2,5,7]
-% grid_n: 棋盘格角点数 (nxn)
-% grid_d: 棋盘格间距 (mm)
-% offsets: Nx2 偏移向量 [dx, dy]，每个平台对应一行
-% rotations: N x 1 旋转角度 (rad)，每个平台对应一行
-%            绕平台中心旋转
+function chess_pts3 = generate_multichess_on_platforms2(X_world, Y_world, ...
+                                                       platforms_with_chess, ...
+                                                       grid_n, grid_d, ...
+                                                       offsets, rotations)
 
+% local chessboard points
 half_grid = (grid_n - 1) * grid_d / 2;
 [yy, xx] = meshgrid(-half_grid:grid_d:half_grid, -half_grid:grid_d:half_grid);
-local_chess = [xx(:), yy(:)];  % nxn x 2
+local_chess = [xx(:), yy(:)];
 
-chess_pts3 = cell(length(X_world), 1);
+M = length(X_world);
+K = length(platforms_with_chess);
 
-for idx = 1:length(platforms_with_chess)
-    i = platforms_with_chess(idx);  % 平台编号
-    dx = offsets(idx, 1);
-    dy = offsets(idx, 2);
-    theta = rotations(idx);
+% 每个平台一个 cell，每个平台可以存多个棋盘格
+chess_pts3 = cell(M,1);
 
-    % 旋转矩阵
+for k = 1:K
+    pid = platforms_with_chess(k);   % 所属平台编号
+    
+    dx = offsets(k,1);
+    dy = offsets(k,2);
+    theta = rotations(k);
+
     R = [cos(theta), -sin(theta);
          sin(theta),  cos(theta)];
 
-    % 平台中心
-    C = [X_world(i), Y_world(i)];
+    C = [X_world(pid), Y_world(pid)];
 
-    % -------------------------------
-    % 1. 平移棋盘格中心
-    % 2. 绕平台中心旋转
-    % -------------------------------
-    transformed = (R * (local_chess' + [dx; dy]))';  % 平移后绕原点旋转
-    transformed = transformed + C;                   % 放回平台中心位置
+    chess_xy = (R * (local_chess' + [dx; dy]))';
+    chess_xy = chess_xy + C;
 
-    % 保存结果
-    chess_pts3{i} = [transformed, ones(size(transformed,1),1)]';
-end
-
-% 保证所有单元非空
-for i = 1:length(X_world)
-    if isempty(chess_pts3{i})
-        chess_pts3{i} = [];
-    end
+    % 平台可存多个棋盘格
+    chess_pts3{pid}{end+1} = [chess_xy, ones(size(chess_xy,1),1)]';
 end
 
 end
+

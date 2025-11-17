@@ -6,6 +6,7 @@ HEADERS += \
 
 
 SOURCES += \
+    $$PWD/py_telecentric_optimizer.cpp \
     $$PWD/telecentric_line_calibrator.cpp \
     $$PWD/telecentric_lm_optimizer.cpp \
     $$PWD/telecentricplatform_calib.cpp
