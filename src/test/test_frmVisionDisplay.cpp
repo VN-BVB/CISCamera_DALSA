@@ -7,13 +7,16 @@
 
 test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     : QWidget(parent),
-      ui(new Ui::test_FrmVisionDisplay),
-      m_frmDisplay(new FrmVisionDisplay(this)),
-      m_btn_begin(new QPushButton("start", this)) {
+    ui(new Ui::test_FrmVisionDisplay),
+    m_frmDisplay(new FrmVisionDisplay(this)),
+    m_btn_begin(new QPushButton("start", this)),
+    m_btn_draw(new QPushButton("draw graphicsItem",this))
+{
     ui->setupUi(this);
 
     // 设置按钮属性
     m_btn_begin->setFixedSize(80, 30);
+    m_btn_draw->setFixedSize(200, 30);
 
     // 创建主布局
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -23,6 +26,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     // 创建按钮布局
     QHBoxLayout* buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(m_btn_begin);
+    buttonLayout->addWidget(m_btn_draw);
     buttonLayout->addStretch();  // 将按钮推到左侧
 
     // 添加按钮布局和显示控件到主布局
@@ -35,6 +39,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
 
     // 连接按钮点击信号到槽函数
     connect(m_btn_begin, &QPushButton::clicked, this, &test_FrmVisionDisplay::onBeginButtonClicked);
+    connect(m_btn_draw, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawButtonClicked);
 }
 
 test_FrmVisionDisplay::~test_FrmVisionDisplay() { delete ui; }
@@ -67,7 +72,16 @@ void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& Rot
     scene->whenDisplayRotateRects(RotatedRects);
 }
 
-// 添加按钮点击槽函数实现
+void test_FrmVisionDisplay::displayLines(std::vector<cv::Vec4f> lines) {
+    DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
+    if (!displayMgr) return;
+
+    DisplayScene* scene = displayMgr->displayScene();
+    if (!scene) return;
+    scene->whenDrawLinesComponent(lines, 1000000);
+}
+
+// 开始按钮点击槽函数实现
 void test_FrmVisionDisplay::onBeginButtonClicked() {
     // 这里实现按钮点击后的功能
     // 创建计时器并开始计时
@@ -88,3 +102,45 @@ void test_FrmVisionDisplay::onBeginButtonClicked() {
     displayContours(contours);
 
 }
+
+void test_FrmVisionDisplay::onDrawButtonClicked()
+{
+    // 构造几条经过原点的直线
+    std::vector<cv::Vec4f> lines;
+
+    // 直线1: 水平线 (y=0)
+    lines.push_back(cv::Vec4f(1.0f, 0.0f, 0.0f, 0.0f));
+
+    // 直线2: 垂直线 (x=0)
+    lines.push_back(cv::Vec4f(0.0f, 1.0f, 0.0f, 0.0f));
+
+    // 直线3: 45度斜线 (y=x)
+    lines.push_back(cv::Vec4f(0.7071f, 0.7071f, 0.0f, 0.0f));
+
+    // 直线4: 135度斜线 (y=-x)
+    lines.push_back(cv::Vec4f(-0.7071f, 0.7071f, 0.0f, 0.0f));
+
+    // 直线5: 30度斜线
+    lines.push_back(cv::Vec4f(0.8660f, 0.5f, 0.0f, 0.0f));
+
+    // 直线6: 60度斜线
+    lines.push_back(cv::Vec4f(0.5f, 0.8660f, 0.0f, 0.0f));
+
+    displayLines(lines);
+
+    PLOG_INFO << "绘制了" << lines.size() << "条经过原点的直线";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

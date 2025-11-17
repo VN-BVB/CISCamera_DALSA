@@ -1,9 +1,13 @@
+#include <QGraphicsItem>
+#include <QGraphicsProxyWidget>
+
 #include "display_scene.h"
 #include "display_view.h"
 #include "display_image_item.h"
+#include "graphicItems/graphic_item_component.h"
+#include "graphicItems/graphic_item_composite.h"
+#include "graphicItems/line_item.h"
 
-#include <QGraphicsItem>
-#include <QGraphicsProxyWidget>
 
 /*******************************/
 // [DisplayScenePrivate]
@@ -30,6 +34,7 @@ DisplayScene::DisplayScene(DisplayView *parentView)
     :QGraphicsScene(parentView),    // 派生类调用父类构造函数
     m_parentView(parentView),
     m_displayImageItem(new DisplayImageItem(this)),
+    m_graphicItemComposite(std::make_shared<GraphicItemComposite>()),
     d_ptr(new DisplayScenePrivate(this))
 {
     m_parentView->setScene(this);
@@ -443,6 +448,46 @@ void DisplayScene::whenDisplayRotateRects(const std::vector<cv::RotatedRect>& ro
         // this->addItem(centerItem);
     }
 }
+
+void DisplayScene::addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (component) {
+        m_graphicItemComposite->addComponent(component);
+        component->addToScene(this);
+    }
+}
+
+void DisplayScene::removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (component) {
+        component->removeFromScene(this);
+        m_graphicItemComposite->removeComponent(component);
+    }
+}
+
+void DisplayScene::clearAllGraphicComponents()
+{
+    m_graphicItemComposite->removeFromScene(this);
+    m_graphicItemComposite->clearComponents();
+}
+
+void DisplayScene::whenDrawLinesComponent(const std::vector<cv::Vec4f> &lines, const double length, const QColor &color)
+{
+    for (const auto& line : lines) {
+        auto lineComponent = std::make_shared<LineItem>(line, length, color);
+        addGraphicComponent(lineComponent);
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

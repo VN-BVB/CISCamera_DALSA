@@ -11,10 +11,12 @@
 
 #include "tinysplinecxx.h"
 #include "src/jointDetection/contourProcess/methods/curve_seg.h"
+#include "graphicItems/graphic_item_component.h"
 
 class DisplayView;
 class DisplayImageItem;
 class DisplayScenePrivate;
+class GraphicItemComposite;
 class DisplayScene : public QGraphicsScene
 {
     Q_OBJECT
@@ -33,17 +35,27 @@ public:
     // 获取显示的图像的尺寸
     QSize getDisplayImageSize() const;
 
+    // 图形组件管理方法
+    void addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
+    void removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
+    void clearAllGraphicComponents();
+
+    // 获取图形组件组合
+    std::shared_ptr<GraphicItemComposite> getGraphicItemComposite() const { return m_graphicItemComposite; }
+
+
+    // =====================================图像显示槽函数=====================================
 public slots:
-    // 显示图像
     bool whenDisplayImage(const QImage &image, bool bAutoFit = false);
-    // 清除图像
     void whenClearImage();
-    // 显示文本
+
+    // =====================================文本显示槽函数=====================================
+public slots:
     void whenAddDisplayText(const QString &text, const QPointF &pt=QPointF(0,0), const double &size=1,
                         const QColor &color=QColor(Qt::green), const bool &clear=false);
-    // 清除文本
     void whenClearDisplayText();
 
+    // =====================================图形显示槽函数=====================================
 public slots:
     // 绘制单条亚像素轮廓
     void whenDrawSingleSubpixelContour(const std::vector<cv::Point2f> &subpixelContour);
@@ -67,6 +79,9 @@ public slots:
     // 绘制旋转矩形
     void whenDisplayRotateRects(const std::vector<cv::RotatedRect>& RotatedRects);
 
+    // ==========================图形组件系统绘制===================
+    void whenDrawLinesComponent(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
+
     // @TODO:将轮廓显示全整理成图元类
 
 protected:
@@ -88,6 +103,8 @@ protected:
     DisplayView *m_parentView = nullptr;
     // 图像显示图元
     DisplayImageItem *m_displayImageItem = nullptr;
+    // 图形图元组合管理器
+    std::shared_ptr<GraphicItemComposite> m_graphicItemComposite;
 protected:
     QList<QtCharts::QChartView*> m_chartViews; // 存储图表视图
     const QScopedPointer<DisplayScenePrivate> d_ptr;    // Qt的智能指针
