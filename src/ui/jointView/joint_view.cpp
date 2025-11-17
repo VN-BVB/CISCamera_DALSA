@@ -136,15 +136,15 @@ void JointView::updateDisplay() {
 
     // 根据checkbox状态绘制不同的内容
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
-        scene->whenDrawPixelContours(m_pixelContours);
+        // scene->whenDrawPixelContours(m_pixelContours);
     }
 
     if (m_showPixelContoursLine && !m_pixelContours.empty()) {
-        scene->whenDrawPixelContours(m_pixelContours);
+        // scene->whenDrawPixelContours(m_pixelContours);
     }
 
     if (m_showSubpixelContours && !m_subpixelContours.empty()) {
-        scene->whenDrawSubpixelContours(m_subpixelContours);
+        // scene->whenDrawSubpixelContours(m_subpixelContours);
     }
 
     if (m_showFitLines && !m_fitTangentLines.empty()) {

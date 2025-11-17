@@ -12,6 +12,7 @@
 #include "tinysplinecxx.h"
 #include "src/jointDetection/contourProcess/methods/curve_seg.h"
 #include "graphicItems/graphic_item_component.h"
+#include "graphicItems/contour_item.h"
 
 class DisplayView;
 class DisplayImageItem;
@@ -57,18 +58,6 @@ public slots:
 
     // =====================================图形显示槽函数=====================================
 public slots:
-    // 绘制单条亚像素轮廓
-    void whenDrawSingleSubpixelContour(const std::vector<cv::Point2f> &subpixelContour);
-    // 绘制单条像素轮廓
-    void whenDrawSinglePixelContour(const std::vector<cv::Point> &pixelContour);
-    // 绘制多条亚像素轮廓
-    void whenDrawSubpixelContours(const std::vector<std::vector<cv::Point2f>> &subpixelContours);
-    // 绘制多条像素轮廓
-    void whenDrawPixelContours(const std::vector<std::vector<cv::Point>> &pixelContours);
-    // 清除轮廓
-    void whenClearContours();
-    // 绘制多条直线
-    void whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
     // 绘制点集
     void whenDrawPoints(const std::vector<cv::Point2f> &Points, const QColor &color);
     // 绘制B样条曲线
@@ -80,7 +69,12 @@ public slots:
     void whenDisplayRotateRects(const std::vector<cv::RotatedRect>& RotatedRects);
 
     // ==========================图形组件系统绘制===================
-    void whenDrawLinesComponent(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
+    void whenDrawContours(const std::vector<std::vector<cv::Point2f>> &contours,
+                          const QColor& color = Qt::transparent,
+                          double lineWidth = -1.0,
+                          Qt::PenStyle lineStyle = Qt::SolidLine,
+                          double zValue = 10.0);
+    void whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
 
     // @TODO:将轮廓显示全整理成图元类
 

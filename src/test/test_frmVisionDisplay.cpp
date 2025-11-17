@@ -8,15 +8,17 @@
 test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     : QWidget(parent),
     ui(new Ui::test_FrmVisionDisplay),
-    m_frmDisplay(new FrmVisionDisplay(this)),
-    m_btn_begin(new QPushButton("start", this)),
-    m_btn_draw(new QPushButton("draw graphicsItem",this))
+    m_frmDisplay(new FrmVisionDisplay(this))
 {
     ui->setupUi(this);
+    m_btn_begin = new QPushButton("start", this);
+    m_btn_draw_lines = new QPushButton("draw lines",this);
+    m_btn_draw_contours = new QPushButton("draw contours",this);
 
     // 设置按钮属性
     m_btn_begin->setFixedSize(80, 30);
-    m_btn_draw->setFixedSize(200, 30);
+    m_btn_draw_lines->setFixedSize(200, 30);
+    m_btn_draw_contours->setFixedSize(200, 30);
 
     // 创建主布局
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -26,7 +28,8 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     // 创建按钮布局
     QHBoxLayout* buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(m_btn_begin);
-    buttonLayout->addWidget(m_btn_draw);
+    buttonLayout->addWidget(m_btn_draw_lines);
+    buttonLayout->addWidget(m_btn_draw_contours);
     buttonLayout->addStretch();  // 将按钮推到左侧
 
     // 添加按钮布局和显示控件到主布局
@@ -39,7 +42,8 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
 
     // 连接按钮点击信号到槽函数
     connect(m_btn_begin, &QPushButton::clicked, this, &test_FrmVisionDisplay::onBeginButtonClicked);
-    connect(m_btn_draw, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawButtonClicked);
+    connect(m_btn_draw_lines, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawLinesBtnClicked);
+    connect(m_btn_draw_contours, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawContoursBtnClicked);
 }
 
 test_FrmVisionDisplay::~test_FrmVisionDisplay() { delete ui; }
@@ -60,7 +64,7 @@ void test_FrmVisionDisplay::displayContours(std::vector<std::vector<cv::Point2f>
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDrawSubpixelContours(contours);
+    scene->whenDrawContours(contours);
 }
 
 void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& RotatedRects) {
@@ -78,8 +82,8 @@ void test_FrmVisionDisplay::displayLines(std::vector<cv::Vec4f> lines) {
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDrawLinesComponent(lines, 100);
-    scene->whenDrawLinesComponent(lines, 10, Qt::yellow);
+    scene->whenDrawLines(lines, 100);
+    scene->whenDrawLines(lines, 10, Qt::yellow);
 }
 
 // 开始按钮点击槽函数实现
@@ -104,7 +108,7 @@ void test_FrmVisionDisplay::onBeginButtonClicked() {
 
 }
 
-void test_FrmVisionDisplay::onDrawButtonClicked()
+void test_FrmVisionDisplay::onDrawLinesBtnClicked()
 {
     // 构造几条经过原点的直线
     std::vector<cv::Vec4f> lines;
@@ -132,6 +136,16 @@ void test_FrmVisionDisplay::onDrawButtonClicked()
     PLOG_INFO << "绘制了" << lines.size() << "条经过原点的直线";
 }
 
+void test_FrmVisionDisplay::onDrawContoursBtnClicked()
+{
+    std::vector<std::vector<cv::Point2f>> contours;
+    std::vector<cv::Point2f> contourPoints1 = {{0,0}, {100,0}, {100,100}, {0,100}};
+    std::vector<cv::Point2f> contourPoints2 = {{500,0}, {500,0}, {100,100}, {0,500}};
+    contours.push_back(contourPoints1);
+    contours.push_back(contourPoints2);
+    displayContours(contours);
+    PLOG_INFO << "绘制了" << contours.size() << "条轮廓";
+}
 
 
 
