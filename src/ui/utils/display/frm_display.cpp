@@ -20,7 +20,6 @@ void FrmVisionDisplay::initFrm()
     vLayoutDisplay->setContentsMargins(0, 0, 0, 0);
     vLayoutDisplay->setSpacing(0);
 
-    // InteractiveDisplayManager* displayMgr = new InteractiveDisplayManager();
     m_displayMgr = new DisplayManager();
     if (m_displayMgr)
     {

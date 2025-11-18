@@ -140,6 +140,7 @@ void JointView::updateDisplay() {
     if (!scene) return;
     ui->gv_image->displayImage(*m_currentImage, true);
 
+    // @TODO：这里不应该直接调用scene的添加图形图元方式，而应该在frm_display中再封装一个接口
     // 根据checkbox状态绘制不同的内容
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
         if (!m_subpixelContours[1].empty()) {
@@ -184,13 +185,6 @@ void JointView::updateDisplay() {
         }
     }
 
-    // if (!m_fitLines.empty()) {
-    //     scene->whenDrawLines(m_fitLines, 1000, Qt::yellow);
-    // }
-
-    // if (!m_endPointsByFittedLines.empty()) {
-    //     scene->whenDrawPoints(m_endPointsByFittedLines, Qt::red);
-    // }
     // @TODO:增加取消勾选时，删除相应轮廓的功能
 }
 

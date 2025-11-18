@@ -25,6 +25,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     m_btn_draw_points = new QPushButton("draw points",this);
     m_btn_draw_bspline = new QPushButton("draw bspline",this);
     m_btn_draw_rotated_rect = new QPushButton("draw rotated rect",this);
+    m_btn_clear_display = new QPushButton("clear display", this);
 
     // 设置按钮属性
     m_btn_begin->setFixedSize(80, 30);
@@ -33,6 +34,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     m_btn_draw_points->setFixedSize(200, 30);
     m_btn_draw_bspline->setFixedSize(200, 30);
     m_btn_draw_rotated_rect->setFixedSize(200, 30);
+    m_btn_clear_display->setFixedSize(200, 30);
 
     // 创建主布局
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -47,6 +49,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     buttonLayout->addWidget(m_btn_draw_points);
     buttonLayout->addWidget(m_btn_draw_bspline);
     buttonLayout->addWidget(m_btn_draw_rotated_rect);
+    buttonLayout->addWidget(m_btn_clear_display);
     buttonLayout->addStretch();  // 将按钮推到左侧
 
     // 添加按钮布局和显示控件到主布局
@@ -64,6 +67,7 @@ test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     connect(m_btn_draw_points, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawPointsBtnClicked);
     connect(m_btn_draw_bspline, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawBSplineBtnClicked);
     connect(m_btn_draw_rotated_rect, &QPushButton::clicked, this, &test_FrmVisionDisplay::onDrawRotatedRectBtnClicked);
+    connect(m_btn_clear_display, &QPushButton::clicked, this, &test_FrmVisionDisplay::onClearDisplayBtnClicked);  // 连接清除按钮
 }
 
 test_FrmVisionDisplay::~test_FrmVisionDisplay() { delete ui; }
@@ -274,7 +278,18 @@ void test_FrmVisionDisplay::onDrawRotatedRectBtnClicked()
     PLOG_INFO << "绘制了" << rotatedRects.size() << "个旋转矩形";
 }
 
+void test_FrmVisionDisplay::onClearDisplayBtnClicked()
+{
+    DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
+    if (!displayMgr) return;
 
+    DisplayScene* scene = displayMgr->displayScene();
+    if (!scene) return;
+
+    scene->whenClearAllGraphicComponents();
+
+    PLOG_INFO << "已清除所有显示内容";
+}
 
 
 

@@ -33,6 +33,7 @@ public slots:
     void onDrawPointsBtnClicked();
     void onDrawBSplineBtnClicked();
     void onDrawRotatedRectBtnClicked();
+    void onClearDisplayBtnClicked();
 private:
     Ui::test_FrmVisionDisplay *ui;
     FrmVisionDisplay *m_frmDisplay;
@@ -42,6 +43,7 @@ private:
     QPushButton* m_btn_draw_points;
     QPushButton* m_btn_draw_bspline;
     QPushButton* m_btn_draw_rotated_rect;
+    QPushButton* m_btn_clear_display;
 };
 
 #endif // TEST_FRMVISIONDISPLAY_H

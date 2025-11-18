@@ -121,46 +121,25 @@ void DisplayScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     return QGraphicsScene::mouseReleaseEvent(event);
 }
 
-void DisplayScene::addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
-{
-    m_graphicItemComposite->addComponent(component);
-}
-
-void DisplayScene::removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
-{
-    m_graphicItemComposite->removeComponent(component);
-}
-
-// 显示所有图形组件
-void DisplayScene::showAllGraphicComponents()
-{
-    m_graphicItemComposite->addToScene(this);
-}
-
-void DisplayScene::clearAllGraphicComponents()
-{
-    m_graphicItemComposite->removeFromScene(this);
-}
-
-// 通用的图元组件管理槽函数实现
+// 图元组件管理槽函数实现
 void DisplayScene::whenAddGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
 {
     if (component) {
-        addGraphicComponent(component);
-        showAllGraphicComponents();
+        m_graphicItemComposite->addComponent(component);
+        m_graphicItemComposite->addToScene(this);
     }
 }
 
 void DisplayScene::whenRemoveGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
 {
     if (component) {
-        removeGraphicComponent(component);
+        m_graphicItemComposite->removeComponent(component);
     }
 }
 
 void DisplayScene::whenClearAllGraphicComponents()
 {
-    clearAllGraphicComponents();
+    m_graphicItemComposite->removeFromScene(this);
 }
 
 

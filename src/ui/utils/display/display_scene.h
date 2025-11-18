@@ -32,15 +32,8 @@ public:
     QPixmap getDisplayImage();
     // 获取显示的图像的尺寸
     QSize getDisplayImageSize() const;
-
-    // 图形组件管理方法
-    void addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
-    void removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
-    void showAllGraphicComponents();
-    void clearAllGraphicComponents();
     // 获取图形组件组合
     std::shared_ptr<GraphicItemComposite> getGraphicItemComposite() const { return m_graphicItemComposite; }
-
 
     // =====================================图像显示槽函数=====================================
 public slots:
@@ -50,7 +43,7 @@ public slots:
     // =====================================文本显示槽函数=====================================
 public slots:
     void whenAddDisplayText(const QString &text, const QPointF &pt=QPointF(0,0), const double &size=1,
-                        const QColor &color=QColor(Qt::green), const bool &clear=false);
+                            const QColor &color=QColor(Qt::green), const bool &clear=false);
     void whenClearDisplayText();
 
     // =====================================图形显示槽函数=====================================
