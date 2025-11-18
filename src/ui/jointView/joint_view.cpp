@@ -145,7 +145,7 @@ void JointView::updateDisplay() {
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
         if (!m_subpixelContours[1].empty()) {
             auto pointComponent = std::make_shared<PointItem>(m_subpixelContours[1]);
-            scene->whenAddGraphicComponent(pointComponent);
+            ui->gv_image->addGraphicComponent(pointComponent);
         }
     }
 
@@ -157,7 +157,7 @@ void JointView::updateDisplay() {
         for (const auto& contour : m_subpixelContours) {
             if (!contour.empty()) {
                 auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour);
-                scene->whenAddGraphicComponent(contourComponent);
+                ui->gv_image->addGraphicComponent(contourComponent);
             }
         }
     }
@@ -165,7 +165,7 @@ void JointView::updateDisplay() {
     if (m_showFitLines && !m_fitTangentLines.empty()) {
         for (const auto& line : m_fitTangentLines) {
             auto lineComponent = std::make_shared<LineItem>(line);
-            scene->whenAddGraphicComponent(lineComponent);
+            ui->gv_image->addGraphicComponent(lineComponent);
         }
     }
 
@@ -173,7 +173,7 @@ void JointView::updateDisplay() {
         if (!m_fitCurves.empty()) {
             for (const auto& curve : m_fitCurves) {
                 auto splineComponent = std::make_shared<BSplineItem>(curve.getSpline());
-                scene->whenAddGraphicComponent(splineComponent);
+                ui->gv_image->addGraphicComponent(splineComponent);
             }
         }
     }
@@ -181,7 +181,7 @@ void JointView::updateDisplay() {
     if (m_showEndPoints && !m_endPointsByTangentLines.empty()) {
         if (!m_endPointsByTangentLines.empty()) {
             auto pointComponent = std::make_shared<PointItem>(m_endPointsByTangentLines);
-            scene->whenAddGraphicComponent(pointComponent);
+            ui->gv_image->addGraphicComponent(pointComponent);
         }
     }
 

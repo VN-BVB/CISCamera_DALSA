@@ -66,7 +66,35 @@ void FrmVisionDisplay::displayImage(std::shared_ptr<cv::Mat> image, bool autoFit
     }
 }
 
+void FrmVisionDisplay::addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (!m_displayMgr) return;
+    DisplayScene* scene = m_displayMgr->displayScene();
+    if (scene)
+    {
+        scene->whenAddGraphicComponent(component);
+    }
+}
 
+void FrmVisionDisplay::removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (!m_displayMgr) return;
+    DisplayScene* scene = m_displayMgr->displayScene();
+    if (scene)
+    {
+        scene->whenRemoveGraphicComponent(component);
+    }
+}
+
+void FrmVisionDisplay::clearAllGraphicComponents()
+{
+    if (!m_displayMgr) return;
+    DisplayScene* scene = m_displayMgr->displayScene();
+    if (scene)
+    {
+        scene->whenClearAllGraphicComponents();
+    }
+}
 
 
 
