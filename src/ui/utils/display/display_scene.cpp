@@ -140,6 +140,7 @@ void DisplayScene::whenRemoveGraphicComponent(std::shared_ptr<GraphicsItemCompon
 void DisplayScene::whenClearAllGraphicComponents()
 {
     m_graphicItemComposite->removeFromScene(this);
+    m_graphicItemComposite->clearComponents();
 }
 
 

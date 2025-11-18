@@ -13,7 +13,7 @@ public:
     void removeComponent(std::shared_ptr<GraphicsItemComponent> component) override;
     void clearComponents() override;
 
-    // 仅在复合类中实现场景管理
+    // 实现场景管理
     void addToScene(QGraphicsScene* scene);
     void removeFromScene(QGraphicsScene* scene);
 
