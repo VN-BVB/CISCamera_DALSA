@@ -138,7 +138,7 @@ void JointView::updateDisplay() {
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    ui->gv_image->displayImage(*m_currentImage, true);
+    ui->gv_image->displayImage(m_currentImage, true);
 
     // @TODO：这里不应该直接调用scene的添加图形图元方式，而应该在frm_display中再封装一个接口
     // 根据checkbox状态绘制不同的内容

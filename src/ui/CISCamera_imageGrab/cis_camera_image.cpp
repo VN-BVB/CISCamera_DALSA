@@ -1,4 +1,4 @@
-﻿#include "cis_camera_image.h"
+#include "cis_camera_image.h"
 
 #include "ui_cis_camera_image.h"
 #define ENABLE_SLAVE_CAMERA
@@ -14,7 +14,8 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     std::string filePath = R"(D:\Code\CISCamera_DALSA\data\CISCamera_Image\qpg\Splice_20251108_160731447.bmp)";
     // 读取图像
     cv::Mat img = cv::imread(filePath, cv::IMREAD_GRAYSCALE);
-    ui->imgSplice->displayImage(img, true);
+    auto smartPtrImage = std::make_shared<cv::Mat>(img);
+    ui->imgSplice->displayImage(smartPtrImage, true);
 }
 
 CISWidget::~CISWidget() {

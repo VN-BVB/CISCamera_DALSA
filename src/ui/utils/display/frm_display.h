@@ -19,8 +19,6 @@ public:
     DisplayManager* getDisplayManager();
 
 public slots:
-    void displayImage(const QImage &image, bool autoFit = true);
-    void displayImage(const cv::Mat &image, bool autoFit = true);
     void displayImage(std::shared_ptr<cv::Mat> image, bool autoFit = true);
 
 
