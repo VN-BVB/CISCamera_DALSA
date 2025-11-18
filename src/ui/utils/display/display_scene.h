@@ -55,27 +55,9 @@ public slots:
 
     // =====================================图形显示槽函数=====================================
 public slots:
-    // @TODO:这里好像有点不好，每回都在调用槽函数时指定绘制属性，应该将这些属性抽象到component基类中实现
-    // 还有，其实这里绘制应该都只传入对应的指针，其他属性应该在具体用到的地方直接设置
-    void whenDrawContours(const std::vector<std::vector<cv::Point2f>> &contours,
-                          const QColor& color = Qt::transparent,
-                          double lineWidth = -1.0,
-                          Qt::PenStyle lineStyle = Qt::SolidLine,
-                          double zValue = 10.0);
-    void whenDrawPoints(const std::vector<cv::Point2f> &points,
-                        const QColor& color = Qt::red,
-                        double size = 10,
-                        double zValue = 15.0);
-
-    void whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints);
-    void whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline);
-    void whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines);
-    void whenDrawBSplineCurves(const std::vector<CurveSeg> &curves);
-
-    void whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length = 1, const QColor &color = Qt::blue);
-
-    // 绘制旋转矩形
-    void whenDisplayRotateRects(const std::vector<cv::RotatedRect>& RotatedRects);
+    void whenAddGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
+    void whenRemoveGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
+    void whenClearAllGraphicComponents();
 
 protected:
     // 设置显示图像图元

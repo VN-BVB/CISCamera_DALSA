@@ -1,9 +1,17 @@
-#include "test_frmVisionDisplay.h"
-#include "ui_test_frmVisionDisplay.h"
+
 #include <QVBoxLayout>
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <plog/Log.h>
+
+#include "test_frmVisionDisplay.h"
+#include "ui_test_frmVisionDisplay.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_component.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
+#include "src/ui/utils/display/graphicItems/line_item.h"
+#include "src/ui/utils/display/graphicItems/point_item.h"
+#include "src/ui/utils/display/graphicItems/bspline_item.h"
+#include "src/ui/utils/display/graphicItems/rotated_rect_item.h"
 
 test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
     : QWidget(parent),
@@ -76,7 +84,12 @@ void test_FrmVisionDisplay::displayContours(std::vector<std::vector<cv::Point2f>
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDrawContours(contours);
+    for (const auto& contour : contours) {
+        if (!contour.empty()) {
+            auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour);
+            scene->whenAddGraphicComponent(contourComponent);
+        }
+    }
 }
 
 void test_FrmVisionDisplay::displayPoints(std::vector<cv::Point2f> points)
@@ -86,7 +99,10 @@ void test_FrmVisionDisplay::displayPoints(std::vector<cv::Point2f> points)
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDrawPoints(points);
+    if (!points.empty()) {
+        auto pointComponent = std::make_shared<PointItem>(points);
+        scene->whenAddGraphicComponent(pointComponent);
+    }
 }
 
 void test_FrmVisionDisplay::displayBSpline(std::vector<cv::Point2f> controlPoints)
@@ -96,16 +112,22 @@ void test_FrmVisionDisplay::displayBSpline(std::vector<cv::Point2f> controlPoint
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDrawSingleBSplineCurve(controlPoints);
+    if (controlPoints.size() >= 2) {
+        auto splineComponent = std::make_shared<BSplineItem>(controlPoints);
+        scene->whenAddGraphicComponent(splineComponent);
+    }
 }
 
-void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& RotatedRects) {
+void test_FrmVisionDisplay::displayRotateRects(std::vector<cv::RotatedRect>& rotatedRects) {
     DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
     if (!displayMgr) return;
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDisplayRotateRects(RotatedRects);
+    if (!rotatedRects.empty()) {
+        auto rotatedRectComponent = std::make_shared<RotatedRectItem>(rotatedRects);
+        scene->whenAddGraphicComponent(rotatedRectComponent);
+    }
 }
 
 void test_FrmVisionDisplay::displayLines(std::vector<cv::Vec4f> lines) {
@@ -114,8 +136,10 @@ void test_FrmVisionDisplay::displayLines(std::vector<cv::Vec4f> lines) {
 
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
-    scene->whenDrawLines(lines, 100);
-    scene->whenDrawLines(lines, 10, Qt::yellow);
+    for (const auto& line : lines) {
+        auto lineComponent = std::make_shared<LineItem> (line,100,Qt::blue);
+        scene->whenAddGraphicComponent(lineComponent);
+    }
 }
 
 // 开始按钮点击槽函数实现

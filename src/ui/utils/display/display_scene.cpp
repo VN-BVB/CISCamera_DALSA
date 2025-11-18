@@ -142,103 +142,26 @@ void DisplayScene::clearAllGraphicComponents()
     m_graphicItemComposite->removeFromScene(this);
 }
 
-void DisplayScene::whenDrawContours(const std::vector<std::vector<cv::Point2f>> &contours,
-                      const QColor &color,
-                      double lineWidth,
-                      Qt::PenStyle lineStyle,
-                      double zValue)
+// 通用的图元组件管理槽函数实现
+void DisplayScene::whenAddGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
 {
-    for (const auto& contour : contours) {
-        if (!contour.empty()) {
-            auto contourComponent = std::make_shared<ContourItem> (contour,ContourItem::subpixelContour,color, lineWidth, lineStyle, zValue);
-            addGraphicComponent(contourComponent);
-            showAllGraphicComponents();
-        }
+    if (component) {
+        addGraphicComponent(component);
+        showAllGraphicComponents();
     }
 }
 
-void DisplayScene::whenDrawPoints(const std::vector<cv::Point2f> &points,
-                                  const QColor& color,
-                                  double size,
-                                  double zValue)
+void DisplayScene::whenRemoveGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
 {
-    if (points.empty()) return;
-
-    auto pointComponent = std::make_shared<PointItem>(points);
-    addGraphicComponent(pointComponent);
-    showAllGraphicComponents();
-}
-
-void DisplayScene::whenDrawLines(const std::vector<cv::Vec4f> &lines, const double length, const QColor &color)
-{
-    for (const auto& line : lines) {
-        auto lineComponent = std::make_shared<LineItem>(line, length, color);
-        addGraphicComponent(lineComponent);
+    if (component) {
+        removeGraphicComponent(component);
     }
-    showAllGraphicComponents();
 }
 
-// 修改绘制单个B样条曲线的方法
-void DisplayScene::whenDrawSingleBSplineCurve(const std::vector<cv::Point2f> &controlPoints)
+void DisplayScene::whenClearAllGraphicComponents()
 {
-    if (controlPoints.size() < 2) {
-        return;
-    }
-
-    // 创建B样条曲线组件
-    auto splineComponent = std::make_shared<BSplineItem>(controlPoints);
-    addGraphicComponent(splineComponent);
-    showAllGraphicComponents();
+    clearAllGraphicComponents();
 }
-
-// 修改使用tinyspline对象绘制B样条曲线的方法
-void DisplayScene::whenDrawSingleBSplineCurve(const tinyspline::BSpline &spline)
-{
-    // 创建B样条曲线组件
-    auto splineComponent = std::make_shared<BSplineItem>(spline);
-    addGraphicComponent(splineComponent);
-    showAllGraphicComponents();
-}
-
-// 修改绘制多条B样条曲线的方法
-void DisplayScene::whenDrawBSplineCurves(const std::vector<tinyspline::BSpline> &splines)
-{
-    if (splines.empty()) return;
-
-    // 遍历所有样条曲线
-    for (const auto& spline : splines) {
-        auto splineComponent = std::make_shared<BSplineItem>(spline);
-        addGraphicComponent(splineComponent);
-    }
-    showAllGraphicComponents();
-}
-
-void DisplayScene::whenDrawBSplineCurves(const std::vector<CurveSeg> &curves)
-{
-    if (curves.empty()) return;
-
-    // 遍历所有曲线段
-    for (const auto& curve : curves) {
-        auto splineComponent = std::make_shared<BSplineItem>(curve.getSpline());
-        addGraphicComponent(splineComponent);
-    }
-    showAllGraphicComponents();
-}
-
-// 绘制旋转矩形
-void DisplayScene::whenDisplayRotateRects(const std::vector<cv::RotatedRect>& rotatedRects)
-{
-    if (rotatedRects.empty())
-        return;
-
-    // 创建旋转矩形组件
-    auto rotatedRectComponent = std::make_shared<RotatedRectItem>(rotatedRects);
-    addGraphicComponent(rotatedRectComponent);
-    showAllGraphicComponents();
-}
-
-
-
 
 
 

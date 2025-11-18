@@ -1,13 +1,19 @@
-#include "joint_view.h"
-#include "ui_joint_view.h"
-#include "src/ui/utils/display/display_scene.h"
-#include "src/ui/utils/display/display_manager.h"
-
 #include <QFileDialog>
 #include <QGraphicsPathItem>
 #include <QPainterPath>
 #include <QInputDialog>
 #include <plog/Log.h>
+
+#include "joint_view.h"
+#include "ui_joint_view.h"
+#include "src/ui/utils/display/display_scene.h"
+#include "src/ui/utils/display/display_manager.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_component.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
+#include "src/ui/utils/display/graphicItems/line_item.h"
+#include "src/ui/utils/display/graphicItems/point_item.h"
+#include "src/ui/utils/display/graphicItems/bspline_item.h"
+#include "src/ui/utils/display/graphicItems/rotated_rect_item.h"
 
 JointView::JointView(QWidget *parent)
     : QWidget(parent), 
@@ -136,7 +142,10 @@ void JointView::updateDisplay() {
 
     // 根据checkbox状态绘制不同的内容
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
-        scene->whenDrawPoints(m_subpixelContours[1]);
+        if (!m_subpixelContours[1].empty()) {
+            auto pointComponent = std::make_shared<PointItem>(m_subpixelContours[1]);
+            scene->whenAddGraphicComponent(pointComponent);
+        }
     }
 
     if (m_showPixelContoursLine && !m_pixelContours.empty()) {
@@ -144,19 +153,35 @@ void JointView::updateDisplay() {
     }
 
     if (m_showSubpixelContours && !m_subpixelContours.empty()) {
-        scene->whenDrawContours(m_subpixelContours);
+        for (const auto& contour : m_subpixelContours) {
+            if (!contour.empty()) {
+                auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour);
+                scene->whenAddGraphicComponent(contourComponent);
+            }
+        }
     }
 
     if (m_showFitLines && !m_fitTangentLines.empty()) {
-        scene->whenDrawLines(m_fitTangentLines, 100, Qt::blue);
+        for (const auto& line : m_fitTangentLines) {
+            auto lineComponent = std::make_shared<LineItem>(line);
+            scene->whenAddGraphicComponent(lineComponent);
+        }
     }
 
     if (m_showFitCurves && !m_fitCurves.empty()) {
-        scene->whenDrawBSplineCurves(m_fitCurves);
+        if (!m_fitCurves.empty()) {
+            for (const auto& curve : m_fitCurves) {
+                auto splineComponent = std::make_shared<BSplineItem>(curve.getSpline());
+                scene->whenAddGraphicComponent(splineComponent);
+            }
+        }
     }
 
     if (m_showEndPoints && !m_endPointsByTangentLines.empty()) {
-        scene->whenDrawPoints(m_endPointsByTangentLines, Qt::green);
+        if (!m_endPointsByTangentLines.empty()) {
+            auto pointComponent = std::make_shared<PointItem>(m_endPointsByTangentLines);
+            scene->whenAddGraphicComponent(pointComponent);
+        }
     }
 
     // if (!m_fitLines.empty()) {
