@@ -2,48 +2,40 @@
 #include <QGraphicsPathItem>
 #include <QPen>
 
-BSplineItem::BSplineItem(const tinyspline::BSpline& spline, const QColor& color, double lineWidth, Qt::PenStyle lineStyle, double zValue)
-    : GraphicsItemComponent() // 调用基类构造函数
+BSplineItem::BSplineItem(const tinyspline::BSpline& spline,
+                         const QColor& color,
+                         double lineWidth,
+                         Qt::PenStyle lineStyle,
+                         double zValue)
+    : GraphicsItemComponent(color,lineWidth,lineStyle,zValue)
 {
-    // 使用基类方法设置共同属性
-    setColor(color);
-    setLineWidth(lineWidth);
-    setLineStyle(lineStyle);
-    setZValue(zValue);
-
     // 创建路径
     QPainterPath path = createPathFromBSpline(spline);
 
     // 创建路径图元
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
 
-    // 使用基类的applyProperties方法应用属性
-    applyProperties();
-
     // 添加到基类的容器中
     m_graphicsItems.append(pathItem);
+    applyProperties();
 }
 
-BSplineItem::BSplineItem(const std::vector<cv::Point2f>& controlPoints, const QColor& color, double lineWidth, Qt::PenStyle lineStyle, double zValue)
-    : GraphicsItemComponent() // 调用基类构造函数
+BSplineItem::BSplineItem(const std::vector<cv::Point2f>& controlPoints,
+                         const QColor& color,
+                         double lineWidth,
+                         Qt::PenStyle lineStyle,
+                         double zValue)
+    : GraphicsItemComponent(color,lineWidth,lineStyle,zValue)
 {
-    // 使用基类方法设置共同属性
-    setColor(color);
-    setLineWidth(lineWidth);
-    setLineStyle(lineStyle);
-    setZValue(zValue);
-
     // 创建路径
     QPainterPath path = createPathFromControlPoints(controlPoints);
 
     // 创建路径图元
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
 
-    // 使用基类的applyProperties方法应用属性
-    applyProperties();
-
     // 添加到基类的容器中
     m_graphicsItems.append(pathItem);
+    applyProperties();
 }
 
 QList<QGraphicsItem*> BSplineItem::getGraphicsItems() const

@@ -25,7 +25,7 @@ public:
     // 获取所有图形图元项
     virtual QList<QGraphicsItem*> getGraphicsItems() const = 0;
 
-    // 共同属性的设置和获取方法
+    // 共同属性的设置和获取
     void setColor(const QColor& color);
     QColor getColor() const;
 

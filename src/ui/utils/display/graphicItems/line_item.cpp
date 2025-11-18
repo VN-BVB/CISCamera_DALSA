@@ -3,19 +3,14 @@
 #include <QPen>
 #include <QGraphicsPathItem>
 
-LineItem::LineItem(const cv::Vec4f& line, double length, const QColor color)
-    : GraphicsItemComponent() // 调用基类构造函数
+LineItem::LineItem(const cv::Vec4f& line,
+                   double lineWidth,
+                   double length,
+                   const QColor& color)
+    : GraphicsItemComponent(color, lineWidth, Qt::SolidLine, 10.0),
+    m_line(line),
+    m_length(length)
 {
-    // 保存特有属性
-    m_line = line;
-    m_length = length;
-
-    // 使用基类方法设置共同属性
-    setColor(color);
-    setLineWidth(0.1); // 原代码中设置的线宽
-    setZValue(10);    // 原代码中设置的z值
-
-    // 创建图形项并添加到基类的m_graphicsItems中
     double vx = line[0];
     double vy = line[1];
     double x0 = line[2];
@@ -33,10 +28,10 @@ LineItem::LineItem(const cv::Vec4f& line, double length, const QColor color)
 
     QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
 
-    applyProperties();
-
     // 添加到基类的容器中
     m_graphicsItems.append(pathItem);
+
+    applyProperties();
 }
 
 QList<QGraphicsItem*> LineItem::getGraphicsItems() const

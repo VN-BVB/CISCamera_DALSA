@@ -141,7 +141,7 @@ void test_FrmVisionDisplay::displayLines(std::vector<cv::Vec4f> lines) {
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
     for (const auto& line : lines) {
-        auto lineComponent = std::make_shared<LineItem> (line,100,Qt::blue);
+        auto lineComponent = std::make_shared<LineItem> (line,0.5, 100,Qt::blue);
         scene->whenAddGraphicComponent(lineComponent);
     }
 }

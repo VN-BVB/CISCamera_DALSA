@@ -9,8 +9,9 @@ class LineItem : public GraphicsItemComponent
 {
 public:
     LineItem(const cv::Vec4f& line,
+             double lineWidth,
              double length = 1.0,
-             const QColor = Qt::blue);
+             const QColor& color = Qt::blue);
 
     QList<QGraphicsItem*> getGraphicsItems() const override;
 

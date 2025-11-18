@@ -140,8 +140,10 @@ void JointView::updateDisplay() {
     if (!scene) return;
     ui->gv_image->displayImage(m_currentImage, true);
 
-    // @TODO：这里不应该直接调用scene的添加图形图元方式，而应该在frm_display中再封装一个接口
-    // 根据checkbox状态绘制不同的内容
+    // 清除所有现有的图形组件，这样在取消勾选时能移除相关显示
+    // &TODO:这里也许还能优化，但现在得忙边缘检测去了
+    ui->gv_image->clearAllGraphicComponents();
+
     if (m_showPixelContoursSquare && !m_pixelContours.empty()) {
         if (!m_subpixelContours[1].empty()) {
             auto pointComponent = std::make_shared<PointItem>(m_subpixelContours[1]);
@@ -164,7 +166,7 @@ void JointView::updateDisplay() {
 
     if (m_showFitLines && !m_fitTangentLines.empty()) {
         for (const auto& line : m_fitTangentLines) {
-            auto lineComponent = std::make_shared<LineItem>(line);
+            auto lineComponent = std::make_shared<LineItem>(line, 0.5, 100, Qt::blue);
             ui->gv_image->addGraphicComponent(lineComponent);
         }
     }
@@ -172,7 +174,11 @@ void JointView::updateDisplay() {
     if (m_showFitCurves && !m_fitCurves.empty()) {
         if (!m_fitCurves.empty()) {
             for (const auto& curve : m_fitCurves) {
-                auto splineComponent = std::make_shared<BSplineItem>(curve.getSpline());
+                auto splineComponent = std::make_shared<BSplineItem>(curve.getSpline(),
+                                                                     QColor(255, 0, 255),
+                                                                     0.1,
+                                                                     Qt::SolidLine,
+                                                                     12.0);
                 ui->gv_image->addGraphicComponent(splineComponent);
             }
         }
@@ -180,7 +186,10 @@ void JointView::updateDisplay() {
 
     if (m_showEndPoints && !m_endPointsByTangentLines.empty()) {
         if (!m_endPointsByTangentLines.empty()) {
-            auto pointComponent = std::make_shared<PointItem>(m_endPointsByTangentLines);
+            auto pointComponent = std::make_shared<PointItem>(m_endPointsByTangentLines,
+                                                              Qt::yellow,
+                                                              0.5,
+                                                              15.0);
             ui->gv_image->addGraphicComponent(pointComponent);
         }
     }
