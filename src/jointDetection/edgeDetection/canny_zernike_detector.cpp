@@ -306,8 +306,32 @@ double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImag
 cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, const cv::Mat& grayImage) {
     // 对背光图去除工件外杂乱边缘，对正光图去除工件内杂乱边缘
     cv::Mat binaryImage;
-    cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    // cv::threshold(grayImage,binaryImage,30, 255, cv::THRESH_BINARY);
+    // cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    // // cv::threshold(grayImage,binaryImage,30, 255, cv::THRESH_BINARY);
+    // cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/binaryImage.bmp", binaryImage);
+    // PLOG_INFO << "baocun binaryImage";
+
+    // 替换OTSU二值化为meanshift分割
+    cv::Mat shiftImage;
+    // 如果是灰度图，需要先转换为彩色图才能使用pyrMeanShiftFiltering
+    cv::Mat colorImage;
+    if (grayImage.channels() == 1) {
+        cv::cvtColor(grayImage, colorImage, cv::COLOR_GRAY2BGR);
+    } else {
+        colorImage = grayImage.clone();
+    }
+    // 使用pyrMeanShiftFiltering进行图像分割
+    // sp参数控制空间窗口大小，sr参数控制颜色窗口大小
+    int sp = 10;  // 空间窗口大小
+    int sr = 15;  // 颜色窗口大小
+    cv::pyrMeanShiftFiltering(colorImage, shiftImage, sp, sr);
+    cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/binaryImage.bmp", shiftImage);
+    // 将分割后的图像转换为灰度图
+    cv::Mat shiftGray;
+    cv::cvtColor(shiftImage, shiftGray, cv::COLOR_BGR2GRAY);
+    // 对分割后的图像进行二值化，可以使用固定阈值或OTSU
+    cv::threshold(shiftGray, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+
     cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/binaryImage.bmp", binaryImage);
     PLOG_INFO << "baocun binaryImage";
 
