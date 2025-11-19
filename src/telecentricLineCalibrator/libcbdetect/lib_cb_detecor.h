@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QObject>
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -28,6 +29,7 @@ private:
     void saveBoardPoints(const std::vector<cv::Point2d>& points);
     // ThreadPool pool(std::thread::hardware_concurrency());
     static int file_counter;
+    std::string parent_path_;
 signals:
     void sendImageReady(cv::Mat result);
     void sendText(const QString& msg);

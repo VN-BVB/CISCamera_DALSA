@@ -21,10 +21,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout_4">
    <item row="0" column="1">
-    <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,0" columnstretch="5,5,1" columnminimumwidth="5,5,1">
-     <item row="0" column="0" rowspan="2">
-      <widget class="QWidget" name="cisConfigHost" native="true"/>
-     </item>
+    <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,0" columnstretch="5,5,5">
      <item row="1" column="1" colspan="2">
       <widget class="FrmVisionDisplay" name="imgSplice">
        <property name="sizePolicy">
@@ -34,6 +31,9 @@
         </sizepolicy>
        </property>
       </widget>
+     </item>
+     <item row="0" column="0" rowspan="2">
+      <widget class="QWidget" name="cisConfigHost" native="true"/>
      </item>
      <item row="0" column="1">
       <widget class="openGLImageWidget" name="imgLive">
@@ -84,42 +84,6 @@
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="0" column="0">
           <layout class="QGridLayout" name="gridLayout">
-           <item row="2" column="0" colspan="2">
-            <widget class="QPushButton" name="btnSoftWareTrigger">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>20</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>软件触发</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QPushButton" name="btnStart">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>20</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>开始采集</string>
-             </property>
-            </widget>
-           </item>
            <item row="5" column="0">
             <widget class="QCheckBox" name="ckbSplice">
              <property name="sizePolicy">
@@ -156,8 +120,8 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QPushButton" name="btnCISConfig">
+           <item row="3" column="0" colspan="2">
+            <widget class="QPushButton" name="btnStopTrigger">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -170,7 +134,7 @@
               </font>
              </property>
              <property name="text">
-              <string>CIS相机内部设置</string>
+              <string>停止触发</string>
              </property>
             </widget>
            </item>
@@ -192,8 +156,8 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0" colspan="2">
-            <widget class="QPushButton" name="btnStopTrigger">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="btnStart">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -206,7 +170,43 @@
               </font>
              </property>
              <property name="text">
-              <string>停止触发</string>
+              <string>开始采集</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QPushButton" name="btnCISConfig">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>20</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>CIS相机内部设置</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QPushButton" name="btnSoftWareTrigger">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>20</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>软件触发</string>
              </property>
             </widget>
            </item>
@@ -358,6 +358,145 @@
             <string>相机内参标定</string>
            </property>
           </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_4">
+        <attribute name="title">
+         <string>相机-对位平台标定</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_10" rowstretch="4,8" columnstretch="4,4">
+           <property name="horizontalSpacing">
+            <number>0</number>
+           </property>
+           <item row="1" column="1">
+            <widget class="FrmVisionDisplay" name="graphicsView_5"/>
+           </item>
+           <item row="1" column="0">
+            <layout class="QGridLayout" name="gridLayout_9" rowstretch="4,4,4,4" rowminimumheight="4,1,4,4">
+             <property name="horizontalSpacing">
+              <number>0</number>
+             </property>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="btnSaveAligenmentPlatImg">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>保存对位标定图像</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QCheckBox" name="checkBox">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>显示图像</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <layout class="QHBoxLayout" name="horizontalLayout_2">
+               <item>
+                <widget class="QLabel" name="label_4">
+                 <property name="text">
+                  <string>对位平台序号</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="cbxPlatform">
+                 <item>
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>1</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>2</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>3</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>4</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>5</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>6</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>7</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>8</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="3" column="0">
+              <widget class="QPushButton" name="btnCalibratePlat">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>对位平台标定</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="FrmVisionDisplay" name="graphicsView"/>
+             </item>
+             <item>
+              <widget class="FrmVisionDisplay" name="graphicsView_3"/>
+             </item>
+             <item>
+              <widget class="FrmVisionDisplay" name="graphicsView_4"/>
+             </item>
+             <item>
+              <widget class="FrmVisionDisplay" name="graphicsView_2"/>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>

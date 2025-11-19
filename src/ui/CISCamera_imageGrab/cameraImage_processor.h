@@ -67,7 +67,12 @@ private:
     const double dx = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
     const double dy = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）
     const int width = 31104, height = 16100;
-
+    std::string folder = "./data/CISCamera_Image/mattxt";
+    // const int W = 8, H = 11;
+    // const double spacingMM = 10.0;
+    // const double dx = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
+    // const double dy = 25.4 / 1200.0;  // 正方像素 （2（D + 1 ） / M）
+    // const int width = 30688, height = 16100;
     bool spliceEnabled_ = true;
     QMutex mtx_;  // 保护 last* 指针
     std::vector<std::vector<Eigen::Vector2d>> all_image_points;

@@ -978,29 +978,29 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     } else {
         std::cout << "非线性优化前的初步估计参数已保存：" << calib_data_path_ << std::endl;
     }
-    Pose pos2e = estimateTelecentricPose(K_, coff_dis_, m_, worldPts, all_imgPts[3]);
-    CalibrationData calib2;
-    if (!calib2.load("./data/calibration_config/optimized_calib_data.json")) {
-        throw std::runtime_error("无法加载标定文件");
-    }
+    // Pose pos2e = estimateTelecentricPose(K_, coff_dis_, m_, worldPts, all_imgPts[3]);
+    // CalibrationData calib2;
+    // if (!calib2.load("./data/calibration_config/optimized_calib_data.json")) {
+    //     throw std::runtime_error("无法加载标定文件");
+    // }
 
-    // 从标定数据中读取参数
-    Eigen::Matrix3d K1 = calib2.K;
-    Eigen::Matrix<double, 1, 5> coff_dis1 = calib2.coff_dis;
-    double m1 = calib2.m;
-    u0_ = calib2.u0;
-    v0_ = calib2.v0;
-    dx_ = calib2.dx;
-    dy_ = calib2.dy;
-    Pose aaa;
-    cv::Vec3d rvec_new(2.0747767, 2.05844074, -0.21906585);
-    cv::Vec3d tvec_new(-249.01625128, -134.99191718, 1);
-    cv::Mat R_cv;
-    cv::Rodrigues(rvec_new, R_cv);
-    aaa.R = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_cv.ptr<double>());
-    aaa.t = Eigen::Vector3d(tvec_new[0], tvec_new[1], tvec_new[2]);
-    aaa.reprojErr = computeReprojectionErrorDemo(worldPts, all_imgPts[3], aaa, K1, " ", coff_dis1);
-    std::cout << "平均重投影误差 = " << aaa.reprojErr << std::endl;
+    // // 从标定数据中读取参数
+    // Eigen::Matrix3d K1 = calib2.K;
+    // Eigen::Matrix<double, 1, 5> coff_dis1 = calib2.coff_dis;
+    // double m1 = calib2.m;
+    // u0_ = calib2.u0;
+    // v0_ = calib2.v0;
+    // dx_ = calib2.dx;
+    // dy_ = calib2.dy;
+    // // Pose aaa;
+    // cv::Vec3d rvec_new(2.0747767, 2.05844074, -0.21906585);
+    // cv::Vec3d tvec_new(-249.01625128, -134.99191718, 1);
+    // cv::Mat R_cv;
+    // cv::Rodrigues(rvec_new, R_cv);
+    // aaa.R = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_cv.ptr<double>());
+    // aaa.t = Eigen::Vector3d(tvec_new[0], tvec_new[1], tvec_new[2]);
+    // aaa.reprojErr = computeReprojectionErrorDemo(worldPts, all_imgPts[3], aaa, K1, " ", coff_dis1);
+    // std::cout << "平均重投影误差 = " << aaa.reprojErr << std::endl;
     // 调用姿态估计函数
     // Pose pos1e = estimateTelecentricPose(K1, coff_dis1, m1, worldPts, all_imgPts[3]);
 

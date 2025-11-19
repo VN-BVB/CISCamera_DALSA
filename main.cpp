@@ -30,50 +30,54 @@
 //     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
 //     plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
 // }
-#include <pybind11/embed.h>
-#include <pybind11/numpy.h>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+#include <direct.h>
 
 #include <Eigen/Dense>
-#include <cmath>
+#include <QDateTime>
+#include <QDir>
+#include <QMutex>
+#include <QObject>
+#include <QString>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <memory>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include "src/telecentricLineCalibrator/py_telecentric_optimizer.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
-#include "src/ui/CISCamera_imageGrab/cameraImage_processor.h"
 int main() {
-    // ------------------ 加载标定 ------------------
-    CalibrationData calib, calib2;
-    CameraImageProcessor reader;
-    TelecentricPYOptimizer calib3;
+    CalibrationData calibRead;
+    TelecentricLineCalibrator calib;
 
-    if (!calib.load("./data/calibration_config/optimized_calib_data.json")) {
-        std::cerr << "无法加载 optimized_calib_data.json\n";
-        return -1;
-    }
-    if (!calib2.load("./data/calibration_config/before_optimization_calib_data.json")) {
-        std::cerr << "无法加载 before_optimization_calib_data.json\n";
-        return -1;
+    if (!calibRead.load("./data/calibration_config/optimized_calib_data.json")) {
+        throw std::runtime_error("无法加载标定文件");
     }
 
-    Eigen::Matrix3d K = calib.K;
-    Eigen::Matrix<double, 1, 5> coff_dis = calib.coff_dis;
+    // 从标定数据中读取参数
+    Eigen::Matrix3d K = calibRead.K;
+    Eigen::Matrix<double, 1, 5> coff_dis = calibRead.coff_dis;
+    double m = calibRead.m;
+    std::vector<Eigen::Vector3d> v_rot1 = calibRead.v_rot;
+    std::vector<Eigen::Vector3d> v_trans1 = calibRead.v_trans;
+    Eigen::Vector3d v_rot = v_rot1[1];
+    Eigen::Vector3d v_trans = v_trans1[1];
+    // 理想归一化坐标（齐次坐标）
+    Eigen::MatrixXd pixelPts(2, 2);
+    pixelPts << 4287.350586, 5683.791992, 4758.567871, 5688.670898;
 
-    Eigen::Vector3d v_rot = calib2.v_rot[3];
-    Eigen::Vector3d v_trans = calib2.v_trans[3];
+    // -------------------- 原始世界平面点 (示例) --------------------
+    // -------------------- 像素 -> 相机（去畸变+K^-1） --------------------
+    Eigen::MatrixXd cam_back = calib.pixelToCameraCoordinates(pixelPts, K, coff_dis);
+    std::cout << "\n像素 -> 相机(去畸变归一化):\n" << cam_back << "\n";
 
-    // ------------------ 读取像素点 ------------------
-    std::vector<Eigen::Vector2d> imgPts;
-    if (!reader.readPointsFromTxt("./data/CISCamera_Image/test/Board1_Points_20251111_170637.txt", imgPts)) {
-        std::cerr << "读取像素点失败\n";
-        return -1;
-    }
+    // -------------------- 相机 -> 世界（平面逆） --------------------
+    Eigen::MatrixXd world_back = calib.cameraToWorldCoordinates(cam_back, v_rot, v_trans);
+    std::cout << "\n像素 -> 世界(反算):\n" << world_back << "\n";
 
-    // ------------------ 构造世界点 ------------------
-    const int W = 8, H = 11;
-    const double spacingMM = 10.0;
-
-    bool a = calib3.optTelecentricExtrinsicParameters(K, coff_dis, imgPts, v_rot, v_trans, W, H, spacingMM);
+    // -------------------- 误差评估 --------------------
     return 0;
 }

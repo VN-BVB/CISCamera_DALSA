@@ -50,6 +50,7 @@ void LibCBDetector::detect(const std::string& image_path, cbdetect::CornerType c
 }
 
 void LibCBDetector::processImagesInDirectory(const std::string& dir_path) {
+    parent_path_ = std::filesystem::path(dir_path).parent_path().string();
     QDir dir(QString::fromStdString(dir_path));
     QStringList filters;
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
@@ -72,7 +73,7 @@ void LibCBDetector::saveBoardPoints(const std::vector<cv::Point2d>& points) {
 #endif
     char timestamp[64];
     std::strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tm);
-    std::string txtFile = "./data/CISCamera_Image/txt/Board1_Points_" + std::string(timestamp) + ".txt";
+    std::string txtFile = parent_path_ + "/test/" + std::string(timestamp) + ".txt";
 
     std::ofstream ofs(txtFile);
     if (ofs.is_open()) {
