@@ -6,25 +6,19 @@
 #include <memory>
 
 /**
- * @brief 新版轮廓处理器 - 使用策略模式
+ * @brief 轮廓处理器 - 使用策略模式
  */
 class ContourProcessorV2 {
 public:
     ContourProcessorV2();
 
-    /**
-     * @brief 处理轮廓
-     */
+    // 处理轮廓
     bool processContour(const std::vector<cv::Point2f>& contour);
 
-    /**
-     * @brief 获取处理结果
-     */
+    // 获取处理结果
     const ContourData& getResult() const { return m_data; }
 
-    /**
-     * @brief 获取处理摘要
-     */
+    // 获取处理摘要
     std::string getSummary() const;
 
     // 结果获取方法

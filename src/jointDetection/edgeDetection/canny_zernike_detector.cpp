@@ -307,6 +307,9 @@ cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, c
     // 对背光图去除工件外杂乱边缘，对正光图去除工件内杂乱边缘
     cv::Mat binaryImage;
     cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    // cv::threshold(grayImage,binaryImage,30, 255, cv::THRESH_BINARY);
+    cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/binaryImage.bmp", binaryImage);
+    PLOG_INFO << "baocun binaryImage";
 
     // 对二值图进行腐蚀，减小边缘无关区域面积，对背光和正光都有用
     cv::Mat erodedBinary;
@@ -316,10 +319,11 @@ cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, c
     cv::erode(erodedBinary, erodedBinary, erodeKernel);
     cv::erode(erodedBinary, erodedBinary, erodeKernel);
 
-    // 先进行闭运算去除腐蚀图中白色区域的空洞，可处理工件外有少量杂物的情况
+    // 进行闭运算去除腐蚀图中白色区域的空洞，可处理工件内外有少量杂物的情况
     cv::Mat closedBinary;
     cv::Mat closeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7,7));
     cv::morphologyEx(erodedBinary, closedBinary, cv::MORPH_CLOSE, closeKernel);
+    cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/closedBinary.bmp", closedBinary);
 
     // 将处理后的二值图翻转，与edge相乘，保留边缘区域，去除无关区域
     cv::bitwise_not(closedBinary, closedBinary);
