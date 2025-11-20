@@ -89,26 +89,28 @@ void ImageReadWorker::whenReadImageFromSharedMemory(int processId, int timeoutMs
         }
 
         // 等待并读取ROIs
-        std::vector<cv::Mat> rois = waitAndReadROIs(timeoutMs);
+        std::vector<ROIWithCoords> rois = waitAndReadROIs(timeoutMs);
         if (rois.empty()) {
             emit sendErrorOccurred("没有从共享内存中读取到图像数据");
             return;
         }
 
-        // 使用线程池并行保存图像
+        // 使用线程池并行保存图像，使用坐标作为文件名
         std::vector<std::future<void>> saveFutures;
         for (size_t i = 0; i < rois.size(); i++) {
             saveFutures.push_back(m_threadPool->enqueue([this, &rois, i]() {
-                std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" + std::to_string(i) + ".bmp";
-                cv::imwrite(imagePath, rois[i]);
+                // 使用坐标作为图像名，格式为"x_y.bmp"
+                std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" + 
+                    std::to_string(rois[i].x) + "_" + std::to_string(rois[i].y) + ".bmp";
+                cv::imwrite(imagePath, rois[i].image);
             }));
         }
 
         //使用线程池将图像转为shared_ptr
         std::vector<std::future<std::shared_ptr<cv::Mat>>> convertFutures;
         for (auto& roi : rois) {
-            convertFutures.push_back(m_threadPool->enqueue([roi] {
-                return std::make_shared<cv::Mat>(roi.clone());
+            convertFutures.push_back(m_threadPool->enqueue([roi] { 
+                return std::make_shared<cv::Mat>(roi.image.clone());
             }));
         }
 
@@ -125,9 +127,9 @@ void ImageReadWorker::whenReadImageFromSharedMemory(int processId, int timeoutMs
     }
 }
 
-std::vector<cv::Mat> ImageReadWorker::waitAndReadROIs(int timeoutMs)
+std::vector<ROIWithCoords> ImageReadWorker::waitAndReadROIs(int timeoutMs)
 {
-    std::vector<cv::Mat> rois;
+    std::vector<ROIWithCoords> rois;
 
     if (!sharedMemory || !sharedMemory->isAttached() ||
         !dataAvailableSemaphore || !dataReadSemaphore)
@@ -187,12 +189,13 @@ std::vector<cv::Mat> ImageReadWorker::waitAndReadROIs(int timeoutMs)
     return rois;
 }
 
-std::vector<cv::Mat> ImageReadWorker::readROIsFromMemory()
+std::vector<ROIWithCoords> ImageReadWorker::readROIsFromMemory()
 {
-    std::vector<cv::Mat> rois;
+    std::vector<ROIWithCoords> rois;
 
     if (!sharedMemory || !sharedMemory->isAttached())
     {
+        // @TODO：将所有错误信息用一个错误管理系统管理，去掉try-catch块
         emit sendErrorOccurred("共享内存未连接");
         return rois;
     }
@@ -233,6 +236,8 @@ std::vector<cv::Mat> ImageReadWorker::readROIsFromMemory()
             int offset = infos[i].offset;
             int channels = infos[i].channels;
             int format = infos[i].format;
+            int x = infos[i].x;  // 读取x坐标
+            int y = infos[i].y;  // 读取y坐标
 
             // 根据通道数创建适当的图像矩阵
             cv::Mat image;
@@ -271,7 +276,11 @@ std::vector<cv::Mat> ImageReadWorker::readROIsFromMemory()
 
             if (!image.empty())
             {
-                rois.push_back(image);
+                ROIWithCoords roiWithCoords;
+                roiWithCoords.image = image;
+                roiWithCoords.x = x;
+                roiWithCoords.y = y;
+                rois.push_back(roiWithCoords);
             }
         }
 

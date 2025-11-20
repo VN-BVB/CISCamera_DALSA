@@ -35,6 +35,14 @@ struct ROIHeader
     bool dataReady; // 数据是否准备好
 };
 
+// 带坐标信息的ROI数据结构
+struct ROIWithCoords
+{
+    cv::Mat image;
+    int x;        // ROI左上角x坐标
+    int y;        // ROI左上角y坐标
+};
+
 // @TODO:实现循环等待读图功能，并且在读完图后发送所有ROI给图像处理线程处理
 // @TODO:采用文件读取进程ID，而不是手动输入pid
 class ImageReadWorker : public QObject
@@ -61,10 +69,10 @@ private:
     void cleanup();
 
     // 从共享内存读取ROIs
-    std::vector<cv::Mat> readROIsFromMemory();
+    std::vector<ROIWithCoords> readROIsFromMemory();
 
     // 等待并读取ROIs
-    std::vector<cv::Mat> waitAndReadROIs(int timeoutMs = 30000);
+    std::vector<ROIWithCoords> waitAndReadROIs(int timeoutMs = 30000);
 
     QSharedMemory *sharedMemory;
     QSystemSemaphore *dataAvailableSemaphore; // 数据可用信号量
