@@ -12,6 +12,8 @@
 #include <QThread>
 #include <vector>
 
+#include "../utils/ThreadPool.h"
+
 // ROI信息结构
 struct ROIInfo
 {
@@ -46,13 +48,13 @@ public:
     bool connectToSender(int processId);
 
 public slots:
-    void readImage(const QString &path);
-    void readImageFromSharedMemory(int processId, int timeoutMs = 30000);
+    void whenReadImage(const QString &path);
+    void whenReadImageFromSharedMemory(int processId, int timeoutMs = 30000);
 
 signals:
-    void imageRead(std::shared_ptr<cv::Mat> image);
-    void errorOccurred(const QString &error);
-    void imagesRead(const std::vector<std::shared_ptr<cv::Mat>>& images);
+    void sendImageRead(std::shared_ptr<cv::Mat> image);
+    void sendErrorOccurred(const QString &error);
+    void sendImagesRead(const std::vector<std::shared_ptr<cv::Mat>>& images);
 
 private:
     // 清理资源
@@ -67,6 +69,7 @@ private:
     QSharedMemory *sharedMemory;
     QSystemSemaphore *dataAvailableSemaphore; // 数据可用信号量
     QSystemSemaphore *dataReadSemaphore;      // 数据已读信号量
+    ThreadPool *m_threadPool;
 };
 
 #endif // IMAGE_READ_WORKER_H

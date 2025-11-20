@@ -35,10 +35,10 @@ JointView::JointView(QWidget *parent)
     // 读取线程
     readWorker->moveToThread(&readThread);
     connect(&readThread, &QThread::finished, readWorker, &QObject::deleteLater);
-    connect(this, &JointView::startImageRead, readWorker, &ImageReadWorker::readImage);
-    connect(this, &JointView::startImageReadFromSharedMemory, readWorker, &ImageReadWorker::readImageFromSharedMemory);
-    connect(readWorker, &ImageReadWorker::imageRead, this, &JointView::handleImageRead);
-    connect(readWorker, &ImageReadWorker::errorOccurred, this, &JointView::handleError);
+    connect(this, &JointView::startImageRead, readWorker, &ImageReadWorker::whenReadImage);
+    connect(this, &JointView::startImageReadFromSharedMemory, readWorker, &ImageReadWorker::whenReadImageFromSharedMemory);
+    connect(readWorker, &ImageReadWorker::sendImageRead, this, &JointView::handleImageRead);
+    connect(readWorker, &ImageReadWorker::sendErrorOccurred, this, &JointView::handleError);
 
     // 处理线程
     processWorker->moveToThread(&processThread);
@@ -76,7 +76,7 @@ JointView::~JointView()
 
 void JointView::on_pb_open_clicked()
 {
-    QString folderPath = "E:/work/车门门环拼接/image/正面打光/9/2碰";
+    QString folderPath = "E:/work/车门门环拼接/image/背面打光/9/1";
     QString path = QFileDialog::getOpenFileName(this, "Select Image", folderPath, "(*.png *.jpg *.bmp)");
     // QString path = "E:/work/车门门环拼接/image/背面打光/9/1/6984_5772.bmp";
     if(path.isEmpty())

@@ -4,11 +4,13 @@
 ImageReadWorker::ImageReadWorker(QObject *parent) : QObject{parent},
     sharedMemory(nullptr),
     dataAvailableSemaphore(nullptr),
-    dataReadSemaphore(nullptr)
+    dataReadSemaphore(nullptr),
+    m_threadPool(new ThreadPool(4))
 {}
 
 ImageReadWorker::~ImageReadWorker()
 {
+    delete m_threadPool;
     cleanup();
 }
 
@@ -54,7 +56,7 @@ bool ImageReadWorker::connectToSender(int processId)
     // 尝试连接到共享内存
     if (!sharedMemory->attach())
     {
-        emit errorOccurred(QString("Failed to attach to shared memory for process %1: %2").arg(processId).arg(sharedMemory->errorString()));
+        emit sendErrorOccurred(QString("Failed to attach to shared memory for process %1: %2").arg(processId).arg(sharedMemory->errorString()));
         cleanup();
         return false;
     }
@@ -62,34 +64,39 @@ bool ImageReadWorker::connectToSender(int processId)
     return true;
 }
 
-void ImageReadWorker::readImage(const QString &path) {
+void ImageReadWorker::whenReadImage(const QString &path) {
     try {
         cv::Mat img = cv::imread(path.toStdString(), cv::IMREAD_GRAYSCALE);
         if (img.empty()) {
-            emit errorOccurred("无法加载图像");
+            emit sendErrorOccurred("无法加载图像");
             return;
         }
         auto imagePtr = std::make_shared<cv::Mat>(img);
-        emit imageRead(imagePtr);
+        emit sendImageRead(imagePtr);
     }
     catch(const std::exception& e){
-        emit errorOccurred(QString("读取图像出错：") + e.what());
+        emit sendErrorOccurred(QString("读取图像出错：") + e.what());
     }
 }
 
-void ImageReadWorker::readImageFromSharedMemory(int processId, int timeoutMs) {
+void ImageReadWorker::whenReadImageFromSharedMemory(int processId, int timeoutMs) {
     try {
         // 连接到发送方进程
         if (!connectToSender(processId)) {
-            emit errorOccurred(QString("连接到发送方进程%1失败").arg(processId));
+            emit sendErrorOccurred(QString("连接到发送方进程%1失败").arg(processId));
             return;
         }
 
         // 等待并读取ROIs
         std::vector<cv::Mat> rois = waitAndReadROIs(timeoutMs);
+        int i = 0;
+        for (auto& roi : rois) {
+            std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" + std::to_string(i++) + ".bmp";
+            cv::imwrite(imagePath, roi);
+        }
 
         if (rois.empty()) {
-            emit errorOccurred("没有从共享内存中读取到图像数据");
+            emit sendErrorOccurred("没有从共享内存中读取到图像数据");
             return;
         }
 
@@ -99,10 +106,10 @@ void ImageReadWorker::readImageFromSharedMemory(int processId, int timeoutMs) {
             images.push_back(std::make_shared<cv::Mat>(roi));
         }
 
-        emit imagesRead(images);
+        emit sendImagesRead(images);
     }
     catch(const std::exception& e) {
-        emit errorOccurred(QString("从共享内存读取图像出错：") + e.what());
+        emit sendErrorOccurred(QString("从共享内存读取图像出错：") + e.what());
     }
 }
 
@@ -113,7 +120,7 @@ std::vector<cv::Mat> ImageReadWorker::waitAndReadROIs(int timeoutMs)
     if (!sharedMemory || !sharedMemory->isAttached() ||
         !dataAvailableSemaphore || !dataReadSemaphore)
     {
-        emit errorOccurred("未正确连接到发送方进程");
+        emit sendErrorOccurred("未正确连接到发送方进程");
         return rois;
     }
 
@@ -122,67 +129,47 @@ std::vector<cv::Mat> ImageReadWorker::waitAndReadROIs(int timeoutMs)
     timer.setSingleShot(true);
     QEventLoop loop;
 
-    // 连接信号槽
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    // 使用原子变量来确保线程安全
+    std::atomic<bool> dataReceived(false);
 
     // 启动定时器
     timer.start(timeoutMs);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
-    // 创建一个线程来尝试获取信号量
-    bool dataReceived = false;
-    QThread workerThread;
-
-    QObject worker;
-    worker.moveToThread(&workerThread);
-
-    QObject::connect(&workerThread, &QThread::started, [&]()
-                     {
-                         dataReceived = dataAvailableSemaphore->acquire();
-                         loop.quit(); });
-
-    workerThread.start();
-    loop.exec(); // 等待获取信号量或超时
+    // 使用线程池执行信号量获取任务
+    auto future = m_threadPool->enqueue([&]() {
+        bool result = dataAvailableSemaphore->acquire();
+        dataReceived = result;
+        loop.quit();
+        return result;
+    });
+    loop.exec();    // 等待获取信号量或超时
 
     // 检查是否超时
-    if (timer.isActive())
-    {
+    if (timer.isActive()) {
         // 正常获取到信号量
         timer.stop();
         PLOG_INFO << "接收到数据可用信号，开始读取ROIs...";
     }
-    else
-    {
+    else {
         // 超时了
         PLOG_WARNING << "等待数据超时，中断操作";
-        workerThread.terminate();
-        workerThread.wait();
-        emit errorOccurred("等待数据超时");
+        emit sendErrorOccurred("等待数据超时");
         return rois;
     }
 
-    // 等待工作线程完成
-    if (workerThread.isRunning())
-    {
-        workerThread.wait(500); // 给线程一点时间完成
-        if (workerThread.isRunning())
-        {
-            workerThread.terminate();
-            workerThread.wait();
-        }
-    }
+    // 等待future完成
+    future.wait();
 
-    if (dataReceived)
-    {
+    if (dataReceived) {
         // 从共享内存读取ROIs
         rois = readROIsFromMemory();
-
         // 通知发送方数据已读取完成
         PLOG_INFO << "通知发送方数据已读取完成";
         dataReadSemaphore->release();
     }
-    else
-    {
-        emit errorOccurred("获取信号量失败");
+    else {
+        emit sendErrorOccurred("获取信号量失败");
     }
 
     return rois;
@@ -194,7 +181,7 @@ std::vector<cv::Mat> ImageReadWorker::readROIsFromMemory()
 
     if (!sharedMemory || !sharedMemory->isAttached())
     {
-        emit errorOccurred("共享内存未连接");
+        emit sendErrorOccurred("共享内存未连接");
         return rois;
     }
 
@@ -203,7 +190,7 @@ std::vector<cv::Mat> ImageReadWorker::readROIsFromMemory()
         // 锁定共享内存以进行安全访问
         if (!sharedMemory->lock())
         {
-            emit errorOccurred("无法锁定共享内存");
+            emit sendErrorOccurred("无法锁定共享内存");
             return rois;
         }
 
@@ -214,7 +201,7 @@ std::vector<cv::Mat> ImageReadWorker::readROIsFromMemory()
         if (!header->dataReady)
         {
             sharedMemory->unlock();
-            emit errorOccurred("共享内存中的数据未准备好");
+            emit sendErrorOccurred("共享内存中的数据未准备好");
             return rois;
         }
 
@@ -285,7 +272,7 @@ std::vector<cv::Mat> ImageReadWorker::readROIsFromMemory()
         {
             sharedMemory->unlock();
         }
-        emit errorOccurred(QString("共享内存操作异常: ") + e.what());
+        emit sendErrorOccurred(QString("共享内存操作异常: ") + e.what());
     }
 
     return rois;
