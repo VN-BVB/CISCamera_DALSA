@@ -1,5 +1,6 @@
-#include "image_read_worker.h"
 #include <plog/Log.h>
+
+#include "image_read_worker.h"
 
 ImageReadWorker::ImageReadWorker(QObject *parent) : QObject{parent},
     sharedMemory(nullptr),
@@ -89,21 +90,32 @@ void ImageReadWorker::whenReadImageFromSharedMemory(int processId, int timeoutMs
 
         // 等待并读取ROIs
         std::vector<cv::Mat> rois = waitAndReadROIs(timeoutMs);
-        int i = 0;
-        for (auto& roi : rois) {
-            std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" + std::to_string(i++) + ".bmp";
-            cv::imwrite(imagePath, roi);
-        }
-
         if (rois.empty()) {
             emit sendErrorOccurred("没有从共享内存中读取到图像数据");
             return;
         }
 
-        // 转换为shared_ptr并发出信号
-        std::vector<std::shared_ptr<cv::Mat>> images;
+        // 使用线程池并行保存图像
+        std::vector<std::future<void>> saveFutures;
+        for (size_t i = 0; i < rois.size(); i++) {
+            saveFutures.push_back(m_threadPool->enqueue([this, &rois, i]() {
+                std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" + std::to_string(i) + ".bmp";
+                cv::imwrite(imagePath, rois[i]);
+            }));
+        }
+
+        //使用线程池将图像转为shared_ptr
+        std::vector<std::future<std::shared_ptr<cv::Mat>>> convertFutures;
         for (auto& roi : rois) {
-            images.push_back(std::make_shared<cv::Mat>(roi));
+            convertFutures.push_back(m_threadPool->enqueue([roi] {
+                return std::make_shared<cv::Mat>(roi.clone());
+            }));
+        }
+
+        std::vector<std::shared_ptr<cv::Mat>> images;
+        images.reserve(convertFutures.size());
+        for (auto& future : convertFutures) {
+            images.push_back(future.get());
         }
 
         emit sendImagesRead(images);
