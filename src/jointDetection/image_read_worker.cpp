@@ -99,28 +99,14 @@ void ImageReadWorker::whenReadImageFromSharedMemory(int processId, int timeoutMs
         std::vector<std::future<void>> saveFutures;
         for (size_t i = 0; i < rois.size(); i++) {
             saveFutures.push_back(m_threadPool->enqueue([this, &rois, i]() {
-                // 使用坐标作为图像名，格式为"x_y.bmp"
                 std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" + 
                     std::to_string(rois[i].x) + "_" + std::to_string(rois[i].y) + ".bmp";
                 cv::imwrite(imagePath, rois[i].image);
             }));
         }
 
-        //使用线程池将图像转为shared_ptr
-        std::vector<std::future<std::shared_ptr<cv::Mat>>> convertFutures;
-        for (auto& roi : rois) {
-            convertFutures.push_back(m_threadPool->enqueue([roi] { 
-                return std::make_shared<cv::Mat>(roi.image.clone());
-            }));
-        }
-
-        std::vector<std::shared_ptr<cv::Mat>> images;
-        images.reserve(convertFutures.size());
-        for (auto& future : convertFutures) {
-            images.push_back(future.get());
-        }
-
-        emit sendImagesRead(images);
+        auto roisPtr = std::make_shared<std::vector<ROIWithCoords>>(std::move(rois));
+        emit sendImagesRead(roisPtr);
     }
     catch(const std::exception& e) {
         emit sendErrorOccurred(QString("从共享内存读取图像出错：") + e.what());

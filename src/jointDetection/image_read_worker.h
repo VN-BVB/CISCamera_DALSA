@@ -62,7 +62,7 @@ public slots:
 signals:
     void sendImageRead(std::shared_ptr<cv::Mat> image);
     void sendErrorOccurred(const QString &error);
-    void sendImagesRead(const std::vector<std::shared_ptr<cv::Mat>>& images);
+    void sendImagesRead(std::shared_ptr<std::vector<ROIWithCoords>> rois);
 
 private:
     // 清理资源

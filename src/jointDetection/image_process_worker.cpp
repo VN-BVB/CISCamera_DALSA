@@ -6,7 +6,7 @@
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent} {}
 
 
-void ImageProcessWorker::processImage(std::shared_ptr<cv::Mat> image) {
+void ImageProcessWorker::whenProcessImage(std::shared_ptr<cv::Mat> image) {
     try {
         PLOG_INFO << "===================开始处理数据:=================== ";
         ImageTools imageTools;

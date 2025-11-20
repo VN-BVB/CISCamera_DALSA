@@ -43,11 +43,8 @@ JointView::JointView(QWidget *parent)
     // 处理线程
     processWorker->moveToThread(&processThread);
     connect(&processThread, &QThread::finished, processWorker, &QObject::deleteLater);
-    connect(this, &JointView::startImageProcess, processWorker, &ImageProcessWorker::processImage);
-    connect(processWorker,
-            QOverload<std::shared_ptr<cv::Mat>, std::shared_ptr<JointSeam>>::of(&ImageProcessWorker::imageProcessed),
-            this,
-            QOverload<std::shared_ptr<cv::Mat>, std::shared_ptr<JointSeam>>::of(&JointView::handleImageProcessed));
+    connect(this, &JointView::startImageProcess, processWorker, &ImageProcessWorker::whenProcessImage);
+    connect(processWorker,&ImageProcessWorker::imageProcessed,this,&JointView::handleImageProcessed);
     connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &JointView::handleImageProcessedCannyDevenay);
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
 
