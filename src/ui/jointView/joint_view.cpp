@@ -23,14 +23,7 @@ JointView::JointView(QWidget *parent)
     m_showPixelContoursSquare(false)
 {
     ui->setupUi(this);
-    qRegisterMetaType<cv::Mat>("cv::Mat");
-    qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
-    qRegisterMetaType<std::vector<cv::Point2f>>("std::vector<cv::Point2f>");
-    qRegisterMetaType<std::vector<std::vector<cv::Point>>>("std::vector<std::vector<cv::Point>>");
-    qRegisterMetaType<std::vector<std::vector<cv::Point2f>>>("std::vector<std::vector<cv::Point2f>>");
-    qRegisterMetaType<std::vector<cv::Vec4f>>("std::vector<cv::Vec4f>");
-    qRegisterMetaType<std::vector<CurveSeg>>("std::vector<CurveSeg>");
-    qRegisterMetaType<std::shared_ptr<JointSeam>>("std::shared_ptr<JointSeam>");
+    initRegisterMetaTypes();
 
     // 读取线程
     readWorker->moveToThread(&readThread);
@@ -44,22 +37,19 @@ JointView::JointView(QWidget *parent)
     processWorker->moveToThread(&processThread);
     connect(&processThread, &QThread::finished, processWorker, &QObject::deleteLater);
     connect(this, &JointView::startImageProcess, processWorker, &ImageProcessWorker::whenProcessImage);
-    connect(processWorker,&ImageProcessWorker::imageProcessed,this,&JointView::handleImageProcessed);
+    connect(processWorker, &ImageProcessWorker::imageProcessed, this, &JointView::handleImageProcessed);
     connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &JointView::handleImageProcessedCannyDevenay);
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
-
-    // 连接checkbox信号
-    connect(ui->ckb_pixelContoursSquare, &QCheckBox::toggled, this, &JointView::on_ckb_pixelContoursSquare_toggled);
-    connect(ui->ckb_pixelContoursLine, &QCheckBox::toggled, this, &JointView::on_ckb_pixelContoursLine_toggled);
-    connect(ui->ckb_subpixelContours, &QCheckBox::toggled, this, &JointView::on_ckb_subpixelContours_toggled);
-    connect(ui->ckb_fitlines, &QCheckBox::toggled, this, &JointView::on_ckb_fitlines_toggled);
-    connect(ui->ckb_endPoints, &QCheckBox::toggled, this, &JointView::on_ckb_endPoints_toggled);
-    // @TODO:整理这里的connect，在需要的地方才连接
-
 
     // 启动线程
     readThread.start();
     processThread.start();
+}
+
+void JointView::initRegisterMetaTypes()
+{
+    qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
+    qRegisterMetaType<std::shared_ptr<JointSeam>>("std::shared_ptr<JointSeam>");
 }
 
 JointView::~JointView()

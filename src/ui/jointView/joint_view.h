@@ -51,6 +51,7 @@ private slots:
 
 private:
     void clearAllResultItems();
+    void initRegisterMetaTypes();
 
     Ui::JointView *ui;
     QThread readThread;
