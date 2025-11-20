@@ -1,4 +1,4 @@
-﻿#include "display_view.h"
+#include "display_view.h"
 
 #include <QGraphicsItem>
 #include <QKeyEvent>
@@ -49,13 +49,14 @@ public:
 // 在构造函数中修改初始鼠标样式
 DisplayView::DisplayView(QWidget *parent)
     : QGraphicsView(parent),
-      m_translateButton(Qt::LeftButton),
-      m_zoomDelta(0.1),
-      m_translateSpeed(0.5),
-      m_bMouseTranslate(false),
-      m_currentMousePos(-1, -1),  // 初始化为无效位置
-      d_ptr(new DisplayViewPrivate(this)),
-      m_scene(new DisplayScene(this)) {
+    m_translateButton(Qt::LeftButton),
+    m_zoomDelta(0.1),
+    m_translateSpeed(0.5),
+    m_bMouseTranslate(false),
+    m_currentMousePos(-1, -1),  // 初始化为无效位置
+    d_ptr(new DisplayViewPrivate(this)),
+    m_scene(new DisplayScene(this))
+{
     // 去掉滚动条
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -71,9 +72,7 @@ DisplayView::DisplayView(QWidget *parent)
     setDragMode(QGraphicsView::RubberBandDrag);                                // 设置拖拽模式为橡皮筋选择模式
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);  // 设置渲染提示的组合
     setMouseTracking(true);                                                    // 启用鼠标跟踪
-    setCacheMode(
-        QGraphicsView::
-            CacheBackground);  // 设置缓存模式为背景缓存，缓存视图的背景，提高重绘性能（在设置视图背景时有效，此项目没有设置黑白格等背景）
+    setCacheMode(QGraphicsView::CacheBackground);  // 设置缓存模式为背景缓存，缓存视图的背景，提高重绘性能（在设置视图背景时有效，此项目没有设置黑白格等背景）
 }
 
 // 缩放的增量
@@ -116,33 +115,33 @@ qreal DisplayView::translateSpeed() const { return m_translateSpeed; }
 // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
 void DisplayView::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
-        case Qt::Key_Up:
-            translate(QPointF(0, -2));  // 上移
-            break;
-        case Qt::Key_Down:
-            translate(QPointF(0, 2));  // 下移
-            break;
-        case Qt::Key_Left:
-            translate(QPointF(-2, 0));  // 左移
-            break;
-        case Qt::Key_Right:
-            translate(QPointF(2, 0));  // 右移
-            break;
-        case Qt::Key_Plus:  // 放大
-            zoomUp();
-            break;
-        case Qt::Key_Minus:  // 缩小
-            zoomDown();
-            break;
-        case Qt::Key_Space:  // 逆时针旋转
-            rotate(-5);
-            break;
-        case Qt::Key_Enter:  // 顺时针旋转
-        case Qt::Key_Return:
-            rotate(5);
-            break;
-        default:
-            QGraphicsView::keyPressEvent(event);
+    case Qt::Key_Up:
+        translate(QPointF(0, -2));  // 上移
+        break;
+    case Qt::Key_Down:
+        translate(QPointF(0, 2));  // 下移
+        break;
+    case Qt::Key_Left:
+        translate(QPointF(-2, 0));  // 左移
+        break;
+    case Qt::Key_Right:
+        translate(QPointF(2, 0));  // 右移
+        break;
+    case Qt::Key_Plus:  // 放大
+        zoomUp();
+        break;
+    case Qt::Key_Minus:  // 缩小
+        zoomDown();
+        break;
+    case Qt::Key_Space:  // 逆时针旋转
+        rotate(-5);
+        break;
+    case Qt::Key_Enter:  // 顺时针旋转
+    case Qt::Key_Return:
+        rotate(5);
+        break;
+    default:
+        QGraphicsView::keyPressEvent(event);
     }
 }
 

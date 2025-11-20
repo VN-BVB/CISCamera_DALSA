@@ -50,6 +50,8 @@ private slots:
     void on_pb_openSharedMemoryImages_clicked();
 
 private:
+    void clearAllResultItems();
+
     Ui::JointView *ui;
     QThread readThread;
     QThread processThread;

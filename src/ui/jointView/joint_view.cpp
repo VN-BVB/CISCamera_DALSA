@@ -90,9 +90,21 @@ void JointView::handleImageRead(std::shared_ptr<cv::Mat> image)
     emit startImageProcess(image);
 }
 
+void JointView::clearAllResultItems()
+{
+    m_subpixelContours.clear();
+    m_pixelContours.clear();
+    m_fitTangentLines.clear();
+    m_fitCurves.clear();
+    m_endPointsByTangentLines.clear();
+    m_fitLines.clear();
+    m_endPointsByFittedLines.clear();
+}
+
 void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
                                      std::shared_ptr<JointSeam> jointSeam)
 {
+    clearAllResultItems();
     m_currentImage = processedImage;
 
     // contour_processor的结果获取方式
@@ -193,8 +205,6 @@ void JointView::updateDisplay() {
             ui->gv_image->addGraphicComponent(pointComponent);
         }
     }
-
-    // @TODO:增加取消勾选时，删除相应轮廓的功能
 }
 
 // Checkbox槽函数实现
