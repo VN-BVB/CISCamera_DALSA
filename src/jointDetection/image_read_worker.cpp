@@ -98,10 +98,11 @@ void ImageReadWorker::whenReadImageFromSharedMemory(int processId, int timeoutMs
         // 使用线程池并行保存图像，使用坐标作为文件名
         std::vector<std::future<void>> saveFutures;
         for (size_t i = 0; i < rois.size(); i++) {
-            saveFutures.push_back(m_threadPool->enqueue([this, &rois, i]() {
-                std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" + 
-                    std::to_string(rois[i].x) + "_" + std::to_string(rois[i].y) + ".bmp";
-                cv::imwrite(imagePath, rois[i].image);
+            // 通过值捕获当前ROI数据，避免引用捕获带来的问题
+            saveFutures.push_back(m_threadPool->enqueue([this, roi = rois[i]]() {
+                std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" +
+                                        std::to_string(roi.x) + "_" + std::to_string(roi.y) + ".bmp";
+                cv::imwrite(imagePath, roi.image);
             }));
         }
 

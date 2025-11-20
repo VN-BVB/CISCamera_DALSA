@@ -32,6 +32,7 @@ JointView::JointView(QWidget *parent)
     connect(this, &JointView::startImageReadFromSharedMemory, readWorker, &ImageReadWorker::whenReadImageFromSharedMemory);
     connect(readWorker, &ImageReadWorker::sendImageRead, this, &JointView::handleImageRead);
     connect(readWorker, &ImageReadWorker::sendErrorOccurred, this, &JointView::handleError);
+    connect(readWorker, &ImageReadWorker::sendImagesRead, processWorker, &ImageProcessWorker::whenProcessMultiImages);
 
     // 处理线程
     processWorker->moveToThread(&processThread);
@@ -50,6 +51,7 @@ void JointView::initRegisterMetaTypes()
 {
     qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
     qRegisterMetaType<std::shared_ptr<JointSeam>>("std::shared_ptr<JointSeam>");
+    qRegisterMetaType<std::shared_ptr<std::vector<ROIWithCoords>>>("std::shared_ptr<std::vector<ROIWithCoords>>");
 }
 
 JointView::~JointView()
