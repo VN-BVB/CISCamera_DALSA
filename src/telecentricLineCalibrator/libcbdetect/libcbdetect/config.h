@@ -76,12 +76,15 @@ typedef struct Params {
     DetectMethod detect_method;
     CornerType corner_type;
     std::vector<int> radius;
+    bool use_known_board_size;
+    int board_cols;
+    int board_rows;
 
     Params()
         : show_processing(true),
           show_debug_image(false),
           show_grow_processing(false),
-          norm(false),
+          norm(true),
           polynomial_fit(true),
           norm_half_kernel_size(31),
           polynomial_fit_half_kernel_size(4),

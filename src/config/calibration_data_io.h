@@ -6,11 +6,23 @@
 #include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
+#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <opencv2/opencv.hpp>
 #include <vector>
 
 #include "plog/Log.h"
+struct Pose {
+    Eigen::Matrix3d R;  // 旋转矩阵
+    Eigen::Vector3d t;  // 平移向量
+    double reprojErr;   // 重投影误差
+};
+struct PoseVec {
+    Eigen::Vector3d R;  // 旋转矩阵
+    Eigen::Vector3d t;  // 平移向量
+    double reprojErr;   // 重投影误差
+};
 namespace cereal {
 // =====================================================
 // Eigen Matrix JSON 序列化

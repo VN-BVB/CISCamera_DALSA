@@ -79,5 +79,6 @@ private slots:
     void on_btnStopTrigger_clicked();
     void on_btn_ChessboardDetector_clicked();
     void on_btnCameraCalibrate_clicked();
+    void on_btnSaveAligenmentPlatImg_clicked();
 };
 #endif  // CIS_CAMERA_IMAGE_H

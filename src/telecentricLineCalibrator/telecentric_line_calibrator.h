@@ -23,11 +23,7 @@
 #include "src/config/calibration_data_io.h"
 #include "telecentric_lm_optimizer.h"
 enum class PatternType { CHESSBOARD, CIRCLES_GRID, ASYMMETRIC_CIRCLES_GRID };
-// struct Pose {
-//     Eigen::Matrix3d R;
-//     Eigen::Vector3d t;
-//     double reprojErr;
-// };
+
 class TelecentricLineCalibrator : public QObject {
     Q_OBJECT
 public:
@@ -68,11 +64,17 @@ public:
     // -------------------- 像素坐标 → 相机坐标 --------------------
     Eigen::MatrixXd pixelToCameraCoordinates(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
                                              const Eigen::Matrix<double, 1, 5>& coff_dis = {});
-
-    Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
+    // -------------------- 相机坐标 → 世界坐标 --------------------
+    Eigen::MatrixXd cameraToWorldCoordinates(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
+                                             const Eigen::Vector3d& v_trans);
+    Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
                                  const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
-    void estimatePosePnP(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
-                         const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
+
+    Pose estimateTelecentricPosePnP(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
+                                    const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
+    double computeReprojectionErrorDemo(const std::vector<Eigen::Vector2d>& worldPts,
+                                        const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose, const Eigen::Matrix3d& K,
+                                        const std::string& savePath, const Eigen::Matrix<double, 1, 5>& coff_dis);
 
 private:
     Eigen::Matrix3d computeHomography(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts);
@@ -84,7 +86,8 @@ private:
                                    const double m);
     Eigen::Matrix3d initIntrinsic(double m, double dx, double dy, double u0, double v0);
     double computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
-                                    const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath = " ");
+                                    const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath = " ",
+                                    const Eigen::Matrix<double, 1, 5>& coff_dis = {0.0, 0.0, 0.0, 0.0, 0.0});
     double computeReprojectionErrorFinal(const std::vector<Eigen::Vector2d>& worldPts,
                                          const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose, const Eigen::Matrix3d& K,
                                          double k);

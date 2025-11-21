@@ -19,11 +19,7 @@
 
 #include "plog/Log.h"
 // 姿态结构体（与原有代码保持一致）
-struct Pose {
-    Eigen::Matrix3d R;  // 旋转矩阵
-    Eigen::Vector3d t;  // 平移向量
-    double reprojErr;   // 重投影误差
-};
+#include "src/config/calibration_data_io.h"
 extern double rms;
 class TelecentricLMOptimizer {
 public:

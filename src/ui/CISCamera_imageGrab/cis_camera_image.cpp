@@ -219,7 +219,7 @@ void CISWidget::on_btnContinue_clicked() {
 
 // 软件触发
 void CISWidget::on_btnSoftWareTrigger_clicked() {
-    startPos = ui->end_lineEdit->text().toDouble();
+    startPos = ui->start_lineEdit->text().toDouble();
     endPos = ui->end_lineEdit->text().toDouble();
     speed = ui->speed_lineEdit->text().toDouble();
     if (triggerRunning) {
@@ -294,10 +294,19 @@ void CISWidget::on_btnCISConfig_clicked() {
 
 void CISWidget::on_btn_ChessboardDetector_clicked() {
     QMetaObject::invokeMethod(
-        libcbDetector.get(), [=]() { libcbDetector->processImagesInDirectory("./data/CISCamera_Image/qpg"); },
+        libcbDetector.get(), [=]() { libcbDetector->processImagesInDirectory("./data/CISCamera_Image/test"); },
         Qt::QueuedConnection);
 }
 
 void CISWidget::on_btnCameraCalibrate_clicked() {
     QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->whenCameraCalibrate(); }, Qt::QueuedConnection);
+}
+
+void CISWidget::on_btnSaveAligenmentPlatImg_clicked() {
+    int idx = ui->cbxPlatform->currentIndex();
+
+    QMetaObject::invokeMethod(
+        imageProcessor.get(),
+        [=]() { imageProcessor->saveResult(QString("./data/PaltfromCalibrate/%1/img/").arg(idx), "Splice", ".bmp", false); },
+        Qt::QueuedConnection);
 }
