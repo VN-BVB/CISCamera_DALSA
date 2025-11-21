@@ -4,7 +4,9 @@
 #include "contourProcess/contour_processor.h"
 #include <iostream>
 
-JointSeam::JointSeam(const cv::Mat &image) : m_image(image)
+JointSeam::JointSeam(const cv::Mat &image, const cv::Point2f position)
+    : m_image(image),
+    m_position(position)
 {}
 
 void JointSeam::run() {
@@ -18,15 +20,18 @@ void JointSeam::run() {
 
     // 轮廓信息整处理
     for (auto& contour : contours) {
-        ContourProcessorV2 processor;
+        ContourProcessor processor;
         if(processor.processContour(contour))
         {
             // 获取处理结果
             auto result = processor.getResult();
             m_contourDatas.push_back(result);
+            std::vector<cv::Vec4f> tangentLines = processor.getTangentLines();
+            std::vector<cv::Point2f> endPoints = processor.getEndPoints();
+            m_lines.insert(m_lines.end(), tangentLines.begin(), tangentLines.end());
+            m_endPoints.insert(m_endPoints.end(), endPoints.begin(), endPoints.end());
         }
     }
 }
-
 
 

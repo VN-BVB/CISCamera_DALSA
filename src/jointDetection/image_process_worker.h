@@ -10,11 +10,23 @@
 #include "joint_seam.h"
 #include "image_read_worker.h"
 
+// 处理结果结构体
+struct ProcessedROIResult
+{
+    std::shared_ptr<cv::Mat> image;
+    std::shared_ptr<JointSeam> jointSeam;
+    int x;
+    int y;
+};
+
 class ImageProcessWorker : public QObject {
     Q_OBJECT
 public:
     explicit ImageProcessWorker(QObject *parent = nullptr);
     ~ImageProcessWorker();
+
+    std::vector<ProcessedROIResult> getAllProcessedResults();
+    void clearProcessedResults();
 
 public slots:
     void whenProcessImage(std::shared_ptr<cv::Mat> image);
@@ -24,7 +36,8 @@ signals:
     void imageProcessed(std::shared_ptr<cv::Mat> processedImage, std::shared_ptr<JointSeam> jointSeam);
     void imageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void errorOccurred(const QString &error);
-    void allImagesProcessed();
+    void allImagesProcessed(std::vector<ProcessedROIResult> processedResults);
+    void singleROIProcessed(const ProcessedROIResult &result);
 
 private:
     // 处理单个ROI图像的方法
@@ -34,6 +47,7 @@ private:
     std::atomic<int> m_processedCount;
     int m_totalROICount;
     std::mutex m_mutex;
+    std::vector<ProcessedROIResult> m_processedResults;
 };
 
 #endif  // IMAGE_PROCESS_WORKER_H

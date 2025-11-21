@@ -8,29 +8,29 @@
 /**
  * @brief 轮廓处理器 - 使用策略模式
  */
-class ContourProcessorV2 {
+class ContourProcessor {
 public:
-    ContourProcessorV2();
+    ContourProcessor();
 
     // 处理轮廓
     bool processContour(const std::vector<cv::Point2f>& contour);
 
     // 获取处理结果
-    const ContourData& getResult() const { return m_data; }
+    const ContourData& getResult() const { return m_contourData; }
 
     // 获取处理摘要
     std::string getSummary() const;
 
     // 结果获取方法
-    std::vector<cv::Point2f> getSortedContour() const { return m_data.getSortedContour(); }
-    std::vector<cv::Point2f> getCornerPoints() const { return m_data.getCornerPoints(); }
-    std::map<int, LineSeg> getLineSegments() const { return m_data.getLineSegments(); }
-    std::map<int, CurveSeg> getCurveSegments() const { return m_data.getCurveSegments(); }
-    std::vector<cv::Point2f> getEndPoints() const { return m_data.getEndPoints(); }
-    std::vector<cv::Vec4f> getTangentLines() const { return m_data.getTangentLines(); }
+    std::vector<cv::Point2f> getSortedContour() const { return m_contourData.getSortedContour(); }
+    std::vector<cv::Point2f> getCornerPoints() const { return m_contourData.getCornerPoints(); }
+    std::map<int, LineSeg> getLineSegments() const { return m_contourData.getLineSegments(); }
+    std::map<int, CurveSeg> getCurveSegments() const { return m_contourData.getCurveSegments(); }
+    std::vector<cv::Point2f> getEndPoints() const { return m_contourData.getEndPoints(); }
+    std::vector<cv::Vec4f> getTangentLines() const { return m_contourData.getTangentLines(); }
 
 private:
-    ContourData m_data;
+    ContourData m_contourData;
     std::unique_ptr<ContourProcessingPipeline> m_pipeline;
 
     void initializePipeline();

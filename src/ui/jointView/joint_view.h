@@ -37,6 +37,7 @@ private slots:
     void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::shared_ptr<JointSeam> jointSeam);
     void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
+    void whenALLImagesProcessed(std::vector<ProcessedROIResult> processedResults);
 
     void updateDisplay();
     // Checkbox槽函数
@@ -58,8 +59,6 @@ private:
     QThread processThread;
     ImageReadWorker *readWorker;
     ImageProcessWorker *processWorker;
-
-    std::chrono::high_resolution_clock::time_point startTime;  // 图像处理开始时间
 
     // 存储当前显示的数据
     std::shared_ptr<cv::Mat> m_currentImage;

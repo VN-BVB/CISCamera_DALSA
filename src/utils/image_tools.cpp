@@ -285,11 +285,6 @@ void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directio
             // 如果提供了保存路径，则保存图像
             if (!savePath.empty()) {
                 bool success = cv::imwrite(savePath, resultImage);
-                if (success) {
-                    std::cout << "图像已保存到: " << savePath << std::endl;
-                } else {
-                    std::cout << "保存图像失败: " << savePath << std::endl;
-                }
             }
 
             return;
@@ -329,11 +324,6 @@ void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directio
     // 如果提供了保存路径，则保存图像
     if (!savePath.empty()) {
         bool success = cv::imwrite(savePath, resultImage);
-        if (success) {
-            std::cout << "图像已保存到: " << savePath << std::endl;
-        } else {
-            std::cout << "保存图像失败: " << savePath << std::endl;
-        }
     }
 
     // 将结果图像复制回原始图像
