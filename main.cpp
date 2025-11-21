@@ -14,6 +14,7 @@
 #include "src/test/test_tiny_spline.h"
 #include "src/ui/jointView/joint_view.h"
 #include "src/test/test_frmVisionDisplay.h"
+#include "src/test/test_multiRoi.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -22,12 +23,11 @@ int main(int argc, char *argv[]) {
     // CISWidget w;
     // w.show();
 
+    test_multiRoi t;
+    t.show();
 
-    // test_FrmVisionDisplay testDisplay;
-    // testDisplay.show();
-
-    JointView w;
-    w.show();
+    // JointView w;
+    // w.show();
 
     return a.exec();
 }

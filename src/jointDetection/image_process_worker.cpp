@@ -137,17 +137,3 @@ void ImageProcessWorker::clearProcessedResults()
     std::lock_guard<std::mutex> lock(m_mutex);
     m_processedResults.clear();
 }
-
-ProcessedROIInfo* ImageProcessWorker::getROIInfo(const int x) {
-    std::lock_guard<std::mutex> lock(m_roiInfoMutex);
-    auto it = m_processedRoiInfos.find(x);
-    if (it != m_processedRoiInfos.end()) {
-        return &(it->second);
-    }
-    return nullptr;
-}
-
-void ImageProcessWorker::clearROIInfos() {
-    std::lock_guard<std::mutex> lock(m_roiInfoMutex);
-    m_processedRoiInfos.clear();
-}

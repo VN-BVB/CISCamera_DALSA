@@ -41,10 +41,6 @@ public:
     std::vector<ProcessedROIResult> getAllProcessedResults();
     void clearProcessedResults();
 
-    // 获取ROI信息的新方法
-    ProcessedROIInfo* getROIInfo(const int x);
-    void clearROIInfos();
-
 public slots:
     void whenProcessImage(std::shared_ptr<cv::Mat> image);
     void whenProcessMultiImages(std::shared_ptr<std::vector<ROIWithCoords>> rois);

@@ -41,10 +41,15 @@ DisplayScene::DisplayScene(DisplayView *parentView)
 {
     m_parentView->setScene(this);
     setDisplayImageItem(m_displayImageItem);
+    // 将主图像图元添加到列表
+    m_displayImageItems.append(m_displayImageItem);
 }
 
 DisplayScene::~DisplayScene()
-{}
+{
+    // 清理所有图像图元
+    whenClearAllDisplayImages();
+}
 
 bool DisplayScene::whenDisplayImage(const QImage &image, bool bAutoFit)
 {
@@ -67,6 +72,78 @@ void DisplayScene::whenClearImage()
     emit sendClearDisplayImage();
 }
 
+// 新接口实现：添加图像图元并显示图像
+DisplayImageItem* DisplayScene::whenAddDisplayImage(const QImage &image, const QPointF &pos, bool bAutoFit)
+{
+    // 创建新的图像图元
+    DisplayImageItem* newImageItem = new DisplayImageItem(this);
+    newImageItem->setPos(pos.x() - 0.5, pos.y() - 0.5);  // 向左上角位移半个像素
+    
+    // 显示图像
+    bool bRet = newImageItem->displayImage(image);
+    if (bRet)
+    {
+        this->addItem(newImageItem);
+        m_displayImageItems.append(newImageItem);
+        
+        if (bAutoFit)
+        {
+            m_parentView->whenZoomToDisplayFit();
+        }
+    }
+    else
+    {
+        delete newImageItem;
+        newImageItem = nullptr;
+    }
+    
+    return newImageItem;
+}
+
+// 新接口实现：移除指定图像图元
+void DisplayScene::whenRemoveDisplayImage(DisplayImageItem* imageItem)
+{
+    if (!imageItem) return;
+    
+    // 从场景中移除
+    this->removeItem(imageItem);
+    // 从列表中移除
+    m_displayImageItems.removeOne(imageItem);
+    
+    // 如果移除的是主图像图元，设置新的主图像图元
+    if (imageItem == m_displayImageItem)
+    {
+        if (!m_displayImageItems.isEmpty())
+        {
+            m_displayImageItem = m_displayImageItems.first();
+        }
+        else
+        {
+            m_displayImageItem = nullptr;
+        }
+    }
+    
+    // 释放内存
+    delete imageItem;
+}
+
+// 新接口实现：清除所有图像图元
+void DisplayScene::whenClearAllDisplayImages()
+{
+    // 移除并释放所有图像图元
+    foreach (DisplayImageItem* item, m_displayImageItems)
+    {
+        this->removeItem(item);
+        delete item;
+    }
+    
+    // 清空列表并重置主图像图元
+    m_displayImageItems.clear();
+    m_displayImageItem = nullptr;
+    
+    emit sendClearDisplayImage();
+}
+
 void DisplayScene::whenAddDisplayText(const QString &text, const QPointF &pt, const double &size,
                                       const QColor &color, const bool &clear)
 {
@@ -82,31 +159,39 @@ void DisplayScene::whenClearDisplayText()
 
 QPixmap DisplayScene::getDisplayImage()
 {
-    return m_displayImageItem->pixmap();
+    return m_displayImageItem ? m_displayImageItem->pixmap() : QPixmap();
 }
 
 QSize DisplayScene::getDisplayImageSize() const
 {
-    return m_displayImageItem->getDisplayImageSize();
+    return m_displayImageItem ? m_displayImageItem->getDisplayImageSize() : QSize();
 }
 
 void DisplayScene::setDisplayImageItem(DisplayImageItem* imageItem)
 {
-    // 遍历所有图元，确保只有一个图像图元在显示
-    foreach (auto item, this->items())
+    // 不再强制只保留一个图像图元，仅设置主图像图元
+    if (imageItem)
     {
-        if (item->type() == DisplayImageItem::Type)
+        if (m_displayImageItem != imageItem)
         {
-            this->removeItem(item);
+            // 如果新图像图元还不在场景中，添加它
+            if (!this->items().contains(imageItem))
+            {
+                imageItem->setPos(-0.5, -0.5);  // 向左上角位移半个像素
+                this->addItem(imageItem);
+                
+                // 如果新图像图元还不在列表中，添加到列表
+                if (!m_displayImageItems.contains(imageItem))
+                {
+                    m_displayImageItems.append(imageItem);
+                }
+            }
+            
+            m_displayImageItem = imageItem;
         }
     }
-    imageItem->setPos(-0.5, -0.5);  // 向左上角位移半个像素，使像素中心对准场景坐标系中的坐标，因为图元坐标系以像素块中心而不是以像素块左上角为像素坐标，
-    this->addItem(imageItem);
+    
     m_parentView->setScene(this);
-    if (m_displayImageItem != imageItem)
-    {
-        m_displayImageItem = imageItem;
-    }
 }
 
 void DisplayScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
@@ -142,12 +227,3 @@ void DisplayScene::whenClearAllGraphicComponents()
     m_graphicItemComposite->removeFromScene(this);
     m_graphicItemComposite->clearComponents();
 }
-
-
-
-
-
-
-
-
-

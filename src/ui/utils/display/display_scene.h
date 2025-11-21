@@ -5,6 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <QList>
 
 #include "tinysplinecxx.h"
 #include "src/jointDetection/contourProcess/methods/curve_seg.h"
@@ -19,15 +20,17 @@ class DisplayScene : public QGraphicsScene
 {
     Q_OBJECT
 
-    friend class DisplayView;   // 双向友元虽然破坏了封装性，但在View和Scene这种紧密耦合的框架组件中是合理的，可以简化实现，避免调用公共接口产生的开销
+    friend class DisplayView;   // 双向友元虽然破坏了封装性，但在View和Scene这种紧密耦合的关系组件中是合理的，可以简化实现，避免调用公共接口产生的开销
 public:
     explicit DisplayScene(DisplayView *parentView = nullptr);
     ~DisplayScene();
 public:
     // 获取视图
     DisplayView* getView() const {return m_parentView;}
-    // 获取图像显示图元
+    // 获取图像显示图元（主图元）
     DisplayImageItem* getDisplayImageItem() const {return m_displayImageItem;}
+    // 获取所有图像显示图元
+    QList<DisplayImageItem*> getAllDisplayImageItems() const {return m_displayImageItems;}
     // 获取显示的图像
     QPixmap getDisplayImage();
     // 获取显示的图像的尺寸
@@ -39,6 +42,9 @@ public:
 public slots:
     bool whenDisplayImage(const QImage &image, bool bAutoFit = false);
     void whenClearImage();
+    DisplayImageItem* whenAddDisplayImage(const QImage &image, const QPointF &pos = QPointF(0, 0), bool bAutoFit = false);
+    void whenRemoveDisplayImage(DisplayImageItem* imageItem);
+    void whenClearAllDisplayImages();
 
     // =====================================文本显示槽函数=====================================
 public slots:
@@ -53,7 +59,7 @@ public slots:
     void whenClearAllGraphicComponents();
 
 protected:
-    // 设置显示图像图元
+    // 设置显示图像图元（主图元）
     void setDisplayImageItem(DisplayImageItem* imageItem);
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -69,8 +75,10 @@ signals:
 protected:
     // 父视图
     DisplayView *m_parentView = nullptr;
-    // 图像显示图元
+    // 主图像显示图元
     DisplayImageItem *m_displayImageItem = nullptr;
+    // 所有图像显示图元列表
+    QList<DisplayImageItem*> m_displayImageItems;
     // 图形图元组合管理器
     std::shared_ptr<GraphicItemComposite> m_graphicItemComposite;
 protected:
