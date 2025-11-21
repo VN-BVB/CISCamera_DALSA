@@ -19,6 +19,19 @@ struct ProcessedROIResult
     int y;
 };
 
+// 每个ROI结果结构体
+struct ProcessedROIInfo
+{
+    std::shared_ptr<cv::Mat> image;                                              // ROI图像
+    cv::Point leftCornerPoint;                                // ROI左上角
+    std::vector<std::vector<cv::Point>> pixelContours;          // 缝隙两条像素轮廓坐标
+    std::vector<std::vector<cv::Point2f>> subpixelContour;      // 缝隙两条亚像素轮廓坐标
+    std::vector<cv::Vec4f> lines;                               // 缝隙所有拟合直线
+    std::vector<cv::Vec4f> seamLines;                           // 缝隙两侧两条直线
+    std::vector<cv::Point2f> endPoints;                         // 缝隙的四个端点
+    std::vector<tinyspline::BSpline> splines;                   // 缝隙所有拟合样条曲线
+};
+
 class ImageProcessWorker : public QObject {
     Q_OBJECT
 public:
@@ -27,6 +40,10 @@ public:
 
     std::vector<ProcessedROIResult> getAllProcessedResults();
     void clearProcessedResults();
+
+    // 获取ROI信息的新方法
+    ProcessedROIInfo* getROIInfo(const int x);
+    void clearROIInfos();
 
 public slots:
     void whenProcessImage(std::shared_ptr<cv::Mat> image);
@@ -48,6 +65,8 @@ private:
     int m_totalROICount;
     std::mutex m_mutex;
     std::vector<ProcessedROIResult> m_processedResults;
+    std::mutex m_roiInfoMutex;  // 保护ROI信息字典的互斥锁
+    std::map<int, ProcessedROIInfo> m_processedRoiInfos;  // 字典，键为ROI左上角坐标
 };
 
 #endif  // IMAGE_PROCESS_WORKER_H

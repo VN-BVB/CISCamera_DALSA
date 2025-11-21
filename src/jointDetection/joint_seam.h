@@ -17,16 +17,17 @@ class JointSeam
 public:
     explicit JointSeam(const cv::Mat &image, const cv::Point2f position);
 
+    std::vector<ContourData> getContourDatas() const {return m_contourDatas;}
+    std::vector<cv::Vec4f> getLines() const {return m_lines;}
+    std::vector<cv::Point2f> getEndPoints() const { return m_endPoints;}
+
     void run();
 private:
     cv::Mat m_image;                                // 拼缝roi处图像
     std::vector<ContourData> m_contourDatas;        // 拼缝两边轮廓
     cv::Point2f m_position;                         // 拼缝roi位置
-    std::vector<cv::Vec4f> m_lines;                 // 拼缝两侧直线
+    std::vector<cv::Vec4f> m_lines;                 // 拼缝两侧所有直线
     std::vector<cv::Point2f> m_endPoints;           // 拼缝四个端点
-
-public:
-    std::vector<ContourData> getContourDatas() const {return m_contourDatas;}
 };
 
 

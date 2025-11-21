@@ -65,7 +65,18 @@
         "valarray": "cpp",
         "variant": "cpp",
         "future": "cpp",
-        "hash_map": "cpp"
+        "hash_map": "cpp",
+        "cassert": "cpp",
+        "cerrno": "cpp",
+        "cfloat": "cpp",
+        "climits": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "iterativelinearsolvers": "cpp",
+        "matrixfunctions": "cpp",
+        "nonlinearoptimization": "cpp",
+        "numericaldiff": "cpp",
+        "polynomials": "cpp"
     },
     "cmake.sourceDirectory": "D:/Code/CISCamera_DALSA/3rdParty/plog"
 }

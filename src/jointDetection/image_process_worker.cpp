@@ -87,10 +87,24 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
         result.x = roi.x;
         result.y = roi.y;
 
+        ProcessedROIInfo resInfo;
+        resInfo.image = imagePtr;
+        resInfo.leftCornerPoint = cv::Point2f(roi.x, roi.y);
+        for (const auto& contour : jointSeam->getContourDatas()) {
+            resInfo.pixelContours .push_back(contour.getPixelContour());
+            resInfo.subpixelContour.push_back(contour.getSubpixelContour());
+            for (const auto& [i, curSeg] : contour.getCurveSegments()) {
+                resInfo.splines.push_back(curSeg.getSpline());
+            }
+        }
+        resInfo.lines = jointSeam->getLines();
+        resInfo.endPoints = jointSeam->getEndPoints();
+
         // 线程安全的将结果添加到容器中
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_processedResults.push_back(result);
+            m_processedRoiInfos[roi.x] = resInfo;
             PLOG_DEBUG << "已添加处理结果，当前结果数量：" << m_processedResults.size();
         }
         emit singleROIProcessed(result);
@@ -122,4 +136,18 @@ void ImageProcessWorker::clearProcessedResults()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_processedResults.clear();
+}
+
+ProcessedROIInfo* ImageProcessWorker::getROIInfo(const int x) {
+    std::lock_guard<std::mutex> lock(m_roiInfoMutex);
+    auto it = m_processedRoiInfos.find(x);
+    if (it != m_processedRoiInfos.end()) {
+        return &(it->second);
+    }
+    return nullptr;
+}
+
+void ImageProcessWorker::clearROIInfos() {
+    std::lock_guard<std::mutex> lock(m_roiInfoMutex);
+    m_processedRoiInfos.clear();
 }

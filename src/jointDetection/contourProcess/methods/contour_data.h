@@ -27,6 +27,10 @@ public:
     std::vector<cv::Point2f> getCornerPoints() const { return m_cornerPoints; }
     std::vector<std::vector<cv::Point2f>> getSegmentedContours() const { return m_segmentedSubpixelContours; }
     std::map<int, std::vector<cv::Point2f>> getSortedSegments() const { return m_counterClockwiseContours; }
+    std::map<int, CurveSeg> getCurveSegments() const { return m_curveSegments; }
+    std::map<int, LineSeg> getLineSegments() const { return m_lineSegments; }
+    std::vector<cv::Point2f> getEndPoints() const { return m_endPoints; }
+    std::vector<cv::Vec4f> getTangentLines() const { return m_tangentLines; }
 
     // 设置计算后的特征
     void setOpeningDirection(OpeningDirection direction) { m_openingDirection = direction; }
@@ -44,11 +48,6 @@ public:
     void setLineSegments(const std::map<int, LineSeg>& segments) { m_lineSegments = segments; }
     void setEndPoints(const std::vector<cv::Point2f>& points) { m_endPoints = points; }
     void setTangentLines(const std::vector<cv::Vec4f>& lines) { m_tangentLines = lines; }
-
-    std::map<int, CurveSeg> getCurveSegments() const { return m_curveSegments; }
-    std::map<int, LineSeg> getLineSegments() const { return m_lineSegments; }
-    std::vector<cv::Point2f> getEndPoints() const { return m_endPoints; }
-    std::vector<cv::Vec4f> getTangentLines() const { return m_tangentLines; }
 
 private:
     std::vector<cv::Point> m_pixelContour;                                  // 像素级坐标轮廓
