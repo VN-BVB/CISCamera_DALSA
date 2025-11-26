@@ -4,8 +4,8 @@ clear; clc; close all;
 %% ===================== 1. 基础配置 =====================
 root_path = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\';
 dirs = {
-    fullfile(root_path, 'mattxt'),    
-    fullfile(root_path, 'txt1'),   
+    fullfile(root_path, 'txt'),    
+    fullfile(root_path, 'txt2'),   
     fullfile(root_path, 'txt3')    
 };
 
@@ -96,9 +96,9 @@ end
 
 %% ===================== 4. 总平均误差 =====================
 valid_idx = (err1_per_img > 0) & (err2_per_img > 0);
-if sum(valid_idx)==0
-    error('无有效图像！');
-end
+% if sum(valid_idx)==0
+%     error('无有效图像！');
+% end
 total_err1 = mean(err1_per_img(valid_idx));
 total_err2 = mean(err2_per_img(valid_idx));
 
@@ -111,7 +111,7 @@ fprintf('=====================================================\n');
 %% ===================== 5. 可视化所有有效图像 =====================
 
 % img_path = '';  
-img_path = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\qpg\Splice_20251108_160910966.bmp';  % 若你提供路径，在图像上作画
+img_path = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\test\Splice_20251030_214803209.bmp';  % 若你提供路径，在图像上作画
 
 for img_idx = find(valid_idx)'
     gt_vis = all_gt{img_idx};

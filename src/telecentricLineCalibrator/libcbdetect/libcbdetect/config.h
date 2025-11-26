@@ -81,7 +81,7 @@ typedef struct Params {
     int board_rows;
 
     Params()
-        : show_processing(true),
+        : show_processing(false),
           show_debug_image(false),
           show_grow_processing(false),
           norm(true),
@@ -91,7 +91,7 @@ typedef struct Params {
           init_loc_thr(0.025),
           score_thr(0.01),
           strict_grow(true),
-          overlay(false),
+          overlay(true),
           occlusion(true),
           detect_method(HessianResponse),
           corner_type(SaddlePoint),

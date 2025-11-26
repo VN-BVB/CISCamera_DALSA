@@ -8,10 +8,13 @@
 class TelecentricPYOptimizer {
 public:
     TelecentricPYOptimizer() = default;
+    // TelecentricPYOptimizer();
+
     bool invokeTelecentricCalibration();
     bool optTelecentricExtrinsicParameters(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
-                                           const std::vector<Eigen::Vector2d> imgPts, Eigen::Vector3d& v_rot,
-                                           Eigen::Vector3d& v_trans, const int W, const int H, const double spacingMM);
+                                           const std::vector<Eigen::Vector2d> imgPts,
+                                           const std::vector<Eigen::Vector2d>& worldPts, Eigen::Vector3d& v_rot,
+                                           Eigen::Vector3d& v_trans, double& err);
 };
 
 #endif  // PY_TELECENTRIC_OPTIMIZER_H

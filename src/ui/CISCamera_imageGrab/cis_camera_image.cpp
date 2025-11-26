@@ -10,8 +10,8 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     initCISCameraConfig();
     initCameraImageProcessor();
     initCamera();
-    initCameraCalibrator();
-    std::string filePath = R"(D:\Code\CISCamera_DALSA\data\CISCamera_Image\qpg\Splice_20251108_160731447.bmp)";
+    PLOGD << "当前主线程";
+    std::string filePath = R"(D:\Code\CISCamera_DALSA\data\CISCamera_Image\test\Splice_20251030_214803209.bmp)";
     // 读取图像
     cv::Mat img = cv::imread(filePath, cv::IMREAD_GRAYSCALE);
     auto smartPtrImage = std::make_shared<cv::Mat>(img);
@@ -37,6 +37,7 @@ CISWidget::~CISWidget() {
 void CISWidget::initUIControls() {
     ui->btnSoftWareTrigger->setEnabled(true);
     ui->ckbSplice->setChecked(true);
+    ui->ckbShowPLlatImg->setChecked(true);
 }
 
 void CISWidget::initregisterMetaType() {
@@ -128,7 +129,7 @@ void CISWidget::initCameraImageProcessor() {
     imageProcessor = std::make_shared<CameraImageProcessor>();
     processorThread = new QThread(this);
     imageProcessor->moveToThread(processorThread);
-    // 信号连接
+    processorThread->start();
     connect(
         imageProcessor.get(), &CameraImageProcessor::imageReady, this,
         [this](std::shared_ptr<cv::Mat> result) {
@@ -139,15 +140,7 @@ void CISWidget::initCameraImageProcessor() {
         Qt::QueuedConnection);
     connect(imageProcessor.get(), &CameraImageProcessor::text, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
     connect(imageProcessor.get(), &CameraImageProcessor::error, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
-}
-void CISWidget::initCameraCalibrator() {
-    libcbDetector = std::make_shared<LibCBDetector>();
-    telecentricLineCalibrator = std::make_shared<TelecentricLineCalibrator>();
-    libcbDetector->moveToThread(processorThread);
-    telecentricLineCalibrator->moveToThread(processorThread);
-    processorThread->start();
-    connect(imageProcessor.get(), &CameraImageProcessor::sendSignalToCalibrate, telecentricLineCalibrator.get(),
-            &TelecentricLineCalibrator::calibrateCameraFromPointsDemo, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->initCameraCalibrator(); }, Qt::QueuedConnection);
 }
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
 // 在信息框推送信息
@@ -293,9 +286,7 @@ void CISWidget::on_btnCISConfig_clicked() {
 }
 
 void CISWidget::on_btn_ChessboardDetector_clicked() {
-    QMetaObject::invokeMethod(
-        libcbDetector.get(), [=]() { libcbDetector->processImagesInDirectory("./data/CISCamera_Image/test"); },
-        Qt::QueuedConnection);
+    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->whenDetectChessboard(); }, Qt::QueuedConnection);
 }
 
 void CISWidget::on_btnCameraCalibrate_clicked() {
@@ -306,7 +297,26 @@ void CISWidget::on_btnSaveAligenmentPlatImg_clicked() {
     int idx = ui->cbxPlatform->currentIndex();
 
     QMetaObject::invokeMethod(
-        imageProcessor.get(),
-        [=]() { imageProcessor->saveResult(QString("./data/PaltfromCalibrate/%1/img/").arg(idx), "Splice", ".bmp", false); },
-        Qt::QueuedConnection);
+        imageProcessor.get(), [=]() { imageProcessor->savePlatfromCailbImg("Splice", ".bmp", idx); }, Qt::QueuedConnection);
+}
+
+void CISWidget::on_btnCalibratePlat_clicked() {
+    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->whenCalibrateCP(); }, Qt::QueuedConnection);
+}
+
+void CISWidget::on_btnReadLocalImg_clicked() {
+    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->loadPlatformCalibImages(); }, Qt::QueuedConnection);
+}
+
+void CISWidget::on_btnClearCPImg_clicked() {
+    QMetaObject::invokeMethod(
+        imageProcessor.get(), [=]() { imageProcessor->whenClearPlatFromFile("img"); }, Qt::QueuedConnection);
+}
+
+void CISWidget::on_btnClearCPDetectResult_clicked() {
+    QMetaObject::invokeMethod(
+        imageProcessor.get(), [=]() { imageProcessor->whenClearPlatFromFile("txt"); }, Qt::QueuedConnection);
+}
+void CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {
+    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->convertToWorld(pix_pts); }, Qt::QueuedConnection);
 }

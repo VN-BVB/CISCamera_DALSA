@@ -1,36 +1,19 @@
 ﻿#include "telecentricplatform_calib.h"
 
+TelecentricPlatformCalib::TelecentricPlatformCalib() { lineCalib_ = new TelecentricLineCalibrator(); }
+// void TelecentricPlatformCalib::iniCalibParams() {
+//     CalibrationData calibParam;
+//     if (!calibParam.load("./data/calibration_config/optimized_calib_data.json")) {
+//         throw std::runtime_error("无法加载标定文件");
+//     }
+//     K_ = calibParam.K;
+//     dist_ = calibParam.coff_dis;
+// }
 TelecentricPlatformCalib::TelecentricPlatformCalib(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& dist,
                                                    const Eigen::Vector3d& rvec, const Eigen::Vector3d& tvec)
     : K_(K), dist_(dist), v_rot_(rvec), v_trans_(tvec) {
     lineCalib_ = new TelecentricLineCalibrator();
 }
-bool TelecentricPlatformCalib::readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pts) {
-    std::ifstream fin(path);
-    if (!fin.is_open()) {
-        std::cerr << "无法打开文件: " << path << std::endl;
-        return false;
-    }
-
-    std::string line;
-    std::getline(fin, line);  // 跳过标题
-
-    pts.clear();
-    double idx, x, y;
-
-    while (fin >> idx >> x >> y) {
-        pts.emplace_back(x, y);
-    }
-
-    if (pts.empty()) {
-        std::cerr << "文件 " << path << " 无有效点。\n";
-        return false;
-    }
-
-    std::cout << "读取 " << path << " 成功，共 " << pts.size() << " 点\n";
-    return true;
-}
-
 Eigen::MatrixXd TelecentricPlatformCalib::vecToMat(const std::vector<Eigen::Vector2d>& v) {
     Eigen::MatrixXd M(v.size(), 2);
     for (int i = 0; i < v.size(); i++) M.row(i) = v[i];
@@ -207,7 +190,7 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterCircleFit(const s
     std::cout << "最终平均旋转中心: [" << final_center.transpose() << "]\n";
     return final_center;
 }
-void TelecentricPlatformCalib::run() {
+void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>> pts) {
     std::vector<Eigen::Vector2d> p1, p2, p3, p4, p5;
     readPointsFromTxt("./src/telecentricLineCalibrator/matlab/xysita/chessboard_platform10.txt", p1);
     readPointsFromTxt("./src/telecentricLineCalibrator/matlab/xysita/chessboard_platform21.txt", p2);
@@ -273,4 +256,76 @@ void TelecentricPlatformCalib::run() {
 
     // 输出结果
     std::cout << "像素点在平台坐标系 = " << plat_pts(0, 0) << ", " << plat_pts(0, 1) << "\n";
+}
+bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(
+    const std::vector<std::vector<std::vector<cv::Point2d>>>& onePlatformBoards, Eigen::Vector3d& vRotPlat,
+    Eigen::Vector3d& vTransPlat) {
+    if (onePlatformBoards.size() < 5) {
+        PLOGE << "输入的图像数量不足 5 组！";
+        return false;
+    }
+
+    // -------------------- 1. 取每组的第一个标定板 --------------------
+    auto extractBoard = [&](int idx) {
+        std::vector<Eigen::Vector2d> pts;
+        const auto& cvpts = onePlatformBoards[idx][0];
+
+        pts.reserve(cvpts.size());
+        for (const auto& p : cvpts) pts.emplace_back(p.x, p.y);
+        return pts;
+    };
+
+    auto p1 = extractBoard(0);
+    auto p2 = extractBoard(1);
+    auto p3 = extractBoard(2);
+    auto p4 = extractBoard(3);
+    auto p5 = extractBoard(4);
+
+    // -------------------- 2. 像素 -> 世界 --------------------
+    auto w1 = convertToWorld(p1);
+    auto w2 = convertToWorld(p2);
+    auto w3 = convertToWorld(p3);
+    auto w4 = convertToWorld(p4);
+    auto w5 = convertToWorld(p5);
+
+    // -------------------- 3. 平台方向向量 --------------------
+    Eigen::Vector3d xdir = computeDirectionLS(w3, w4);
+    Eigen::Vector3d ydir = computeDirectionLS(w4, w5);
+
+    // -------------------- 4. 旋转中心 --------------------
+    Eigen::Vector2d C = computeRotationCenterSequential({w1, w2, w3});
+
+    // -------------------- 5. 平台 -> 世界
+    Eigen::Vector3d zdir = xdir.cross(ydir).normalized();
+
+    Eigen::Matrix3d R_plat_world;
+    R_plat_world.col(0) = xdir.normalized();
+    R_plat_world.col(1) = ydir.normalized();
+    R_plat_world.col(2) = zdir;
+
+    Eigen::Vector3d t_plat_world(C.x(), C.y(), 0);
+
+    // -------------------- 6. 世界 -> 相机
+    Eigen::Matrix3d R_world_cam;
+    cv::Mat rvec_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
+    for (int i = 0; i < 3; i++) rvec_cv.at<double>(i, 0) = v_rot_(i);
+    cv::Rodrigues(rvec_cv, R_cv);
+    cv::cv2eigen(R_cv, R_world_cam);
+
+    Eigen::Vector3d t_world_cam = v_trans_;
+
+    // -------------------- 7. 平台 -> 相机
+    Eigen::Matrix3d R_plat_cam = R_world_cam * R_plat_world;
+    Eigen::Vector3d t_plat_cam = R_world_cam * t_plat_world + t_world_cam;
+
+    // -------------------- 8. 转换为旋转向量
+    cv::Mat R_plat_cv, rvec_plat_cv;
+    cv::eigen2cv(R_plat_cam, R_plat_cv);
+    cv::Rodrigues(R_plat_cv, rvec_plat_cv);
+
+    for (int i = 0; i < 3; ++i) vRotPlat(i) = rvec_plat_cv.at<double>(i, 0);
+
+    vTransPlat = t_plat_cam;
+
+    return true;
 }
