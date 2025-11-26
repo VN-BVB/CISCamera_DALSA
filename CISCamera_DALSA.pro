@@ -1,4 +1,4 @@
-QT       += core gui widgets network charts
+QT       += core gui widgets network charts printsupport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17

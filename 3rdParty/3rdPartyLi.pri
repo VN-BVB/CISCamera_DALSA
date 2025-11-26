@@ -42,3 +42,13 @@ CONFIG(debug, debug|release) {
     INCLUDEPATH += $$PWD/tinyspline/release/include
     LIBS += -L$$PWD/tinyspline/release/lib64/ -ltinysplinecxx
 }
+# ------------------QCAD库------------------
+INCLUDEPATH += D:/Qt_Project/qcad/src/core/
+INCLUDEPATH += D:/Qt_Project/qcad/src/core/math
+INCLUDEPATH += D:/Qt_Project/qcad/src/gui
+INCLUDEPATH += D:/Qt_Project/qcad/src/spatialindex
+INCLUDEPATH += D:\Qt_Project\qcad\src\io\dxf
+INCLUDEPATH += D:/Qt_Project/qcad/src/3rdparty/legacy/spatialindexnavel/include
+LIBS += -LD:/Qt_Project/qcad/debug -lqcadcore -lqcadgui -lqcadspatialindex
+# ------------------spatialindex------------------
+INCLUDEPATH += E:\download\ChromeDownload\spatialindex-src-2.0.0/include
