@@ -1,0 +1,11 @@
+prefix=C:/Program Files/tinyspline
+exec_prefix=${prefix}
+libdir=${prefix}/lib64
+includedir=${prefix}/include
+
+Name: tinyspline
+Description: Spline Library for a Multitude of Programming Languages
+Version: 0.7.0
+
+Libs: -L${libdir} -ltinysplinecxx -l
+Cflags: -I${includedir} 

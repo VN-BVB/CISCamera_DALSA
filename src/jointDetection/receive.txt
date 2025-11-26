@@ -1,0 +1,419 @@
+#include <QCoreApplication>
+#include <QSharedMemory>
+#include <QDebug>
+#include <QString>
+#include <QTimer>
+#include <QSystemSemaphore>
+#include <QThread>
+#include <QEventLoop>
+#include <opencv2/opencv.hpp>
+#include <vector>
+#include <iostream>
+
+// 与sendROIs.txt中完全相同的结构体定义
+// ROI信息结构
+struct ROIInfo
+{
+    int id;       // ROI唯一标识
+    int x;        // ROI左上角x坐标
+    int y;        // ROI左上角y坐标
+    int width;    // ROI宽度
+    int height;   // ROI高度
+    int offset;   // 图像数据在共享内存中的偏移量
+    int channels; // 图像通道数（1:灰度, 3:RGB, 4:RGBA/BGRA）
+    int format;   // 图像格式（例如：0:灰度, 1:RGB, 2:BGR, 3:RGBA, 4:BGRA）
+};
+
+// 共享内存头部
+struct ROIHeader
+{
+    int version;    // 版本号
+    int roiCount;   // ROI数量
+    bool dataReady; // 数据是否准备好
+    // 可添加其他状态信息
+};
+
+// ROI接收器类 - 完全重写以匹配发送方的同步机制
+class ROIReceiver
+{
+public:
+    ROIReceiver() : sharedMemory(nullptr),
+                    dataAvailableSemaphore(nullptr),
+                    dataReadSemaphore(nullptr)
+    {
+    }
+
+    ~ROIReceiver()
+    {
+        cleanup();
+    }
+
+    // 清理资源
+    void cleanup()
+    {
+        if (sharedMemory)
+        {
+            if (sharedMemory->isAttached())
+            {
+                sharedMemory->detach();
+            }
+            delete sharedMemory;
+            sharedMemory = nullptr;
+        }
+
+        if (dataAvailableSemaphore)
+        {
+            delete dataAvailableSemaphore;
+            dataAvailableSemaphore = nullptr;
+        }
+
+        if (dataReadSemaphore)
+        {
+            delete dataReadSemaphore;
+            dataReadSemaphore = nullptr;
+        }
+    }
+
+    // 连接到发送方进程
+    bool connectToSender(int processId)
+    {
+        QString processIdStr = QString::number(processId);
+
+        // 清理之前的资源
+        cleanup();
+
+        // 创建信号量对象（注意：接收方不使用Create标志，而是打开已存在的信号量）
+        dataAvailableSemaphore = new QSystemSemaphore("ROI_Semaphore_" + processIdStr + "_DataAvailable");
+        dataReadSemaphore = new QSystemSemaphore("ROI_Semaphore_" + processIdStr + "_DataRead");
+
+        // 创建共享内存对象
+        sharedMemory = new QSharedMemory("ROI_Shared_Memory_" + processIdStr);
+
+        // 尝试连接到共享内存
+        if (!sharedMemory->attach())
+        {
+            qCritical() << "Failed to attach to shared memory for process" << processId << ":" << sharedMemory->errorString();
+            cleanup();
+            return false;
+        }
+
+        qInfo() << "Successfully connected to sender process" << processId;
+        qInfo() << "- Shared memory key:" << sharedMemory->key();
+        qInfo() << "- Data available semaphore:" << dataAvailableSemaphore->key();
+        qInfo() << "- Data read semaphore:" << dataReadSemaphore->key();
+
+        return true;
+    }
+
+    // 修改waitAndReadROIs方法，正确实现带超时的信号量获取
+    std::vector<cv::Mat> waitAndReadROIs(int timeoutMs = 30000)
+    {
+        std::vector<cv::Mat> rois;
+
+        if (!sharedMemory || !sharedMemory->isAttached() ||
+            !dataAvailableSemaphore || !dataReadSemaphore)
+        {
+            qCritical() << "Not properly connected to sender process";
+            return rois;
+        }
+
+        qInfo() << "等待发送方数据可用信号...";
+
+        // 正确实现带超时的信号量获取
+        QTimer timer;
+        timer.setSingleShot(true);
+        QEventLoop loop;
+
+        // 连接信号槽
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+        // 启动定时器
+        timer.start(timeoutMs);
+
+        // 创建一个线程来尝试获取信号量
+        bool dataReceived = false;
+        QThread workerThread;
+
+        QObject worker;
+        worker.moveToThread(&workerThread);
+
+        QObject::connect(&workerThread, &QThread::started, [&]()
+                         {
+        dataReceived = dataAvailableSemaphore->acquire();
+        loop.quit(); });
+
+        workerThread.start();
+        loop.exec(); // 等待获取信号量或超时
+
+        // 检查是否超时
+        if (timer.isActive())
+        {
+            // 正常获取到信号量
+            timer.stop();
+            qInfo() << "接收到数据可用信号，开始读取ROIs...";
+        }
+        else
+        {
+            // 超时了
+            qWarning() << "等待数据超时，中断操作";
+            workerThread.terminate();
+            workerThread.wait();
+            return rois;
+        }
+
+        // 等待工作线程完成
+        if (workerThread.isRunning())
+        {
+            workerThread.wait(500); // 给线程一点时间完成
+            if (workerThread.isRunning())
+            {
+                workerThread.terminate();
+                workerThread.wait();
+            }
+        }
+
+        if (dataReceived)
+        {
+            // 从共享内存读取ROIs
+            rois = readROIsFromMemory();
+
+            // 通知发送方数据已读取完成
+            qInfo() << "通知发送方数据已读取完成";
+            dataReadSemaphore->release();
+        }
+        else
+        {
+            qWarning() << "获取信号量失败";
+        }
+
+        return rois;
+    }
+
+private:
+    // 修改readROIsFromMemory方法，增加更多调试输出
+    std::vector<cv::Mat> readROIsFromMemory()
+    {
+        std::vector<cv::Mat> rois;
+
+        if (!sharedMemory || !sharedMemory->isAttached())
+        {
+            qWarning() << "共享内存未连接";
+            return rois;
+        }
+
+        try
+        {
+            qInfo() << "尝试锁定共享内存...";
+            // 锁定共享内存以进行安全访问
+            if (!sharedMemory->lock())
+            {
+                qWarning() << "无法锁定共享内存";
+                return rois;
+            }
+            qInfo() << "共享内存锁定成功";
+
+            // 获取头部信息
+            ROIHeader *header = reinterpret_cast<ROIHeader *>(sharedMemory->data());
+            qInfo() << "获取头部信息完成，版本:" << header->version
+                    << "，ROI数量:" << header->roiCount
+                    << "，数据准备状态:" << (header->dataReady ? "是" : "否");
+
+            // 检查数据是否准备好
+            if (!header->dataReady)
+            {
+                qWarning() << "Data in shared memory is not ready";
+                sharedMemory->unlock();
+                return rois;
+            }
+
+            // 获取ROI信息数组
+            ROIInfo *infos = reinterpret_cast<ROIInfo *>(
+                reinterpret_cast<char *>(header) + sizeof(ROIHeader));
+
+            // 获取图像数据起始位置
+            uchar *imageData = reinterpret_cast<uchar *>(
+                reinterpret_cast<char *>(infos) + sizeof(ROIInfo) * header->roiCount);
+
+            // 读取每个ROI
+            for (int i = 0; i < header->roiCount; i++)
+            {
+                qInfo() << "正在读取ROI" << i;
+                int width = infos[i].width;
+                int height = infos[i].height;
+                int offset = infos[i].offset;
+                int channels = infos[i].channels;
+                int format = infos[i].format;
+
+                qInfo() << "ROI" << i << "信息 - 宽:" << width << "高:" << height
+                        << "通道:" << channels << "格式:" << format << "偏移:" << offset;
+
+                // 根据通道数创建适当的图像矩阵
+                cv::Mat image;
+                if (channels == 1)
+                {
+                    // 灰度图像
+                    image = cv::Mat(height, width, CV_8UC1);
+                    memcpy(image.data, imageData + offset, width * height);
+                }
+                else if (channels == 3)
+                {
+                    // 彩色图像 - OpenCV默认使用BGR格式
+                    image = cv::Mat(height, width, CV_8UC3);
+                    memcpy(image.data, imageData + offset, width * height * 3);
+
+                    // 如果格式是RGB，需要转换为BGR
+                    if (format == 1)
+                    { // RGB格式
+                        cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
+                    }
+                    // 格式2是BGR，不需要转换
+                }
+                else if (channels == 4)
+                {
+                    // 带Alpha通道的图像
+                    image = cv::Mat(height, width, CV_8UC4);
+                    memcpy(image.data, imageData + offset, width * height * 4);
+
+                    // 如果是RGBA格式，转换为BGRA
+                    if (format == 3)
+                    { // RGBA格式
+                        cv::cvtColor(image, image, cv::COLOR_RGBA2BGRA);
+                    }
+                    // 格式4是BGRA，不需要转换
+                }
+
+                if (!image.empty())
+                {
+                    rois.push_back(image);
+                    qInfo() << "成功读取ROI" << i;
+                }
+                else
+                {
+                    qWarning() << "ROI" << i << "为空";
+                }
+            }
+
+            // 解锁共享内存
+            sharedMemory->unlock();
+            qInfo() << "共享内存解锁成功，共读取" << rois.size() << "个ROI";
+        }
+        catch (const std::exception &e)
+        {
+            qCritical() << "Exception during shared memory operations:" << e.what();
+            if (sharedMemory->isAttached())
+            {
+                sharedMemory->unlock();
+            }
+        }
+
+        return rois;
+    }
+
+    QSharedMemory *sharedMemory;
+    QSystemSemaphore *dataAvailableSemaphore; // 数据可用信号量
+    QSystemSemaphore *dataReadSemaphore;      // 数据已读信号量
+};
+
+void displayImages(const std::vector<cv::Mat> &images)
+{
+    if (images.empty())
+    {
+        qWarning() << "No images to display";
+        return;
+    }
+
+    qInfo() << "Displaying" << images.size() << "images (显示3秒后自动关闭)";
+
+    // 为每个图像创建一个窗口
+    for (size_t i = 0; i < images.size(); i++)
+    {
+        std::string windowName = "ROI " + std::to_string(i);
+        cv::namedWindow(windowName, cv::WINDOW_NORMAL);
+        cv::imshow(windowName, images[i]);
+    }
+
+    // 显示3秒后自动关闭窗口
+    cv::waitKey(3000); // 3000毫秒 = 3秒
+    cv::destroyAllWindows();
+
+    qInfo() << "图像窗口已自动关闭";
+}
+
+// 获取发送方进程ID
+int getSenderProcessId()
+{
+    qInfo() << "请输入发送方进程ID（在sendROIs程序输出中显示）:";
+
+    int processId = 0;
+    std::cin >> processId;
+
+    return processId;
+}
+
+int main(int argc, char *argv[])
+{
+    // 设置OpenCV日志级别为警告
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_WARNING);
+
+    QCoreApplication a(argc, argv);
+
+    qDebug() << "ROI Receiver Application Started";
+    qDebug() << "此应用程序将使用进程间同步机制连接到sendROIs程序";
+
+    // 获取发送方进程ID
+    int senderProcessId = getSenderProcessId();
+
+    if (senderProcessId <= 0)
+    {
+        qCritical() << "无效的进程ID，退出程序";
+        return -1;
+    }
+
+    ROIReceiver receiver;
+
+    // 连接到发送方进程
+    if (!receiver.connectToSender(senderProcessId))
+    {
+        qCritical() << "连接到发送方进程失败，请确保sendROIs程序正在运行且进程ID正确:" << senderProcessId;
+        return -1;
+    }
+
+    qInfo() << "连接成功，进入循环接收模式...";
+    qInfo() << "按 Ctrl+C 退出循环";
+
+    // 设置运行标志
+    bool running = true;
+
+    // 注册Ctrl+C信号处理
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, [&]()
+                     {
+        running = false;
+        qInfo() << "正在停止接收循环..."; });
+
+    // 循环接收数据
+    while (running)
+    {
+        qInfo() << "\n[循环接收] 等待发送方数据...";
+
+        // 等待并读取ROIs（60秒超时，给发送方足够的准备时间）
+        std::vector<cv::Mat> rois = receiver.waitAndReadROIs(60000);
+
+        if (rois.empty())
+        {
+            if (running)
+            { // 只有在正常运行时才显示错误
+                qWarning() << "没有从共享内存中读取到ROIs或操作超时，继续等待...";
+            }
+        }
+        else
+        {
+            // 显示图像
+            qInfo() << "接收到新的图像批次，准备显示...";
+            displayImages(rois);
+            qInfo() << "图像显示完成，等待下一批数据...";
+        }
+    }
+
+    qInfo() << "ROI Receiver Application Completed";
+    return 0;
+}

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>JointView</class>
+ <widget class="QWidget" name="JointView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1512</width>
+    <height>851</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="FrmVisionDisplay" name="gv_image">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>60</y>
+     <width>1231</width>
+     <height>721</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>1300</x>
+     <y>130</y>
+     <width>160</width>
+     <height>561</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QPushButton" name="pb_open">
+      <property name="text">
+       <string>打开图像</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pb_openSharedMemoryImages">
+      <property name="text">
+       <string>打开共享内存的图像</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="ckb_pixelContoursSquare">
+      <property name="text">
+       <string>像素级轮廓（方块）</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="ckb_pixelContoursLine">
+      <property name="text">
+       <string>像素级轮廓（线条）</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="ckb_subpixelContours">
+      <property name="text">
+       <string>亚像素级轮廓</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="ckb_fitlines">
+      <property name="text">
+       <string>拟合线条</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="ckb_fitCurves">
+      <property name="text">
+       <string>拟合曲线</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="ckb_endPoints">
+      <property name="text">
+       <string>拼缝端点</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FrmVisionDisplay</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">src/ui/utils/display/frm_display.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

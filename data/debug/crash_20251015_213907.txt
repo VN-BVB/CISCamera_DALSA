@@ -1,0 +1,27 @@
+Crash time: 2025-10-15 21:39:07
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ff71ef0f37e
+Thread ID: 5780
+
+Crash function: Rail::whenMove2AbsPosition
+Source file: d:\code\ciscamera_dalsa\src\rail\rail.cpp
+Line: 132
+
+Call Stack:
+#0  Rail::whenMove2AbsPosition [d:\code\ciscamera_dalsa\src\rail\rail.cpp:132]
+#1  QtPrivate::FunctorCall<QtPrivate::IndexesList<0,1>,QtPrivate::List<float,float>,void,void (__cdecl Rail::*)(float,float)>::call [d:\programdata\qt\qt5.14.2\5.14.2\msvc2017_64\include\qtcore\qobjectdefs_impl.h:152]
+#2  QtPrivate::FunctionPointer<void (__cdecl Rail::*)(float,float)>::call<QtPrivate::List<float,float>,void> [d:\programdata\qt\qt5.14.2\5.14.2\msvc2017_64\include\qtcore\qobjectdefs_impl.h:186]
+#3  QtPrivate::QSlotObject<void (__cdecl Rail::*)(float,float),QtPrivate::List<float,float>,void>::impl [d:\programdata\qt\qt5.14.2\5.14.2\msvc2017_64\include\qtcore\qobjectdefs_impl.h:419]
+#4  QMetaCallEvent::placeMetaCall
+#5  QObject::event
+#6  QApplicationPrivate::notify_helper
+#7  QApplication::notify
+#8  QCoreApplication::notifyInternal2
+#9  QCoreApplicationPrivate::sendPostedEvents
+#10  QEventDispatcherWin32::processEvents
+#11  QEventLoop::exec
+#12  QThread::exec
+#13  QThread::start
+#14  BaseThreadInitThunk
+#15  RtlUserThreadStart

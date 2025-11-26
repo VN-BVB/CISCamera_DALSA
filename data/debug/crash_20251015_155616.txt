@@ -1,0 +1,27 @@
+Crash time: 2025-10-15 15:56:16
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ff77cb528ef
+Thread ID: 19504
+
+Crash function: ImageProcessWorker::processImage
+Source file: d:\qt_project\ciscamera_dalsa\src\jointdetection\imageprocessworker.cpp
+Line: 349
+
+Call Stack:
+#0  ImageProcessWorker::processImage [d:\qt_project\ciscamera_dalsa\src\jointdetection\imageprocessworker.cpp:349]
+#1  QtPrivate::FunctorCall<QtPrivate::IndexesList<0>,QtPrivate::List<cv::Mat>,void,void (__cdecl ImageProcessWorker::*)(cv::Mat)>::call [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:152]
+#2  QtPrivate::FunctionPointer<void (__cdecl ImageProcessWorker::*)(cv::Mat)>::call<QtPrivate::List<cv::Mat>,void> [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:186]
+#3  QtPrivate::QSlotObject<void (__cdecl ImageProcessWorker::*)(cv::Mat),QtPrivate::List<cv::Mat>,void>::impl [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:419]
+#4  QMetaCallEvent::placeMetaCall
+#5  QObject::event
+#6  QApplicationPrivate::notify_helper
+#7  QApplication::notify
+#8  QCoreApplication::notifyInternal2
+#9  QCoreApplicationPrivate::sendPostedEvents
+#10  QEventDispatcherWin32::processEvents
+#11  QEventLoop::exec
+#12  QThread::exec
+#13  QThread::start
+#14  BaseThreadInitThunk
+#15  RtlUserThreadStart

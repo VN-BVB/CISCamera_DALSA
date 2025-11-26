@@ -1,0 +1,31 @@
+Crash time: 2025-11-10 18:57:54
+Exception code: 0xc0000005
+Exception type: Access Violation
+Exception address: 0x7ff63f5d8f75
+Thread ID: 4836
+
+Crash function: std::_Vb_reference<std::_Wrap_alloc<std::allocator<unsigned int> > >::operator=
+Source file: d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector
+Line: 2117
+
+Call Stack:
+#0  std::_Vb_reference<std::_Wrap_alloc<std::allocator<unsigned int> > >::operator= [d:\apps\visualstudio2017\enterprise\vc\tools\msvc\14.16.27023\include\vector:2117]
+#1  ContourFeatureCalculator::sortContour [d:\qt_project\ciscamera_dalsa\src\jointdetection\contourprocess\contour_feature_calculator.cpp:136]
+#2  ContourProcessor::processContour [d:\qt_project\ciscamera_dalsa\src\jointdetection\contourprocess\contour_processor.cpp:23]
+#3  JointSeam::run [d:\qt_project\ciscamera_dalsa\src\jointdetection\contourprocess\joint_seam.cpp:27]
+#4  ImageProcessWorker::processImage [d:\qt_project\ciscamera_dalsa\src\jointdetection\image_process_worker.cpp:20]
+#5  QtPrivate::FunctorCall<QtPrivate::IndexesList<0>,QtPrivate::List<std::shared_ptr<cv::Mat> >,void,void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>)>::call [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:152]
+#6  QtPrivate::FunctionPointer<void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>)>::call<QtPrivate::List<std::shared_ptr<cv::Mat> >,void> [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:186]
+#7  QtPrivate::QSlotObject<void (__cdecl ImageProcessWorker::*)(std::shared_ptr<cv::Mat>),QtPrivate::List<std::shared_ptr<cv::Mat> >,void>::impl [d:\apps\qt\5.15.2\msvc2015_64\include\qtcore\qobjectdefs_impl.h:419]
+#8  QMetaCallEvent::placeMetaCall
+#9  QObject::event
+#10  QApplicationPrivate::notify_helper
+#11  QApplication::notify
+#12  QCoreApplication::notifyInternal2
+#13  QCoreApplicationPrivate::sendPostedEvents
+#14  QEventDispatcherWin32::processEvents
+#15  QEventLoop::exec
+#16  QThread::exec
+#17  QThread::start
+#18  BaseThreadInitThunk
+#19  RtlUserThreadStart
