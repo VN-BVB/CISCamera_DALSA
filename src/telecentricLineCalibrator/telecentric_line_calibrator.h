@@ -29,6 +29,7 @@ class TelecentricLineCalibrator : public QObject {
 public:
     TelecentricLineCalibrator();
     Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d& R) const;
+    Eigen::Matrix3d vecToRotMat(const Eigen::Vector3d& rvec) const;
 
     /**
      * @brief 线阵远心镜头标定（DLT 初值求解）
@@ -68,10 +69,8 @@ public:
     Eigen::MatrixXd cameraToWorldCoordinates(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
                                              const Eigen::Vector3d& v_trans);
     Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
+                                 const double u0, const double v0, const double dx, const double dy,
                                  const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
-
-    Pose estimateTelecentricPosePnP(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
-                                    const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);
     double computeReprojectionErrorDemo(const std::vector<Eigen::Vector2d>& worldPts,
                                         const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose, const Eigen::Matrix3d& K,
                                         const std::string& savePath, const Eigen::Matrix<double, 1, 5>& coff_dis);
@@ -83,7 +82,7 @@ private:
                                             const std::vector<double>& reprojErrors);
     Pose extractPoseFromHomography(const Eigen::Matrix3d& H, const Eigen::Matrix3d& K,
                                    const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
-                                   const double m);
+                                   const double m, const double u0, const double v0, const double dx, const double dy);
     Eigen::Matrix3d initIntrinsic(double m, double dx, double dy, double u0, double v0);
     double computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
                                     const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath = " ",
@@ -98,5 +97,7 @@ private:
     Eigen::Matrix3d K_;
     Eigen::Matrix<double, 1, 5> coff_dis_;
     const std::string calib_data_path_ = "./data/calibration_config/before_optimization_calib_data.json";
+signals:
+    void sendSignalSuccessCalib();
 };
 #endif  // TELECENTRIC_LINE_CALIBRATOR_H
