@@ -30,3 +30,13 @@ void initPlog() {
     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
     plog::get()->addAppender(&consoleAppender);  // Also add logging to the console.
 }
+void useDemo() {
+    // 放类成员
+    std::shared_ptr<CISWidget> test{nullptr};
+    // 放构造
+    test = std::make_shared<CISWidget>();
+    // 给图像坐标
+    std::vector<Eigen::Vector2d> pix_pts;
+    // 调用
+    QMetaObject::invokeMethod(test.get(), [=]() { test->convertToWorldDemo(pix_pts); }, Qt::QueuedConnection);
+}

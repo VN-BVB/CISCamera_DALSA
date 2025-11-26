@@ -47489,3 +47489,4 @@
 2025/11/26;15:07:22.193;ERROR;6032;0000000000000000;TelecentricPlatformCalib::estimatePlatformPoseFromBoards@264;"输入的图像数量不足 5 组！"
 2025/11/26;15:07:22.193;ERROR;6032;0000000000000000;TelecentricPlatformCalib::estimatePlatformPoseFromBoards@264;"输入的图像数量不足 5 组！"
 2025/11/26;15:07:22.193;ERROR;6032;0000000000000000;TelecentricPlatformCalib::estimatePlatformPoseFromBoards@264;"输入的图像数量不足 5 组！"
+2025/11/26;15:34:12.181;DEBUG;27468;0000000000000000;DalsaCamera::stopGrab@189;" 相机停止采集图像"
