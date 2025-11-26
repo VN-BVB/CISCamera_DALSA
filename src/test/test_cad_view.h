@@ -22,9 +22,6 @@ public:
 private:
     Ui::TestCADView *ui;
 
-    // QCAD相关成员
-    RDocument* document;
-    RDocumentInterface* documentInterface;
     RGraphicsViewQt* cadView;
 };
 

@@ -1,3 +1,4 @@
+#include <QApplication>
 #include <plog/Init.h>
 #include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Initializers/RollingFileInitializer.h>
@@ -7,7 +8,6 @@
 #include <plog/Initializers/RollingFileInitializer.h>
 #include <plog/Log.h>
 
-#include <QApplication>
 // clang-format off
 #include <winsock2.h>
 #include <windows.h>
@@ -19,7 +19,7 @@
 #include "src/ui/jointView/joint_view.h"
 #include "src/test/test_frmVisionDisplay.h"
 #include "src/test/test_multiRoi.h"
-#include "src/test/test_cad_view.h"
+#include "src/test/test_cad_view.h"'
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
