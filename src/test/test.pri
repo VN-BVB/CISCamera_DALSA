@@ -20,8 +20,7 @@ SOURCES += \
     $$PWD/test_frmVisionDisplay.cpp \
     $$PWD/test_multiRoi.cpp \
     $$PWD/test_tiny_spline.cpp \
-    E:/download/ChromeDownload/dxflib-3.26.4-src/src/dl_writer_ascii.cpp \
-    E:/download/ChromeDownload/dxflib-3.26.4-src/src/dl_dxf.cpp
+
 
 
 

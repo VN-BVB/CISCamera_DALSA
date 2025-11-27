@@ -48,7 +48,8 @@ void useDemo() {
     // 给图像坐标
     std::vector<Eigen::Vector2d> pix_pts;
     std::vector<std::vector<std::vector<cv::Point2d>>> calcOriCoordinateSystem;
-    // libcbDetector->processImagesInDirectoryFilePath("./data/PaltfromCalibrate/orignCor/img", calcOriCoordinateSystem);
+    LibCBDetector libcbDetector;
+    libcbDetector.processImagesInDirectoryFilePath("./data/PaltfromCalibrate/orignCor/img", calcOriCoordinateSystem);
     for (auto& p : calcOriCoordinateSystem[0][0]) {
         pix_pts.emplace_back(p.x, p.y);
     }

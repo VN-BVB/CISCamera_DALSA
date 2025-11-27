@@ -9,7 +9,7 @@ TestDxfWriter::TestDxfWriter() {
 
 void TestDxfWriter::run() {
     DL_Dxf dxf;
-    DL_WriterA* dw = dxf.out("dimension1.dxf", DL_Codes::AC1015);
+    DL_WriterA* dw = dxf.out("dimension2.dxf", DL_Codes::AC1015);
 
     // section header:
     dxf.writeHeader(*dw);

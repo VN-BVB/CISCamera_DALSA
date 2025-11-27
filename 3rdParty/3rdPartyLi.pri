@@ -43,17 +43,21 @@ CONFIG(debug, debug|release) {
     LIBS += -L$$PWD/tinyspline/release/lib64/ -ltinysplinecxx
 }
 # ------------------QCAD库------------------
-INCLUDEPATH += D:/Qt_Project/qcad/src/core/
-INCLUDEPATH += D:/Qt_Project/qcad/src/core/math
-INCLUDEPATH += D:/Qt_Project/qcad/src/gui
-INCLUDEPATH += D:/Qt_Project/qcad/src/spatialindex
-INCLUDEPATH += D:/Qt_Project/qcad/src/io/dxf
-INCLUDEPATH += D:/Qt_Project/qcad/src/3rdparty/legacy/spatialindexnavel
-INCLUDEPATH += D:\Qt_Project\qcad\src\io\dxf
-INCLUDEPATH += D:\Qt_Project\qcad\src\3rdparty
-INCLUDEPATH += D:\Qt_Project\qcad\src\entity
-LIBS += -LD:/Qt_Project/qcad/debug -lqcadcore -lqcadgui -lqcadspatialindex
+# INCLUDEPATH += D:/Qt_Project/qcad/src/core/
+# INCLUDEPATH += D:/Qt_Project/qcad/src/core/math
+# INCLUDEPATH += D:/Qt_Project/qcad/src/gui
+# INCLUDEPATH += D:/Qt_Project/qcad/src/spatialindex
+# INCLUDEPATH += D:/Qt_Project/qcad/src/io/dxf
+# INCLUDEPATH += D:/Qt_Project/qcad/src/3rdparty/legacy/spatialindexnavel
+# INCLUDEPATH += D:\Qt_Project\qcad\src\io\dxf
+# INCLUDEPATH += D:\Qt_Project\qcad\src\3rdparty
+# INCLUDEPATH += D:\Qt_Project\qcad\src\entity
+# LIBS += -LD:/Qt_Project/qcad/debug -lqcadcore -lqcadgui -lqcadspatialindex
 # ------------------dxflib库------------------
-INCLUDEPATH += E:/download/ChromeDownload/dxflib-3.26.4-src/src
+INCLUDEPATH += $$PWD/dxflib-3.26.4-src
+SOURCES += \
+    $$PWD/dxflib-3.26.4-src/dl_dxf.cpp \
+    $$PWD/dxflib-3.26.4-src/dl_writer_ascii.cpp
+
 
 
