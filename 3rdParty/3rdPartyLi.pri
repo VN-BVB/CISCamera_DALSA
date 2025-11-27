@@ -53,3 +53,7 @@ INCLUDEPATH += D:\Qt_Project\qcad\src\io\dxf
 INCLUDEPATH += D:\Qt_Project\qcad\src\3rdparty
 INCLUDEPATH += D:\Qt_Project\qcad\src\entity
 LIBS += -LD:/Qt_Project/qcad/debug -lqcadcore -lqcadgui -lqcadspatialindex
+# ------------------dxflib库------------------
+INCLUDEPATH += E:/download/ChromeDownload/dxflib-3.26.4-src/src
+
+

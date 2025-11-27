@@ -20,6 +20,7 @@
 #include "src/test/test_frmVisionDisplay.h"
 #include "src/test/test_multiRoi.h"
 #include "src/test/test_cad_view.h"'
+#include "src/test/test_dxf_writer.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -31,8 +32,8 @@ int main(int argc, char *argv[]) {
     // test_multiRoi t;
     // t.show();
 
-    TestCADView t;
-    t.show();
+    TestDxfWriter t;
+    t.run();
 
     // JointView w;
     // w.show();
@@ -46,6 +47,11 @@ void useDemo() {
     test = std::make_shared<CISWidget>();
     // 给图像坐标
     std::vector<Eigen::Vector2d> pix_pts;
+    std::vector<std::vector<std::vector<cv::Point2d>>> calcOriCoordinateSystem;
+    // libcbDetector->processImagesInDirectoryFilePath("./data/PaltfromCalibrate/orignCor/img", calcOriCoordinateSystem);
+    for (auto& p : calcOriCoordinateSystem[0][0]) {
+        pix_pts.emplace_back(p.x, p.y);
+    }
     // 调用
     QMetaObject::invokeMethod(test.get(), [=]() { test->convertToWorldDemo(pix_pts); }, Qt::QueuedConnection);
 }
