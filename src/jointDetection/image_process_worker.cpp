@@ -46,7 +46,7 @@ void ImageProcessWorker::whenProcessMultiImages(std::shared_ptr<std::vector<ROIW
         // 如果没有ROI图像，直接返回
         if (m_totalROICount == 0) {
             PLOG_INFO << "没有ROI图像需要处理";
-            emit allImagesProcessed(m_processedResults);
+            emit sendAllImagesProcessed(m_processedRoiInfos);
             return;
         }
 
@@ -60,8 +60,6 @@ void ImageProcessWorker::whenProcessMultiImages(std::shared_ptr<std::vector<ROIW
         }
 
         PLOG_INFO << "所有图像处理任务已提交到线程池";
-        // 等待所有任务完成（可选，如果需要同步的话）
-        // 这里我们选择异步处理，通过信号通知完成
     } catch (const std::exception &e) {
         emit errorOccurred(QString("处理多张ROI图像时出错: ") + e.what());
     }
@@ -72,22 +70,15 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
     try {
         PLOG_INFO << "开始处理ROI图像 (x:" << roi.x << ", y:" << roi.y << ")";
 
-        // 创建图像的共享指针，以便在信号中传递
         auto imagePtr = std::make_shared<cv::Mat>(roi.image.clone());
-
         cv::Point2f leftUPPoint = cv::Point2f{static_cast<float>(roi.x), static_cast<float>(roi.y)};
         auto jointSeam = std::make_shared<JointSeam>(*imagePtr, leftUPPoint);
         jointSeam->run();
 
         PLOG_INFO << "完成处理ROI图像 (x:" << roi.x << ", y:" << roi.y << ")";
 
-        ProcessedROIResult result;
-        result.image = imagePtr;
-        result.jointSeam = jointSeam;
-        result.x = roi.x;
-        result.y = roi.y;
-
         ProcessedROIInfo resInfo;
+        resInfo.index = m_totalROICount;
         resInfo.image = imagePtr;
         resInfo.leftCornerPoint = cv::Point2f(roi.x, roi.y);
         for (const auto& contour : jointSeam->getContourDatas()) {
@@ -100,14 +91,12 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
         resInfo.lines = jointSeam->getLines();
         resInfo.endPoints = jointSeam->getEndPoints();
 
-        // 线程安全的将结果添加到容器中
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            m_processedResults.push_back(result);
-            m_processedRoiInfos[roi.x] = resInfo;
-            PLOG_DEBUG << "已添加处理结果，当前结果数量：" << m_processedResults.size();
+            m_processedRoiInfos[m_processedCount] = resInfo;
+            PLOG_DEBUG << "已添加处理结果，当前结果数量：" << m_processedCount;
         }
-        emit singleROIProcessed(result);
+        emit singleROIProcessed(resInfo);
 
         // 更新处理完成的计数
         int processed = ++m_processedCount;
@@ -115,7 +104,7 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
         // 检查是否所有图像都已处理完成
         if (processed == m_totalROICount) {
             PLOG_INFO << "===================所有ROI图像处理完成:=================== ";
-            emit allImagesProcessed(m_processedResults);
+            emit sendAllImagesProcessed(m_processedRoiInfos);
         }
     } catch (const cv::Exception &e) {
         // 注意：在工作线程中发送信号需要确保线程安全
@@ -126,14 +115,14 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
     }
 }
 
-std::vector<ProcessedROIResult> ImageProcessWorker::getAllProcessedResults()
+std::map<int, ProcessedROIInfo> ImageProcessWorker::getAllProcessedResults()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    return m_processedResults;
+    return m_processedRoiInfos;
 }
 
 void ImageProcessWorker::clearProcessedResults()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_processedResults.clear();
+    m_processedRoiInfos.clear();
 }

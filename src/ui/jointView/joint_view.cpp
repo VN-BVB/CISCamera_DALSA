@@ -41,7 +41,7 @@ JointView::JointView(QWidget *parent)
     connect(processWorker, &ImageProcessWorker::imageProcessed, this, &JointView::handleImageProcessed);
     connect(processWorker, &ImageProcessWorker::imageProcessedCannyDevenay, this, &JointView::handleImageProcessedCannyDevenay);
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
-    connect(processWorker, &ImageProcessWorker::allImagesProcessed, this, &JointView::whenALLImagesProcessed);
+    connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, this, &JointView::whenALLImagesProcessed);
 
     // 启动线程
     readThread.start();
@@ -53,7 +53,7 @@ void JointView::initRegisterMetaTypes()
     qRegisterMetaType<std::shared_ptr<cv::Mat>>("std::shared_ptr<cv::Mat>");
     qRegisterMetaType<std::shared_ptr<JointSeam>>("std::shared_ptr<JointSeam>");
     qRegisterMetaType<std::shared_ptr<std::vector<ROIWithCoords>>>("std::shared_ptr<std::vector<ROIWithCoords>>");
-    qRegisterMetaType<std::vector<ProcessedROIResult>>("std::vector<ProcessedROIResult>");
+    qRegisterMetaType<std::map<int, ProcessedROIInfo>>("std::map<int, ProcessedROIInfo>");
 }
 
 JointView::~JointView()
@@ -130,9 +130,9 @@ void JointView::handleError(const QString &error)
     PLOG_INFO << "错误:" << error;
 }
 
-void JointView::whenALLImagesProcessed(std::vector<ProcessedROIResult> processedResults)
+void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& processedRoiInfos)
 {
-    std::vector<ProcessedROIResult> rrrr = processedResults;
+    std::map<int, ProcessedROIInfo> rrrr = processedRoiInfos;
     PLOG_INFO << "正在处理所有图像" ;
 }
 

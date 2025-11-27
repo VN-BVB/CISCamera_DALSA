@@ -37,7 +37,7 @@ private slots:
     void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::shared_ptr<JointSeam> jointSeam);
     void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
-    void whenALLImagesProcessed(std::vector<ProcessedROIResult> processedResults);
+    void whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& processedRoiInfos);
 
     void updateDisplay();
     // Checkbox槽函数

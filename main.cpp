@@ -21,6 +21,7 @@
 #include "src/test/test_multiRoi.h"
 #include "src/test/test_cad_view.h"'
 #include "src/test/test_dxf_writer.h"
+#include "src/test/test_convert_coordinate.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -29,14 +30,8 @@ int main(int argc, char *argv[]) {
     // CISWidget w;
     // w.show();
 
-    // test_multiRoi t;
-    // t.show();
-
-    TestDxfWriter t;
-    t.run();
-
-    // JointView w;
-    // w.show();
+    JointView w;
+    w.show();
 
     return a.exec();
 }
