@@ -78,13 +78,13 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
         PLOG_INFO << "完成处理ROI图像 (x:" << roi.x << ", y:" << roi.y << ")";
 
         ProcessedROIInfo resInfo;
-        resInfo.index = m_totalROICount;
+        resInfo.index = m_processedCount;
         resInfo.image = imagePtr;
         resInfo.leftCornerPoint = cv::Point2f(roi.x, roi.y);
         resInfo.contourDatas = jointSeam->getContourDatas();
         for (const auto& contour : jointSeam->getContourDatas()) {
             resInfo.pixelContours .push_back(contour.getPixelContour());
-            resInfo.subpixelContour.push_back(contour.getSubpixelContour());
+            resInfo.subpixelContours.push_back(contour.getSubpixelContour());
             for (const auto& [i, curSeg] : contour.getCurveSegments()) {
                 resInfo.splines.push_back(curSeg.getSpline());
             }

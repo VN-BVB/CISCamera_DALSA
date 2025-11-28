@@ -27,7 +27,7 @@ struct ProcessedROIInfo
     cv::Point leftCornerPoint;                                  // ROI左上角
     std::vector<ContourData> contourDatas;                      // 缝隙轮廓数据
     std::vector<std::vector<cv::Point>> pixelContours;          // 缝隙两条像素轮廓坐标
-    std::vector<std::vector<cv::Point2f>> subpixelContour;      // 缝隙两条亚像素轮廓坐标
+    std::vector<std::vector<cv::Point2f>> subpixelContours;      // 缝隙两条亚像素轮廓坐标
     std::vector<cv::Vec4f> lines;                               // 缝隙所有拟合直线
     std::vector<cv::Vec4f> seamLines;                           // 缝隙两侧两条直线
     std::vector<cv::Point2f> endPoints;                         // 缝隙的四个端点

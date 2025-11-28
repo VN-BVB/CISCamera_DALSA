@@ -43,6 +43,10 @@ JointView::JointView(QWidget *parent)
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
     connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, this, &JointView::whenALLImagesProcessed);
 
+    // 边缘组合
+    m_edgeAssembier = std::make_shared<EdgeAssembly>();
+    connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, m_edgeAssembier.get(), &EdgeAssembly::whenAllImagesProcessed);
+
     // 保存dxf
     m_dxfSaver = std::make_shared<DXFSaver>();
     connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, m_dxfSaver.get(), &DXFSaver::whenAllImagesProcessed);
@@ -136,8 +140,19 @@ void JointView::handleError(const QString &error)
 
 void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& processedRoiInfos)
 {
-    std::map<int, ProcessedROIInfo> rrrr = processedRoiInfos;
-    PLOG_INFO << "正在处理所有图像" ;
+    DisplayManager* displayMgr = ui->gv_image->getDisplayManager();
+    if (!displayMgr) return;
+
+    DisplayScene* scene = displayMgr->displayScene();
+    for (const auto& [key, roiInfo] : processedRoiInfos) {
+        for (const auto& contour : roiInfo.subpixelContours) {
+            if (!contour.empty()) {
+                auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour, Qt::blue, 1);
+                scene->whenAddGraphicComponent(contourComponent);
+            }
+        }
+    }
+    PLOG_INFO << "显示所有轮廓";
 }
 
 // 更新显示函数

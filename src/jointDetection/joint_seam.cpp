@@ -18,6 +18,14 @@ void JointSeam::run() {
     c->setDetector(std::move(s1));
     contours = c->detectContours(m_image);
 
+    // 添加m_position偏移量,映射到整体图像坐标
+    for (auto& contour : contours) {
+        for (auto& point : contour) {
+            point.x += m_position.x;
+            point.y += m_position.y;
+        }
+    }
+
     // 轮廓信息整处理
     for (auto& contour : contours) {
         ContourProcessor processor;

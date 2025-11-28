@@ -6,8 +6,8 @@
 #include "src/jointDetection/image_process_worker.h"
 #include <memory>
 
-class EdgeAssembly
-{
+class EdgeAssembly : public QObject {
+    Q_OBJECT
 public:
     EdgeAssembly();
     explicit EdgeAssembly(const std::vector<std::shared_ptr<ContourBoundingBox>> cbbs);
@@ -18,7 +18,7 @@ public:
     void run(int n);
 
 public slots:
-    void whenAllImagesProcessed(std::map<int, ProcessedROIInfo> processedRoiInfos);
+    void whenAllImagesProcessed(const std::map<int, ProcessedROIInfo> &processedRoiInfos);
 
 private:
     std::vector<std::shared_ptr<ContourBoundingBox>> m_cbbs;

@@ -15,6 +15,7 @@
 #include "src/jointDetection/contourProcess/methods/curve_seg.h"
 #include "src/jointDetection/joint_seam.h"
 #include "src/dxfSaver/dxf_saver.h"
+#include "src/workpieceEdgeAssembly/edge_assembly.h"
 
 namespace Ui {
 class JointView;
@@ -61,6 +62,7 @@ private:
     ImageReadWorker *readWorker;
     ImageProcessWorker *processWorker;
     std::shared_ptr<DXFSaver> m_dxfSaver;
+    std::shared_ptr<EdgeAssembly> m_edgeAssembier;
 
     // 存储当前显示的数据
     std::shared_ptr<cv::Mat> m_currentImage;
