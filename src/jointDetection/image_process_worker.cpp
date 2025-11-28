@@ -81,6 +81,7 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
         resInfo.index = m_totalROICount;
         resInfo.image = imagePtr;
         resInfo.leftCornerPoint = cv::Point2f(roi.x, roi.y);
+        resInfo.contourDatas = jointSeam->getContourDatas();
         for (const auto& contour : jointSeam->getContourDatas()) {
             resInfo.pixelContours .push_back(contour.getPixelContour());
             resInfo.subpixelContour.push_back(contour.getSubpixelContour());

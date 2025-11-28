@@ -2,6 +2,8 @@
 #include "workpiece_generator.h"
 #include "workpiece_combiner.h"
 
+EdgeAssembly::EdgeAssembly() {}
+
 EdgeAssembly::EdgeAssembly(const std::vector<std::shared_ptr<ContourBoundingBox>> cbbs)
 {
     m_cbbs = cbbs;

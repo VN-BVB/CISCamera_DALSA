@@ -43,6 +43,10 @@ JointView::JointView(QWidget *parent)
     connect(processWorker, &ImageProcessWorker::errorOccurred, this, &JointView::handleError);
     connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, this, &JointView::whenALLImagesProcessed);
 
+    // 保存dxf
+    m_dxfSaver = std::make_shared<DXFSaver>();
+    connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, m_dxfSaver.get(), &DXFSaver::whenAllImagesProcessed);
+
     // 启动线程
     readThread.start();
     processThread.start();

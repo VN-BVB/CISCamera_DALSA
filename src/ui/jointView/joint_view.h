@@ -14,6 +14,7 @@
 #include "src/ui/utils/display/frm_display.h"
 #include "src/jointDetection/contourProcess/methods/curve_seg.h"
 #include "src/jointDetection/joint_seam.h"
+#include "src/dxfSaver/dxf_saver.h"
 
 namespace Ui {
 class JointView;
@@ -59,6 +60,7 @@ private:
     QThread processThread;
     ImageReadWorker *readWorker;
     ImageProcessWorker *processWorker;
+    std::shared_ptr<DXFSaver> m_dxfSaver;
 
     // 存储当前显示的数据
     std::shared_ptr<cv::Mat> m_currentImage;
