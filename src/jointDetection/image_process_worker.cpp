@@ -7,7 +7,7 @@
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent}
 {
     int threadCount = std::thread::hardware_concurrency();
-    m_threadPool = new ThreadPool(threadCount > 0 ? threadCount : 9);
+    m_threadPool = new ThreadPool(threadCount > 0 ? threadCount : 6);
     m_processedCount = 0;
     m_totalROICount = 0;
 }
@@ -84,7 +84,7 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
         resInfo.contourDatas = jointSeam->getContourDatas();
         for (const auto& contour : jointSeam->getContourDatas()) {
             resInfo.pixelContours .push_back(contour.getPixelContour());
-            resInfo.subpixelContours.push_back(contour.getSubpixelContour());
+            resInfo.subpixelContours.push_back(contour.getSortedContour());
             for (const auto& [i, curSeg] : contour.getCurveSegments()) {
                 resInfo.splines.push_back(curSeg.getSpline());
             }

@@ -14,6 +14,7 @@
 #include "src/ui/utils/display/graphicItems/point_item.h"
 #include "src/ui/utils/display/graphicItems/bspline_item.h"
 #include "src/ui/utils/display/graphicItems/rotated_rect_item.h"
+#include "src/ui/utils/display/display_view.h"
 
 JointView::JointView(QWidget *parent)
     : QWidget(parent), 
@@ -143,15 +144,17 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
     DisplayManager* displayMgr = ui->gv_image->getDisplayManager();
     if (!displayMgr) return;
 
+    DisplayView* view = displayMgr->displayView();
     DisplayScene* scene = displayMgr->displayScene();
     for (const auto& [key, roiInfo] : processedRoiInfos) {
         for (const auto& contour : roiInfo.subpixelContours) {
             if (!contour.empty()) {
-                auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour, Qt::blue, 1);
+                auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour, Qt::red, 2);
                 scene->whenAddGraphicComponent(contourComponent);
             }
         }
     }
+    view->whenUpdateDisplayFit();
     PLOG_INFO << "显示所有轮廓";
 }
 

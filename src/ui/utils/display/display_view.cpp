@@ -260,8 +260,8 @@ void DisplayView::zoomDown() {
 // 平移
 void DisplayView::translate(QPointF delta) {
     // 根据当前 zoom 缩放平移数
-    delta *= m_rZoomValue;
-    delta *= m_translateSpeed;
+    // delta *= m_rZoomValue;
+    // delta *= m_translateSpeed;
 
     // 获取当前场景中的所有items的边界矩形
     QRectF scene_bounds;
@@ -286,7 +286,7 @@ void DisplayView::translate(QPointF delta) {
     // 计算平移后的视窗位置
     QRectF newViewRect = viewRect.translated(-delta);
 
-    bool canTranslate = true;  //  可以增加检查是否有图元到达边界，到达边界后不允许再移动
+    bool canTranslate = true;  //  可以增加检查是否有图元到达边界，到达边界后不允许再移动,现在这里没用这个
 
     if (canTranslate) {
         // view 根据鼠标下的点作为锚点来定位 scene
@@ -300,34 +300,33 @@ void DisplayView::translate(QPointF delta) {
 }
 
 void DisplayView::whenUpdateDisplayFit() {
-    int imageWidth = m_scene->getDisplayImageSize().width();
-    int imageHeight = m_scene->getDisplayImageSize().height();
-    if (this->width() < 1 || imageWidth < 1) {
+    // 获取场景中所有图元的外接矩形
+    QRectF sceneBoundingRect = m_scene->itemsBoundingRect();
+
+    if (sceneBoundingRect.isEmpty() || this->width() < 1) {
         return;
     }
-    // 图像自适应方法
-    double winWidth = this->width();
-    double winHeight = this->height();
-    double scaleWidth = (imageWidth + 1) / winWidth;  // 加1确保后续流程正确，防止除零错误、比较错误等
-    double scaleHeight = (imageHeight + 1) / winHeight;
-    double row1, column1;
-    double s = 0;
-    if (scaleWidth >= scaleHeight) {
-        row1 = -(1) * ((winHeight * scaleWidth) - imageHeight) / 2;
-        // row1 = 0;
-        column1 = 0;
-        s = 1 / scaleWidth;
-    } else {
-        row1 = 0;
-        column1 = -(1.0) * ((winWidth * scaleHeight) - imageWidth) / 2;
-        // column1 = 0;
-        s = 1 / scaleHeight;
-    }
 
-    if (m_rZoomFit != s || m_rFitPixX != column1 * s) {
+    // 计算缩放比例，确保所有图元都能显示在视图中
+    double winWidth = this->width() - 20;  // 减去边距
+    double winHeight = this->height() - 20;
+
+    double scaleWidth = sceneBoundingRect.width() / winWidth;
+    double scaleHeight = sceneBoundingRect.height() / winHeight;
+
+    // 取较大的缩放比例，确保所有内容都能显示
+    double scale = std::max(scaleWidth, scaleHeight);
+    double s = (scale > 0) ? 1 / scale : 1.0;
+
+    // 计算中心点位置
+    double centerX = sceneBoundingRect.center().x();
+    double centerY = sceneBoundingRect.center().y();
+
+    // 更新缩放和位置信息
+    if (m_rZoomFit != s || m_rFitPixX != centerX * s || m_rFitPixY != centerY * s) {
         m_rZoomFit = s;
-        m_rFitPixX = column1 * s;
-        m_rFitPixY = row1 * s;
+        m_rFitPixX = centerX * s;
+        m_rFitPixY = centerY * s;
         whenZoomToDisplayFit();
     }
 }
@@ -336,12 +335,17 @@ void DisplayView::whenUpdateDisplayFit() {
  将图像缩放到合适视图的大小，并调整显示位置
 */
 void DisplayView::whenZoomToDisplayFit() {
-    zoomByValue(m_rZoomFit);
-    QScrollBar *pHbar = this->horizontalScrollBar();
-    pHbar->setSliderPosition(m_rFitPixX);
-    QScrollBar *pVbar = this->verticalScrollBar();
-    pVbar->setSliderPosition(m_rFitPixY);
-    // centerOn(m_scene->getDisplayImageItem()->getDisplayImageCenter());
+    // 先重置缩放
+    this->resetTransform();
+
+    // 应用新的缩放比例
+    this->scale(m_rZoomFit, m_rZoomFit);
+
+    // 滚动到中心位置
+    this->centerOn(m_rFitPixX / m_rZoomFit, m_rFitPixY / m_rZoomFit);
+
+    // 确保所有内容都在视图内
+    this->ensureVisible(m_scene->itemsBoundingRect());
 }
 
 void DisplayView::zoomByValue(const double &val) {

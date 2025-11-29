@@ -332,9 +332,6 @@ cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, c
     // 对分割后的图像进行二值化，可以使用固定阈值或OTSU
     cv::threshold(shiftGray, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
-    cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/binaryImage.bmp", binaryImage);
-    PLOG_INFO << "baocun binaryImage";
-
     // 对二值图进行腐蚀，减小边缘无关区域面积，对背光和正光都有用
     cv::Mat erodedBinary;
     cv::Mat erodeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));

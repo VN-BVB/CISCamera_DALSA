@@ -30,6 +30,9 @@ int main(int argc, char *argv[]) {
     // CISWidget w;
     // w.show();
 
+    // TestConvertCoordinate t;
+    // t.pixel2World();
+
     JointView w;
     w.show();
 
