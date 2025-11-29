@@ -48,16 +48,10 @@ void EdgeAssembly::whenAllImagesProcessed(const std::map<int, ProcessedROIInfo>&
     // 1、解析出轮廓数据
     std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
     for (const auto& [key, roiInfo] : processedRoiInfos) {
-        int index = roiInfo.index;
-        if (roiInfo.contourDatas.size() >=2) {
-            ContourData firstContourData = roiInfo.contourDatas[0];
-            std::shared_ptr<ContourBoundingBox> firstCbb = std::make_shared<ContourBoundingBox>();
-            firstCbb->initContourData(index * 2, firstContourData);
-            cbbs.push_back(firstCbb);
-            ContourData secondContourData = roiInfo.contourDatas[1];
-            std::shared_ptr<ContourBoundingBox> secondCbb = std::make_shared<ContourBoundingBox>();
-            secondCbb->initContourData(index * 2 + 1, secondContourData);
-            cbbs.push_back(secondCbb);
+        for (const auto& [contourId, contourData] : roiInfo.contourDatas) {
+            std::shared_ptr<ContourBoundingBox> cbb = std::make_shared<ContourBoundingBox>();
+            cbb->initContourData(contourId, contourData);
+            cbbs.push_back(cbb);
         }
     }
     m_cbbs = cbbs;
