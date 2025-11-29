@@ -20,11 +20,6 @@ protected:
     bool displayImage(const QImage &image);
     // 清除图像
     void clearImage();
-    // 显示文本
-    void addDisplayText(const QString &text,const QPointF &pt=QPointF(0,0),const double &size=1,
-                        const QColor &color=QColor(Qt::green),const bool &clear=false);
-    // 清除文本
-    void clearDisplayText();
 public:
     // Qt图形项（QGraphicsItem）系统中用于类型标识的标准实现
     // 在Qt图形视图框架中，每个图形项都需要有唯一的类型标识，能够调用type（）方法确定是否是InteractiveImageItem类型图元

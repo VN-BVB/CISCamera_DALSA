@@ -36,7 +36,7 @@ WorkpieceCombiner::WorkpieceCombiner(const std::vector<WorkpieceBoundingBox>& po
 {}
 
 /**
- * @brief 生成并验证有效的工件组合
+ * @brief 生成并验证有效的门环工件组合
  * @param n 需要选择的工件数量
  *
  * @details

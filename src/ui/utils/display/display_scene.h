@@ -16,6 +16,7 @@ class DisplayView;
 class DisplayImageItem;
 class DisplayScenePrivate;
 class GraphicItemComposite;
+class DisplayTextItem;
 class DisplayScene : public QGraphicsScene
 {
     Q_OBJECT
@@ -48,9 +49,13 @@ public slots:
 
     // =====================================文本显示槽函数=====================================
 public slots:
-    void whenAddDisplayText(const QString &text, const QPointF &pt=QPointF(0,0), const double &size=1,
-                            const QColor &color=QColor(Qt::green), const bool &clear=false);
-    void whenClearDisplayText();
+    // 添加文本图元
+    DisplayTextItem* whenAddDisplayTextItem(const QString &text, const QPointF &pt=QPointF(0,0),
+                                            const double &size=1, const QColor &color=QColor(Qt::green));
+    // 移除文本项
+    void whenRemoveDisplayTextItem(DisplayTextItem* textItem);
+    // 清除所有文本项
+    void whenClearAllDisplayTextItems();
 
     // =====================================图形显示槽函数=====================================
 public slots:
@@ -79,6 +84,8 @@ protected:
     DisplayImageItem *m_displayImageItem = nullptr;
     // 所有图像显示图元列表
     QList<DisplayImageItem*> m_displayImageItems;
+    // 文本图元列表
+    QList<DisplayTextItem*> m_displayTextItems;
     // 图形图元组合管理器
     std::shared_ptr<GraphicItemComposite> m_graphicItemComposite;
 protected:

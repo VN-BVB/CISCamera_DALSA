@@ -202,8 +202,8 @@ bool WorkpieceBoundingBox::isLegal(std::shared_ptr<ContourBoundingBox> candidate
     // 计算候选轮廓边界框在工件边界框中的重叠百分比
     float overlapPercentage = calculateOverlapPercentage(candidateRect, m_outerBoundingBox);
 
-    // 设置阈值，例如50%的重叠率
-    const float OVERLAP_THRESHOLD = 70.0f;
+    // 设置重叠率阈值
+    const float OVERLAP_THRESHOLD = 99.0f;
 
     if (overlapPercentage >= OVERLAP_THRESHOLD) {
         // 2. 检查工件中是否有与候选轮廓相背的轮廓

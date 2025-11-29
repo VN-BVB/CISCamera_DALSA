@@ -78,29 +78,6 @@ void DisplayImageItem::clearImage()
     setPixmap(QPixmap());
 }
 
-// 添加显示文本
-void DisplayImageItem::addDisplayText(const QString &text,
-                                          const QPointF &pt,
-                                          const double &size,
-                                          const QColor &color,
-                                          const bool &clear)
-{
-    Q_D(DisplayImageItem);  // 使用Qt的PIMPL宏获取指向私有实现类的指针
-    if (clear)
-    {
-        d->lstDisplayText.clear();
-    }
-    d->lstDisplayText.append(SDisplayText(text, pt, size, color));
-    this->update();
-}
-
-// 清除文本
-void DisplayImageItem::clearDisplayText()
-{
-    Q_D(DisplayImageItem);
-    d->lstDisplayText.clear();
-    this->update();
-}
 
 QPointF DisplayImageItem::getDisplayImageCenter() const
 {

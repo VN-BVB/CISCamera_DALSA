@@ -10,6 +10,7 @@
 #include "graphicItems/point_item.h"
 #include "graphicItems/bspline_item.h"
 #include "graphicItems/rotated_rect_item.h"
+#include "display_text_item.h"
 
 /*******************************/
 // [DisplayScenePrivate]
@@ -144,17 +145,38 @@ void DisplayScene::whenClearAllDisplayImages()
     emit sendClearDisplayImage();
 }
 
-void DisplayScene::whenAddDisplayText(const QString &text, const QPointF &pt, const double &size,
-                                      const QColor &color, const bool &clear)
+// 实现新接口
+DisplayTextItem* DisplayScene::whenAddDisplayTextItem(const QString &text, const QPointF &pt,
+                                                      const double &size, const QColor &color)
 {
-    if (!m_displayImageItem) return;
-    m_displayImageItem->addDisplayText(text, pt, size, color, clear);
+    // 创建新的文本项
+    DisplayTextItem* textItem = new DisplayTextItem();
+    textItem->setText(text, size, color);
+    textItem->setPos(pt);
+
+    // 添加到场景和列表
+    this->addItem(textItem);
+    m_displayTextItems.append(textItem);
+
+    return textItem;
 }
 
-void DisplayScene::whenClearDisplayText()
+void DisplayScene::whenRemoveDisplayTextItem(DisplayTextItem* textItem)
 {
-    if (!m_displayImageItem) return;
-    m_displayImageItem->clearDisplayText();
+    if (!textItem || !m_displayTextItems.contains(textItem)) return;
+
+    this->removeItem(textItem);
+    m_displayTextItems.removeOne(textItem);
+    delete textItem;
+}
+
+void DisplayScene::whenClearAllDisplayTextItems()
+{
+    foreach (DisplayTextItem* textItem, m_displayTextItems) {
+        this->removeItem(textItem);
+        delete textItem;
+    }
+    m_displayTextItems.clear();
 }
 
 QPixmap DisplayScene::getDisplayImage()

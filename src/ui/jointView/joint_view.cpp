@@ -146,13 +146,47 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
 
     DisplayView* view = displayMgr->displayView();
     DisplayScene* scene = displayMgr->displayScene();
+    int test = 0;
     for (const auto& [key, roiInfo] : processedRoiInfos) {
+        // 检查图像是否有效
+        if (roiInfo.image && !roiInfo.image->empty()) {
+            std::string imagePath = "E:/work/车门门环拼接/image/背面打光/9/1/test/roi_" + std::to_string(roiInfo.index) + ".bmp";
+            cv::imwrite(imagePath, *roiInfo.image);
+            QImage qimg;
+            QString savePath = QString("E:/work/车门门环拼接/image/背面打光/9/1/test/roi_%1.png").arg(roiInfo.index);
+            if (roiInfo.image->type() == CV_8UC1) {
+                // 使用带step参数的QImage构造函数，并拷贝数据
+                qimg = QImage(roiInfo.image->data, roiInfo.image->cols, roiInfo.image->rows,
+                              static_cast<int>(roiInfo.image->step), QImage::Format_Grayscale8).copy();
+            } else {
+                cv::Mat img_rgb;
+                cv::cvtColor(*roiInfo.image, img_rgb, cv::COLOR_BGR2RGB);
+                // 使用带step参数的QImage构造函数，并拷贝数据
+                qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows,
+                              static_cast<int>(img_rgb.step), QImage::Format_RGB888).copy();
+            }
+
+            // 检查QImage是否有效
+            if (!qimg.isNull()) {
+                qimg.save(savePath);
+                QPoint ptImage(roiInfo.leftCornerPoint.x, roiInfo.leftCornerPoint.y);
+                scene->whenAddDisplayImage(qimg, ptImage);
+            } else {
+                PLOG_ERROR << "Failed to create valid QImage for ROI index: " << roiInfo.index;
+            }
+        } else {
+            PLOG_WARNING << "ROI image is null or empty for index: " << roiInfo.index;
+        }
         for (const auto& contour : roiInfo.subpixelContours) {
             if (!contour.empty()) {
                 auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour, Qt::red, 2);
                 scene->whenAddGraphicComponent(contourComponent);
+                cv::Point2f cvPt = contour[0];
+                QPoint pt(qRound(cvPt.x), qRound(cvPt.y));
+                scene->whenAddDisplayTextItem("aaaa", pt, 1);
             }
         }
+        test++;
     }
     view->whenUpdateDisplayFit();
     PLOG_INFO << "显示所有轮廓";
