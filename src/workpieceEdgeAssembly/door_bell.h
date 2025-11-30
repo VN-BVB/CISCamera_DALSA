@@ -1,15 +1,15 @@
-#ifndef WORKPIECE_COMBINER_H
-#define WORKPIECE_COMBINER_H
+#ifndef DOOR_BELL_H
+#define DOOR_BELL_H
 
 #include "workpiece_bounding_box.h"
 #include "workpiece_generator.h"
 #include <cstdint>
 #include <functional>
 
-class WorkpieceCombiner
+class DoorBellCombiner
 {
 public:
-    WorkpieceCombiner(const std::vector<WorkpieceBoundingBox>& possibleWorkpieces);
+    DoorBellCombiner(const std::vector<WorkpieceBoundingBox>& possibleWorkpieces);
     std::vector<std::vector<int>> getValidCombinations() const { return m_validCombinations; }
     std::vector<int> getMostLikelyCombination() const { return m_mostLikelyCombination; }
 
@@ -64,4 +64,4 @@ private:
     std::vector<int> m_mostLikelyCombination;                               // 最有可能的工件组合
 };
 
-#endif // WORKPIECE_COMBINER_H
+#endif // DOOR_BELL_H

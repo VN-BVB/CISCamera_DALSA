@@ -186,9 +186,18 @@ void WorkpieceBoundingBox::updateOuterBoundingBox() {
     updateCenterPointConnections();
 }
 
-void WorkpieceBoundingBox::addContourBoundingBox(std::shared_ptr<ContourBoundingBox> cbb) {
+bool WorkpieceBoundingBox::addContourBoundingBox(std::shared_ptr<ContourBoundingBox> cbb) {
+    // 检查是否存在对立关系的轮廓
+    int candidateOppositeId = cbb->getOppositeId();
+    for (const auto& existingCbb : m_cbbs) {
+        if (existingCbb->getId() == candidateOppositeId) {
+            return false;
+        }
+    }
+
     m_cbbs.push_back(cbb);
     updateOuterBoundingBox();
+    return true;
 }
 
 bool WorkpieceBoundingBox::isLegal(std::shared_ptr<ContourBoundingBox> candidateCbb) const {
@@ -196,31 +205,49 @@ bool WorkpieceBoundingBox::isLegal(std::shared_ptr<ContourBoundingBox> candidate
         return false;
     }
 
-    // 1. 判断候选轮廓边界框与工件边界框的重叠百分比
+    // 1、首先判断候选框是否是组成工件的边界框
+    int candidateId = candidateCbb->getId();
+    for (const auto& existingCbb : m_cbbs) {
+        if (existingCbb->getId() == candidateId) {
+            return true;
+        }
+    }
+
+    // 2、新增判断：检查候选轮廓的边界框是否包含工件中某个中心线段的端点
     cv::RotatedRect candidateRect = candidateCbb->getBoundingRect();
+    cv::Point2f vertices[4];
+    candidateRect.points(vertices);
 
-    // 计算候选轮廓边界框在工件边界框中的重叠百分比
-    float overlapPercentage = calculateOverlapPercentage(candidateRect, m_outerBoundingBox);
+    // 将候选轮廓边界框的四个角点转换为std::vector<cv::Point2f>用于pointPolygonTest
+    std::vector<cv::Point2f> candidatePolygon(vertices, vertices + 4);
 
-    // 设置重叠率阈值
-    const float OVERLAP_THRESHOLD = 99.0f;
+    // 遍历所有中心线段，检查端点是否在候选轮廓边界框内
+    for (const auto& centerSegment : m_centerPointConnections) {
+        // 检查第一个端点
+        double result1 = cv::pointPolygonTest(candidatePolygon, centerSegment.first, false);
+        // 检查第二个端点
+        double result2 = cv::pointPolygonTest(candidatePolygon, centerSegment.second, false);
 
-    if (overlapPercentage >= OVERLAP_THRESHOLD) {
-        // 2. 检查工件中是否有与候选轮廓相背的轮廓
-        int candidateOppositeId = candidateCbb->getOppositeId();
-        for (const auto& existingCbb : m_cbbs) {
-            if (existingCbb->getId() == candidateOppositeId) {
+        // 如果任何一个端点在边界框内（result >= 0表示点在内部或边上）
+        if (result1 >= 0 || result2 >= 0) {
+            return true;
+        }
+    }
+
+    std::vector<std::pair<cv::Point2f, cv::Point2f>> candidateEdges;
+    for (int i = 0; i < 4; ++i) {
+        candidateEdges.push_back(std::make_pair(vertices[i], vertices[(i + 1) % 4]));
+    }
+
+    // 3、检查候选轮廓边界框的任意边是否与工件的任意中心线段相交
+    for (const auto& candidateEdge : candidateEdges) {
+        for (const auto& centerSegment : m_centerPointConnections) {
+            if (GeometryUtils::doSegmentsIntersect(
+                    candidateEdge.first, candidateEdge.second,
+                    centerSegment.first, centerSegment.second)) {
                 return false;
             }
         }
-        // 3. 候选框不是组成工件的轮廓，但又包含在工件矩形中，则不合法
-        int candidateId = candidateCbb->getId();
-        for (const auto& existingCbb : m_cbbs) {
-            if (existingCbb->getId() == candidateId) {
-                return true;
-            }
-        }
-        return false;
     }
 
     return true;

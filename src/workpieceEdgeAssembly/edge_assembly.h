@@ -2,7 +2,7 @@
 #define EDGE_ASSEMBLY_H
 
 #include "workpiece_generator.h"
-#include "workpiece_combiner.h"
+#include "door_bell.h"
 #include "src/jointDetection/image_process_worker.h"
 #include <memory>
 
@@ -23,7 +23,7 @@ public slots:
 private:
     std::vector<std::shared_ptr<ContourBoundingBox>> m_cbbs;
     std::unique_ptr<WorkpieceGenerator> m_workpieceGenerator;
-    std::unique_ptr<WorkpieceCombiner> m_workpieceCombiner;
+    std::unique_ptr<DoorBellCombiner> m_workpieceCombiner;
 };
 
 #endif // EDGE_ASSEMBLY_H

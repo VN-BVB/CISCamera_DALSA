@@ -1,6 +1,6 @@
 #include "edge_assembly.h"
 #include "workpiece_generator.h"
-#include "workpiece_combiner.h"
+#include "door_bell.h"
 
 EdgeAssembly::EdgeAssembly() {}
 
@@ -37,7 +37,7 @@ void EdgeAssembly::run(int n)
     m_workpieceGenerator->generateWorkpieces();
 
     // 第二步：组合工件成门环
-    m_workpieceCombiner = std::make_unique<WorkpieceCombiner>(m_workpieceGenerator->getPossibleWorkpieces());
+    m_workpieceCombiner = std::make_unique<DoorBellCombiner>(m_workpieceGenerator->getPossibleWorkpieces());
     m_workpieceCombiner->generateValidCombinations(n, m_cbbs);
     m_workpieceCombiner->calculateMostLikelyCombination();
     m_workpieceCombiner->outputResult();
@@ -60,8 +60,8 @@ void EdgeAssembly::whenAllImagesProcessed(const std::map<int, ProcessedROIInfo>&
     m_workpieceGenerator->generateWorkpieces();
 
     // 3、组合工件成门环
-    m_workpieceCombiner = std::make_unique<WorkpieceCombiner>(m_workpieceGenerator->getPossibleWorkpieces());
-    m_workpieceCombiner->generateValidCombinations(9, m_cbbs);
+    m_workpieceCombiner = std::make_unique<DoorBellCombiner>(m_workpieceGenerator->getPossibleWorkpieces());
+    m_workpieceCombiner->generateValidCombinations(5, m_cbbs);
     m_workpieceCombiner->calculateMostLikelyCombination();
     m_workpieceCombiner->outputResult();
 }

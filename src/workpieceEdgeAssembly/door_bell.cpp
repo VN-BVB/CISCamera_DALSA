@@ -1,7 +1,7 @@
 #include <QString>
 #include <plog/Log.h>
 
-#include "workpiece_combiner.h"
+#include "door_bell.h"
 
 //===========================WorkpieceInfo===========================
 /**
@@ -9,7 +9,7 @@
  * @param idx 工件索引
  * @param wp 工件边界框
  */
-WorkpieceCombiner::WorkpieceInfo::WorkpieceInfo(int idx, const WorkpieceBoundingBox& wp) {
+DoorBellCombiner::WorkpieceInfo::WorkpieceInfo(int idx, const WorkpieceBoundingBox& wp) {
     index = idx;
     contourMask = 0;
     contourCount = 0;
@@ -30,8 +30,8 @@ WorkpieceCombiner::WorkpieceInfo::WorkpieceInfo(int idx, const WorkpieceBounding
     boundingBoxArea = rect.size.width * rect.size.height;
 }
 
-// ===========================WorkpieceCombiner===========================
-WorkpieceCombiner::WorkpieceCombiner(const std::vector<WorkpieceBoundingBox>& possibleWorkpieces)
+// ===========================DoorBellCombiner===========================
+DoorBellCombiner::DoorBellCombiner(const std::vector<WorkpieceBoundingBox>& possibleWorkpieces)
     : m_possibleWorkpieces(possibleWorkpieces)
 {}
 
@@ -47,7 +47,7 @@ WorkpieceCombiner::WorkpieceCombiner(const std::vector<WorkpieceBoundingBox>& po
  *    - 轮廓不重复（每个轮廓只被一个工件包含）
  *    - 工件之间不相交（避免空间冲突）
  */
-void WorkpieceCombiner::generateValidCombinations(int n, const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs) {
+void DoorBellCombiner::generateValidCombinations(int n, const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs) {
     if (m_possibleWorkpieces.empty() || n <= 0) {
         return;
     }
@@ -107,7 +107,7 @@ void WorkpieceCombiner::generateValidCombinations(int n, const std::vector<std::
  * @brief 计算最有可能的工件组合
  * @return 无返回值
  */
-void WorkpieceCombiner::calculateMostLikelyCombination() {
+void DoorBellCombiner::calculateMostLikelyCombination() {
     if (m_validCombinations.empty()) {
         m_mostLikelyCombination.clear();
         return;
@@ -130,9 +130,9 @@ void WorkpieceCombiner::calculateMostLikelyCombination() {
     m_mostLikelyCombination = bestCombination;
 
     // 输出结果
-    // PLOG_INFO << "最有可能的工件组合（总线段长度最小）：";
+    PLOG_INFO << "最有可能的工件组合（总线段长度最小）：";
     PLOG_INFO << "总线段长度：" << minTotalLength;
-    // PLOG_INFO << "组合索引：" << bestCombination;
+    PLOG_INFO << "组合索引：" << bestCombination;
 
     // 输出组合中每个工件的轮廓ID
     QString contourIdsStr = "ID：";
@@ -149,7 +149,7 @@ void WorkpieceCombiner::calculateMostLikelyCombination() {
     PLOG_INFO << contourIdsStr.toStdString();
 }
 
-void WorkpieceCombiner::outputResult() {
+void DoorBellCombiner::outputResult() {
     // ... existing code ...
 }
 
@@ -159,7 +159,7 @@ void WorkpieceCombiner::outputResult() {
  * @param start 起始索引
  * @return 最大轮廓数
  */
-int WorkpieceCombiner::getMaxContoursPerWorkpiece(const std::vector<WorkpieceInfo>& infos, int start) const {
+int DoorBellCombiner::getMaxContoursPerWorkpiece(const std::vector<WorkpieceInfo>& infos, int start) const {
     int maxContours = 0;
     for (int i = start; i < infos.size(); ++i) {
         if (infos[i].contourCount > maxContours) {
@@ -175,7 +175,7 @@ int WorkpieceCombiner::getMaxContoursPerWorkpiece(const std::vector<WorkpieceInf
  * @param newIndex 新工件索引
  * @return 是否相交
  */
-bool WorkpieceCombiner::hasIntersectionWithSelected(const std::vector<int>& selected, int newIndex) const {
+bool DoorBellCombiner::hasIntersectionWithSelected(const std::vector<int>& selected, int newIndex) const {
     const WorkpieceBoundingBox& newWp = m_possibleWorkpieces[newIndex];
 
     for (int idx : selected) {
@@ -208,7 +208,7 @@ bool WorkpieceCombiner::hasIntersectionWithSelected(const std::vector<int>& sele
  * - mask = 0b1111 (二进制) → 返回4（有4个位被设置）
  * - mask = 0 (二进制) → 返回0（没有位被设置）
  */
-int WorkpieceCombiner::countBits(ContourSet mask) const {
+int DoorBellCombiner::countBits(ContourSet mask) const {
     int count = 0;
     while (mask) {
         count += (mask & 1);
@@ -234,7 +234,7 @@ int WorkpieceCombiner::countBits(ContourSet mask) const {
  *
  * 这个掩码用于后续的组合生成算法中，判断是否已经覆盖了所有需要的轮廓。
  */
-WorkpieceCombiner::ContourSet WorkpieceCombiner::createTargetMask(const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs) const {
+DoorBellCombiner::ContourSet DoorBellCombiner::createTargetMask(const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs) const {
     ContourSet targetMask = 0;
     for (const auto& cbb : cbbs) {
         int id = cbb->getId();
@@ -260,7 +260,7 @@ WorkpieceCombiner::ContourSet WorkpieceCombiner::createTargetMask(const std::vec
  * 3. 对剩余工件进行启发式排序
  * 4. 递归搜索所有可能的组合，应用剪枝策略
  */
-void WorkpieceCombiner::generateOptimizedCombinations(int start,
+void DoorBellCombiner::generateOptimizedCombinations(int start,
                                                       int k,
                                                       std::vector<int>& current,
                                                       std::set<int>& usedContourIds,
@@ -374,7 +374,7 @@ void WorkpieceCombiner::generateOptimizedCombinations(int start,
  * 4. 调用DFS算法进行组合搜索，使用位运算优化状态表示
  * 5. 应用剪枝策略减少搜索空间
  */
-void WorkpieceCombiner::generateOptimizedCombinationsDP(int k,
+void DoorBellCombiner::generateOptimizedCombinationsDP(int k,
                                                         std::vector<std::vector<int>>& result,
                                                         const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs)
 {
@@ -421,7 +421,7 @@ void WorkpieceCombiner::generateOptimizedCombinationsDP(int k,
  *    - 剪枝4：剩余工件数量不足时终止
  *    - 剪枝5：跳过包含已使用轮廓的工件
  */
-void WorkpieceCombiner::dfsCombinations(const std::vector<WorkpieceInfo>& infos, int start, int k, ContourSet targetMask,
+void DoorBellCombiner::dfsCombinations(const std::vector<WorkpieceInfo>& infos, int start, int k, ContourSet targetMask,
                                    ContourSet usedMask, std::vector<int>& current, std::vector<std::vector<int>>& result) {
     // 剪枝1：如果当前组合已经包含所有轮廓
     if ((usedMask & targetMask) == targetMask) {
@@ -497,7 +497,7 @@ void WorkpieceCombiner::dfsCombinations(const std::vector<WorkpieceInfo>& infos,
  * @param wp2 第二个工件
  * @return 是否相交
  */
-bool WorkpieceCombiner::doWorkpiecesIntersect(const WorkpieceBoundingBox& wp1, const WorkpieceBoundingBox& wp2) const {
+bool DoorBellCombiner::doWorkpiecesIntersect(const WorkpieceBoundingBox& wp1, const WorkpieceBoundingBox& wp2) const {
     // 获取两个工件的中心线段集合
     std::vector<std::pair<cv::Point2f, cv::Point2f>> segments1 = wp1.getCenterPointConnections();
     std::vector<std::pair<cv::Point2f, cv::Point2f>> segments2 = wp2.getCenterPointConnections();
@@ -519,7 +519,7 @@ bool WorkpieceCombiner::doWorkpiecesIntersect(const WorkpieceBoundingBox& wp1, c
  * @param combination 工件组合索引数组
  * @return 组合是否合法
  */
-bool WorkpieceCombiner::checkWorkpieceIntersections(const std::vector<WorkpieceBoundingBox>& workpieces,
+bool DoorBellCombiner::checkWorkpieceIntersections(const std::vector<WorkpieceBoundingBox>& workpieces,
                                                const std::vector<int>& combination) {
     // 遍历组合中所有两个工件的组合情况
     // 检查不同工件之间的中心线段是否有交点
@@ -546,7 +546,7 @@ bool WorkpieceCombiner::checkWorkpieceIntersections(const std::vector<WorkpieceB
  * @param combination 工件组合索引数组
  * @return 总线段长度
  */
-float WorkpieceCombiner::calculateCombinationTotalLength(const std::vector<int>& combination) const {
+float DoorBellCombiner::calculateCombinationTotalLength(const std::vector<int>& combination) const {
     float totalLength = 0.0f;
 
     // 遍历组合中的每个工件

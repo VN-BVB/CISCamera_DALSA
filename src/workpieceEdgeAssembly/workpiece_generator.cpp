@@ -144,21 +144,27 @@ bool WorkpieceGenerator::tryGenerateTwoContourCombination(int currentIndex,
                                                           const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
                                                           std::set<std::set<int>>& generatedCombinations) {
 
+    bool foundCombination = false;
+
     for (int j : candidateIndices) {
         WorkpieceBoundingBox wp2;
-        wp2.addContourBoundingBox(unpairedContours[currentIndex]);
-        wp2.addContourBoundingBox(unpairedContours[j]);
+        // 检查添加是否成功
+        if (!wp2.addContourBoundingBox(unpairedContours[currentIndex]) ||
+            !wp2.addContourBoundingBox(unpairedContours[j])){
+            continue;
+        }
 
         if (isLegalCombination(wp2)) {
             std::set<int> combination = {currentIndex, j};
             if (generatedCombinations.find(combination) == generatedCombinations.end()) {
                 m_possibleWorkpieces.push_back(wp2);
                 generatedCombinations.insert(combination);
-                return true;
+                foundCombination = true;
+                // return true;
             }
         }
     }
-    return false;
+    return foundCombination;
 }
 
 /**
@@ -176,25 +182,31 @@ bool WorkpieceGenerator::tryGenerateThreeContourCombination(int currentIndex,
                                                             const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
                                                             std::set<std::set<int>>& generatedCombinations) {
 
+    bool foundCombination = false;
+
     for (int k : candidateIndices) {
         if (k == currentIndex || k == secondIndex) continue;
         if (currentIndex >= k || secondIndex >= k) continue; // 确保有序，避免重复
 
         WorkpieceBoundingBox wp3;
-        wp3.addContourBoundingBox(unpairedContours[currentIndex]);
-        wp3.addContourBoundingBox(unpairedContours[secondIndex]);
-        wp3.addContourBoundingBox(unpairedContours[k]);
+        // 检查添加是否成功
+        if (!wp3.addContourBoundingBox(unpairedContours[currentIndex]) ||
+            !wp3.addContourBoundingBox(unpairedContours[secondIndex]) ||
+            !wp3.addContourBoundingBox(unpairedContours[k])) {
+            continue;
+        }
 
         if (isLegalCombination(wp3)) {
             std::set<int> combination = {currentIndex, secondIndex, k};
             if (generatedCombinations.find(combination) == generatedCombinations.end()) {
                 m_possibleWorkpieces.push_back(wp3);
                 generatedCombinations.insert(combination);
-                return true;
+                foundCombination = true;
+                // return true;
             }
         }
     }
-    return false;
+    return foundCombination;
 }
 
 /**
@@ -217,32 +229,11 @@ void WorkpieceGenerator::searchAndGenerateCombinations(int currentIndex,
     auto [preferredIndices, otherIndices] = partitionCandidatesByDirection(
         currentIndex, currentDirection, currentCenter, nearestIndices[currentIndex], unpairedContours);
 
-    // 尝试2轮廓组合
-    bool foundInPreferredArea = tryGenerateTwoContourCombination(
-        currentIndex, preferredIndices, unpairedContours, generatedCombinations);
-
-    if (!foundInPreferredArea) {
-        tryGenerateTwoContourCombination(
-            currentIndex, otherIndices, unpairedContours, generatedCombinations);
-    }
+    tryGenerateTwoContourCombination(currentIndex, preferredIndices, unpairedContours, generatedCombinations);
 
     // 尝试3轮廓组合
-    foundInPreferredArea = false;
     for (int j : preferredIndices) {
-        if (tryGenerateThreeContourCombination(
-                currentIndex, j, nearestIndices[j], unpairedContours, generatedCombinations)) {
-            foundInPreferredArea = true;
-            break;
-        }
-    }
-
-    if (!foundInPreferredArea) {
-        for (int j : otherIndices) {
-            if (tryGenerateThreeContourCombination(
-                    currentIndex, j, nearestIndices[j], unpairedContours, generatedCombinations)) {
-                break;
-            }
-        }
+        tryGenerateThreeContourCombination(currentIndex, j, preferredIndices, unpairedContours, generatedCombinations);
     }
 }
 

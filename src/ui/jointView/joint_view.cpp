@@ -159,8 +159,9 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
                 qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows,
                               static_cast<int>(img_rgb.step), QImage::Format_RGB888).copy();
             }
-
+            QString path = "E:/work/车门门环拼接/image/背面打光/5/1/test/" + QString::number(roiInfo.index) + ".bmp";
             if (!qimg.isNull()) {
+                qimg.save(path);
                 QPoint ptImage(roiInfo.leftCornerPoint.x, roiInfo.leftCornerPoint.y);
                 scene->whenAddDisplayImage(qimg, ptImage);
             } else {
@@ -177,7 +178,7 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
                 scene->whenAddGraphicComponent(contourComponent);
                 cv::Point2f cvPt = contour[0];
                 QPoint pt(qRound(cvPt.x), qRound(cvPt.y));
-                scene->whenAddDisplayTextItem(QString::number(contourId), pt, 10);
+                scene->whenAddDisplayTextItem(QString::number(contourId), pt, 20);
             }
         }
     }
