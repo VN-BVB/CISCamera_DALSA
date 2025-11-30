@@ -9,35 +9,6 @@ TelecentricLineCalibrator::TelecentricLineCalibrator() {
     K_.setIdentity();
     coff_dis_ = Eigen::VectorXd::Zero(5);
 }
-Eigen::Vector3d TelecentricLineCalibrator::rotMatToVec(const Eigen::Matrix3d& R) const {
-    cv::Mat R_cv(3, 3, CV_64F);
-    cv::Mat rvec_cv;
-    // Eigen矩阵转OpenCV矩阵
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j) R_cv.at<double>(i, j) = R(i, j);
-    // Rodrigues变换（旋转矩阵→旋转向量）
-    cv::Rodrigues(R_cv, rvec_cv);
-    // OpenCV矩阵转Eigen向量
-    return Eigen::Vector3d(rvec_cv.at<double>(0), rvec_cv.at<double>(1), rvec_cv.at<double>(2));
-}
-Eigen::Matrix3d TelecentricLineCalibrator::vecToRotMat(const Eigen::Vector3d& rvec) const {
-    // 构造 OpenCV 的旋转向量
-    cv::Mat rvec_cv(3, 1, CV_64F);
-    rvec_cv.at<double>(0) = rvec.x();
-    rvec_cv.at<double>(1) = rvec.y();
-    rvec_cv.at<double>(2) = rvec.z();
-
-    // Rodrigues: 旋转向量 → 旋转矩阵
-    cv::Mat R_cv;
-    cv::Rodrigues(rvec_cv, R_cv);
-
-    // OpenCV → Eigen
-    Eigen::Matrix3d R;
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j) R(i, j) = R_cv.at<double>(i, j);
-
-    return R;
-}
 bool TelecentricLineCalibrator::calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize,
                                                        std::vector<cv::Point2d>& imagePoints) {
     // ---------- 1. 灰度化与反色 ----------
@@ -482,8 +453,6 @@ double TelecentricLineCalibrator::computeReprojectionErrorDemo(const std::vector
 
     std::cout << "\nDistortion coff_dis:\n" << coff_dis << "\n";
 
-    std::cout << "\nsavePath = \"" << savePath << "\"\n";
-
     std::cout << "=======================================================\n\n";
 
     const int n = static_cast<int>(worldPts.size());
@@ -749,6 +718,154 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen:
 
     return world_pts;
 }
+
+bool TelecentricLineCalibrator::optimizeExtrinsicsWithLeastSquares(const Eigen::MatrixXd& transformedPts,
+                                                                   const std::vector<Eigen::Vector2d>& trueWorldPts,
+                                                                   const Eigen::Matrix3d& R_in, const Eigen::Vector3d& t_in,
+                                                                   Eigen::Matrix3d& R_out, Eigen::Vector3d& t_out) {
+    if (transformedPts.rows() != trueWorldPts.size() || transformedPts.rows() < 3) {
+        std::cerr << "[optimizeExtrinsicsWithLeastSquares] 点数量不足或不匹配" << std::endl;
+        return false;
+    }
+
+    std::cout << "[最小二乘优化] 开始构建仿射变换模型..." << std::endl;
+
+    // 1. 准备数据点对
+    struct PointPair {
+        double transformed_x, transformed_y;
+        double true_x, true_y;
+    };
+    std::vector<PointPair> data;
+    data.reserve(trueWorldPts.size());
+
+    for (int i = 0; i < trueWorldPts.size(); ++i) {
+        PointPair pair;
+        pair.transformed_x = transformedPts(i, 0);
+        pair.transformed_y = transformedPts(i, 1);
+        pair.true_x = trueWorldPts[i].x();
+        pair.true_y = trueWorldPts[i].y();
+        data.push_back(pair);
+    }
+
+    // 2. 构建最小二乘方程：world_true = A * world_transformed + b
+    int n = data.size();
+    Eigen::MatrixXd X(2 * n, 6);  // 扩展矩阵用于求解仿射变换
+    Eigen::VectorXd Y(2 * n);     // 目标世界坐标
+
+    for (int i = 0; i < n; ++i) {
+        // X分量
+        X(2 * i, 0) = data[i].transformed_x;
+        X(2 * i, 1) = data[i].transformed_y;
+        X(2 * i, 2) = 1;
+        X(2 * i, 3) = 0;
+        X(2 * i, 4) = 0;
+        X(2 * i, 5) = 0;
+
+        // Y分量
+        X(2 * i + 1, 0) = 0;
+        X(2 * i + 1, 1) = 0;
+        X(2 * i + 1, 2) = 0;
+        X(2 * i + 1, 3) = data[i].transformed_x;
+        X(2 * i + 1, 4) = data[i].transformed_y;
+        X(2 * i + 1, 5) = 1;
+
+        // 目标值
+        Y(2 * i) = data[i].true_x;
+        Y(2 * i + 1) = data[i].true_y;
+    }
+
+    // 3. 使用SVD求解最小二乘问题
+    Eigen::VectorXd params = X.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(Y);
+
+    // 4. 提取补偿矩阵和偏移量
+    Eigen::Matrix2d A;
+    Eigen::Vector2d b;
+    A << params[0], params[1], params[3], params[4];
+    b << params[2], params[5];
+
+    // 5. 输出最小二乘优化结果
+    std::cout << "[最小二乘优化] 补偿矩阵求解结果：" << std::endl;
+    std::cout << "  转换矩阵 A (2x2):" << std::endl;
+    std::cout << "  " << A << std::endl;
+    std::cout << "  偏移向量 b (2x1):" << std::endl;
+    std::cout << "  " << b << std::endl;
+
+    // 6. 更新外参：应用补偿变换
+    // a. 计算新的旋转矩阵：R_new = A * R_old
+    Eigen::Matrix2d R2_old = R_in.block<2, 2>(0, 0);
+    Eigen::Matrix2d R2_new = A * R2_old;
+
+    // b. 计算新的平移向量：t_new = A * t_old + b
+    Eigen::Vector2d t2_old = t_in.head<2>();
+    Eigen::Vector2d t2_new = A * t2_old + b;
+
+    // c. 更新完整的旋转矩阵和平移向量
+    R_out = R_in;
+    R_out.block<2, 2>(0, 0) = R2_new;
+
+    t_out = t_in;
+    t_out.head<2>() = t2_new;
+    // 5.1 计算补偿前（原始）误差
+    double raw_error = 0;
+    for (const auto& p : data) {
+        Eigen::Vector2d raw_pred(p.transformed_x, p.transformed_y);
+        Eigen::Vector2d world_true(p.true_x, p.true_y);
+        double err = (raw_pred - world_true).norm();
+        raw_error += err * err;
+    }
+
+    // 6. 计算补偿后误差
+    double corrected_error = 0;
+    std::cout << "\n=== 补偿后拟合误差分析 ===" << std::endl;
+    for (const auto& p : data) {
+        Eigen::Vector2d pixel(p.transformed_x, p.transformed_y);
+        Eigen::Vector2d world_pred = A * pixel + b;
+        Eigen::Vector2d world_true(p.true_x, p.true_y);
+        double err = (world_pred - world_true).norm();
+        corrected_error += err * err;
+
+        if (&p == &data[0] || &p == &data[8] || &p == &data[16]) {
+            std::cout << "像素(" << p.transformed_x << "," << p.transformed_y << ") -> 预测(" << world_pred[0] << ","
+                      << world_pred[1] << ") 真实(" << p.true_x << "," << p.true_y << ") 误差: " << err << std::endl;
+        }
+    }
+    // 7. 输出补偿前/补偿后的对比结果
+    std::cout << "\n=== 原始误差 vs 补偿后误差 ===" << std::endl;
+    std::cout << "原始均方误差 (RMSE): " << sqrt(raw_error / n) << std::endl;
+    std::cout << "补偿后均方误差 (RMSE): " << sqrt(corrected_error / n) << std::endl;
+
+    // 7. 输出所有补偿后坐标及误差（加入补偿前误差）
+    std::cout << "\n=== 所有坐标补偿结果及误差 ===" << std::endl;
+    std::cout << std::left << std::setw(15) << "像素X" << std::setw(15) << "像素Y" << std::setw(18) << "补偿后世界X"
+              << std::setw(18) << "补偿后世界Y" << std::setw(15) << "真实世界X" << std::setw(15) << "真实世界Y" << std::setw(15)
+              << "点误差" << std::setw(15) << "原始误差"  //  新增这一列
+              << std::endl;
+
+    std::cout << std::string(130, '-') << std::endl;
+
+    for (const auto& p : data) {
+        Eigen::Vector2d pixel(p.transformed_x, p.transformed_y);
+        Eigen::Vector2d world_pred = A * pixel + b;      // 补偿后世界坐标
+        Eigen::Vector2d world_true(p.true_x, p.true_y);  // 真实世界坐标
+
+        double err_after = (world_pred - world_true).norm();  // 补偿后误差
+        double err_before = (pixel - world_true).norm();      // 补偿前误差
+
+        std::cout << std::left << std::setw(15) << p.transformed_x << std::setw(15) << p.transformed_y << std::setw(18)
+                  << world_pred[0] << std::setw(18) << world_pred[1] << std::setw(15) << p.true_x << std::setw(15) << p.true_y
+                  << std::setw(15) << err_after << std::setw(15) << err_before  // 输出原始误差
+                  << std::endl;
+    }
+
+    // 输出统计
+    std::cout << "\n=== 整体误差统计 ===" << std::endl;
+    std::cout << "原始均方误差 (RMSE):  " << sqrt(raw_error / n) << std::endl;
+    std::cout << "补偿后均方误差 (RMSE): " << sqrt(corrected_error / n) << std::endl;
+    std::cout << "误差下降比例: " << (1.0 - sqrt(corrected_error / raw_error)) * 100.0 << "%" << std::endl;
+
+    std::cout << "[最小二乘优化] 外参优化完成" << std::endl;
+    return true;
+}
 Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
                                                         const double m, const double u0, const double v0, const double dx,
                                                         const double dy, const std::vector<Eigen::Vector2d>& worldPts,
@@ -798,7 +915,7 @@ Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K
     Eigen::Vector3d opt_t = pose.t;
     double opt_err = 0.0;
     TelecentricPYOptimizer opt;
-    bool ok = opt.optTelecentricExtrinsicParameters(K, coff_dis, undistortedPts, worldPts, opt_r, opt_t, opt_err);
+    bool ok = opt.optTelecentricExtrinsicParameters(K, coff_dis, imgPts, worldPts, opt_r, opt_t, opt_err);
 
     if (!ok) {
         std::cout << " [5] 优化失败，返回初始值。" << std::endl;
@@ -812,9 +929,59 @@ Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K
         pose.R = vecToRotMat(opt_r);
         pose.t = opt_t;
         pose.reprojErr = opt_err;
+        std::string txtPath = "./data/CISCamera_Image/txt1/" + ("img_" + std::to_string(100) + "_reproj_pts.txt");
+        std::cout << "\n====== computeReprojectionError INPUT ======\n";
+
+        // // --- 打印 worldPts ---
+        // std::cout << "worldPts (" << worldPts.size() << "):\n";
+        // for (size_t i = 0; i < worldPts.size(); ++i) {
+        //     std::cout << "  [" << i << "] " << worldPts[i].transpose() << "\n";
+        // }
+
+        // // --- 打印 imagePts ---
+        // std::cout << "imagePts (" << imgPts.size() << "):\n";
+        // for (size_t i = 0; i < imgPts.size(); ++i) {
+        //     std::cout << "  [" << i << "] " << imgPts[i].transpose() << "\n";
+        // }
+        double test = computeReprojectionError(worldPts, imgPts, pose, K, txtPath, coff_dis);
+        std::cout << "test err" << test << std::endl;
+
+        // // ---------- Step 6. 调用最小二乘法进一步优化外参 ----------
+        // std::cout << "[6] 正在使用最小二乘法进一步优化外参..." << std::endl;
+
+        // // 1. 将像素坐标转换到世界坐标（使用优化后的外参）
+        // Eigen::MatrixXd px = imgPtsMat;
+
+        // // 像素坐标 → 相机归一化坐标（去畸变 + 归一化）
+        // Eigen::MatrixXd cam_norm = pixelToCameraCoordinates(px, K, coff_dis);
+
+        // // 相机坐标 → 世界坐标（使用当前优化后的外参）
+        // Eigen::MatrixXd world_transformed = cameraToWorldCoordinates(cam_norm, opt_r, opt_t);
+
+        // // 2. 调用最小二乘优化函数
+        // Eigen::Matrix3d R_refined;
+        // Eigen::Vector3d t_refined;
+        // if (optimizeExtrinsicsWithLeastSquares(world_transformed, worldPts, pose.R, pose.t, R_refined, t_refined)) {
+        //     // 3. 验证优化效果，只有当重投影误差减小时才接受新参数
+        //     Pose refined_pose;
+        //     refined_pose.R = R_refined;
+        //     refined_pose.t = t_refined;
+        //     refined_pose.reprojErr = computeReprojectionError(worldPts, imgPts, refined_pose, K, " ", coff_dis);
+        //     std::cout << "refined_pose.reprojErr " << refined_pose.reprojErr << std::endl;
+        //     std::cout << "pose.reprojErr " << pose.reprojErr << std::endl;
+        //     if (refined_pose.reprojErr < pose.reprojErr) {
+        //         pose = refined_pose;
+        //         std::cout << " [6] 最小二乘优化成功，重投影误差从 " << pose.reprojErr << " 减小到 " << refined_pose.reprojErr
+        //                   << std::endl;
+        //     } else {
+        //         std::cout << " [6] 最小二乘优化未能改善结果，保持原参数" << std::endl;
+        //     }
+        // } else {
+        //     std::cout << " [6] 最小二乘优化失败，保持原参数" << std::endl;
+        // }
     }
 
-    std::cout << "======== [estimateTelecentricPose] 完成初值 + 优化 ========" << std::endl;
+    std::cout << "======== [estimateTelecentricPose] 完成初值 + 优化 + 最小二乘精调 ========" << std::endl;
     return pose;
 }
 // =========================================================
@@ -939,21 +1106,28 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     Eigen::Matrix3d K1 = calib2.K;
     Eigen::Matrix<double, 1, 5> coff_dis1 = calib2.coff_dis;
     double m1 = calib2.m;
-    u0_ = calib2.u0;
-    v0_ = calib2.v0;
-    dx_ = calib2.dx;
-    dy_ = calib2.dy;
-    // Pose aaa;
-    // cv::Vec3d rvec_new(2.0747767, 2.05844074, -0.21906585);
-    // cv::Vec3d tvec_new(-249.01625128, -134.99191718, 1);
-    // cv::Mat R_cv;
-    // cv::Rodrigues(rvec_new, R_cv);
-    // aaa.R = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_cv.ptr<double>());
-    // aaa.t = Eigen::Vector3d(tvec_new[0], tvec_new[1], tvec_new[2]);
-    // aaa.reprojErr = computeReprojectionErrorDemo(worldPts, all_imgPts[3], aaa, K1, " ", coff_dis1);
-    // std::cout << "平均重投影误差 = " << aaa.reprojErr << std::endl;
+    double u01 = calib2.u0;
+    double v01 = calib2.v0;
+    double dx1 = calib2.dx;
+    double dy1 = calib2.dy;
+
+    std::vector<Eigen::Vector3d> v_rot1 = calib2.v_rot;
+    std::vector<Eigen::Vector3d> v_trans1 = calib2.v_trans;
+
+    // // Pose aaa;
+    // // cv::Vec3d rvec_new(2.0747767, 2.05844074, -0.21906585);
+    // // cv::Vec3d tvec_new(-249.01625128, -134.99191718, 1);
+    // // cv::Mat R_cv;
+    // // cv::Rodrigues(rvec_new, R_cv);
+    // // aaa.R = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_cv.ptr<double>());
+    // // aaa.t = Eigen::Vector3d(tvec_new[0], tvec_new[1], tvec_new[2]);
+    // // aaa.reprojErr = computeReprojectionErrorDemo(worldPts, all_imgPts[3], aaa, K1, " ", coff_dis1);
+    // // std::cout << "平均重投影误差 = " << aaa.reprojErr << std::endl;
     // // 调用姿态估计函数
-    Pose pos1e = estimateTelecentricPose(K1, coff_dis1, m1, u0_, v0_, dx_, dy_, worldPts, all_imgPts[3]);
+    std::vector<Eigen::Vector2d> pts;
+    if (readPointsFromTxt("D:/Code/CISCamera_DALSA/data/PaltfromCalibrate/orignCor/txt/Splice_20251108_160806374.txt", pts)) {
+        Pose pos1e = estimateTelecentricPose(K1, coff_dis1, m1, u0_, v0_, dx_, dy_, worldPts, pts);
+    }
 
     // PLOGD << " 开始非线性优化";
     // TelecentricPYOptimizer opt;

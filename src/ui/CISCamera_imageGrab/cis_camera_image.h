@@ -36,7 +36,8 @@ public:
     CISWidget(QWidget* parent = nullptr);
     ~CISWidget();
 
-    void convertToWorldDemo(const std::vector<Eigen::Vector2d> &pix_pts);
+    std::vector<Eigen::Vector2d> convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts);
+
 private:
     void initCamera();
     void initCamera2UIConnections();

@@ -1,4 +1,5 @@
 HEADERS += \
+    $$PWD/calib_utils.h \
     $$PWD/telecentric_line_calibrator.h \
     $$PWD/telecentric_lm_optimizer.h \
     $$PWD/py_telecentric_optimizer.h \

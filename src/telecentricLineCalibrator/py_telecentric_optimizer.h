@@ -1,7 +1,9 @@
 ﻿#ifndef PY_TELECENTRIC_OPTIMIZER_H
 #define PY_TELECENTRIC_OPTIMIZER_H
 #include <pybind11/embed.h>
+#include <pybind11/iostream.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 
 #include "src/config/calibration_data_io.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"

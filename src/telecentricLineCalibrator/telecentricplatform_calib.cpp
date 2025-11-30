@@ -1,6 +1,6 @@
 ﻿#include "telecentricplatform_calib.h"
 
-TelecentricPlatformCalib::TelecentricPlatformCalib() { lineCalib_ = new TelecentricLineCalibrator(); }
+TelecentricPlatformCalib::TelecentricPlatformCalib() {}
 // void TelecentricPlatformCalib::iniCalibParams() {
 //     CalibrationData calibParam;
 //     if (!calibParam.load("./data/calibration_config/optimized_calib_data.json")) {
@@ -13,18 +13,6 @@ TelecentricPlatformCalib::TelecentricPlatformCalib(const Eigen::Matrix3d& K, con
                                                    const Eigen::Vector3d& rvec, const Eigen::Vector3d& tvec)
     : K_(K), dist_(dist), v_rot_(rvec), v_trans_(tvec) {
     lineCalib_ = new TelecentricLineCalibrator();
-}
-Eigen::MatrixXd TelecentricPlatformCalib::vecToMat(const std::vector<Eigen::Vector2d>& v) {
-    Eigen::MatrixXd M(v.size(), 2);
-    for (int i = 0; i < v.size(); i++) M.row(i) = v[i];
-    return M;
-}
-
-std::vector<Eigen::Vector2d> TelecentricPlatformCalib::matToVec(const Eigen::MatrixXd& M) {
-    std::vector<Eigen::Vector2d> v;
-    v.reserve(M.rows());
-    for (int i = 0; i < M.rows(); i++) v.emplace_back(M(i, 0), M(i, 1));
-    return v;
 }
 
 std::vector<Eigen::Vector2d> TelecentricPlatformCalib::convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts) {
