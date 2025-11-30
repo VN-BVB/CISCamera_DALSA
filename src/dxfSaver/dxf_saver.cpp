@@ -99,38 +99,8 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
             // 计算偏移量，避免ROI重叠
             double offsetX = roiIndex * SPACING_BETWEEN_ROIS;
 
-            // 检查endPoints是否有数据
-            if (roiInfo.endPoints.size() >= 2) {
-                std::cout << "处理ROI索引 " << roiInfo.index << "，端点数量: " << roiInfo.endPoints.size() << std::endl;
-
-                // 将端点连成线
-                for (size_t i = 0; i < roiInfo.endPoints.size() - 1; ++i) {
-                    const cv::Point2f& p1 = roiInfo.endPoints[i];
-                    const cv::Point2f& p2 = roiInfo.endPoints[i + 1];
-
-                    // 创建线数据，添加偏移量
-                    DL_LineData lineData(
-                        p1.x + offsetX, p1.y, 0.0,
-                        p2.x + offsetX, p2.y, 0.0
-                        );
-
-                    // 写入线到DXF文件
-                    dxf.writeLine(*dw, lineData, attributes);
-                }
-
-                // 如果端点数量大于2，将最后一个点与第一个点连接
-                if (roiInfo.endPoints.size() > 2) {
-                    const cv::Point2f& pFirst = roiInfo.endPoints[0];
-                    const cv::Point2f& pLast = roiInfo.endPoints.back();
-
-                    DL_LineData lineData(
-                        pLast.x + offsetX, pLast.y, 0.0,
-                        pFirst.x + offsetX, pFirst.y, 0.0
-                        );
-
-                    dxf.writeLine(*dw, lineData, attributes);
-                }
-            }
+            // 绘制亚像素轮廓
+            drawSubpixelContours(dxf, dw, attributes, roiInfo, offsetX);
 
             roiIndex++;
         }
@@ -150,5 +120,46 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         std::cout << "DXF文件创建成功: joint_detected.dxf" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "创建DXF文件时出错: " << e.what() << std::endl;
+    }
+}
+
+
+void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                                    const ProcessedROIInfo& roiInfo, double offsetX)
+{
+    // 检查是否有亚像素轮廓数据
+    if (roiInfo.subpixelContours.empty()) {
+        std::cout << "ROI索引 " << roiInfo.index << " 没有亚像素轮廓数据" << std::endl;
+        return;
+    }
+
+    std::cout << "处理ROI索引 " << roiInfo.index << "，亚像素轮廓数量: " << roiInfo.subpixelContours.size() << std::endl;
+
+    // 遍历每个亚像素轮廓
+    for (size_t contourIdx = 0; contourIdx < roiInfo.subpixelContours.size(); ++contourIdx) {
+        const std::vector<cv::Point2f>& contour = roiInfo.subpixelContours[contourIdx];
+
+        // 检查轮廓是否有足够的点来绘制线
+        if (contour.size() < 2) {
+            std::cout << "  轮廓 " << contourIdx << " 点数不足，跳过绘制" << std::endl;
+            continue;
+        }
+
+        std::cout << "  绘制轮廓 " << contourIdx << "，包含 " << contour.size() << " 个点" << std::endl;
+
+        // 遍历轮廓中的点，将相邻点用直线连接
+        for (size_t i = 0; i < contour.size() - 1; ++i) {
+            const cv::Point2f& p1 = contour[i];
+            const cv::Point2f& p2 = contour[i + 1];
+
+            // 创建线数据，添加偏移量
+            DL_LineData lineData(
+                p1.x + offsetX, p1.y, 0.0,
+                p2.x + offsetX, p2.y, 0.0
+                );
+
+            // 写入线到DXF文件
+            dxf.writeLine(*dw, lineData, attributes);
+        }
     }
 }
