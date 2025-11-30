@@ -1,5 +1,10 @@
-#include "geometry_utils.h"
+
 #include <iostream>
+#include <plog/Log.h>
+#include "geometry_utils.h"
+#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
+#include "src/ui/CISCamera_imageGrab/cameraImage_processor.h"
+#include "src/config/calibration_data_io.h"
 
 namespace GeometryUtils {
 
@@ -207,4 +212,24 @@ cv::Vec4f fitLine(const std::vector<cv::Point2f> &points)
     cv::fitLine(points, lineParams, cv::DIST_HUBER, 0, 0.01, 0.01);
     return lineParams;
 }
+
+
+// 将像素坐标转成世界坐标
+std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts)
+{
+    // 将cv::Point2f格式转换为Eigen::Vector2d格式
+    std::vector<Eigen::Vector2d> eigen_pix_pts;
+    eigen_pix_pts.reserve(pix_pts.size());
+    for (const auto& pt : pix_pts) {
+        eigen_pix_pts.push_back(Eigen::Vector2d(pt.x, pt.y));
+    }
+
+    std::shared_ptr<CameraImageProcessor> imageProcessor;
+    imageProcessor = std::make_shared<CameraImageProcessor>();
+    imageProcessor->initCameraCalibrator();
+    std::vector<Eigen::Vector2d> worldPoints = imageProcessor->convertToWorld(eigen_pix_pts);
+    PLOG_INFO << "convert done";
+    return worldPoints;
+}
+
 } // namespace GeometryUtils

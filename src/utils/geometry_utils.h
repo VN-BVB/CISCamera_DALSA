@@ -3,6 +3,8 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
+#include <Eigen/Core>
+
 
 namespace GeometryUtils {
 
@@ -35,6 +37,9 @@ bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, co
 // 最小二乘法拟合直线
 cv::Vec4f fitLine(const std::vector<cv::Point> &points);
 cv::Vec4f fitLine(const std::vector<cv::Point2f> &points);
+
+// 将像素坐标转成世界坐标
+std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts);
 
 
 } // namespace GeometryUtils

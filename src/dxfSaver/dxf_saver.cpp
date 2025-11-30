@@ -1,5 +1,7 @@
-#include "dxf_saver.h"
 #include <iostream>
+#include <plog/Log.h>
+#include "dxf_saver.h"
+#include "../utils/geometry_utils.h"
 
 const int SPACING_BETWEEN_ROIS = 100; // ROI之间的间距，避免重叠
 
@@ -14,7 +16,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         DL_WriterA* dw = dxf.out("joint_detected.dxf", DL_Codes::AC1015);
 
         if (!dw || dw->openFailed()) {
-            std::cerr << "无法创建DXF文件!" << std::endl;
+            PLOG_ERROR << "无法创建DXF文件!";
             return;
         }
 
@@ -87,10 +89,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
 
         DL_Attributes attributes("0", 256, -1, -1, "BYLAYER");
 
-        // 先添加一条测试线，验证基本功能是否正常
-        DL_LineData testLineData(10, 5, 0, 30, 5, 0);
-        dxf.writeLine(*dw, testLineData, attributes);
-
         // 遍历所有处理过的ROI
         int roiIndex = 0;
         for (const auto& roiPair : processedRoiInfos) {
@@ -117,9 +115,9 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         dw->close();
         delete dw;
 
-        std::cout << "DXF文件创建成功: joint_detected.dxf" << std::endl;
+        PLOG_INFO << "DXF文件创建成功: joint_detected.dxf";
     } catch (const std::exception& e) {
-        std::cerr << "创建DXF文件时出错: " << e.what() << std::endl;
+        PLOG_ERROR << "创建DXF文件时出错: " << e.what();
     }
 }
 
@@ -129,33 +127,27 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
 {
     // 检查是否有亚像素轮廓数据
     if (roiInfo.subpixelContours.empty()) {
-        std::cout << "ROI索引 " << roiInfo.index << " 没有亚像素轮廓数据" << std::endl;
+        PLOG_INFO << "ROI索引 " << roiInfo.index << " 没有亚像素轮廓数据";
         return;
     }
 
-    std::cout << "处理ROI索引 " << roiInfo.index << "，亚像素轮廓数量: " << roiInfo.subpixelContours.size() << std::endl;
+    PLOG_INFO << "处理ROI索引 " << roiInfo.index << "，亚像素轮廓数量: " << roiInfo.subpixelContours.size();
 
     // 遍历每个亚像素轮廓
     for (size_t contourIdx = 0; contourIdx < roiInfo.subpixelContours.size(); ++contourIdx) {
         const std::vector<cv::Point2f>& contour = roiInfo.subpixelContours[contourIdx];
+        PLOG_INFO << "  绘制轮廓 " << contourIdx << "，包含 " << contour.size() << " 个点";
 
-        // 检查轮廓是否有足够的点来绘制线
-        if (contour.size() < 2) {
-            std::cout << "  轮廓 " << contourIdx << " 点数不足，跳过绘制" << std::endl;
-            continue;
-        }
+        // 将像素坐标转换为世界坐标
+        std::vector<Eigen::Vector2d> worldPoints = GeometryUtils::pixel2World(contour);
 
-        std::cout << "  绘制轮廓 " << contourIdx << "，包含 " << contour.size() << " 个点" << std::endl;
+        for (size_t i = 0; i < worldPoints.size() - 1; ++i) {
+            const Eigen::Vector2d& wp1 = worldPoints[i];
+            const Eigen::Vector2d& wp2 = worldPoints[i + 1];
 
-        // 遍历轮廓中的点，将相邻点用直线连接
-        for (size_t i = 0; i < contour.size() - 1; ++i) {
-            const cv::Point2f& p1 = contour[i];
-            const cv::Point2f& p2 = contour[i + 1];
-
-            // 创建线数据，添加偏移量
             DL_LineData lineData(
-                p1.x + offsetX, p1.y, 0.0,
-                p2.x + offsetX, p2.y, 0.0
+                wp1.y() + offsetX, wp1.x(), 0.0,  // 交换x和y坐标
+                wp2.y() + offsetX, wp2.x(), 0.0   // 交换x和y坐标
                 );
 
             // 写入线到DXF文件
