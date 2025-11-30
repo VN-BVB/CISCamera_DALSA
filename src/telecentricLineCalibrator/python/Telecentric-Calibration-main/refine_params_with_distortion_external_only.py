@@ -85,6 +85,74 @@ def refine_params_with_distortion_external_only(points_world, points_pixel, K, c
                 total_points += 1
         mean_loss = total_err / total_points
         return mean_loss
+
+    def compute_reproj_loss_debug(v_rot_list, v_trans_list):
+        total_err = 0.0
+        total_points = 0
+
+        print("\n========== [Python computeReprojectionError Inputs] ==========")
+        print("Camera Matrix K:\n", K)
+        print("Distortion coff_dis:\n", coff_dis_opt)
+        print("===============================================================\n")
+
+        for i in range(n_views):
+            print(f"\n================= [Python View {i}] =================")
+
+            world_points = points_world[i].reshape(-1, 3)
+            world_points[:, 2] = 1
+            pixel_gt = points_pixel[i].reshape(-1, 2)
+
+            # --- rotation vector to matrix ---
+            rot_vec = np.array(v_rot_list[i], dtype=np.float64).reshape(3)
+            rot_mat, _ = cv2.Rodrigues(rot_vec)
+
+            R2 = rot_mat[:2, :2]
+            t2 = np.array(v_trans_list[i], dtype=np.float64).reshape(2)
+
+            print("\n--- Python Pose ---")
+            print("R (3x3):\n", rot_mat)
+            print("R2 (2x2):\n", R2)
+            print("t2 (2D):", t2)
+            print("======================================")
+
+            for pt_idx in range(world_points.shape[0]):
+                print(f"\n------ [Python Point {pt_idx}] ------")
+
+                xy = world_points[pt_idx, :2]
+                print("world xy =", xy)
+
+                # ----------- Step 1: 仿射到相机归一化平面 -----------
+                cam_xy = R2 @ xy + t2
+                print("cam_xy =", cam_xy)
+
+                # ----------- Step 2: 畸变 -----------
+                camPt = cam_xy.reshape(1, 2)
+                distortedH = distort(coff_dis_opt, camPt)
+                print("distortedH =", distortedH)
+
+                # ----------- Step 3: 相机内参映射 -----------
+                uvw = K @ distortedH[0].T
+                print("uvw =", uvw)
+
+                # ----------- Step 4: 像素坐标 -----------
+                uv_hat = np.array([uvw[0] / uvw[2], uvw[1] / uvw[2]])
+                print("uv_hat =", uv_hat)
+
+                uv_gt = pixel_gt[pt_idx]
+                print("uv (GT) =", uv_gt)
+
+                err = np.linalg.norm(uv_hat - uv_gt)
+                print("err =", err)
+
+                total_err += err
+                total_points += 1
+
+        mean_loss = total_err / total_points
+
+        print("\n================ END Python computeReprojError ================\n")
+        print("mean_loss =", mean_loss)
+
+        return mean_loss
     initial_loss = compute_reproj_loss(v_rot, v_trans)
     print(f"Initial reprojection error: {initial_loss:.6f}")
     packed_params = []

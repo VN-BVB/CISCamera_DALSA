@@ -267,6 +267,10 @@ bool TelecentricPYOptimizer::optTelecentricExtrinsicParameters(const Eigen::Matr
     try {
         static pybind11::scoped_interpreter guard{};  // 只初始化一次
         pybind11::gil_scoped_acquire acquire;
+        // 关键：重定向 Python 输出
+        pybind11::scoped_ostream_redirect stream_redirect(std::cout,                                       // C++ 输出
+                                                          pybind11::module_::import("sys").attr("stdout")  // Python stdout
+        );
 
         // 导入模块
         pybind11::module refine = pybind11::module::import("refine_params_with_distortion_external_only");

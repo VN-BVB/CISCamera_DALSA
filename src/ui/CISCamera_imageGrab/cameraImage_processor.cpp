@@ -507,7 +507,7 @@ void CameraImageProcessor::whenCameraCalibrate() {
 }
 void CameraImageProcessor::whenCalibrateCP() {
     if (all_platfromCalibImg_.empty()) {
-        loadPlatformCalibImages();
+        // loadPlatformCalibImages();
     }
     emit text(QString(u8"正在进初始世界平台的棋盘格检测与外参估计..."));
     PlatformPoseData poseData;
@@ -524,7 +524,7 @@ void CameraImageProcessor::whenCalibrateCP() {
 
     Pose pose = telecentricLineCalibrator->estimateTelecentricPose(K_, coff_dis_, m_, width_ / 2, height_ / 2, dx_, dy_, worldPts,
                                                                    imgPts);
-    Eigen::Vector3d v_rot = telecentricLineCalibrator->rotMatToVec(pose.R);
+    Eigen::Vector3d v_rot = rotMatToVec(pose.R);
     Eigen::Vector3d v_trans = pose.t;
     // 保存世界坐标系
     poseData.allRotVecs.back() = v_rot;
@@ -603,7 +603,7 @@ void CameraImageProcessor::whenCalibrateCP() {
 std::vector<Eigen::Vector2d> CameraImageProcessor::convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts) {
     if (pix_pts.empty()) return {};
 
-    Eigen::MatrixXd px = telecentricPlatCalibrator->vecToMat(pix_pts);
+    Eigen::MatrixXd px = vecToMat(pix_pts);
 
     // pixel → camera (去畸变 + 归一化)
     Eigen::MatrixXd cam_norm = telecentricLineCalibrator->pixelToCameraCoordinates(px, K_, coff_dis_);
@@ -611,5 +611,5 @@ std::vector<Eigen::Vector2d> CameraImageProcessor::convertToWorld(const std::vec
     // camera → world（逆平面变换）
     Eigen::MatrixXd world =
         telecentricLineCalibrator->cameraToWorldCoordinates(cam_norm, allRotVecs_.back(), allTransVecs_.back());
-    return telecentricPlatCalibrator->matToVec(world);
+    return matToVec(world);
 }

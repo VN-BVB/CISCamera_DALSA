@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "calib_utils.h"
 #include "plog/Log.h"
 #include "src/config/calibration_data_io.h"
 #include "telecentric_lm_optimizer.h"
@@ -28,8 +29,6 @@ class TelecentricLineCalibrator : public QObject {
     Q_OBJECT
 public:
     TelecentricLineCalibrator();
-    Eigen::Vector3d rotMatToVec(const Eigen::Matrix3d& R) const;
-    Eigen::Matrix3d vecToRotMat(const Eigen::Vector3d& rvec) const;
 
     /**
      * @brief 线阵远心镜头标定（DLT 初值求解）
@@ -74,6 +73,10 @@ public:
     double computeReprojectionErrorDemo(const std::vector<Eigen::Vector2d>& worldPts,
                                         const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose, const Eigen::Matrix3d& K,
                                         const std::string& savePath, const Eigen::Matrix<double, 1, 5>& coff_dis);
+
+    bool optimizeExtrinsicsWithLeastSquares(const Eigen::MatrixXd& transformedPts,
+                                            const std::vector<Eigen::Vector2d>& trueWorldPts, const Eigen::Matrix3d& R_in,
+                                            const Eigen::Vector3d& t_in, Eigen::Matrix3d& R_out, Eigen::Vector3d& t_out);
 
 private:
     Eigen::Matrix3d computeHomography(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts);

@@ -317,6 +317,9 @@ void CISWidget::on_btnClearCPDetectResult_clicked() {
     QMetaObject::invokeMethod(
         imageProcessor.get(), [=]() { imageProcessor->whenClearPlatFromFile("txt"); }, Qt::QueuedConnection);
 }
-void CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {
-    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->convertToWorld(pix_pts); }, Qt::QueuedConnection);
+std::vector<Eigen::Vector2d> CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {
+    std::vector<Eigen::Vector2d> world;
+    QMetaObject::invokeMethod(
+        imageProcessor.get(), [&]() { world = imageProcessor->convertToWorld(pix_pts); }, Qt::BlockingQueuedConnection);
+    return world;
 }

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "calib_utils.h"
 #include "src/config/calibration_data_io.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 class TelecentricPlatformCalib {
@@ -20,8 +21,6 @@ public:
     void runDemo(std::vector<std::vector<Eigen::Vector2d>> pts = {});
     bool estimatePlatformPoseFromBoards(const std::vector<std::vector<std::vector<cv::Point2d>>>& onePlatformBoards,
                                         Eigen::Vector3d& rvec_plat, Eigen::Vector3d& t_plat_cam);
-    std::vector<Eigen::Vector2d> matToVec(const Eigen::MatrixXd& M);
-    Eigen::MatrixXd vecToMat(const std::vector<Eigen::Vector2d>& v);
 
 private:
     // pixel → camera → world
