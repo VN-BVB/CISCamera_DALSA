@@ -1,5 +1,5 @@
-#ifndef DOOR_BELL_H
-#define DOOR_BELL_H
+#ifndef DOOR_BELL_COMBINER_H
+#define DOOR_BELL_COMBINER_H
 
 #include "workpiece_bounding_box.h"
 #include "workpiece_generator.h"
@@ -15,7 +15,7 @@ public:
 
     void generateValidCombinations(int n, const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs);
     void calculateMostLikelyCombination();
-    void outputResult();
+    std::map<int, std::vector<int>> outputResult();
 
 private:
     // 位运算类型定义
@@ -64,4 +64,4 @@ private:
     std::vector<int> m_mostLikelyCombination;                               // 最有可能的工件组合
 };
 
-#endif // DOOR_BELL_H
+#endif // DOOR_BELL_COMBINER_H

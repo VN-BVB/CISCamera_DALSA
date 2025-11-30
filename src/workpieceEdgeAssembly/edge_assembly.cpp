@@ -1,6 +1,7 @@
+#include <plog/Log.h>
 #include "edge_assembly.h"
 #include "workpiece_generator.h"
-#include "door_bell.h"
+#include "door_bell_combiner.h"
 
 EdgeAssembly::EdgeAssembly() {}
 
@@ -61,9 +62,27 @@ void EdgeAssembly::whenAllImagesProcessed(const std::map<int, ProcessedROIInfo>&
 
     // 3、组合工件成门环
     m_workpieceCombiner = std::make_unique<DoorBellCombiner>(m_workpieceGenerator->getPossibleWorkpieces());
-    m_workpieceCombiner->generateValidCombinations(5, m_cbbs);
+    m_workpieceCombiner->generateValidCombinations(9, m_cbbs);
     m_workpieceCombiner->calculateMostLikelyCombination();
-    m_workpieceCombiner->outputResult();
+    std::map<int, std::vector<int>> combinationResult = m_workpieceCombiner->outputResult();
+
+    // 4、发送组合完成信号
+    std::map<int, std::vector<int>> workpieceToRoiInfos;
+    for (const auto& [workpieceId, contourIds] : combinationResult) {
+        std::vector<int> relatedRoiInfos;
+        // 在processedRoiInfos中查找包含对应轮廓ID的ProcessedROIInfo
+        for (const auto& [roiKey, roiInfo] : processedRoiInfos) {
+            for (const auto& contourId : contourIds) {
+                if (roiInfo.contourDatas.find(contourId) != roiInfo.contourDatas.end()) {
+                    relatedRoiInfos.push_back(roiInfo.index);
+                    break;
+                }
+            }
+        }
+        workpieceToRoiInfos[workpieceId] = relatedRoiInfos;
+    }
+
+    emit sendEdgeAssemblyFinished(workpieceToRoiInfos, processedRoiInfos);
 }
 
 

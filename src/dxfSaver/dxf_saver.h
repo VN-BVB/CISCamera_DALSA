@@ -14,7 +14,8 @@ public:
     DXFSaver();
 
 public slots:
-    void whenAllImagesProcessed(std::map<int, ProcessedROIInfo> processedRoiInfos);
+    void whenAllImagesProcessed(const std::map<int, std::vector<int>>& workpieceToRoiInfos,
+                                const std::map<int, ProcessedROIInfo>& processedRoiInfos);
 };
 
 #endif // DXF_SAVER_H

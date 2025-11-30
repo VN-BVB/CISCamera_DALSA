@@ -5,7 +5,8 @@ const int SPACING_BETWEEN_ROIS = 100; // ROI之间的间距，避免重叠
 
 DXFSaver::DXFSaver() : QObject(nullptr) {}
 
-void DXFSaver::whenAllImagesProcessed(std::map<int, ProcessedROIInfo> processedRoiInfos)
+void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& workpieceToRoiInfos,
+                                      const std::map<int, ProcessedROIInfo>& processedRoiInfos)
 {
     try {
         // 创建DXF对象和写入器 - 使用简单的文件名，与测试文件类似

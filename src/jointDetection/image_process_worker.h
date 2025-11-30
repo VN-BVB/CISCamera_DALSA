@@ -25,7 +25,7 @@ struct ProcessedROIInfo
     int index;                                                  // ROI编号
     std::shared_ptr<cv::Mat> image;                             // ROI图像
     cv::Point leftCornerPoint;                                  // ROI左上角
-     std::map<int, ContourData> contourDatas;                   // 缝隙轮廓数据
+    std::map<int, ContourData> contourDatas;                    // 缝隙轮廓数据
     std::vector<std::vector<cv::Point>> pixelContours;          // 缝隙两条像素轮廓坐标
     std::vector<std::vector<cv::Point2f>> subpixelContours;     // 缝隙两条亚像素轮廓坐标
     std::vector<cv::Vec4f> lines;                               // 缝隙所有拟合直线

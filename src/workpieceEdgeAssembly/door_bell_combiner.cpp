@@ -1,7 +1,7 @@
 #include <QString>
 #include <plog/Log.h>
 
-#include "door_bell.h"
+#include "door_bell_combiner.h"
 
 //===========================WorkpieceInfo===========================
 /**
@@ -149,8 +149,30 @@ void DoorBellCombiner::calculateMostLikelyCombination() {
     PLOG_INFO << contourIdsStr.toStdString();
 }
 
-void DoorBellCombiner::outputResult() {
-    // ... existing code ...
+std::map<int, std::vector<int>> DoorBellCombiner::outputResult() {
+    // 键为工件序号，值为轮廓id数组
+    std::map<int, std::vector<int>> resultDictionary;
+
+    // 检查是否有最可能的组合
+    if (m_mostLikelyCombination.empty()) {
+        PLOG_INFO << "没有找到有效的工件组合";
+        return resultDictionary;
+    }
+
+    // 遍历最可能组合中的每个工件
+    for (size_t i = 0; i < m_mostLikelyCombination.size(); ++i) {
+        int workpieceIndex = m_mostLikelyCombination[i];
+
+        if (workpieceIndex < 0 || workpieceIndex >= m_possibleWorkpieces.size()) {
+            continue;
+        }
+
+        std::vector<int> contourIds = m_possibleWorkpieces[workpieceIndex].getContourIds();
+
+        resultDictionary[i + 1] = contourIds;
+    }
+
+    return resultDictionary;
 }
 
 /**

@@ -2,7 +2,7 @@
 #define EDGE_ASSEMBLY_H
 
 #include "workpiece_generator.h"
-#include "door_bell.h"
+#include "door_bell_combiner.h"
 #include "src/jointDetection/image_process_worker.h"
 #include <memory>
 
@@ -16,7 +16,9 @@ public:
     std::vector<int> getMostLikelyCombination() const;
 
     void run(int n);
-
+signals:
+    void sendEdgeAssemblyFinished(const std::map<int, std::vector<int>>& workpieceToRoiInfos,
+                                  const std::map<int, ProcessedROIInfo>& processedRoiInfos);
 public slots:
     void whenAllImagesProcessed(const std::map<int, ProcessedROIInfo> &processedRoiInfos);
 

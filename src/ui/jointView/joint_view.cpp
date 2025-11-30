@@ -50,7 +50,7 @@ JointView::JointView(QWidget *parent)
 
     // 保存dxf
     m_dxfSaver = std::make_shared<DXFSaver>();
-    connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, m_dxfSaver.get(), &DXFSaver::whenAllImagesProcessed);
+    connect(m_edgeAssembier.get(), &EdgeAssembly::sendEdgeAssemblyFinished, m_dxfSaver.get(), &DXFSaver::whenAllImagesProcessed);
 
     // 启动线程
     readThread.start();
