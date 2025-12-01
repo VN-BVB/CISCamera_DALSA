@@ -146,8 +146,23 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
 
     DisplayView* view = displayMgr->displayView();
     DisplayScene* scene = displayMgr->displayScene();
+    cv::Mat img = cv::imread("D:/Download/WeiXingDownload/WeChat Files/wxid_2e35cz5qkc1p22/FileStorage/File/2025-11/Splice_20251108_160806374.bmp",
+                             cv::IMREAD_GRAYSCALE);
+    cv::Mat img_with_contours;
+    cv::cvtColor(img, img_with_contours, cv::COLOR_GRAY2BGR);
     for (const auto& [key, roiInfo] : processedRoiInfos) {
         if (roiInfo.image && !roiInfo.image->empty()) {
+            for (const auto& subpixelContour : roiInfo.subpixelContours) {
+                if (!subpixelContour.empty()) {
+                    // 直接改变对应像素点的颜色为红色
+                    std::cout <<"aaa" << subpixelContour[0] << std::endl;
+                    std::cout <<"bbb" << subpixelContour.back() << std::endl;
+                    cv::line(img_with_contours, subpixelContour[0], subpixelContour.back(), cv::Scalar(0, 0, 255), 2);
+
+                }
+            }
+
+
             // 转换并拷贝cv::Mat的数据
             QImage qimg;
             if (roiInfo.image->type() == CV_8UC1) {
@@ -182,6 +197,8 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
             }
         }
     }
+
+    cv::imwrite("D:/Download/WeiXingDownload/WeChat Files/wxid_2e35cz5qkc1p22/FileStorage/File/2025-11/11111111111.bmp", img_with_contours);
     view->whenUpdateDisplayFit();
     PLOG_INFO << "显示所有轮廓";
 }

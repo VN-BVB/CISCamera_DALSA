@@ -13,7 +13,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
     try {
         // 创建DXF对象和写入器 - 使用简单的文件名，与测试文件类似
         DL_Dxf dxf;
-        DL_WriterA* dw = dxf.out("joint_detected.dxf", DL_Codes::AC1015);
+        DL_WriterA* dw = dxf.out("joint_detected________________.dxf", DL_Codes::AC1015);
 
         if (!dw || dw->openFailed()) {
             PLOG_ERROR << "无法创建DXF文件!";
@@ -98,7 +98,8 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
             double offsetX = roiIndex * SPACING_BETWEEN_ROIS;
 
             // 绘制亚像素轮廓
-            drawSubpixelContours(dxf, dw, attributes, roiInfo, offsetX);
+            drawSubpixelContours(dxf, dw, attributes, roiInfo, 0);
+            drawSubpixelContours_sub(dxf, dw, attributes, roiInfo, offsetX);
 
             roiIndex++;
         }
@@ -133,6 +134,22 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
 
     PLOG_INFO << "处理ROI索引 " << roiInfo.index << "，亚像素轮廓数量: " << roiInfo.subpixelContours.size();
 
+    cv::Mat white_bg = cv::Mat(400, 200, CV_8UC3, cv::Scalar(255, 255, 255));
+
+    // 绘制坐标系：画布左下角为原点，向上为x轴，向右为y轴
+    // 原点在(50, 150)，为了在画布中有足够的空间显示
+    cv::Point origin(0, 400);
+
+    // 绘制x轴（向上）
+    cv::line(white_bg, origin, cv::Point(origin.x, 30), cv::Scalar(0, 0, 255), 2);
+    // 绘制y轴（向右）
+    cv::line(white_bg, origin, cv::Point(350, origin.y), cv::Scalar(0, 255, 0), 2);
+
+    // 绘制坐标轴标签
+    cv::putText(white_bg, "X", cv::Point(origin.x - 10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
+    cv::putText(white_bg, "Y", cv::Point(360, origin.y + 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
+    cv::putText(white_bg, "Origin", cv::Point(origin.x + 5, origin.y + 15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
+
     // 遍历每个亚像素轮廓
     for (size_t contourIdx = 0; contourIdx < roiInfo.subpixelContours.size(); ++contourIdx) {
         const std::vector<cv::Point2f>& contour = roiInfo.subpixelContours[contourIdx];
@@ -141,13 +158,94 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
         // 将像素坐标转换为世界坐标
         std::vector<Eigen::Vector2d> worldPoints = GeometryUtils::pixel2World(contour);
 
+        // 在DXF文件中绘制
         for (size_t i = 0; i < worldPoints.size() - 1; ++i) {
             const Eigen::Vector2d& wp1 = worldPoints[i];
             const Eigen::Vector2d& wp2 = worldPoints[i + 1];
 
             DL_LineData lineData(
-                wp1.y() + offsetX, wp1.x(), 0.0,  // 交换x和y坐标
-                wp2.y() + offsetX, wp2.x(), 0.0   // 交换x和y坐标
+                wp1.x() + offsetX, wp1.y(), 0.0,  // 交换x和y坐标
+                wp2.x() + offsetX, wp2.y(), 0.0   // 交换x和y坐标
+                );
+
+            // 写入线到DXF文件
+            dxf.writeLine(*dw, lineData, attributes);
+        }
+
+        // 在OpenCV图像上绘制世界坐标点
+        // 缩放因子，用于将世界坐标缩放到图像尺寸
+        double scaleFactor = 1; // 根据实际情况调整缩放因子
+        // cv::line(white_bg,white_bg,)
+        // double a =  worldPoints.front().x();
+        // std::cout << "======aa=======" << worldPoints.front() << std::endl;
+        // std::cout << "======bb=======" << worldPoints.back() << std::endl;
+
+        for (size_t i = 0; i < worldPoints.size(); ++i) {
+            const Eigen::Vector2d& wp = worldPoints[i];
+
+            // 转换世界坐标到图像坐标：原点在左下角，向上为x轴，向右为y轴
+            // 注意：OpenCV图像坐标系是原点在左上角，向下为y轴，向右为x轴
+            // 所以需要进行转换
+            int imgX = origin.x + static_cast<int>(wp.y() * scaleFactor); // 世界y轴映射到图像x轴
+            int imgY = origin.y - static_cast<int>(wp.x() * scaleFactor); // 世界x轴映射到图像y轴
+
+            // 确保点在图像范围内
+            if (imgX >= 0 && imgX < white_bg.cols && imgY >= 0 && imgY < white_bg.rows) {
+                // 绘制点
+                cv::circle(white_bg, cv::Point(imgX, imgY), 3, cv::Scalar(255, 0, 0), -1);
+
+                // 连接相邻的点
+                if (i > 0) {
+                    const Eigen::Vector2d& prevWp = worldPoints[i - 1];
+                    int prevImgX = origin.x + static_cast<int>(prevWp.y() * scaleFactor);
+                    int prevImgY = origin.y - static_cast<int>(prevWp.x() * scaleFactor);
+
+                    if (prevImgX >= 0 && prevImgX < white_bg.cols && prevImgY >= 0 && prevImgY < white_bg.rows) {
+                        cv::line(white_bg, cv::Point(prevImgX, prevImgY), cv::Point(imgX, imgY), cv::Scalar(255, 0, 0), 1);
+                    }
+                }
+            }
+        }
+    }
+
+    // 保存绘制结果图像
+    std::string filename = "world_coordinates_visualization_" + std::to_string(roiInfo.index) + ".png";
+    cv::imwrite(filename, white_bg);
+    PLOG_INFO << "世界坐标可视化图像已保存: " << filename;
+}
+
+void DXFSaver::drawSubpixelContours_sub(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                                    const ProcessedROIInfo& roiInfo, double offsetX)
+{
+    // 检查是否有亚像素轮廓数据
+    if (roiInfo.subpixelContours.empty()) {
+        std::cout << "ROI索引 " << roiInfo.index << " 没有亚像素轮廓数据" << std::endl;
+        return;
+    }
+
+    std::cout << "处理ROI索引 " << roiInfo.index << "，亚像素轮廓数量: " << roiInfo.subpixelContours.size() << std::endl;
+
+    // 遍历每个亚像素轮廓
+    for (size_t contourIdx = 0; contourIdx < roiInfo.subpixelContours.size(); ++contourIdx) {
+        const std::vector<cv::Point2f>& contour = roiInfo.subpixelContours[contourIdx];
+
+        // 检查轮廓是否有足够的点来绘制线
+        if (contour.size() < 2) {
+            std::cout << "  轮廓 " << contourIdx << " 点数不足，跳过绘制" << std::endl;
+            continue;
+        }
+
+        std::cout << "  绘制轮廓 " << contourIdx << "，包含 " << contour.size() << " 个点" << std::endl;
+
+        // 遍历轮廓中的点，将相邻点用直线连接
+        for (size_t i = 0; i < contour.size() - 1; ++i) {
+            const cv::Point2f& p1 = contour[i];
+            const cv::Point2f& p2 = contour[i + 1];
+
+            // 创建线数据，添加偏移量
+            DL_LineData lineData(
+                p1.x + offsetX, -p1.y, 0.0,
+                p2.x + offsetX, -p2.y, 0.0
                 );
 
             // 写入线到DXF文件
@@ -155,3 +253,4 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
         }
     }
 }
+

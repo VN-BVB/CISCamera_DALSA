@@ -22,6 +22,8 @@ private:
     void drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
                               const ProcessedROIInfo& roiInfo, double offsetX);
 
+    void drawSubpixelContours_sub(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                                  const ProcessedROIInfo& roiInfo, double offsetX);
 };
 
 #endif // DXF_SAVER_H
