@@ -20,10 +20,7 @@ public slots:
 private:
     // 绘制亚像素轮廓
     void drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
-                              const ProcessedROIInfo& roiInfo, double offsetX);
-
-    void drawSubpixelContours_sub(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
-                                  const ProcessedROIInfo& roiInfo, double offsetX);
+                              const ProcessedROIInfo& roiInfo);
 };
 
 #endif // DXF_SAVER_H

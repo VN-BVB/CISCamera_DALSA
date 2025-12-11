@@ -3,24 +3,22 @@
 #include "dxf_saver.h"
 #include "../utils/geometry_utils.h"
 
-const int SPACING_BETWEEN_ROIS = 100; // ROI之间的间距，避免重叠
-
 DXFSaver::DXFSaver() : QObject(nullptr) {}
 
 void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& workpieceToRoiInfos,
                                       const std::map<int, ProcessedROIInfo>& processedRoiInfos)
 {
     try {
-        // 创建DXF对象和写入器 - 使用简单的文件名，与测试文件类似
+        // 创建DXF对象和写入器
         DL_Dxf dxf;
-        DL_WriterA* dw = dxf.out("joint_detected________________.dxf", DL_Codes::AC1015);
+        DL_WriterA* dw = dxf.out("joint_detected.dxf", DL_Codes::AC1015);
 
         if (!dw || dw->openFailed()) {
             PLOG_ERROR << "无法创建DXF文件!";
             return;
         }
 
-        // 严格按照测试文件的结构和顺序写入DXF头部
+        // 写入DXF头部
         dxf.writeHeader(*dw);
         dw->sectionEnd();
 
@@ -94,12 +92,8 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         for (const auto& roiPair : processedRoiInfos) {
             const ProcessedROIInfo& roiInfo = roiPair.second;
 
-            // 计算偏移量，避免ROI重叠
-            double offsetX = roiIndex * SPACING_BETWEEN_ROIS;
-
             // 绘制亚像素轮廓
-            drawSubpixelContours(dxf, dw, attributes, roiInfo, 0);
-            drawSubpixelContours_sub(dxf, dw, attributes, roiInfo, offsetX);
+            drawSubpixelContours(dxf, dw, attributes, roiInfo);
 
             roiIndex++;
         }
@@ -124,7 +118,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
 
 
 void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
-                                    const ProcessedROIInfo& roiInfo, double offsetX)
+                                    const ProcessedROIInfo& roiInfo)
 {
     // 检查是否有亚像素轮廓数据
     if (roiInfo.subpixelContours.empty()) {
@@ -164,8 +158,8 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
             const Eigen::Vector2d& wp2 = worldPoints[i + 1];
 
             DL_LineData lineData(
-                wp1.x() + offsetX, wp1.y(), 0.0,  // 交换x和y坐标
-                wp2.x() + offsetX, wp2.y(), 0.0   // 交换x和y坐标
+                wp1.y(), wp1.x(), 0.0,  // 交换x和y坐标
+                wp2.y(), wp2.x(), 0.0
                 );
 
             // 写入线到DXF文件
@@ -212,45 +206,5 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
     std::string filename = "world_coordinates_visualization_" + std::to_string(roiInfo.index) + ".png";
     cv::imwrite(filename, white_bg);
     PLOG_INFO << "世界坐标可视化图像已保存: " << filename;
-}
-
-void DXFSaver::drawSubpixelContours_sub(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
-                                    const ProcessedROIInfo& roiInfo, double offsetX)
-{
-    // 检查是否有亚像素轮廓数据
-    if (roiInfo.subpixelContours.empty()) {
-        std::cout << "ROI索引 " << roiInfo.index << " 没有亚像素轮廓数据" << std::endl;
-        return;
-    }
-
-    std::cout << "处理ROI索引 " << roiInfo.index << "，亚像素轮廓数量: " << roiInfo.subpixelContours.size() << std::endl;
-
-    // 遍历每个亚像素轮廓
-    for (size_t contourIdx = 0; contourIdx < roiInfo.subpixelContours.size(); ++contourIdx) {
-        const std::vector<cv::Point2f>& contour = roiInfo.subpixelContours[contourIdx];
-
-        // 检查轮廓是否有足够的点来绘制线
-        if (contour.size() < 2) {
-            std::cout << "  轮廓 " << contourIdx << " 点数不足，跳过绘制" << std::endl;
-            continue;
-        }
-
-        std::cout << "  绘制轮廓 " << contourIdx << "，包含 " << contour.size() << " 个点" << std::endl;
-
-        // 遍历轮廓中的点，将相邻点用直线连接
-        for (size_t i = 0; i < contour.size() - 1; ++i) {
-            const cv::Point2f& p1 = contour[i];
-            const cv::Point2f& p2 = contour[i + 1];
-
-            // 创建线数据，添加偏移量
-            DL_LineData lineData(
-                p1.x + offsetX, -p1.y, 0.0,
-                p2.x + offsetX, -p2.y, 0.0
-                );
-
-            // 写入线到DXF文件
-            dxf.writeLine(*dw, lineData, attributes);
-        }
-    }
 }
 
