@@ -28,7 +28,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         // 写入视口表
         dxf.writeVPort(*dw);
 
-        // 写入线型表 - 完全按照测试文件的方式
+        // 写入线型表
         dw->tableLinetypes(1);
         dxf.writeLinetype(*dw, DL_LinetypeData("CONTINUOUS", "Continuous", 0, 0, 0.0));
         dxf.writeLinetype(*dw, DL_LinetypeData("BYLAYER", "", 0, 0, 0.0));
@@ -93,7 +93,10 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
             const ProcessedROIInfo& roiInfo = roiPair.second;
 
             // 绘制亚像素轮廓
-            drawSubpixelContours(dxf, dw, attributes, roiInfo);
+            // drawSubpixelContours(dxf, dw, attributes, roiInfo);
+
+            // 绘制样条曲线
+            drawSplines(dxf, dw, attributes, roiInfo);
 
             roiIndex++;
         }
@@ -116,7 +119,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
     }
 }
 
-
 void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
                                     const ProcessedROIInfo& roiInfo)
 {
@@ -129,20 +131,6 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
     PLOG_INFO << "处理ROI索引 " << roiInfo.index << "，亚像素轮廓数量: " << roiInfo.subpixelContours.size();
 
     cv::Mat white_bg = cv::Mat(400, 200, CV_8UC3, cv::Scalar(255, 255, 255));
-
-    // 绘制坐标系：画布左下角为原点，向上为x轴，向右为y轴
-    // 原点在(50, 150)，为了在画布中有足够的空间显示
-    cv::Point origin(0, 400);
-
-    // 绘制x轴（向上）
-    cv::line(white_bg, origin, cv::Point(origin.x, 30), cv::Scalar(0, 0, 255), 2);
-    // 绘制y轴（向右）
-    cv::line(white_bg, origin, cv::Point(350, origin.y), cv::Scalar(0, 255, 0), 2);
-
-    // 绘制坐标轴标签
-    cv::putText(white_bg, "X", cv::Point(origin.x - 10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
-    cv::putText(white_bg, "Y", cv::Point(360, origin.y + 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
-    cv::putText(white_bg, "Origin", cv::Point(origin.x + 5, origin.y + 15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
 
     // 遍历每个亚像素轮廓
     for (size_t contourIdx = 0; contourIdx < roiInfo.subpixelContours.size(); ++contourIdx) {
@@ -165,46 +153,63 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
             // 写入线到DXF文件
             dxf.writeLine(*dw, lineData, attributes);
         }
+    }
+}
 
-        // 在OpenCV图像上绘制世界坐标点
-        // 缩放因子，用于将世界坐标缩放到图像尺寸
-        double scaleFactor = 1; // 根据实际情况调整缩放因子
-        // cv::line(white_bg,white_bg,)
-        // double a =  worldPoints.front().x();
-        // std::cout << "======aa=======" << worldPoints.front() << std::endl;
-        // std::cout << "======bb=======" << worldPoints.back() << std::endl;
-
-        for (size_t i = 0; i < worldPoints.size(); ++i) {
-            const Eigen::Vector2d& wp = worldPoints[i];
-
-            // 转换世界坐标到图像坐标：原点在左下角，向上为x轴，向右为y轴
-            // 注意：OpenCV图像坐标系是原点在左上角，向下为y轴，向右为x轴
-            // 所以需要进行转换
-            int imgX = origin.x + static_cast<int>(wp.y() * scaleFactor); // 世界y轴映射到图像x轴
-            int imgY = origin.y - static_cast<int>(wp.x() * scaleFactor); // 世界x轴映射到图像y轴
-
-            // 确保点在图像范围内
-            if (imgX >= 0 && imgX < white_bg.cols && imgY >= 0 && imgY < white_bg.rows) {
-                // 绘制点
-                cv::circle(white_bg, cv::Point(imgX, imgY), 3, cv::Scalar(255, 0, 0), -1);
-
-                // 连接相邻的点
-                if (i > 0) {
-                    const Eigen::Vector2d& prevWp = worldPoints[i - 1];
-                    int prevImgX = origin.x + static_cast<int>(prevWp.y() * scaleFactor);
-                    int prevImgY = origin.y - static_cast<int>(prevWp.x() * scaleFactor);
-
-                    if (prevImgX >= 0 && prevImgX < white_bg.cols && prevImgY >= 0 && prevImgY < white_bg.rows) {
-                        cv::line(white_bg, cv::Point(prevImgX, prevImgY), cv::Point(imgX, imgY), cv::Scalar(255, 0, 0), 1);
-                    }
-                }
-            }
-        }
+void DXFSaver::drawSplines(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                           const ProcessedROIInfo& roiInfo)
+{
+    // 检查是否有样条曲线数据
+    if (roiInfo.splines.empty()) {
+        PLOG_INFO << "ROI索引 " << roiInfo.index << " 没有样条曲线数据";
+        return;
     }
 
-    // 保存绘制结果图像
-    std::string filename = "world_coordinates_visualization_" + std::to_string(roiInfo.index) + ".png";
-    cv::imwrite(filename, white_bg);
-    PLOG_INFO << "世界坐标可视化图像已保存: " << filename;
+    PLOG_INFO << "处理ROI索引 " << roiInfo.index << "，样条曲线数量: " << roiInfo.splines.size();
+
+    // 遍历每个样条曲线
+    for (size_t splineIdx = 0; splineIdx < roiInfo.splines.size(); ++splineIdx) {
+        const tinyspline::BSpline& spline = roiInfo.splines[splineIdx];
+        PLOG_INFO << "  绘制样条曲线 " << splineIdx;
+
+        // 获取样条曲线的控制点
+        std::vector<tinyspline::real> controlPoints = spline.controlPoints();
+        std::vector<tinyspline::real> knots = spline.knots();
+
+        std::vector<cv::Point2f> pixelPoints;
+        for (size_t i = 0; i < controlPoints.size(); i += 2) {
+            pixelPoints.emplace_back(controlPoints[i], controlPoints[i+1]);
+        }
+        std::vector<Eigen::Vector2d> worldPoints = GeometryUtils::pixel2World(pixelPoints);
+
+        // 创建DL_SplineData对象
+        DL_SplineData splineData(
+            spline.degree(),                            // 次数
+            static_cast<int>(knots.size()),             // 节点数量
+            static_cast<int>(worldPoints.size() / 2),   // 控制点数量（2D）
+            0,                                          // 拟合点数量（0表示没有）
+            0                                           // 标志位
+            );
+
+        // 写入样条曲线数据
+        dxf.writeSpline(*dw, splineData, attributes);
+
+        // 写入控制点
+        for (size_t i = 0; i < worldPoints.size(); ++i) {
+            const Eigen::Vector2d& worldPoint = worldPoints[i];
+
+            DL_ControlPointData controlPointData(
+                worldPoint.y(), worldPoint.x(), 0.0,  // 交换x和y坐标
+                1.0  // 权重
+                );
+            dxf.writeControlPoint(*dw, controlPointData);
+        }
+
+        // 写入节点
+        for (double knot : knots) {
+            DL_KnotData knotData(knot);
+            dxf.writeKnot(*dw, knotData);
+        }
+    }
 }
 
