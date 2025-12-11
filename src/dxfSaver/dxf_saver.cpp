@@ -36,11 +36,24 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         dw->tableEnd();
 
         // 写入图层表
-        dw->tableLayers(1);
+        dw->tableLayers(3);  // 增加图层数量
+        // 0层
         dxf.writeLayer(
             *dw,
             DL_LayerData("0", 0),
             DL_Attributes("", 1, 0x00ff0000, 15, "CONTINUOUS")
+            );
+        // 亚像素轮廓图层（蓝色）
+        dxf.writeLayer(
+            *dw,
+            DL_LayerData("SubpixelContours", 0),
+            DL_Attributes("", 1, 0xffffff, 15, "CONTINUOUS")
+            );
+        // 样条曲线图层（红色）
+        dxf.writeLayer(
+            *dw,
+            DL_LayerData("Splines", 0),
+            DL_Attributes("", 1, 0xff0000, 15, "CONTINUOUS")
             );
         dw->tableEnd();
 
@@ -85,18 +98,20 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         // 写入实体部分
         dw->sectionEntities();
 
-        DL_Attributes attributes("0", 256, -1, -1, "BYLAYER");
+        // 创建不同图层的属性
+        DL_Attributes subpixelAttributes("SubpixelContours", 256, -1, -1, "BYLAYER");
+        DL_Attributes splineAttributes("Splines", 256, -1, -1, "BYLAYER");
 
         // 遍历所有处理过的ROI
         int roiIndex = 0;
         for (const auto& roiPair : processedRoiInfos) {
             const ProcessedROIInfo& roiInfo = roiPair.second;
 
-            // 绘制亚像素轮廓
-            // drawSubpixelContours(dxf, dw, attributes, roiInfo);
+            // 绘制亚像素轮廓（使用蓝色图层）
+            drawSubpixelContours(dxf, dw, subpixelAttributes, roiInfo);
 
-            // 绘制样条曲线
-            drawSplines(dxf, dw, attributes, roiInfo);
+            // 绘制样条曲线（使用红色图层）
+            drawSplines(dxf, dw, splineAttributes, roiInfo);
 
             roiIndex++;
         }
@@ -186,7 +201,7 @@ void DXFSaver::drawSplines(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& att
         DL_SplineData splineData(
             spline.degree(),                            // 次数
             static_cast<int>(knots.size()),             // 节点数量
-            static_cast<int>(worldPoints.size() / 2),   // 控制点数量（2D）
+            static_cast<int>(worldPoints.size()),       // 控制点数量（2D）
             0,                                          // 拟合点数量（0表示没有）
             0                                           // 标志位
             );
@@ -212,4 +227,3 @@ void DXFSaver::drawSplines(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& att
         }
     }
 }
-
