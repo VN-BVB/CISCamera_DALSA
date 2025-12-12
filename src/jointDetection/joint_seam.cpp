@@ -1,8 +1,9 @@
+#include <iostream>
 #include "joint_seam.h"
 #include "src/utils/image_tools.h"
 #include "src/jointDetection/edgeDetection/canny_zernike_detector.h"
 #include "contourProcess/contour_processor.h"
-#include <iostream>
+#include "src/utils/scoped_timer.h"
 
 JointSeam::JointSeam(const cv::Mat &image, const cv::Point2f position)
     : m_image(image),
@@ -10,6 +11,7 @@ JointSeam::JointSeam(const cv::Mat &image, const cv::Point2f position)
 {}
 
 void JointSeam::run() {
+    SCOPED_TIMER("单张图片拼缝检测");
     // 拼缝两侧亚像素轮廓检测
     std::unique_ptr<AbstractContourDetector> s1;
     std::unique_ptr<ContourDetectorContext> c = std::make_unique<ContourDetectorContext>();
@@ -17,7 +19,6 @@ void JointSeam::run() {
     std::vector<std::vector<cv::Point2f>> contours;
     c->setDetector(std::move(s1));
     contours = c->detectContours(m_image);
-
     // 添加m_position偏移量,映射到整体图像坐标
     for (auto& contour : contours) {
         for (auto& point : contour) {

@@ -60,8 +60,13 @@ void ImageProcessWorker::whenProcessMultiImages(std::shared_ptr<std::vector<ROIW
             auto future = m_threadPool->enqueue(&ImageProcessWorker::processSingleROI, this, roi);
             futures.push_back(std::move(future));
         }
-
         PLOG_INFO << "所有图像处理任务已提交到线程池";
+
+        // 等待所有任务完成
+        for (auto &future : futures) {
+            future.get();
+        }
+        PLOG_INFO << "所有图像处理任务已完成";
     } catch (const std::exception &e) {
         emit errorOccurred(QString("处理多张ROI图像时出错: ") + e.what());
     }
