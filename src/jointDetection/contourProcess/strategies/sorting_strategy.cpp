@@ -4,7 +4,6 @@
 SortingStrategy::SortingStrategy() {}
 
 bool SortingStrategy::process(ContourData& context) {
-    SCOPED_TIMER("SortingStrategy");
     auto contour = context.getSubpixelContour();
     auto direction = context.getOpeningDirection();
     int startIndex = 0;

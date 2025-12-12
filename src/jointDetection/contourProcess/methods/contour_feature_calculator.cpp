@@ -451,7 +451,6 @@ int ContourFeatureCalculator::findNextPoint(const std::vector<cv::Point2f>& cont
  *          如果逆时针方向的点距离超过阈值，则选择最近的点。
  */
 std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int startIndex, int endIndex) {
-    SCOPED_TIMER("sortContourByNearestNeighbor");
 
     if (contour.empty()) return {};
     if (startIndex < 0 || startIndex >= contour.size()) {
@@ -467,7 +466,6 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
 
     // 计算轮廓中心点
     cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
-    SCOPED_TIMER("wwwwwwww");
     while (sortedContour.size() < contour.size()) {
         // 检查是否到达终点
         if (hasValidEndIndex && currentIndex == endIndex) {
@@ -482,8 +480,6 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
         visited[selectedCandidateIndex] = true;
         currentIndex = selectedCandidateIndex;
     }
-
-    PLOG_INFO << contour.size();
 
     return sortedContour;
 }

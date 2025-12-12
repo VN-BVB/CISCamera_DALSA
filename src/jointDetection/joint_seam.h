@@ -25,7 +25,7 @@ public:
 private:
     cv::Mat m_image;                                // 拼缝roi处图像
     std::vector<ContourData> m_contourDatas;        // 拼缝两边轮廓
-    cv::Point2f m_position;                         // 拼缝roi位置
+    cv::Point2f m_position;                         // 拼缝roi图像左上角坐标
     std::vector<cv::Vec4f> m_lines;                 // 拼缝两侧所有直线
     std::vector<cv::Point2f> m_endPoints;           // 拼缝四个端点
 };
