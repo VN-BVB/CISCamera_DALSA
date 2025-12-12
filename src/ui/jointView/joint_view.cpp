@@ -191,7 +191,6 @@ void JointView::updateDisplay() {
     if (!m_currentImage) return;
 
     // 在主线程中显示图像
-
     DisplayManager* displayMgr = ui->gv_image->getDisplayManager();
     if (!displayMgr) return;
 
@@ -246,7 +245,7 @@ void JointView::updateDisplay() {
     if (m_showEndPoints && !m_endPointsByTangentLines.empty()) {
         if (!m_endPointsByTangentLines.empty()) {
             auto pointComponent = std::make_shared<PointItem>(m_endPointsByTangentLines,
-                                                              Qt::yellow,
+                                                              Qt::blue,
                                                               0.5,
                                                               15.0);
             ui->gv_image->addGraphicComponent(pointComponent);

@@ -62,7 +62,7 @@ void FrmVisionDisplay::displayImage(std::shared_ptr<cv::Mat> image, bool autoFit
     DisplayScene* scene = m_displayMgr->displayScene();
     if (scene)
     {
-        scene->whenDisplayImage(qimg, autoFit);
+        scene->whenAddDisplayImage(qimg, QPointF(0, 0));
     }
 }
 

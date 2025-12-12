@@ -394,6 +394,18 @@ int ContourFeatureCalculator::selectNextCandidate(const std::vector<cv::Point2f>
     return candidates[0].first;
 }
 
+/**
+ * @brief 在轮廓点集中查找下一个合适的点（优先选择逆时针方向的最近点）
+ * @param contour 输入轮廓点集，包含所有待处理的点
+ * @param currentIndex 当前处理点的索引
+ * @param visited 访问标记数组，标记哪些点已经被处理过
+ * @param centroid 轮廓的质心点，用于判断点的方向
+ * @return int 找到的下一个点的索引，如果没有找到则返回-1
+ * @details 1. 计算当前点到所有未访问点的距离
+ *          2. 检查每个未访问点相对于当前点和质心的方向（顺时针/逆时针）
+ *          3. 优先选择位于当前点逆时针方向的最近点
+ *          4. 如果没有逆时针方向的点，则选择最近的点
+ */
 int ContourFeatureCalculator::findNextPoint(const std::vector<cv::Point2f>& contour,
                                             int currentIndex,
                                             const std::vector<bool>& visited,
@@ -456,17 +468,13 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
     // 计算轮廓中心点
     cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
     SCOPED_TIMER("wwwwwwww");
-    // 主排序循环
     while (sortedContour.size() < contour.size()) {
         // 检查是否到达终点
         if (hasValidEndIndex && currentIndex == endIndex) {
             break;
         }
 
-
-        // 直接找到下一个点，避免中间步骤
         int selectedCandidateIndex = findNextPoint(contour, currentIndex, visited, centroid);
-
         if (selectedCandidateIndex == -1) break;
 
         // 添加选中的点到结果中
