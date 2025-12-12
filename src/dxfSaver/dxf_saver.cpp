@@ -10,7 +10,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
                                       const std::map<int, ProcessedROIInfo>& processedRoiInfos)
 {
     try {
-        ScopedTimer t("保存dxf文件");
+        SCOPED_TIMER("保存dxf文件");
         // 创建DXF对象和写入器
         DL_Dxf dxf;
         DL_WriterA* dw = dxf.out("joint_detected.dxf", DL_Codes::AC1015);
@@ -105,19 +105,23 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         DL_Attributes splineAttributes("Splines", 256, -1, -1, "BYLAYER");
 
         // 遍历所有处理过的ROI
-        int roiIndex = 0;
-        for (const auto& roiPair : processedRoiInfos) {
-            const ProcessedROIInfo& roiInfo = roiPair.second;
+        {
+            SCOPED_TIMER("绘制轮廓");
+            int roiIndex = 0;
+            for (const auto& roiPair : processedRoiInfos) {
 
-            // 绘制亚像素轮廓（使用蓝色图层）
-            drawSubpixelContours(dxf, dw, subpixelAttributes, roiInfo);
+                const ProcessedROIInfo& roiInfo = roiPair.second;
 
-            // 绘制样条曲线（使用红色图层）
-            drawSplines(dxf, dw, splineAttributes, roiInfo);
+                // 绘制亚像素轮廓（使用蓝色图层）
+                drawSubpixelContours(dxf, dw, subpixelAttributes, roiInfo);
 
-            roiIndex++;
+                // 绘制样条曲线（使用红色图层）
+                drawSplines(dxf, dw, splineAttributes, roiInfo);
+
+                roiIndex++;
+            }
         }
-
+        SCOPED_TIMER("保存dxf文件");
         // 结束实体部分
         dw->sectionEnd();
 

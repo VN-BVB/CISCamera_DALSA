@@ -24,4 +24,9 @@ private:
     std::chrono::high_resolution_clock::time_point m_startTime;
 };
 
+// 宏定义，用于自动生成唯一变量名
+#define SCOPED_TIMER_CONCAT_INNER(a, b) a##b
+#define SCOPED_TIMER_CONCAT(a, b) SCOPED_TIMER_CONCAT_INNER(a, b)
+#define SCOPED_TIMER(operationName) ScopedTimer SCOPED_TIMER_CONCAT(scopedTimer_, __COUNTER__)(operationName)
+
 #endif // SCOPED_TIMER_H

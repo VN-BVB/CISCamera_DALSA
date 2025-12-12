@@ -1,8 +1,10 @@
+#include <plog/Log.h>
+#include <future>
+
 #include "image_process_worker.h"
 #include "src/utils/image_tools.h"
 #include "src/test/test_curve_seg.cpp"
-#include <plog/Log.h>
-#include <future>
+#include "src/utils/scoped_timer.h"
 
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent}
 {
@@ -38,7 +40,7 @@ void ImageProcessWorker::whenProcessMultiImages(std::shared_ptr<std::vector<ROIW
 {
     try {
         PLOG_INFO << "===================开始处理多张ROI图像:=================== ";
-
+        SCOPED_TIMER("处理多张ROI图像");
         // 重置计数器
         m_processedCount = 0;
         m_totalROICount = rois->size();
