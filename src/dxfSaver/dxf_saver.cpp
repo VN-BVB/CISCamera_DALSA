@@ -2,6 +2,7 @@
 #include <plog/Log.h>
 #include "dxf_saver.h"
 #include "../utils/geometry_utils.h"
+#include "../utils/scoped_timer.h"
 
 DXFSaver::DXFSaver() : QObject(nullptr) {}
 
@@ -9,6 +10,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
                                       const std::map<int, ProcessedROIInfo>& processedRoiInfos)
 {
     try {
+        ScopedTimer t("保存dxf文件");
         // 创建DXF对象和写入器
         DL_Dxf dxf;
         DL_WriterA* dw = dxf.out("joint_detected.dxf", DL_Codes::AC1015);
