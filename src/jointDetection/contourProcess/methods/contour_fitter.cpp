@@ -120,7 +120,6 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
         endPoints.push_back(cornerPoint1);
         endPoints.push_back(cornerPoint2);
 
-        PLOG_INFO << "使用逆时针排序曲线段计算端点完成";
         PLOG_INFO << "端点1坐标: (" << cornerPoint1.x << ", " << cornerPoint1.y << ")";
         PLOG_INFO << "端点2坐标: (" << cornerPoint2.x << ", " << cornerPoint2.y << ")";
     } else {

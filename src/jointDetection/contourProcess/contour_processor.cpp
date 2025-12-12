@@ -5,6 +5,7 @@
 #include "strategies/corner_detection_strategy.h"
 #include "strategies/segmentation_strategy.h"
 #include "strategies/curve_fitting_strategy.h"
+#include "src/utils/scoped_timer.h"
 
 ContourProcessor::ContourProcessor() {
     m_pipeline = std::make_unique<ContourProcessingPipeline>();
@@ -22,6 +23,7 @@ void ContourProcessor::initializePipeline() {
 }
 
 bool ContourProcessor::processContour(const std::vector<cv::Point2f>& contour) {
+    SCOPED_TIMER("处理单条轮廓");
     m_contourData.clear();
     m_contourData.setSubpixelContour(contour);
     return m_pipeline->process(m_contourData);

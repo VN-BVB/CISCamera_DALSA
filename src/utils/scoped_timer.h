@@ -5,6 +5,10 @@
 #include <chrono>
 #include <plog/Log.h>
 
+/*
+ * @breif 耗时计时器
+ *
+ */
 class ScopedTimer
 {
 public:

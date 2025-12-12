@@ -28,6 +28,10 @@ public:
                                    int currentIndex,
                                    const std::vector<std::pair<int, double>>& candidates,
                                    const cv::Point2f& centroid);
+    static int findNextPoint(const std::vector<cv::Point2f>& contour,
+                             int currentIndex,
+                             const std::vector<bool>& visited,
+                             const cv::Point2f& centroid);
     static std::vector<cv::Point2f> sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int startIndex, int endIndex);
 
     // =============检测角点=============

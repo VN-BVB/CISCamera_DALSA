@@ -1,8 +1,10 @@
+#include <unordered_set>
+#include <cmath>
+
 #include "contour_feature_calculator.h"
 #include "contour_segmenter.h"
 #include "src/utils/geometry_utils.h"
-#include <unordered_set>
-#include <cmath>
+#include "src/utils/scoped_timer.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -316,12 +318,14 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByCentroid(const s
  * @param contour 轮廓点集
  * @param currentIndex 当前点索引
  * @param visited 访问标记数组
+ * @param k 返回最邻近点的个数
  * @return std::vector<std::pair<int, double>> 候选点列表<索引, 距离>
  */
 std::vector<std::pair<int, double>> ContourFeatureCalculator::getSortedCandidatesByDistance(const std::vector<cv::Point2f>& contour,
                                                                                             int currentIndex,
                                                                                             const std::vector<bool>& visited,
                                                                                             int k) {
+    SCOPED_TIMER("getSortedCandidatesByDistance");
     std::vector<std::pair<int, double>> candidates;
 
     for (int i = 0; i < contour.size(); ++i) {
@@ -390,6 +394,41 @@ int ContourFeatureCalculator::selectNextCandidate(const std::vector<cv::Point2f>
     return candidates[0].first;
 }
 
+int ContourFeatureCalculator::findNextPoint(const std::vector<cv::Point2f>& contour,
+                                            int currentIndex,
+                                            const std::vector<bool>& visited,
+                                            const cv::Point2f& centroid) {
+
+    cv::Point2f currentPoint = contour[currentIndex];
+    int bestIndex = -1;
+    double bestDistance = std::numeric_limits<double>::max();
+    bool foundCounterclockwise = false;
+
+    for (int i = 0; i < contour.size(); ++i) {
+        if (!visited[i]) {
+            double distance = cv::norm(currentPoint - contour[i]);
+            cv::Point2f candidatePoint = contour[i];
+
+            // 检查是否是逆时针方向
+            bool isCounterclockwise = !GeometryUtils::isPointClockwiseTo(candidatePoint, currentPoint, centroid);
+
+            if (isCounterclockwise) {
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestIndex = i;
+                    foundCounterclockwise = true;
+                }
+            } else if (!foundCounterclockwise && distance < bestDistance) {
+                // 如果还没找到逆时针方向的点，记录最近的点
+                bestDistance = distance;
+                bestIndex = i;
+            }
+        }
+    }
+
+    return bestIndex;
+}
+
 /**
  * @brief 使用最近邻算法对轮廓点进行排序，优先选择逆时针方向的点
  * @param contour 输入轮廓点集
@@ -400,13 +439,12 @@ int ContourFeatureCalculator::selectNextCandidate(const std::vector<cv::Point2f>
  *          如果逆时针方向的点距离超过阈值，则选择最近的点。
  */
 std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(const std::vector<cv::Point2f>& contour, int startIndex, int endIndex) {
-    // 验证参数有效性
+    SCOPED_TIMER("sortContourByNearestNeighbor");
+
     if (contour.empty()) return {};
-    // 验证起始点索引
     if (startIndex < 0 || startIndex >= contour.size()) {
         return sortContour(contour, 0);
     }
-    // 验证终点索引，如果无效则排序所有点
     bool hasValidEndIndex = (endIndex >= 0 && endIndex < contour.size() && endIndex != startIndex);
 
     std::vector<cv::Point2f> sortedContour;
@@ -415,14 +453,9 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
     sortedContour.push_back(contour[currentIndex]);
     visited[currentIndex] = true;
 
-    // 如果起始点就是终点，直接返回
-    if (hasValidEndIndex && currentIndex == endIndex) {
-        return sortedContour;
-    }
-
     // 计算轮廓中心点
     cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
-
+    SCOPED_TIMER("wwwwwwww");
     // 主排序循环
     while (sortedContour.size() < contour.size()) {
         // 检查是否到达终点
@@ -430,25 +463,19 @@ std::vector<cv::Point2f> ContourFeatureCalculator::sortContourByNearestNeighbor(
             break;
         }
 
-        // 获取排序后的候选点
-        auto candidates = getSortedCandidatesByDistance(contour, currentIndex, visited, 10);
 
-        // 如果没有候选点，结束循环
-        if (candidates.empty()) break;
+        // 直接找到下一个点，避免中间步骤
+        int selectedCandidateIndex = findNextPoint(contour, currentIndex, visited, centroid);
 
-        // 选择下一个合适的候选点
-        int selectedCandidateIndex = selectNextCandidate(contour, currentIndex, candidates, centroid);
+        if (selectedCandidateIndex == -1) break;
 
         // 添加选中的点到结果中
         sortedContour.push_back(contour[selectedCandidateIndex]);
         visited[selectedCandidateIndex] = true;
         currentIndex = selectedCandidateIndex;
-
-        // 检查是否到达终点
-        if (hasValidEndIndex && currentIndex == endIndex) {
-            break;
-        }
     }
+
+    PLOG_INFO << contour.size();
 
     return sortedContour;
 }
