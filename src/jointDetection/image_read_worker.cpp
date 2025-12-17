@@ -95,17 +95,6 @@ void ImageReadWorker::whenReadImageFromSharedMemory(int processId, int timeoutMs
             return;
         }
 
-        // 使用线程池并行保存图像，使用坐标作为文件名
-        std::vector<std::future<void>> saveFutures;
-        for (size_t i = 0; i < rois.size(); i++) {
-            // 通过值捕获当前ROI数据，避免引用捕获带来的问题
-            saveFutures.push_back(m_threadPool->enqueue([this, roi = rois[i]]() {
-                std::string imagePath = "E:/work/车门门环拼接/image/共享内存测试/" +
-                                        std::to_string(roi.x) + "_" + std::to_string(roi.y) + ".bmp";
-                cv::imwrite(imagePath, roi.image);
-            }));
-        }
-
         auto roisPtr = std::make_shared<std::vector<ROIWithCoords>>(std::move(rois));
         emit sendImagesRead(roisPtr);
     }
@@ -182,7 +171,7 @@ std::vector<ROIWithCoords> ImageReadWorker::readROIsFromMemory()
 
     if (!sharedMemory || !sharedMemory->isAttached())
     {
-        // @TODO：将所有错误信息用一个错误管理系统管理，去掉try-catch块
+        // @TODO：将所有错误信息用一个错误管理系统管理
         emit sendErrorOccurred("共享内存未连接");
         return rois;
     }
@@ -208,16 +197,15 @@ std::vector<ROIWithCoords> ImageReadWorker::readROIsFromMemory()
         }
 
         // 获取ROI信息数组
-        ROIInfo *infos = reinterpret_cast<ROIInfo *>(
-            reinterpret_cast<char *>(header) + sizeof(ROIHeader));
+        ROIInfo *infos = reinterpret_cast<ROIInfo *>(reinterpret_cast<char *>(header) + sizeof(ROIHeader));
 
         // 获取图像数据起始位置
-        uchar *imageData = reinterpret_cast<uchar *>(
-            reinterpret_cast<char *>(infos) + sizeof(ROIInfo) * header->roiCount);
+        uchar *imageData = reinterpret_cast<uchar *>(reinterpret_cast<char *>(infos) + sizeof(ROIInfo) * header->roiCount);
 
         // 读取每个ROI
         for (int i = 0; i < header->roiCount; i++)
         {
+            int id = infos[i].id;
             int width = infos[i].width;
             int height = infos[i].height;
             int offset = infos[i].offset;
@@ -264,6 +252,7 @@ std::vector<ROIWithCoords> ImageReadWorker::readROIsFromMemory()
             if (!image.empty())
             {
                 ROIWithCoords roiWithCoords;
+                roiWithCoords.id = id;
                 roiWithCoords.image = image;
                 roiWithCoords.x = x;
                 roiWithCoords.y = y;

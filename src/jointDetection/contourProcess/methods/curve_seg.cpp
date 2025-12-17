@@ -234,11 +234,11 @@ std::pair<cv::Point2f, cv::Point2f> CurveSeg::sortPointsCounterClockwise(const c
  * @param referencePoint 参考点
  * @return 排序后的端点对，包含点的坐标和对应的u值
  */
-std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f& referencePoint) {
+std::pair<SplineEndpoints, SplineEndpoints> CurveSeg::sortEndpoints(const cv::Point2f& referencePoint) {
     // 检查轮廓是否已拟合
     if (!m_isFitted) {
         PLOG_WARNING << "轮廓尚未拟合";
-        return std::make_pair(EndpointInfo(cv::Point2f(0, 0), 0.0f), EndpointInfo(cv::Point2f(0, 0), 0.0f));
+        return std::make_pair(SplineEndpoints(cv::Point2f(0, 0), 0.0f), SplineEndpoints(cv::Point2f(0, 0), 0.0f));
     }
 
     // 获取轮廓的两个端点（首尾点）及其对应的u值
@@ -246,8 +246,8 @@ std::pair<EndpointInfo, EndpointInfo> CurveSeg::sortEndpoints(const cv::Point2f&
     cv::Point2f endPoint2 = evaluate(m_maxDomain);
 
     // 创建端点信息对象
-    EndpointInfo ep1(endPoint1, m_minDomain);
-    EndpointInfo ep2(endPoint2, m_maxDomain);
+    SplineEndpoints ep1(endPoint1, m_minDomain);
+    SplineEndpoints ep2(endPoint2, m_maxDomain);
 
     // 按逆时针方向排序
     std::pair<cv::Point2f, cv::Point2f> sortedPoints = sortPointsCounterClockwise(endPoint1, endPoint2, referencePoint);

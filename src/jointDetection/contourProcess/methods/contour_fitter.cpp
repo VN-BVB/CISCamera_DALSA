@@ -81,18 +81,18 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
         cv::Point2f referencePoint(centroid.x, centroid.y);
 
         // 对每条曲线段的端点进行逆时针排序
-        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints1 = curve1.sortEndpoints(referencePoint);
-        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints2 = curve2.sortEndpoints(referencePoint);
-        std::pair<EndpointInfo, EndpointInfo> sortedEndpoints3 = curve3.sortEndpoints(referencePoint);
+        std::pair<SplineEndpoints, SplineEndpoints> sortedEndpoints1 = curve1.sortEndpoints(referencePoint);
+        std::pair<SplineEndpoints, SplineEndpoints> sortedEndpoints2 = curve2.sortEndpoints(referencePoint);
+        std::pair<SplineEndpoints, SplineEndpoints> sortedEndpoints3 = curve3.sortEndpoints(referencePoint);
 
         // 键为1的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
-        EndpointInfo endpoint1_ccw = sortedEndpoints1.first;  // 更逆时针的端点
+        SplineEndpoints endpoint1_ccw = sortedEndpoints1.first;  // 更逆时针的端点
         // 键为2的曲线：取相对于参考点更顺时针的端点（即排序后的第二个端点）
-        EndpointInfo endpoint2_cw = sortedEndpoints2.second;  // 更顺时针的端点
+        SplineEndpoints endpoint2_cw = sortedEndpoints2.second;  // 更顺时针的端点
         // 键为3的曲线：取相对于参考点更顺时针的端点（即排序后的第一个端点）
-        EndpointInfo endpoint3_ccw = sortedEndpoints3.second;  // 更顺时针的端点
+        SplineEndpoints endpoint3_ccw = sortedEndpoints3.second;  // 更顺时针的端点
         // 键为2的曲线：取相对于参考点更逆时针的端点（即排序后的第一个端点）
-        EndpointInfo endpoint2_ccw = sortedEndpoints2.first;  // 更逆时针的端点
+        SplineEndpoints endpoint2_ccw = sortedEndpoints2.first;  // 更逆时针的端点
 
         // 获取端点附近区域的平均直线
         // 根据曲线长度决定区域大小：长度小于50用99%区域，大于50用50%区域

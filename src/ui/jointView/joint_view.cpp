@@ -117,10 +117,10 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
         for (auto& line : cd.getTangentLines())
             m_fitTangentLines.push_back(line);
 
-        for (auto& point : cd.getEndPoints())
+        for (auto& point : cd.getIntersections())
             m_endPointsByTangentLines.push_back(point);
 
-        for (auto& point : cd.getEndPoints())
+        for (auto& point : cd.getIntersections())
             m_endPointsByFittedLines.push_back(point);
     }
 

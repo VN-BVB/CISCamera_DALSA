@@ -12,12 +12,12 @@ const float MAX_DOMAIN = 0.995f;     // 样条曲线参数U的最大值
 /**
  * @brief 端点信息结构体，包含点的坐标和对应的u值
  */
-struct EndpointInfo {
+struct SplineEndpoints {
     cv::Point2f point;  // 端点坐标
     float u;            // 对应的参数u值
 
-    EndpointInfo() : point(0, 0), u(0.0f) {}
-    EndpointInfo(const cv::Point2f& p, float u_val) : point(p), u(u_val) {}
+    SplineEndpoints() : point(0, 0), u(0.0f) {}
+    SplineEndpoints(const cv::Point2f& p, float u_val) : point(p), u(u_val) {}
 };
 
 /**
@@ -55,7 +55,7 @@ public:
                                                                    const cv::Point2f& point2,
                                                                    const cv::Point2f& referencePoint);
     // 按照参考点的逆时针方向排序其两端点
-    std::pair<EndpointInfo, EndpointInfo> sortEndpoints(const cv::Point2f& referencePoint);
+    std::pair<SplineEndpoints, SplineEndpoints> sortEndpoints(const cv::Point2f& referencePoint);
     // 获取端点附近区域的平均直线
     cv::Vec4f getAverageLineNearEndpoint(float endpointU, float regionSize = 0.1f, int numSamples = 10) const;
 

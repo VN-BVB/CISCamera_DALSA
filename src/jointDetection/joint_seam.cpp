@@ -40,7 +40,7 @@ void JointSeam::run() {
             results.emplace_back(pool.enqueue([contour]() -> std::tuple<bool, ContourData, std::vector<cv::Vec4f>, std::vector<cv::Point2f>> {
                 ContourProcessor processor;
                 if (processor.processContour(contour)) {
-                    return {true, processor.getResult(), processor.getTangentLines(), processor.getEndPoints()};
+                    return {true, processor.getResult(), processor.getTangentLines(), processor.getIntersections()};
                 }
                 return {false, ContourData(), {}, {}};
             }));

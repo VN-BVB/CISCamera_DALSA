@@ -26,7 +26,7 @@ public:
     std::vector<cv::Point2f> getCornerPoints() const { return m_contourData.getCornerPoints(); }
     std::map<int, LineSeg> getLineSegments() const { return m_contourData.getLineSegments(); }
     std::map<int, CurveSeg> getCurveSegments() const { return m_contourData.getCurveSegments(); }
-    std::vector<cv::Point2f> getEndPoints() const { return m_contourData.getEndPoints(); }
+    std::vector<cv::Point2f> getIntersections() const { return m_contourData.getIntersections(); }
     std::vector<cv::Vec4f> getTangentLines() const { return m_contourData.getTangentLines(); }
 
 private:

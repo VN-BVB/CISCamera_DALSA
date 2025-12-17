@@ -9,6 +9,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 
+struct SeamEndpoint {
+    int id;
+    cv::Point2f coordinates;
+};
+
 /**
  * @brief   拼缝类
  */
@@ -29,6 +34,5 @@ private:
     std::vector<cv::Vec4f> m_lines;                 // 拼缝两侧所有直线
     std::vector<cv::Point2f> m_endPoints;           // 拼缝四个端点
 };
-
 
 #endif // JOINT_SEAM_H

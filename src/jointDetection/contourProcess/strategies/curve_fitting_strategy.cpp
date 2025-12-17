@@ -8,7 +8,7 @@ bool CurveFittingStrategy::process(ContourData& context) {
     // 拟合曲线
     auto curveSegments = ContourFitter::fitCurvesToSegments(sortedSegments);
 
-    // 计算端点
+    // 计算拼缝端点
     auto centroid = ContourUtils::calculateCentralPoint(context.getSortedContour());
     std::vector<cv::Vec4f> tangentLines;
     std::vector<cv::Point2f> endPoints;
@@ -16,7 +16,7 @@ bool CurveFittingStrategy::process(ContourData& context) {
 
     // 存储结果到上下文
     context.setCurveSegments(curveSegments);
-    context.setEndPoints(endPoints);
+    context.setIntersections(endPoints);
     context.setTangentLines(tangentLines);
 
     return true;

@@ -14,7 +14,15 @@
 
 #include "../utils/ThreadPool.h"
 
-// ROI信息结构
+// 共享内存头部
+struct ROIHeader
+{
+    int version;    // 版本号
+    int roiCount;   // ROI数量
+    bool dataReady; // 数据是否准备好
+};
+
+// ROI信息结构---用于接收共享内存的内容，与发送端的格式相同
 struct ROIInfo
 {
     int id;       // ROI唯一标识
@@ -27,17 +35,10 @@ struct ROIInfo
     int format;   // 图像格式（例如：0:灰度, 1:RGB, 2:BGR, 3:RGBA, 4:BGRA）
 };
 
-// 共享内存头部
-struct ROIHeader
-{
-    int version;    // 版本号
-    int roiCount;   // ROI数量
-    bool dataReady; // 数据是否准备好
-};
-
-// 带坐标信息的ROI数据结构
+// 带坐标信息的ROI数据结构---用于存放共享内存的解析结果，方便后续使用
 struct ROIWithCoords
 {
+    int id;
     cv::Mat image;
     int x;        // ROI左上角x坐标
     int y;        // ROI左上角y坐标
@@ -60,17 +61,15 @@ public slots:
     void whenReadImageFromSharedMemory(int processId, int timeoutMs = 30000);
 
 signals:
-    void sendImageRead(std::shared_ptr<cv::Mat> image);
+    void sendImageRead(std::shared_ptr<cv::Mat> image);                         // 单张图像读取完成信号
     void sendErrorOccurred(const QString &error);
-    void sendImagesRead(std::shared_ptr<std::vector<ROIWithCoords>> rois);
+    void sendImagesRead(std::shared_ptr<std::vector<ROIWithCoords>> rois);      // 多张图像读取完成信号
 
 private:
     // 清理资源
     void cleanup();
-
     // 从共享内存读取ROIs
     std::vector<ROIWithCoords> readROIsFromMemory();
-
     // 等待并读取ROIs
     std::vector<ROIWithCoords> waitAndReadROIs(int timeoutMs = 30000);
 

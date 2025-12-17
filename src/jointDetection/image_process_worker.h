@@ -10,15 +10,6 @@
 #include "joint_seam.h"
 #include "image_read_worker.h"
 
-// 处理结果结构体
-struct ProcessedROIResult
-{
-    std::shared_ptr<cv::Mat> image;
-    std::shared_ptr<JointSeam> jointSeam;
-    int x;
-    int y;
-};
-
 // 每个ROI结果结构体
 struct ProcessedROIInfo
 {

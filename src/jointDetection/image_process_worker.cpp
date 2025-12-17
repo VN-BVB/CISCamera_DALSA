@@ -86,15 +86,15 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
 
         // 包装ProcessedROIInfo内容
         ProcessedROIInfo resInfo;
-        resInfo.index = m_processedCount;
+        resInfo.index = roi.id;
         resInfo.image = imagePtr;
         resInfo.leftCornerPoint = cv::Point2f(roi.x, roi.y);
         std::vector<ContourData> contourDataVector = jointSeam->getContourDatas();
         if (contourDataVector.size() > 0) {
-            resInfo.contourDatas[m_processedCount * 2] = contourDataVector[0];
+            resInfo.contourDatas[roi.id * 2] = contourDataVector[0];
         }
         if (contourDataVector.size() > 1) {
-            resInfo.contourDatas[m_processedCount * 2 + 1] = contourDataVector[1];
+            resInfo.contourDatas[roi.id * 2 + 1] = contourDataVector[1];
         }
         for (const auto& contour : jointSeam->getContourDatas()) {
             resInfo.pixelContours .push_back(contour.getPixelContour());
@@ -122,7 +122,6 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
             emit sendAllImagesProcessed(m_processedRoiInfos);
         }
     } catch (const cv::Exception &e) {
-        // 注意：在工作线程中发送信号需要确保线程安全
         emit errorOccurred(QString("处理ROI图像时出错 (x:") +
                            QString::number(roi.x) + ", y:" +
                            QString::number(roi.y) + "): " +

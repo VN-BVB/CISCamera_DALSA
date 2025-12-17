@@ -145,7 +145,6 @@ void DisplayScene::whenClearAllDisplayImages()
     emit sendClearDisplayImage();
 }
 
-// 实现新接口
 DisplayTextItem* DisplayScene::whenAddDisplayTextItem(const QString &text, const QPointF &pt,
                                                       const double &size, const QColor &color)
 {
@@ -153,8 +152,6 @@ DisplayTextItem* DisplayScene::whenAddDisplayTextItem(const QString &text, const
     DisplayTextItem* textItem = new DisplayTextItem();
     textItem->setText(text, size, color);
     textItem->setPos(pt);
-
-    // 添加到场景和列表
     this->addItem(textItem);
     m_displayTextItems.append(textItem);
 

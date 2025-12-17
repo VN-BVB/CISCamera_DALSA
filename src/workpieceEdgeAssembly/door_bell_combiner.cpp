@@ -162,13 +162,10 @@ std::map<int, std::vector<int>> DoorBellCombiner::outputResult() {
     // 遍历最可能组合中的每个工件
     for (size_t i = 0; i < m_mostLikelyCombination.size(); ++i) {
         int workpieceIndex = m_mostLikelyCombination[i];
-
         if (workpieceIndex < 0 || workpieceIndex >= m_possibleWorkpieces.size()) {
             continue;
         }
-
         std::vector<int> contourIds = m_possibleWorkpieces[workpieceIndex].getContourIds();
-
         resultDictionary[i + 1] = contourIds;
     }
 
