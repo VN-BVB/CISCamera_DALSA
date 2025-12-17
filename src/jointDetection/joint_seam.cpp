@@ -78,7 +78,6 @@ void JointSeam::run() {
 
     // 计算端点之间的对应关系
     calculateEndpointCorrespondences();
-    PLOG_INFO << "123241255";
 }
 
 void JointSeam::calculateEndpointCorrespondences() {

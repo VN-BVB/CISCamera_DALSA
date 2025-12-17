@@ -88,14 +88,8 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
         resInfo.index = roi.id;
         resInfo.image = imagePtr;
         resInfo.leftCornerPoint = cv::Point2f(roi.x, roi.y);
-        std::vector<ContourData> contourDataVector = jointSeam->getContourDatas();
-        if (contourDataVector.size() > 0) {
-            resInfo.contourDatas[roi.id * 2] = contourDataVector[0];
-        }
-        if (contourDataVector.size() > 1) {
-            resInfo.contourDatas[roi.id * 2 + 1] = contourDataVector[1];
-        }
-        for (const auto& contour : jointSeam->getContourDatas()) {
+        resInfo.contourDatas = jointSeam->getContourDatas();
+        for (const auto& contour : resInfo.contourDatas) {
             resInfo.pixelContours .push_back(contour.getPixelContour());
             resInfo.subpixelContours.push_back(contour.getSortedContour());
             for (const auto& [i, curSeg] : contour.getCurveSegments()) {
@@ -103,13 +97,7 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
             }
         }
         resInfo.lines = jointSeam->getLines();
-
-        // 从SeamEndpoint中提取坐标到endPoints
-        auto seamEndpoints = jointSeam->getEndPoints();
-        resInfo.endPoints.clear();
-        for (const auto& seamEndpoint : seamEndpoints) {
-            resInfo.endPoints.push_back(seamEndpoint.coordinates);
-        }
+        resInfo.endPoints = jointSeam->getEndPoints();
 
         {
             std::lock_guard<std::mutex> lock(m_mutex);

@@ -170,7 +170,7 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
         } else {
             PLOG_WARNING << "ROI image is null or empty for index: " << roiInfo.index;
         }
-        for (const auto& [contourId, contourData] : roiInfo.contourDatas) {
+        for (const auto& contourData : roiInfo.contourDatas) {
             // 获取轮廓数据的排序后的轮廓点
             std::vector<cv::Point2f> contour = contourData.getSortedContour();
             if (!contour.empty()) {
@@ -178,7 +178,7 @@ void JointView::whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& pr
                 scene->whenAddGraphicComponent(contourComponent);
                 cv::Point2f cvPt = contour[0];
                 QPoint pt(qRound(cvPt.x), qRound(cvPt.y));
-                scene->whenAddDisplayTextItem(QString::number(contourId), pt, 20);
+                scene->whenAddDisplayTextItem(QString::number(contourData.getId()), pt, 20);
             }
         }
     }
