@@ -48,9 +48,10 @@ JointView::JointView(QWidget *parent)
     m_edgeAssembier = std::make_shared<EdgeAssembly>();
     connect(processWorker, &ImageProcessWorker::sendAllImagesProcessed, m_edgeAssembier.get(), &EdgeAssembly::whenAllImagesProcessed);
 
-    // 保存dxf
-    m_dxfSaver = std::make_shared<DXFSaver>();
-    connect(m_edgeAssembier.get(), &EdgeAssembly::sendEdgeAssemblyFinished, m_dxfSaver.get(), &DXFSaver::whenAllImagesProcessed);
+    // 结果处理器
+    m_resultProcessor = std::make_shared<ResultProcessor>();
+    connect(m_edgeAssembier.get(), &EdgeAssembly::sendEdgeAssemblyFinished,
+            m_resultProcessor.get(), &ResultProcessor::whenEdgeAssemblyFinished);
 
     // 启动线程
     readThread.start();

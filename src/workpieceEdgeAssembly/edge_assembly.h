@@ -17,7 +17,7 @@ public:
 
     void run(int n);
 signals:
-    void sendEdgeAssemblyFinished(const std::map<int, std::vector<int>>& workpieceToRoiInfos,
+    void sendEdgeAssemblyFinished(const std::map<int, std::vector<int>>& combinationResult,
                                   const std::map<int, ProcessedROIInfo>& processedRoiInfos);
 public slots:
     void whenAllImagesProcessed(const std::map<int, ProcessedROIInfo> &processedRoiInfos);
