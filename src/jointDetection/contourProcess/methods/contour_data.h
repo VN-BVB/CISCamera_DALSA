@@ -12,10 +12,11 @@
 struct ContourIntersection {
     int id;                           // 交点ID
     cv::Point2f coordinates;          // 交点坐标
+    int contourId;                    // 交点所属轮廓ID
 
-    ContourIntersection() : id(-1) {}
-    ContourIntersection(int id, const cv::Point2f& coords)
-        : id(id), coordinates(coords) {}
+    ContourIntersection() : id(-1), contourId(-1) {}
+    ContourIntersection(int id, const cv::Point2f& coords, int _contourId = -1)
+        : id(id), coordinates(coords), contourId(_contourId) {}
 };
 
 /**

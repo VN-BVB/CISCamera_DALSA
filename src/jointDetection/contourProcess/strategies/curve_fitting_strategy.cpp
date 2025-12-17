@@ -18,7 +18,7 @@ bool CurveFittingStrategy::process(ContourData& context) {
     std::vector<ContourIntersection> contourIntersections;
     for (size_t i = 0; i < endPoints.size(); ++i) {
         int endpointId = context.getId() * 2 + static_cast<int>(i);
-        contourIntersections.emplace_back(endpointId, endPoints[i]);
+        contourIntersections.emplace_back(endpointId, endPoints[i], context.getId());
     }
 
     // 存储结果到上下文

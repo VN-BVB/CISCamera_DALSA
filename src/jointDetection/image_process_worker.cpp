@@ -103,7 +103,13 @@ void ImageProcessWorker::processSingleROI(const ROIWithCoords &roi)
             }
         }
         resInfo.lines = jointSeam->getLines();
-        resInfo.endPoints = jointSeam->getEndPoints();
+
+        // 从SeamEndpoint中提取坐标到endPoints
+        auto seamEndpoints = jointSeam->getEndPoints();
+        resInfo.endPoints.clear();
+        for (const auto& seamEndpoint : seamEndpoints) {
+            resInfo.endPoints.push_back(seamEndpoint.coordinates);
+        }
 
         {
             std::lock_guard<std::mutex> lock(m_mutex);

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include "joint_seam.h"
 #include "src/utils/image_tools.h"
 #include "src/jointDetection/edgeDetection/canny_zernike_detector.h"
@@ -62,11 +63,60 @@ void JointSeam::run() {
                 const auto& contourIntersections = std::get<3>(result);
                 m_lines.insert(m_lines.end(), tangentLines.begin(), tangentLines.end());
 
-                // 从ContourIntersection中提取坐标到m_endPoints
+                // 从ContourIntersection中提取信息并创建SeamEndpoint对象
                 for (const auto& intersection : contourIntersections) {
-                    m_endPoints.push_back(intersection.coordinates);
+                    SeamEndpoint seamEndpoint;
+                    seamEndpoint.id = intersection.id;                    // 端点ID使用交点ID
+                    seamEndpoint.coordinates = intersection.coordinates;  // 端点坐标
+                    seamEndpoint.contourId = intersection.contourId;      // 交点所属轮廓ID
+
+                    m_endPoints.push_back(seamEndpoint);
                 }
             }
+        }
+    }
+
+    // 计算端点之间的对应关系
+    calculateEndpointCorrespondences();
+    PLOG_INFO << "123241255";
+}
+
+void JointSeam::calculateEndpointCorrespondences() {
+    if (m_endPoints.size() < 2) return;
+
+    // 创建标记数组，用于记录端点是否已配对
+    std::vector<bool> isPaired(m_endPoints.size(), false);
+
+    // 依次遍历端点，寻找最近的未配对端点
+    for (size_t i = 0; i < m_endPoints.size(); ++i) {
+        if (isPaired[i]) continue;
+
+        const auto& endpoint1 = m_endPoints[i];
+        int nearestIndex = -1;
+        float minDistance = std::numeric_limits<float>::max();
+
+        // 寻找最近的未配对端点（属于不同轮廓）
+        for (size_t j = i + 1; j < m_endPoints.size(); ++j) {
+            if (isPaired[j]) continue;
+            const auto& endpoint2 = m_endPoints[j];
+            // 只配对不同轮廓的端点
+            if (endpoint1.contourId != endpoint2.contourId) {
+                float dx = endpoint1.coordinates.x - endpoint2.coordinates.x;
+                float dy = endpoint1.coordinates.y - endpoint2.coordinates.y;
+                float distance = std::sqrt(dx * dx + dy * dy);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestIndex = static_cast<int>(j);
+                }
+            }
+        }
+
+        if (nearestIndex != -1) {
+            m_endPoints[i].correspondingIntersectionId = m_endPoints[nearestIndex].id;
+            m_endPoints[nearestIndex].correspondingIntersectionId = m_endPoints[i].id;
+            isPaired[i] = true;
+            isPaired[nearestIndex] = true;
         }
     }
 }
