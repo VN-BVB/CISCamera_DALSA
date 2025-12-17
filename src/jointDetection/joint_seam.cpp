@@ -6,9 +6,10 @@
 #include "src/utils/scoped_timer.h"
 #include "src/utils/ThreadPool.h"
 
-JointSeam::JointSeam(const cv::Mat &image, const cv::Point2f position)
+JointSeam::JointSeam(const cv::Mat &image, const cv::Point2f position, const int id)
     : m_image(image),
-    m_position(position)
+    m_position(position),
+    m_id(id)
 {}
 
 void JointSeam::run() {
@@ -32,14 +33,19 @@ void JointSeam::run() {
     // 轮廓信息处理（使用线程池并行处理）
     {
         ThreadPool pool(2);
-        std::vector<std::future<std::tuple<bool, ContourData, std::vector<cv::Vec4f>, std::vector<cv::Point2f>>>> results;
+        std::vector<std::future<std::tuple<bool, ContourData, std::vector<cv::Vec4f>, std::vector<ContourIntersection>>>> results;
         std::mutex resultMutex;
 
         // 将每条轮廓处理任务提交到线程池
-        for (const auto& contour : contours) {
-            results.emplace_back(pool.enqueue([contour]() -> std::tuple<bool, ContourData, std::vector<cv::Vec4f>, std::vector<cv::Point2f>> {
+        for (size_t contourIndex = 0; contourIndex < contours.size(); ++contourIndex) {
+            const auto& contour = contours[contourIndex];
+            int contourId = m_id * 2 + contourIndex;
+            results.emplace_back(pool.enqueue([contour, contourId]()
+                                              -> std::tuple<bool, ContourData,
+                                                            std::vector<cv::Vec4f>,
+                                                            std::vector<ContourIntersection>> {
                 ContourProcessor processor;
-                if (processor.processContour(contour)) {
+                if (processor.processContour(contour, contourId)) {
                     return {true, processor.getResult(), processor.getTangentLines(), processor.getIntersections()};
                 }
                 return {false, ContourData(), {}, {}};
@@ -53,9 +59,13 @@ void JointSeam::run() {
                 std::lock_guard<std::mutex> lock(resultMutex);
                 m_contourDatas.push_back(std::get<1>(result));
                 const auto& tangentLines = std::get<2>(result);
-                const auto& endPoints = std::get<3>(result);
+                const auto& contourIntersections = std::get<3>(result);
                 m_lines.insert(m_lines.end(), tangentLines.begin(), tangentLines.end());
-                m_endPoints.insert(m_endPoints.end(), endPoints.begin(), endPoints.end());
+
+                // 从ContourIntersection中提取坐标到m_endPoints
+                for (const auto& intersection : contourIntersections) {
+                    m_endPoints.push_back(intersection.coordinates);
+                }
             }
         }
     }

@@ -118,10 +118,10 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
             m_fitTangentLines.push_back(line);
 
         for (auto& point : cd.getIntersections())
-            m_endPointsByTangentLines.push_back(point);
+            m_endPointsByTangentLines.push_back(point.coordinates);
 
         for (auto& point : cd.getIntersections())
-            m_endPointsByFittedLines.push_back(point);
+            m_endPointsByFittedLines.push_back(point.coordinates);
     }
 
     // 更新显示

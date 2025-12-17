@@ -7,6 +7,18 @@
 #include "line_seg.h"
 
 /**
+ * @brief 轮廓交点结构体
+ */
+struct ContourIntersection {
+    int id;                           // 交点ID
+    cv::Point2f coordinates;          // 交点坐标
+
+    ContourIntersection() : id(-1) {}
+    ContourIntersection(int id, const cv::Point2f& coords)
+        : id(id), coordinates(coords) {}
+};
+
+/**
  * @brief 轮廓数据容器类 - 扩展支持策略模式
  */
 class ContourData {
@@ -14,12 +26,14 @@ public:
     ContourData();
 
     // 数据设置
+    void setId(int id) { m_id = id; }
     void setPixelContour(const std::vector<cv::Point>& contour);
     void setSubpixelContour(const std::vector<cv::Point2f>& contour);
     void clear();
     bool isValid() const;
 
     // 数据获取
+    int getId() const { return m_id; }
     std::vector<cv::Point> getPixelContour() const { return m_pixelContour; }
     std::vector<cv::Point2f> getSubpixelContour() const { return m_subpixelContour; }
     OpeningDirection getOpeningDirection() const { return m_openingDirection; }
@@ -29,7 +43,7 @@ public:
     std::map<int, std::vector<cv::Point2f>> getSortedSegments() const { return m_counterClockwiseContours; }
     std::map<int, CurveSeg> getCurveSegments() const { return m_curveSegments; }
     std::map<int, LineSeg> getLineSegments() const { return m_lineSegments; }
-    std::vector<cv::Point2f> getIntersections() const { return m_intersections; }
+    std::vector<ContourIntersection> getIntersections() const { return m_intersections; }
     std::vector<cv::Vec4f> getTangentLines() const { return m_tangentLines; }
 
     // 设置计算后的特征
@@ -42,10 +56,11 @@ public:
     // 曲线和直线拟合结果存储
     void setCurveSegments(const std::map<int, CurveSeg>& segments) { m_curveSegments = segments; }
     void setLineSegments(const std::map<int, LineSeg>& segments) { m_lineSegments = segments; }
-    void setIntersections(const std::vector<cv::Point2f>& points) { m_intersections = points; }
+    void setIntersections(const std::vector<ContourIntersection>& intersections) { m_intersections = intersections; }
     void setTangentLines(const std::vector<cv::Vec4f>& lines) { m_tangentLines = lines; }
 
 private:
+    int m_id;                                                               // 轮廓ID
     std::vector<cv::Point> m_pixelContour;                                  // 像素级坐标轮廓
     std::vector<cv::Point2f> m_subpixelContour;                             // 亚像素级坐标轮廓
     OpeningDirection m_openingDirection;                                    // 轮廓开口方向
@@ -57,7 +72,7 @@ private:
     // 拟合结果
     std::map<int, CurveSeg> m_curveSegments;                // 拟合曲线
     std::map<int, LineSeg> m_lineSegments;                  // 拟合线段
-    std::vector<cv::Point2f> m_intersections;               // 拟合直线或曲线切线的交点，也是拼缝的端点
+    std::vector<ContourIntersection> m_intersections;       // 拟合直线或曲线切线的交点，也是拼缝的端点
     std::vector<cv::Vec4f> m_tangentLines;                  // 切线
 };
 

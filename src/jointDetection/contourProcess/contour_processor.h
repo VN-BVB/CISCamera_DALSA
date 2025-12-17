@@ -13,7 +13,7 @@ public:
     ContourProcessor();
 
     // 处理轮廓
-    bool processContour(const std::vector<cv::Point2f>& contour);
+    bool processContour(const std::vector<cv::Point2f>& contour, int contourId = -1);
 
     // 获取处理结果
     const ContourData& getResult() const { return m_contourData; }
@@ -26,7 +26,7 @@ public:
     std::vector<cv::Point2f> getCornerPoints() const { return m_contourData.getCornerPoints(); }
     std::map<int, LineSeg> getLineSegments() const { return m_contourData.getLineSegments(); }
     std::map<int, CurveSeg> getCurveSegments() const { return m_contourData.getCurveSegments(); }
-    std::vector<cv::Point2f> getIntersections() const { return m_contourData.getIntersections(); }
+    std::vector<ContourIntersection> getIntersections() const { return m_contourData.getIntersections(); }
     std::vector<cv::Vec4f> getTangentLines() const { return m_contourData.getTangentLines(); }
 
 private:

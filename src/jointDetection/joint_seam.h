@@ -20,7 +20,7 @@ struct SeamEndpoint {
 class JointSeam
 {
 public:
-    explicit JointSeam(const cv::Mat &image, const cv::Point2f position);
+    explicit JointSeam(const cv::Mat &image, const cv::Point2f position, const int id);
 
     std::vector<ContourData> getContourDatas() const {return m_contourDatas;}
     std::vector<cv::Vec4f> getLines() const {return m_lines;}
@@ -28,6 +28,7 @@ public:
 
     void run();
 private:
+    int m_id;                                       // 拼缝id
     cv::Mat m_image;                                // 拼缝roi处图像
     std::vector<ContourData> m_contourDatas;        // 拼缝两边轮廓
     cv::Point2f m_position;                         // 拼缝roi图像左上角坐标
