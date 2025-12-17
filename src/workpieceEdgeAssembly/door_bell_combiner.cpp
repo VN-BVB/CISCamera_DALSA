@@ -166,7 +166,7 @@ std::map<int, std::vector<int>> DoorBellCombiner::outputResult() {
             continue;
         }
         std::vector<int> contourIds = m_possibleWorkpieces[workpieceIndex].getContourIds();
-        resultDictionary[i + 1] = contourIds;
+        resultDictionary[i] = contourIds;
     }
 
     return resultDictionary;

@@ -53,7 +53,7 @@ private:
     std::atomic<int> m_processedCount;
     int m_totalROICount;
     std::mutex m_mutex;
-    std::map<int, ProcessedROIInfo> m_processedRoiInfos;  // 字典，键为ROI左上角坐标
+    std::map<int, ProcessedROIInfo> m_processedRoiInfos;
 };
 
 #endif  // IMAGE_PROCESS_WORKER_H

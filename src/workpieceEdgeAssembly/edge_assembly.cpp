@@ -70,7 +70,7 @@ void EdgeAssembly::whenAllImagesProcessed(const std::map<int, ProcessedROIInfo>&
     std::map<int, std::vector<int>> workpieceToRoiInfos;
     for (const auto& [workpieceId, contourIds] : combinationResult) {
         std::vector<int> relatedRoiInfos;
-        // 在processedRoiInfos中查找包含对应轮廓ID的ProcessedROIInfo
+        // 在processedRoiInfos中查找包含对应轮廓ID的processedROIInfo
         for (const auto& [roiKey, roiInfo] : processedRoiInfos) {
             for (const auto& contourId : contourIds) {
                 bool found = false;
