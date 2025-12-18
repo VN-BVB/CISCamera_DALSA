@@ -1,5 +1,5 @@
 HEADERS += \
-    $$PWD/transfer_endpoints_info.h
+    $$PWD/json_sender.h
 
 SOURCES += \
-    $$PWD/transfer_endpoints_info.cpp
+    $$PWD/json_sender.cpp

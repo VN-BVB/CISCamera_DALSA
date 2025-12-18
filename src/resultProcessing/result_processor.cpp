@@ -7,7 +7,8 @@
 #include "src/utils/scoped_timer.h"
 
 ResultProcessor::ResultProcessor(QObject *parent)
-    : QObject(parent), m_dxfSaver(std::make_shared<DXFSaver>()), m_jsonTransformer(nullptr)
+    : QObject(parent), m_dxfSaver(std::make_shared<DXFSaver>()),
+      m_jsonTransformer(nullptr), m_jsonSender(std::make_unique<JsonSender>())
 {
 }
 
@@ -30,7 +31,10 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
         m_jsonTransformer = std::make_unique<JsonTransformer>(processedRoiInfos);
         std::string jsonString = m_jsonTransformer->generateJson(combinationResult, 0);
 
-        // 4. 保存JSON到文件
+        // 4. 发送JSON到共享内存
+        sendJsonToSharedMemory(jsonString, 0);
+
+        // 5. 保存JSON到文件作为备份
         saveJsonToFile(jsonString, 0);
 
         PLOG_INFO << "处理完成（DXF + JSON）";
@@ -76,5 +80,24 @@ void ResultProcessor::saveJsonToFile(const std::string& jsonString, int batchNum
         // std::cout << "\n=== JSON Output ===\n" << jsonString << "\n==================\n" << std::endl;
     } catch (const std::exception& e) {
         PLOG_ERROR << "保存JSON文件时出错: " << e.what();
+    }
+}
+
+void ResultProcessor::sendJsonToSharedMemory(const std::string& jsonString, int batchNumber)
+{
+    try {
+        PLOG_INFO << "发送JSON批次 " << batchNumber << " 到共享内存...";
+
+        if (m_jsonSender->sendJson(jsonString, batchNumber)) {
+            PLOG_INFO << "JSON批次 " << batchNumber << " 成功发送到共享内存";
+            PLOG_INFO << "共享内存信息:";
+            PLOG_INFO << "- 共享内存名称: " << m_jsonSender->getSharedMemoryKey().toStdString();
+            PLOG_INFO << "- 数据可用信号量: " << m_jsonSender->getDataAvailableSemaphoreKey().toStdString();
+            PLOG_INFO << "- 数据已读信号量: " << m_jsonSender->getDataReadSemaphoreKey().toStdString();
+        } else {
+            PLOG_ERROR << "JSON批次 " << batchNumber << " 发送到共享内存失败";
+        }
+    } catch (const std::exception& e) {
+        PLOG_ERROR << "发送JSON到共享内存时出错: " << e.what();
     }
 }
