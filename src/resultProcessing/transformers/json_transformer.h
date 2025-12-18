@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include "src/jointDetection/image_process_worker.h"
+#include "src/utils/geometry_utils.h"
 #include "json_data_structure.h"
 #include <cereal/cereal.hpp>
 #include <cereal/archives/json.hpp>

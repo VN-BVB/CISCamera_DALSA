@@ -59,11 +59,22 @@ EndpointInfo JsonTransformer::createEndpointInfo(const SeamEndpoint& endpoint)
     // 1. 点序号：直接使用SeamEndpoint中的ID
     endpointInfo.pointId = endpoint.id;
 
-    // 2. 坐标：转换为double类型
-    endpointInfo.coordinates = {
-        static_cast<double>(endpoint.coordinates.x),
-        static_cast<double>(endpoint.coordinates.y)
-    };
+    // 2. 坐标：转换为世界坐标
+    std::vector<cv::Point2f> pixelPoints = {endpoint.coordinates};
+    std::vector<Eigen::Vector2d> worldPoints = GeometryUtils::pixel2World(pixelPoints);
+    if (!worldPoints.empty()) {
+        endpointInfo.coordinates = {
+            worldPoints[0].x(),
+            worldPoints[0].y()
+        };
+    } 
+    else {
+        endpointInfo.coordinates = {
+            static_cast<double>(endpoint.coordinates.x),
+            static_cast<double>(endpoint.coordinates.y)
+        };
+        PLOG_WARNING << "端点 " << endpoint.id << " 坐标转换失败，使用像素坐标";
+    }
 
     // 3. 对应点的序号
     endpointInfo.correspondingPointId = endpoint.correspondingIntersectionId;
