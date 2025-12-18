@@ -19,13 +19,13 @@ struct EndpointInfo {
     int correspondingPointId;           // 对应点的序号
     int correspondingWorkpieceId;       // 对应点所属工件的序号
 
-    // cereal序列化支持
+    // cereal序列化支持，自定义字段名，而不是用变量名
     template<class Archive>
     void serialize(Archive& ar) {
-        ar(CEREAL_NVP(pointId),
-           CEREAL_NVP(coordinates),
-           CEREAL_NVP(correspondingPointId),
-           CEREAL_NVP(correspondingWorkpieceId));
+        ar(cereal::make_nvp("点序号", pointId),
+           cereal::make_nvp("坐标", coordinates),
+           cereal::make_nvp("对应点的序号", correspondingPointId),
+           cereal::make_nvp("对应点所属工件的序号", correspondingWorkpieceId));
     }
 };
 
@@ -39,8 +39,9 @@ struct EdgeInfo {
 
     template<class Archive>
     void serialize(Archive& ar) {
-        ar(CEREAL_NVP(edgeId),
-           CEREAL_NVP(endpoints));
+        ar(cereal::make_nvp("边序号", edgeId),
+           cereal::make_nvp("端点0", endpoints["端点0"]),
+           cereal::make_nvp("端点1", endpoints["端点1"]));
     }
 };
 
@@ -53,7 +54,9 @@ struct WorkpieceInfo {
 
     template<class Archive>
     void serialize(Archive& ar) {
-        ar(CEREAL_NVP(edges));
+        for (const auto& [edgeKey, edgeInfo] : edges) {
+            ar(cereal::make_nvp(edgeKey, edgeInfo));
+        }
     }
 };
 
@@ -67,8 +70,10 @@ struct BatchResultData {
 
     template<class Archive>
     void serialize(Archive& ar) {
-        ar(CEREAL_NVP(batchNumber),
-           CEREAL_NVP(workpieces));
+        ar(cereal::make_nvp("批次号", batchNumber));
+        for (const auto& [workpieceKey, workpieceInfo] : workpieces) {
+            ar(cereal::make_nvp(workpieceKey, workpieceInfo));
+        }
     }
 };
 

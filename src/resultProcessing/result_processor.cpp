@@ -1,8 +1,10 @@
-#include "result_processor.h"
 #include <plog/Log.h>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+
+#include "result_processor.h"
+#include "src/utils/scoped_timer.h"
 
 ResultProcessor::ResultProcessor(QObject *parent)
     : QObject(parent), m_dxfSaver(std::make_shared<DXFSaver>()), m_jsonTransformer(nullptr)
@@ -23,6 +25,7 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
         // 2. 调用output模块保存DXF文件
         m_dxfSaver->whenAllImagesProcessed(workpieceToRoiInfos, processedRoiInfos);
 
+        SCOPED_TIMER("保存json数据");
         // 3. 创建JsonTransformer并生成JSON数据
         m_jsonTransformer = std::make_unique<JsonTransformer>(processedRoiInfos);
         std::string jsonString = m_jsonTransformer->generateJson(combinationResult, 0);

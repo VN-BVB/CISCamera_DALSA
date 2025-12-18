@@ -1,49 +1,59 @@
 #include "json_transformer.h"
 #include <plog/Log.h>
 
+/**
+ * @brief JsonTransformer 构造函数
+ * @param processedRoiInfos ROI处理结果数据，包含轮廓信息、端点信息等
+ */
 JsonTransformer::JsonTransformer(const std::map<int, ProcessedROIInfo>& processedRoiInfos)
     : m_processedRoiInfos(processedRoiInfos)
 {
     // 构造时提取端点数据
     extractAllEndpoints();
-    PLOG_INFO << "JsonTransformer构造完成，提取到 " << m_allEndpoints.size() << " 个端点";
 }
 
+/**
+ * @brief 从processedRoiInfos中提取所有端点数据
+ * 遍历所有ROI的端点信息，存储到m_allEndpoints中供后续处理使用
+ */
 void JsonTransformer::extractAllEndpoints()
 {
-    PLOG_INFO << "从processedRoiInfos中提取所有端点数据";
-
     m_allEndpoints.clear();
     for (const auto& [roiKey, roiInfo] : m_processedRoiInfos) {
         for (const auto& endpoint : roiInfo.endPoints) {
             m_allEndpoints.push_back(endpoint);
         }
     }
-
-    PLOG_INFO << "提取完成，共 " << m_allEndpoints.size() << " 个端点";
 }
 
+/**
+ * @brief 构建轮廓ID到工件ID的映射
+ * @param combinationResult 工件组合结果：工件ID → 轮廓ID列表
+ * @details 根据工件组合结果，建立轮廓ID到工件ID的映射关系
+ *          用于后续查找端点对应的工件信息
+ */
 void JsonTransformer::buildContourToWorkpieceMapping(
     const std::map<int, std::vector<int>>& combinationResult)
 {
-    PLOG_INFO << "开始构建轮廓ID到工件ID的映射关系";
-
     m_contourToWorkpieceMapping.clear();
     // 遍历每个工件
     for (const auto& [workpieceId, contourIds] : combinationResult) {
         // 遍历工件中的每个轮廓
         for (int contourId : contourIds) {
             m_contourToWorkpieceMapping[contourId] = workpieceId;
-            PLOG_DEBUG << "轮廓 " << contourId << " → 工件 " << workpieceId;
         }
     }
-    PLOG_INFO << "轮廓-工件映射构建完成，共映射 " << m_contourToWorkpieceMapping.size() << " 个轮廓";
 }
 
+/**
+ * @brief 创建端点信息
+ * @param endpoint 原始端点数据结构
+ * @return 转换后的端点信息结构
+ * @details 将SeamEndpoint转换为JSON序列化所需的EndpointInfo格式
+ *          包含点序号、坐标、对应点信息等，并查找对应点所属的工件
+ */
 EndpointInfo JsonTransformer::createEndpointInfo(const SeamEndpoint& endpoint)
 {
-    PLOG_DEBUG << "创建端点信息，端点ID: " << endpoint.id << "，轮廓ID: " << endpoint.contourId;
-
     EndpointInfo endpointInfo;
 
     // 1. 点序号：直接使用SeamEndpoint中的ID
@@ -70,10 +80,7 @@ EndpointInfo JsonTransformer::createEndpointInfo(const SeamEndpoint& endpoint)
             // 通过contourToWorkpieceMapping查找对应工件
             auto it = m_contourToWorkpieceMapping.find(correspondingContourId);
             if (it != m_contourToWorkpieceMapping.end()) {
-                // 工件序号直接使用映射值（已经从0开始）
                 endpointInfo.correspondingWorkpieceId = it->second;
-                PLOG_DEBUG << "端点 " << endpointInfo.pointId << " 的对应点 " << endpointInfo.correspondingPointId
-                          << " 属于轮廓 " << correspondingContourId << "，工件序号 " << endpointInfo.correspondingWorkpieceId;
             } else {
                 PLOG_WARNING << "未找到对应点轮廓ID " << correspondingContourId << " 所属的工件";
             }
@@ -88,10 +95,15 @@ EndpointInfo JsonTransformer::createEndpointInfo(const SeamEndpoint& endpoint)
     return endpointInfo;
 }
 
+/**
+ * @brief 创建边（轮廓）信息
+ * @param contourData 轮廓数据，包含轮廓ID和交点信息
+ * @return 转换后的边信息结构
+ * @details 将ContourData转换为JSON序列化所需的EdgeInfo格式
+ *          根据轮廓的交点信息查找对应的端点数据，构建边的信息
+ */
 EdgeInfo JsonTransformer::createEdgeInfo(const ContourData& contourData)
 {
-    PLOG_DEBUG << "创建边信息，轮廓ID: " << contourData.getId();
-
     EdgeInfo edgeInfo;
     edgeInfo.edgeId = contourData.getId();
 
@@ -116,20 +128,24 @@ EdgeInfo JsonTransformer::createEdgeInfo(const ContourData& contourData)
                 break;
             }
         }
-
-        PLOG_DEBUG << "边 " << contourData.getId() << " 创建完成，包含 " << edgeInfo.endpoints.size() << " 个端点";
     } else {
         PLOG_WARNING << "轮廓ID " << contourData.getId() << " 的端点数据不完整，只有 "
-                    << intersections.size() << " 个交点";
+                     << intersections.size() << " 个交点";
     }
 
     return edgeInfo;
 }
 
+/**
+ * @brief 创建工件信息
+ * @param workpieceId 工件ID
+ * @param contourIds 该工件包含的轮廓ID列表
+ * @return 转换后的工件信息结构
+ * @details 根据工件ID和轮廓列表，从processedRoiInfos中查找对应的轮廓数据
+ *          为每个轮廓创建边信息，构建完整的工件数据结构
+ */
 WorkpieceInfo JsonTransformer::createWorkpieceInfo(int workpieceId, const std::vector<int>& contourIds)
 {
-    PLOG_DEBUG << "创建工件信息，工件ID: " << workpieceId << "，包含轮廓数量: " << contourIds.size();
-
     WorkpieceInfo workpieceInfo;
 
     // 为每条轮廓（边）创建信息
@@ -152,26 +168,24 @@ WorkpieceInfo JsonTransformer::createWorkpieceInfo(int workpieceId, const std::v
         if (targetContour) {
             EdgeInfo edgeInfo = createEdgeInfo(*targetContour);
             workpieceInfo.edges[edgeKey] = edgeInfo;
-
-            PLOG_DEBUG << "工件 " << workpieceId << " 创建边 " << edgeKey
-                      << "（轮廓ID: " << contourId << "），包含 "
-                      << edgeInfo.endpoints.size() << " 个端点";
         } else {
             PLOG_WARNING << "未找到轮廓ID " << contourId << " 的数据";
         }
     }
-
-    PLOG_DEBUG << "工件 " << workpieceId << " 创建完成，包含 "
-              << workpieceInfo.edges.size() << " 条边";
     return workpieceInfo;
 }
 
-BatchResultData JsonTransformer::transformToBatchResultData(
-    const std::map<int, std::vector<int>>& combinationResult,
-    int batchNumber)
+/**
+ * @brief 将处理结果转换为批次结果格式
+ * @param combinationResult 工件组合结果：工件ID → 轮廓ID列表
+ * @param batchNumber 批次号，默认为0
+ * @return BatchResultData 结构化数据
+ * @details 核心转换函数，将图像处理的原始结果转换为JSON序列化所需的格式
+ *          包含构建轮廓-工件映射、创建工件信息等步骤
+ */
+BatchResultData JsonTransformer::transformToBatchResultData(const std::map<int, std::vector<int>>& combinationResult,
+                                                            int batchNumber)
 {
-    PLOG_INFO << "开始转换数据为批次结果格式，批次号: " << batchNumber;
-
     BatchResultData batchData;
     batchData.batchNumber = batchNumber;
 
@@ -181,36 +195,37 @@ BatchResultData JsonTransformer::transformToBatchResultData(
     // 2. 为每个工件创建信息
     for (const auto& [workpieceId, contourIds] : combinationResult) {
         std::string workpieceKey = "工件" + std::to_string(workpieceId);
-
         WorkpieceInfo workpieceInfo = createWorkpieceInfo(workpieceId, contourIds);
         batchData.workpieces[workpieceKey] = workpieceInfo;
-
-        PLOG_INFO << "创建工件 " << workpieceKey << "，包含 " << contourIds.size() << " 条边";
     }
 
-    PLOG_INFO << "批次结果数据转换完成，包含 " << batchData.workpieces.size() << " 个工件";
     return batchData;
 }
 
+/**
+ * @brief 将BatchResultData序列化为JSON字符串
+ * @param batchData 批次结果数据
+ * @return 格式化的JSON字符串
+ */
 std::string JsonTransformer::serializeToJson(const BatchResultData& batchData)
 {
-    PLOG_INFO << "开始序列化为JSON字符串";
-
     std::stringstream jsonStream;
     try {
-        // 确保archive在复制字符串前完成析构
+        // 手动序列化，避免value0包装层
         {
             cereal::JSONOutputArchive archive(jsonStream);
-            archive(batchData);
-        } // archive在这里析构，确保序列化完成
+            // 序列化批次号
+            archive(cereal::make_nvp("批次号", batchData.batchNumber));
+            // 序列化每个工件
+            for (const auto& [workpieceKey, workpieceInfo] : batchData.workpieces) {
+                archive(cereal::make_nvp(workpieceKey, workpieceInfo));
+            }
+        }
 
         // 确保流被刷新
         jsonStream.flush();
 
         std::string jsonString = jsonStream.str();
-        PLOG_INFO << "JSON序列化完成，字符串长度: " << jsonString.length();
-        PLOG_DEBUG << "JSON内容预览: " << jsonString.substr(0, 200) << "...";
-
         return jsonString;
     } catch (const std::exception& e) {
         PLOG_ERROR << "JSON序列化失败: " << e.what();
@@ -218,12 +233,17 @@ std::string JsonTransformer::serializeToJson(const BatchResultData& batchData)
     }
 }
 
+/**
+ * @brief 直接生成JSON字符串（一步完成）
+ * @param combinationResult 工件组合结果：工件ID → 轮廓ID列表
+ * @param batchNumber 批次号，默认为0
+ * @return 格式化的JSON字符串
+ * @details 对外的便捷接口，一步完成数据转换和JSON序列化
+ */
 std::string JsonTransformer::generateJson(
     const std::map<int, std::vector<int>>& combinationResult,
     int batchNumber)
 {
-    PLOG_INFO << "直接生成JSON字符串，批次号: " << batchNumber;
-
     // 1. 转换为批次结果数据
     BatchResultData batchData = transformToBatchResultData(combinationResult, batchNumber);
 
