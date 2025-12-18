@@ -41,7 +41,6 @@ cv::Vec4f fitLine(const std::vector<cv::Point2f> &points);
 // 将像素坐标转成世界坐标
 std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts);
 
-
 } // namespace GeometryUtils
 
 #endif // GEOMETRY_UTILS_H
