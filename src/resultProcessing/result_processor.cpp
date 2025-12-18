@@ -1,8 +1,10 @@
 #include "result_processor.h"
 #include <plog/Log.h>
+#include <fstream>
+#include <iostream>
 
 ResultProcessor::ResultProcessor(QObject *parent)
-    : QObject(parent), m_dxfSaver(std::make_shared<DXFSaver>())
+    : QObject(parent), m_dxfSaver(std::make_shared<DXFSaver>()), m_jsonTransformer(nullptr)
 {
 }
 
@@ -20,8 +22,56 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
         // 2. 调用output模块保存DXF文件
         m_dxfSaver->whenAllImagesProcessed(workpieceToRoiInfos, processedRoiInfos);
 
-        PLOG_INFO << "处理完成";
+        // 3. 创建JsonTransformer并生成JSON数据
+        m_jsonTransformer = std::make_unique<JsonTransformer>(processedRoiInfos);
+        std::string jsonString = m_jsonTransformer->generateJson(combinationResult, 0);
+
+        // 4. 保存JSON到文件
+        saveJsonToFile(jsonString, 0);
+
+        PLOG_INFO << "处理完成（DXF + JSON）";
     } catch (const std::exception& e) {
         PLOG_ERROR << "处理时出错: " << e.what();
+    }
+}
+
+void ResultProcessor::saveJsonToFile(const std::string& jsonString, int batchNumber)
+{
+    try {
+        // 生成文件名：seam_result_batch_0.json
+        std::string fileName = "seam_result_batch_" + std::to_string(batchNumber) + ".json";
+
+        // 打开文件进行写入
+        std::ofstream jsonFile(fileName);
+        if (!jsonFile.is_open()) {
+            PLOG_ERROR << "无法打开JSON文件进行写入: " << fileName;
+            return;
+        }
+
+        // 写入JSON内容
+        jsonFile << jsonString;
+
+        // 确保缓冲区被刷新
+        jsonFile.flush();
+        jsonFile.close();
+
+        // 验证文件写入完整性
+        std::ifstream verifyFile(fileName);
+        std::string verifyContent((std::istreambuf_iterator<char>(verifyFile)),
+                                  std::istreambuf_iterator<char>());
+        verifyFile.close();
+
+        PLOG_INFO << "JSON文件保存成功: " << fileName << "，原始大小: " << jsonString.length() << " 字节";
+        PLOG_INFO << "文件实际大小: " << verifyContent.length() << " 字节";
+
+        if (jsonString.length() != verifyContent.length()) {
+            PLOG_ERROR << "JSON文件写入不完整！可能有数据丢失";
+        }
+
+        // 可选：同时输出到控制台用于调试
+        std::cout << "\n=== JSON Output ===\n" << jsonString << "\n==================\n" << std::endl;
+
+    } catch (const std::exception& e) {
+        PLOG_ERROR << "保存JSON文件时出错: " << e.what();
     }
 }
