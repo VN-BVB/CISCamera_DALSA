@@ -29,17 +29,9 @@ public:
     JsonSender();
     ~JsonSender();
 
-    /**
-     * @brief 发送JSON数据到共享内存
-     * @param jsonString JSON字符串
-     * @param batchNumber 批次号
-     * @return 发送是否成功
-     */
     bool sendJson(const std::string& jsonString, int batchNumber);
+    bool sendJsonWithLogging(const std::string& jsonString, int batchNumber);
 
-    /**
-     * @brief 获取调试信息的辅助方法
-     */
     QString getSharedMemoryKey() const;
     QString getDataAvailableSemaphoreKey() const;
     QString getDataReadSemaphoreKey() const;

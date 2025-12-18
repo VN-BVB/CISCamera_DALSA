@@ -259,3 +259,34 @@ QString JsonSender::getDataReadSemaphoreKey() const
 {
     return m_dataReadSemaphore ? m_dataReadSemaphore->key() : "No semaphore created";
 }
+
+/**
+ * @brief 发送JSON数据到共享内存并记录详细日志
+ * @param jsonString JSON字符串
+ * @param batchNumber 批次号
+ * @return 发送是否成功
+ * @details
+ *   在调用基础 sendJson 方法的基础上，添加 ResultProcessor 原有的日志输出逻辑
+ *   包括发送前的信息提示、共享内存和信号量的详细信息输出
+ */
+bool JsonSender::sendJsonWithLogging(const std::string& jsonString, int batchNumber)
+{
+    try {
+        PLOG_INFO << "发送JSON批次 " << batchNumber << " 到共享内存...";
+
+        if (sendJson(jsonString, batchNumber)) {
+            PLOG_INFO << "JSON批次 " << batchNumber << " 成功发送到共享内存";
+            PLOG_INFO << "共享内存信息:";
+            PLOG_INFO << "- 共享内存名称: " << getSharedMemoryKey().toStdString();
+            PLOG_INFO << "- 数据可用信号量: " << getDataAvailableSemaphoreKey().toStdString();
+            PLOG_INFO << "- 数据已读信号量: " << getDataReadSemaphoreKey().toStdString();
+            return true;
+        } else {
+            PLOG_ERROR << "JSON批次 " << batchNumber << " 发送到共享内存失败";
+            return false;
+        }
+    } catch (const std::exception& e) {
+        PLOG_ERROR << "发送JSON到共享内存时出错: " << e.what();
+        return false;
+    }
+}

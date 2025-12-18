@@ -1,14 +1,13 @@
 #include <plog/Log.h>
-#include <fstream>
-#include <iostream>
-#include <filesystem>
 
 #include "result_processor.h"
 #include "src/utils/scoped_timer.h"
 
 ResultProcessor::ResultProcessor(QObject *parent)
     : QObject(parent), m_dxfSaver(std::make_shared<DXFSaver>()),
-      m_jsonTransformer(nullptr), m_jsonSender(std::make_unique<JsonSender>())
+      m_jsonTransformer(nullptr), 
+      m_jsonSender(std::make_unique<JsonSender>()),
+      m_jsonSaver(std::make_unique<JsonSaver>())
 {
 }
 
@@ -32,10 +31,10 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
         std::string jsonString = m_jsonTransformer->generateJson(combinationResult, 0);
 
         // 4. 发送JSON到共享内存
-        sendJsonToSharedMemory(jsonString, 0);
+        m_jsonSender->sendJsonWithLogging(jsonString, 0);
 
         // 5. 保存JSON到文件作为备份
-        saveJsonToFile(jsonString, 0);
+        m_jsonSaver->saveJsonToFile(jsonString, 0);
 
         PLOG_INFO << "处理完成（DXF + JSON）";
     } catch (const std::exception& e) {
@@ -43,61 +42,4 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
     }
 }
 
-void ResultProcessor::saveJsonToFile(const std::string& jsonString, int batchNumber)
-{
-    try {
-        // 生成文件名
-        std::string fileName = "./data/seamEndpointInfos/seam_result_batch_" + std::to_string(batchNumber) + ".json";
 
-        // 确保目录存在
-        std::filesystem::path filePath(fileName);
-        std::filesystem::path dirPath = filePath.parent_path();
-
-        if (!std::filesystem::exists(dirPath)) {
-            std::error_code ec;
-            if (std::filesystem::create_directories(dirPath, ec)) {
-                PLOG_INFO << "成功创建目录: " << dirPath.string();
-            } else {
-                PLOG_ERROR << "无法创建目录 " << dirPath.string() << ": " << ec.message();
-                return;
-            }
-        }
-
-        // 打开文件进行写入
-        std::ofstream jsonFile(fileName);
-        if (!jsonFile.is_open()) {
-            PLOG_ERROR << "无法打开JSON文件进行写入: " << fileName;
-            return;
-        }
-
-        // 写入JSON内容
-        jsonFile << jsonString;
-
-        // 确保缓冲区被刷新
-        jsonFile.flush();
-        jsonFile.close();
-
-        // std::cout << "\n=== JSON Output ===\n" << jsonString << "\n==================\n" << std::endl;
-    } catch (const std::exception& e) {
-        PLOG_ERROR << "保存JSON文件时出错: " << e.what();
-    }
-}
-
-void ResultProcessor::sendJsonToSharedMemory(const std::string& jsonString, int batchNumber)
-{
-    try {
-        PLOG_INFO << "发送JSON批次 " << batchNumber << " 到共享内存...";
-
-        if (m_jsonSender->sendJson(jsonString, batchNumber)) {
-            PLOG_INFO << "JSON批次 " << batchNumber << " 成功发送到共享内存";
-            PLOG_INFO << "共享内存信息:";
-            PLOG_INFO << "- 共享内存名称: " << m_jsonSender->getSharedMemoryKey().toStdString();
-            PLOG_INFO << "- 数据可用信号量: " << m_jsonSender->getDataAvailableSemaphoreKey().toStdString();
-            PLOG_INFO << "- 数据已读信号量: " << m_jsonSender->getDataReadSemaphoreKey().toStdString();
-        } else {
-            PLOG_ERROR << "JSON批次 " << batchNumber << " 发送到共享内存失败";
-        }
-    } catch (const std::exception& e) {
-        PLOG_ERROR << "发送JSON到共享内存时出错: " << e.what();
-    }
-}
