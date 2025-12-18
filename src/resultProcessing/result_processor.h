@@ -7,7 +7,7 @@
 #include "src/jointDetection/image_process_worker.h"
 #include "src/resultProcessing/outputs/dxfSaver/dxf_saver.h"
 #include "src/resultProcessing/outputs/jsonSaver/json_saver.h"
-#include "src/resultProcessing/outputs/transferResult/json_sender.h"
+#include "src/resultProcessing/outputs/transferResult/async_json_sender.h"
 #include "src/resultProcessing/transformers/workpiece_roi_mapper.h"
 #include "src/resultProcessing/transformers/json_transformer.h"
 
@@ -21,12 +21,15 @@ public slots:
     void whenEdgeAssemblyFinished(const std::map<int, std::vector<int>>& combinationResult,
                                  const std::map<int, ProcessedROIInfo>& processedRoiInfos);
 
-private:
-    void sendJsonToSharedMemory(const std::string& jsonString, int batchNumber);
+private slots:
+    void onSendCompleted(int batchNumber, bool success);
+    void onTimeoutOccurred(int batchNumber);
+    void onEarlyBatchArrived(int currentBatchNumber, int newBatchNumber);
 
+private:
     std::shared_ptr<DXFSaver> m_dxfSaver;
     std::unique_ptr<JsonTransformer> m_jsonTransformer;
-    std::unique_ptr<JsonSender> m_jsonSender;
+    std::unique_ptr<AsyncJsonSender> m_asyncJsonSender;
     std::unique_ptr<JsonSaver> m_jsonSaver;
 };
 
