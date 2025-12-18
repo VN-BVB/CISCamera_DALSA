@@ -2,6 +2,7 @@
 #include <plog/Log.h>
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
 ResultProcessor::ResultProcessor(QObject *parent)
     : QObject(parent), m_dxfSaver(std::make_shared<DXFSaver>()), m_jsonTransformer(nullptr)
@@ -38,8 +39,22 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
 void ResultProcessor::saveJsonToFile(const std::string& jsonString, int batchNumber)
 {
     try {
-        // 生成文件名：seam_result_batch_0.json
-        std::string fileName = "seam_result_batch_" + std::to_string(batchNumber) + ".json";
+        // 生成文件名
+        std::string fileName = "./data/seamEndpointInfos/seam_result_batch_" + std::to_string(batchNumber) + ".json";
+
+        // 确保目录存在
+        std::filesystem::path filePath(fileName);
+        std::filesystem::path dirPath = filePath.parent_path();
+
+        if (!std::filesystem::exists(dirPath)) {
+            std::error_code ec;
+            if (std::filesystem::create_directories(dirPath, ec)) {
+                PLOG_INFO << "成功创建目录: " << dirPath.string();
+            } else {
+                PLOG_ERROR << "无法创建目录 " << dirPath.string() << ": " << ec.message();
+                return;
+            }
+        }
 
         // 打开文件进行写入
         std::ofstream jsonFile(fileName);

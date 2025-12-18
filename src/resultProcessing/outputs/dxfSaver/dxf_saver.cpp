@@ -1,8 +1,8 @@
 #include <iostream>
 #include <plog/Log.h>
 #include "dxf_saver.h"
-#include "../utils/geometry_utils.h"
-#include "../utils/scoped_timer.h"
+#include "src/utils/geometry_utils.h"
+#include "src/utils/scoped_timer.h"
 
 DXFSaver::DXFSaver() : QObject(nullptr) {}
 
@@ -13,7 +13,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         SCOPED_TIMER("保存dxf文件");
         // 创建DXF对象和写入器
         DL_Dxf dxf;
-        DL_WriterA* dw = dxf.out("joint_detected.dxf", DL_Codes::AC1015);
+        DL_WriterA* dw = dxf.out("./data/seamEndpointInfos/joint_detected.dxf", DL_Codes::AC1015);
 
         if (!dw || dw->openFailed()) {
             PLOG_ERROR << "无法创建DXF文件!";

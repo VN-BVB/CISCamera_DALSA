@@ -4,7 +4,7 @@
 #include <QObject>
 #include <map>
 #include <opencv2/core/core.hpp>
-#include "../jointDetection/image_process_worker.h"
+#include "src/jointDetection/image_process_worker.h"
 #include "../../3rdParty/dxflib-3.26.4-src/dl_dxf.h"
 
 class DXFSaver : public QObject
