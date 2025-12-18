@@ -70,22 +70,7 @@ void ResultProcessor::saveJsonToFile(const std::string& jsonString, int batchNum
         jsonFile.flush();
         jsonFile.close();
 
-        // 验证文件写入完整性
-        std::ifstream verifyFile(fileName);
-        std::string verifyContent((std::istreambuf_iterator<char>(verifyFile)),
-                                  std::istreambuf_iterator<char>());
-        verifyFile.close();
-
-        PLOG_INFO << "JSON文件保存成功: " << fileName << "，原始大小: " << jsonString.length() << " 字节";
-        PLOG_INFO << "文件实际大小: " << verifyContent.length() << " 字节";
-
-        if (jsonString.length() != verifyContent.length()) {
-            PLOG_ERROR << "JSON文件写入不完整！可能有数据丢失";
-        }
-
-        // 可选：同时输出到控制台用于调试
-        std::cout << "\n=== JSON Output ===\n" << jsonString << "\n==================\n" << std::endl;
-
+        // std::cout << "\n=== JSON Output ===\n" << jsonString << "\n==================\n" << std::endl;
     } catch (const std::exception& e) {
         PLOG_ERROR << "保存JSON文件时出错: " << e.what();
     }

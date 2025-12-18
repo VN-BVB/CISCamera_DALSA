@@ -180,8 +180,7 @@ BatchResultData JsonTransformer::transformToBatchResultData(
 
     // 2. 为每个工件创建信息
     for (const auto& [workpieceId, contourIds] : combinationResult) {
-        // 将工件ID从1开始映射为从0开始的索引：工件1 → "工件0", 工件2 → "工件1"
-        std::string workpieceKey = "工件" + std::to_string(workpieceId - 1);
+        std::string workpieceKey = "工件" + std::to_string(workpieceId);
 
         WorkpieceInfo workpieceInfo = createWorkpieceInfo(workpieceId, contourIds);
         batchData.workpieces[workpieceKey] = workpieceInfo;
