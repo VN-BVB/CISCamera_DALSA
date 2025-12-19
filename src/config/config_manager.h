@@ -52,8 +52,7 @@ private:
     mutable std::shared_mutex m_mutex;
     AppConfig m_config;
 
-    static const std::string IMAGE_PATH_CONFIG_FILE;
-    static const std::string CALIBRATION_CONFIG_FILE;
+    static const std::string CONFIG_PATHS_FILE;
 };
 
 #endif  // CONFIG_MANAGER_H
