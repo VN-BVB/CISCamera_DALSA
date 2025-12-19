@@ -19,7 +19,7 @@ AppConfig ConfigManager::getConfig() const
 bool ConfigManager::loadAllConfigs()
 {
     std::unique_lock<std::shared_mutex> lock(m_mutex);
-    if (loadConfig(m_config.image_path_config, IMAGE_PATH_CONFIG_FILE))
+    if (loadConfig(m_config.image_path_config, IMAGE_PATH_CONFIG_FILE, "image_path_config"))
     {
         PLOG_INFO << "[Config] Image path config loaded successfully";
     }
@@ -36,7 +36,7 @@ bool ConfigManager::saveAllConfigs()
     std::unique_lock<std::shared_mutex> lock(m_mutex);
 
     bool success = true;
-    if (!saveConfig(m_config.image_path_config, IMAGE_PATH_CONFIG_FILE))
+    if (!saveConfig(m_config.image_path_config, IMAGE_PATH_CONFIG_FILE, "image_path_config"))
     {
         PLOG_ERROR << "[Config] Failed to save image path config";
         success = false;

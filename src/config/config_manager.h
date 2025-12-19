@@ -22,7 +22,7 @@ private:
     ConfigManager& operator=(const ConfigManager&) = delete;
 
     template<typename T>
-    bool saveConfig(const T& config, const std::string& file_path) {
+    bool saveConfig(const T& config, const std::string& file_path, const std::string& config_name = "config") {
         try {
             std::ofstream os(file_path);
             if (!os.is_open()) {
@@ -30,7 +30,7 @@ private:
                 return false;
             }
             cereal::JSONOutputArchive archive(os);
-            archive(cereal::make_nvp("config", config));
+            archive(cereal::make_nvp(config_name, config));
             PLOG_DEBUG << "[Config] Config saved successfully: " << file_path;
             return true;
         } catch (const std::exception& e) {
@@ -40,7 +40,7 @@ private:
     }
 
     template<typename T>
-    bool loadConfig(T& config, const std::string& file_path) {
+    bool loadConfig(T& config, const std::string& file_path, const std::string& config_name = "config") {
         try {
             std::ifstream is(file_path);
             if (!is.is_open()) {
@@ -48,7 +48,7 @@ private:
                 return false;
             }
             cereal::JSONInputArchive archive(is);
-            archive(cereal::make_nvp("config", config));
+            archive(cereal::make_nvp(config_name, config));
             PLOG_DEBUG << "[Config] Config loaded successfully: " << file_path;
             return true;
         } catch (const std::exception& e) {
