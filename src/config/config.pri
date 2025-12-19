@@ -3,6 +3,7 @@ HEADERS += \
     $$PWD/image_path_config.h \
     $$PWD/app_config.h \
     $$PWD/config_manager.h \
+    $$PWD/calibration_config.h
 
 SOURCES += \
     $$PWD/config_manager.cpp

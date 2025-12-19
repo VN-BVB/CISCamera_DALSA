@@ -25,10 +25,6 @@ private:
     bool saveConfig(const T& config, const std::string& file_path, const std::string& config_name = "config") {
         try {
             std::ofstream os(file_path);
-            if (!os.is_open()) {
-                PLOG_ERROR << "[Config] Cannot open file for writing: " << file_path;
-                return false;
-            }
             cereal::JSONOutputArchive archive(os);
             archive(cereal::make_nvp(config_name, config));
             PLOG_DEBUG << "[Config] Config saved successfully: " << file_path;
@@ -43,10 +39,6 @@ private:
     bool loadConfig(T& config, const std::string& file_path, const std::string& config_name = "config") {
         try {
             std::ifstream is(file_path);
-            if (!is.is_open()) {
-                PLOG_ERROR << "[Config] Cannot open file for reading: " << file_path;
-                return false;
-            }
             cereal::JSONInputArchive archive(is);
             archive(cereal::make_nvp(config_name, config));
             PLOG_DEBUG << "[Config] Config loaded successfully: " << file_path;
@@ -61,6 +53,7 @@ private:
     AppConfig m_config;
 
     static const std::string IMAGE_PATH_CONFIG_FILE;
+    static const std::string CALIBRATION_CONFIG_FILE;
 };
 
 #endif  // CONFIG_MANAGER_H
