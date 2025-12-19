@@ -5,6 +5,7 @@
 #include <plog/Log.h>
 
 #include "joint_view.h"
+#include "src/config/config_manager.h"
 #include "ui_joint_view.h"
 #include "src/ui/utils/display/display_scene.h"
 #include "src/ui/utils/display/display_manager.h"
@@ -77,7 +78,9 @@ JointView::~JointView()
 
 void JointView::on_pb_open_clicked()
 {
-    QString folderPath = "E:/work/车门门环拼接/image/背面打光/9/1";
+    auto appConfig = ConfigManager::getInstance().getConfig();
+
+    QString folderPath = QString::fromStdString(appConfig.image_path_config.default_image_folder);
     QString path = QFileDialog::getOpenFileName(this, "Select Image", folderPath, "(*.png *.jpg *.bmp)");
     // QString path = "E:/work/车门门环拼接/image/背面打光/9/1/6984_5772.bmp";
     if(path.isEmpty())

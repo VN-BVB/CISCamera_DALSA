@@ -23,4 +23,4 @@ src/rail/PLCCode/Temp/
 *.idea/
 *.asv
 CLAUDE.md
-
+src/CLAUDE/

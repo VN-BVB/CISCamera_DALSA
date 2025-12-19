@@ -1,13 +1,4 @@
 #include <QApplication>
-#include <plog/Init.h>
-#include <plog/Initializers/ConsoleInitializer.h>
-#include <plog/Initializers/RollingFileInitializer.h>
-#include <plog/Log.h>
-#include <plog/Init.h>
-#include <plog/Initializers/ConsoleInitializer.h>
-#include <plog/Initializers/RollingFileInitializer.h>
-#include <plog/Log.h>
-
 // clang-format off
 #include <winsock2.h>
 #include <windows.h>
@@ -22,11 +13,18 @@
 #include "src/test/test_cad_view.h"'
 #include "src/test/test_dxf_writer.h"
 #include "src/test/test_convert_coordinate.h"
+#include "src/config/config_manager.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     PlogUtils::initPlog();              // 初始化日志类
+
+    // 加载配置文件
+    if (!ConfigManager::getInstance().loadAllConfigs()) {
+        PLOG_ERROR << "Failed to load configuration files";
+    }
+
     // CISWidget w;
     // w.show();
 

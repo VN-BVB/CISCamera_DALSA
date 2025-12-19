@@ -26,8 +26,6 @@ AsyncJsonSender::AsyncJsonSender(int timeoutMs, QObject *parent)
 
     // 启动工作线程
     m_workerThread->start();
-
-    PLOG_INFO << "AsyncJsonSender 初始化完成，超时时间: " << timeoutMs << "ms";
 }
 
 /**
