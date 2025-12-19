@@ -2,7 +2,7 @@
 #include <cereal/archives/json.hpp>
 #include <fstream>
 
-const std::string ConfigManager::CONFIG_PATHS_FILE = "./data/config_paths.json";
+const std::string ConfigManager::CONFIG_PATHS_FILE = "./data/config/config_paths.json";
 
 
 ConfigManager &ConfigManager::getInstance()

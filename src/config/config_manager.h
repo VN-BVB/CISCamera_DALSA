@@ -7,6 +7,14 @@
 #include "app_config.h"
 #include "plog/Log.h"
 
+/*
+ * @details 现在添加一个新模块需要四步：
+ *  1、添加对应的module_config.h
+ *  2、在ConfigPath添加对应module的配置文件路径，并在config_path.json中手动增加对应module的字段（否则就运行一遍saveConfig）
+ *  3、在AppConfig中添加对应module成员，以方便后续使用
+ *  4、在ConfigManager中的loadAllConfigs和saveAllConfigs分别添加对应的load和save步骤
+ */
+
 class ConfigManager {
 public:
     static ConfigManager& getInstance();

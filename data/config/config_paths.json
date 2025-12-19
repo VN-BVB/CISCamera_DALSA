@@ -1,0 +1,7 @@
+{
+    "config_paths": {
+        "image_path_config_file": "./data/config/image_path_config.json",
+        "calibration_config_file": "./data/config/calibration_config.json",
+        "data_root_dir": "./data"
+    }
+}
