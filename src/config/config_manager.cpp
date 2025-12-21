@@ -28,24 +28,11 @@ bool ConfigManager::loadAllConfigs()
     }
 
     // 加载图像路径配置
-    if (!loadConfig(m_config.image_path_config, m_config.paths.image_path_config_file, "image_path_config")) {
-        loadStatus = false;
-    }
-
-    // 加载标定配置数据（包含文件路径）
-    if (loadConfig(m_config.calibration_config, m_config.paths.calibration_config_file, "calibration_config"))
-    {
-        PLOG_INFO << "[Config] Calibration config metadata loaded successfully";
-
-        // 通过原有加载方法加载实际的标定数据
-        if (!m_config.calibration_config.camera_calibration.load(m_config.calibration_config.camera_calib_file)) {
-            loadStatus = false;
-        }
-
-        if (!m_config.calibration_config.platform_calibration.load(m_config.calibration_config.platform_calib_file)) {
-            loadStatus = false;
-        }
-    }
+    if (!loadConfig(m_config.image_path_config, m_config.paths.image_path_config_file, "image_path_config")) loadStatus = false;
+    // 加载相机标定配置
+    if (!m_config.camera_calibration.load(m_config.paths.camera_calibration_file)) loadStatus = false;
+    // 加载平台标定配置
+    if (!m_config.platform_calibration.load(m_config.paths.platform_calibration_file)) loadStatus = false;
 
     if(loadStatus) {
         PLOG_INFO << "Load all configs done";
@@ -54,7 +41,7 @@ bool ConfigManager::loadAllConfigs()
         PLOG_ERROR << "Load configs failed";
     }
 
-    return true;
+    return loadStatus;
 }
 
 bool ConfigManager::saveAllConfigs()
@@ -77,10 +64,17 @@ bool ConfigManager::saveAllConfigs()
         success = false;
     }
 
-    // 保存标定配置元数据（包含文件路径和当前配置状态）
-    if (!saveConfig(m_config.calibration_config, m_config.paths.calibration_config_file, "calibration_config"))
+    // 保存相机标定配置
+    if (!m_config.camera_calibration.save(m_config.paths.camera_calibration_file))
     {
-        PLOG_ERROR << "[Config] Failed to save calibration config";
+        PLOG_ERROR << "[Config] Failed to save camera calibration config";
+        success = false;
+    }
+
+    // 保存平台标定配置
+    if (!m_config.platform_calibration.save(m_config.paths.platform_calibration_file))
+    {
+        PLOG_ERROR << "[Config] Failed to save platform calibration config";
         success = false;
     }
 

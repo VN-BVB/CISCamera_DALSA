@@ -104,7 +104,8 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "shared_mutex": "cpp"
     },
     "cmake.sourceDirectory": "D:/Code/CISCamera_DALSA/3rdParty/plog"
 }

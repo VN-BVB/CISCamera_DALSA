@@ -25,7 +25,7 @@ void CameraImageProcessor::lodaCameraCalibrateParams() {
 
     // 使用统一配置加载方式，这样可以避免每次初始化这个类都打开配置文件
     auto appConfig = ConfigManager::getInstance().getConfig();
-    const auto& calibParam = appConfig.calibration_config.camera_calibration;
+    const auto& calibParam = appConfig.camera_calibration;
 
     m_ = calibParam.m;
     K_ = calibParam.K;
@@ -39,7 +39,7 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
 
     // 使用统一配置加载方式
     auto appConfig = ConfigManager::getInstance().getConfig();
-    const auto& platformData = appConfig.calibration_config.platform_calibration;
+    const auto& platformData = appConfig.platform_calibration;
 
     allRotVecs_ = platformData.allRotVecs;
     allTransVecs_ = platformData.allTransVecs;
