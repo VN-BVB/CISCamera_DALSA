@@ -167,8 +167,8 @@ void DXFSaver::drawSubpixelContours(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attrib
             const Eigen::Vector2d& wp2 = worldPoints[i + 1];
 
             DL_LineData lineData(
-                wp1.y(), wp1.x(), 0.0,  // 交换x和y坐标
-                wp2.y(), wp2.x(), 0.0
+                wp1.x(), wp1.y(), 0.0,
+                wp2.x(), wp2.y(), 0.0
                 );
 
             // 写入线到DXF文件
@@ -220,7 +220,7 @@ void DXFSaver::drawSplines(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& att
             const Eigen::Vector2d& worldPoint = worldPoints[i];
 
             DL_ControlPointData controlPointData(
-                worldPoint.y(), worldPoint.x(), 0.0,  // 交换x和y坐标
+                worldPoint.x(), worldPoint.y(), 0.0,
                 1.0  // 权重
                 );
             dxf.writeControlPoint(*dw, controlPointData);
