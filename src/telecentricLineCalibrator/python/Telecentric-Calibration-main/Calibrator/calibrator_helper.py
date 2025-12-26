@@ -1,8 +1,9 @@
 import glob,os
 import numpy as np
 import cv2
-from nuitka.build.inline_copy.clcache.clcache.caching import cache
 from scipy.optimize import curve_fit, least_squares
+from nuitka.build.inline_copy.clcache.clcache.caching import cache
+
 from numba import njit
 
 
@@ -191,7 +192,7 @@ def undistort_points(points, K, D, criteria=None):
             iteration += 1
             # print(error)
 
-        undistorted_points.append([x*fx+cx, y*fx+cy])
+        undistorted_points.append([x*fx+cx, y*fy+cy])
 
     return np.array(undistorted_points)
 
@@ -597,10 +598,11 @@ def refine_params_with_distortion_basic(
     # min_bounds[8], max_bounds[8] = v_c - 1, v_c + 1
     # min_bounds[9], max_bounds[9] = u_c - 1, u_c + 1
     bounds = (min_bounds, max_bounds)
-
+    iter_cnt = {"k": 0}
     # ---------------------- 投影函数（基础参数推导内参K） ----------------------
     def project(x_data, *params):
         # 解包参数
+        iter_cnt["k"] += 1
         m_opt, dx_opt, dy_opt, theta_opt, u0_opt, v0_opt = params[:6]  # 优化后的基础参数
         k1_opt, k2_opt, p1_opt, p2_opt, k3_opt = params[6:11]  # 优化后的畸变系数
         v_RT_opt = params[11:]  # 优化后的外参
@@ -633,8 +635,16 @@ def refine_params_with_distortion_basic(
             y_distorted = distort(coff_dis_opt, y_normalized)  # 畸变校正
             y_pixel = (K @ y_distorted.T).T  # 归一化平面→像素坐标
             y_pre_list.append(y_pixel[:, :2])  # 取前两列（u, v）
+            y_pred = np.array(y_pre_list).reshape(-1)
 
-        return np.array(y_pre_list).reshape(-1)  # 展平为1D数组（匹配curve_fit要求）
+        # ================== 实时误差打印 ==================
+        resid = y_pred - points_pixel.reshape(-1)
+        rms = np.sqrt(np.mean(resid ** 2))
+
+        if iter_cnt["k"] % 20 == 0:   # 每 20 次打印一次，防止刷屏
+            print(f"[Iter {iter_cnt['k']}] RMS reprojection error = {rms:.6f}")
+
+        return y_pred
 
     # ---------------------- 执行优化 ----------------------
     popt, pcov = curve_fit(project, points_world, points_pixel.reshape(-1), packed_params, bounds=bounds,
@@ -706,6 +716,182 @@ def refine_params_with_distortion_basic(
         # 额外返回优化后的基础参数（方便查看）
         (m_refined, dx_refined, dy_refined, theta_refined, u0_refined, v0_refined)
     )
+def refine_params_with_distortion_basic2(
+        points_world, points_pixel,
+        m, dx, dy, theta, u0, v0,
+        coff_dis, v_rot, v_trans
+):
+    import numpy as np
+    import os
+    import cv2
+    from scipy.optimize import curve_fit
+
+    points_pixel = np.array(points_pixel)
+    points_world = np.array(points_world)
+
+    # ====================== 打包参数 ======================
+    packed_params = []
+    packed_params.extend([m, dx, dy, theta, u0, v0])
+
+    k1, k2, p1, p2, k3 = coff_dis
+    packed_params.extend([k1, k2, p1, p2, k3])
+
+    for i in range(len(v_rot)):
+        rx, ry, rz = v_rot[i]
+        tx, ty = v_trans[i]
+        packed_params.extend([rx, ry, rz, tx, ty])
+
+    # ====================== 参数边界 ======================
+    min_bounds = [-np.inf] * len(packed_params)
+    max_bounds = [ np.inf] * len(packed_params)
+
+    min_bounds[1], max_bounds[1] = dx - 5e-6, dx + 5e-6
+    min_bounds[2], max_bounds[2] = dy - 5e-6, dy + 5e-6
+    min_bounds[4], max_bounds[4] = u0 - 2, u0 + 2
+    min_bounds[5], max_bounds[5] = v0 - 2, v0 + 2
+
+    bounds = (min_bounds, max_bounds)
+    iter_cnt = {"k": 0}
+
+    # ====================== 投影函数（远心模型） ======================
+    def project(x_data, *params):
+        iter_cnt["k"] += 1
+
+        m_opt, dx_opt, dy_opt, theta_opt, u0_opt, v0_opt = params[:6]
+        k1, k2, p1, p2, k3 = params[6:11]
+        v_RT = params[11:]
+
+        sx = m_opt / dx_opt
+        sy = m_opt / dy_opt
+
+        c0, s0 = np.cos(theta_opt), np.sin(theta_opt)
+        R0 = np.array([[c0, -s0],
+                       [s0,  c0]])
+
+        y_pred_all = []
+
+        for i in range(len(x_data)):
+            Pw = np.asarray(x_data[i]).reshape(-1, 3)
+            Xw = Pw[:, 0]
+            Yw = Pw[:, 1]
+
+            _, _, rz, tx, ty = v_RT[i * 5:(i + 1) * 5]
+
+            ci, si = np.cos(rz), np.sin(rz)
+            Ri = np.array([[ci, -si],
+                           [si,  ci]])
+
+            Pc = (Ri @ np.vstack([Xw, Yw])).T
+            Pc[:, 0] += tx
+            Pc[:, 1] += ty
+
+            xn = Pc[:, 0]
+            yn = Pc[:, 1]
+
+            r2 = xn * xn + yn * yn
+            radial = 1 + k1 * r2 + k2 * r2**2 + k3 * r2**3
+            xd = xn * radial + 2 * p1 * xn * yn + p2 * (r2 + 2 * xn * xn)
+            yd = yn * radial + p1 * (r2 + 2 * yn * yn) + 2 * p2 * xn * yn
+
+            pts = np.vstack([xd, yd]).T
+            pts = (R0 @ pts.T).T
+
+            u = sx * pts[:, 0] + u0_opt
+            v = sy * pts[:, 1] + v0_opt
+
+            y_pred_all.append(np.vstack([u, v]).T)
+
+        y_pred = np.concatenate(y_pred_all, axis=0).reshape(-1)
+
+        resid = y_pred - points_pixel.reshape(-1)
+        rms = np.sqrt(np.mean(resid ** 2))
+        if iter_cnt["k"] % 20 == 0:
+            print(f"[Iter {iter_cnt['k']}] RMS reprojection error = {rms:.6f}")
+
+        return y_pred
+
+    # ====================== 非线性优化 ======================
+    popt, _ = curve_fit(
+        project,
+        points_world,
+        points_pixel.reshape(-1),
+        packed_params,
+        bounds=bounds,
+        maxfev=5_000_000
+    )
+
+    # ====================== 解包结果 ======================
+    m_refined, dx_refined, dy_refined, theta_refined, u0_refined, v0_refined = popt[:6]
+    k1_ref, k2_ref, p1_ref, p2_ref, k3_ref = popt[6:11]
+
+    n_views = len(v_rot)
+    v_rot_refined = []
+    v_trans_refined = []
+
+    rt_all = popt[11:]
+    for i in range(n_views):
+        v_rot_refined.append(rt_all[i * 5:i * 5 + 3])
+        v_trans_refined.append(rt_all[i * 5 + 3:(i + 1) * 5])
+
+    v_rot_refined = np.array(v_rot_refined)
+    v_trans_refined = np.array(v_trans_refined)
+
+    # ====================== 计算重投影误差 ======================
+    loss_list = []
+
+    sx = m_refined / dx_refined
+    sy = m_refined / dy_refined
+    c0, s0 = np.cos(theta_refined), np.sin(theta_refined)
+    R0 = np.array([[c0, -s0],
+                   [s0,  c0]])
+
+    for i in range(n_views):
+        Pw = points_world[i].reshape(-1, 3)
+        Xw, Yw = Pw[:, 0], Pw[:, 1]
+        _, _, rz = v_rot_refined[i]
+        tx, ty = v_trans_refined[i]
+
+        ci, si = np.cos(rz), np.sin(rz)
+        Ri = np.array([[ci, -si],
+                       [si,  ci]])
+
+        Pc = (Ri @ np.vstack([Xw, Yw])).T
+        Pc[:, 0] += tx
+        Pc[:, 1] += ty
+
+        xn, yn = Pc[:, 0], Pc[:, 1]
+        r2 = xn*xn + yn*yn
+        radial = 1 + k1_ref*r2 + k2_ref*r2**2 + k3_ref*r2**3
+        xd = xn*radial + 2*p1_ref*xn*yn + p2_ref*(r2 + 2*xn*xn)
+        yd = yn*radial + p1_ref*(r2 + 2*yn*yn) + 2*p2_ref*xn*yn
+
+        pts = np.vstack([xd, yd]).T
+        pts = (R0 @ pts.T).T
+
+        u = sx * pts[:, 0] + u0_refined
+        v = sy * pts[:, 1] + v0_refined
+        reproj = np.vstack([u, v]).T
+
+        gt = points_pixel[i].reshape(-1, 2)
+        loss_list.append(np.mean(np.linalg.norm(reproj - gt, axis=1)))
+
+    mean_loss = np.mean(loss_list)
+
+    K_refined = np.array([
+        [sx, 0, u0_refined],
+        [0, sy, v0_refined],
+        [0,  0, 1]
+    ])
+
+    return (
+        mean_loss,
+        K_refined,
+        [k1_ref, k2_ref, p1_ref, p2_ref, k3_ref],
+        v_rot_refined,
+        v_trans_refined,
+        (m_refined, dx_refined, dy_refined, theta_refined, u0_refined, v0_refined)
+    )
+
 # 只优化外参的函数
 def refine_params_with_distortion_external_only(
         points_world, points_pixel,K,

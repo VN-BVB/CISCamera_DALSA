@@ -28,7 +28,7 @@ public:
     void initCameraCalibrator();
     void lodaCameraCalibrateParams();
     void lodaCam2PlatCalibrateParams();
-    std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d> &pix_pts);
+    std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
 signals:
     void text(const QString& msg);
     void error(const QString& msg);
@@ -84,7 +84,7 @@ private:
     const double dy_ = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）
     const int width_ = 31104, height_ = 16100;
     std::string readPointsPath_ = "./data/CISCamera_Image/mattxt";
-    std::string readImgPath_ = "./data/CISCamera_Image/test/rotated_output";
+    std::string readImgPath_ = "./data/CISCamera_Image/cameraCalibrate";
     // const int W = 8, H = 11;
     // const double spacingMM = 10.0;
     // const double dx = 25.4 / 1200.0;

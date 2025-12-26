@@ -67,6 +67,9 @@ public:
     // -------------------- 相机坐标 → 世界坐标 --------------------
     Eigen::MatrixXd cameraToWorldCoordinates(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
                                              const Eigen::Vector3d& v_trans);
+    Eigen::MatrixXd cameraToWorldCoordinatesSO2(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
+                                                const Eigen::Vector3d& v_trans);
+
     Pose estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
                                  const double u0, const double v0, const double dx, const double dy,
                                  const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts);

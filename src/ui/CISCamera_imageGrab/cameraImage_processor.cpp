@@ -481,7 +481,7 @@ void CameraImageProcessor::whenDetectChessboard() {
 }
 void CameraImageProcessor::whenCameraCalibrate() {
     all_image_points_.clear();
-    std::string folder = "./data/CISCamera_Image/mattxt";
+    std::string folder = "./data/CISCamera_Image/cameraCalibrate/txt";
 
     // 遍历文件夹读取所有txt
     for (auto& entry : std::filesystem::directory_iterator(folder)) {
@@ -507,7 +507,7 @@ void CameraImageProcessor::whenCameraCalibrate() {
 }
 void CameraImageProcessor::whenCalibrateCP() {
     if (all_platfromCalibImg_.empty()) {
-        // loadPlatformCalibImages();
+        loadPlatformCalibImages();
     }
     emit text(QString(u8"正在进初始世界平台的棋盘格检测与外参估计..."));
     PlatformPoseData poseData;
@@ -529,76 +529,78 @@ void CameraImageProcessor::whenCalibrateCP() {
     // 保存世界坐标系
     poseData.allRotVecs.back() = v_rot;
     poseData.allTransVecs.back() = v_trans;
-
-    //  2. 输出结构：platform → image → board → corner
-    std::vector<std::vector<std::vector<std::vector<cv::Point2d>>>> allPlatformsBoardsPts;
-
-    allPlatformsBoardsPts.resize(all_platfromCalibImg_.size());
-    emit text(QString(u8"正在进行所有平台的棋盘格检测..."));
-    // 3. 遍历每个平台
-    for (size_t p = 0; p < all_platfromCalibImg_.size(); ++p) {
-        emit text(QString(u8"平台 %1：检测棋盘格...").arg(p));
-
-        // 取该平台的所有图像
-        const auto& imgs = all_platfromCalibImg_[p];
-
-        // 输出：图像 × 标定板 × 角点
-        std::vector<std::vector<std::vector<cv::Point2d>>> onePlatformBoards;
-
-        libcbDetector->processImagesFromMats(imgs, onePlatformBoards);
-
-        allPlatformsBoardsPts[p] = onePlatformBoards;
-        for (size_t imgIdx = 0; imgIdx < onePlatformBoards.size(); ++imgIdx) {
-            const auto& boards = onePlatformBoards[imgIdx];
-
-            if (boards.empty()) {
-                emit text(QString(u8"平台 %1 - 图像 %2：未检测到棋盘格").arg(p).arg(imgIdx));
-                continue;
-            }
-
-            for (size_t b = 0; b < boards.size(); ++b) {
-                int detectedCorners = boards[b].size();
-                int expectedCorners = W_ * H_;
-
-                if (detectedCorners == expectedCorners) {
-                    emit text(QString(u8"平台 %1 - 图像 %2 - 棋盘格 %3：角点数 %4 ✔ 符合规格 (%5×%6)")
-                                  .arg(p)
-                                  .arg(imgIdx)
-                                  .arg(b)
-                                  .arg(detectedCorners)
-                                  .arg(W_)
-                                  .arg(H_));
-                } else {
-                    emit text(QString(u8"平台 %1 - 图像 %2 - 棋盘格 %3：角点数 %4 ✘ 不符合规格 (%5×%6)")
-                                  .arg(p)
-                                  .arg(imgIdx)
-                                  .arg(b)
-                                  .arg(detectedCorners)
-                                  .arg(W_)
-                                  .arg(H_));
-                }
-            }
-        }
-    }
-    emit text(QString(u8"所有平台棋盘格检测完成！"));
     TelecentricPlatformCalib calibCamera2Plat(K_, coff_dis_, v_rot, v_trans);
-    for (size_t p = 0; p < allPlatformsBoardsPts.size(); ++p) {
-        Eigen::Vector3d r, t;
-        emit text(QString(u8"平台 %1：求解平台姿态...").arg(p));
+    calibCamera2Plat.runDemo();
+    // //  2. 输出结构：platform → image → board → corner
+    // std::vector<std::vector<std::vector<std::vector<cv::Point2d>>>> allPlatformsBoardsPts;
 
-        if (!calibCamera2Plat.estimatePlatformPoseFromBoards(allPlatformsBoardsPts[p], r, t)) {
-            emit text(QString(u8"平台 %1 姿态求解失败！").arg(p));
-            continue;
-        }
-        emit text(QString(u8"平台 %1 姿态求解成功！").arg(p));
-        poseData.allRotVecs[p] = r;
-        poseData.allTransVecs[p] = t;
-    }
-    poseData.save("./data/calibration_config/platform_pose.json");
-    allRotVecs_ = poseData.allRotVecs;
-    allTransVecs_ = poseData.allTransVecs;
+    // allPlatformsBoardsPts.resize(all_platfromCalibImg_.size());
+    // emit text(QString(u8"正在进行所有平台的棋盘格检测..."));
+    // // 3. 遍历每个平台
+    // for (size_t p = 0; p < all_platfromCalibImg_.size(); ++p) {
+    //     emit text(QString(u8"平台 %1：检测棋盘格...").arg(p));
 
-    emit text(QString(u8"所有平台的姿态求解完成！"));
+    //     // 取该平台的所有图像
+    //     const auto& imgs = all_platfromCalibImg_[p];
+
+    //     // 输出：图像 × 标定板 × 角点
+    //     std::vector<std::vector<std::vector<cv::Point2d>>> onePlatformBoards;
+
+    //     libcbDetector->processImagesFromMats(imgs, onePlatformBoards);
+
+    //     allPlatformsBoardsPts[p] = onePlatformBoards;
+    //     for (size_t imgIdx = 0; imgIdx < onePlatformBoards.size(); ++imgIdx) {
+    //         const auto& boards = onePlatformBoards[imgIdx];
+
+    //         if (boards.empty()) {
+    //             emit text(QString(u8"平台 %1 - 图像 %2：未检测到棋盘格").arg(p).arg(imgIdx));
+    //             continue;
+    //         }
+
+    //         for (size_t b = 0; b < boards.size(); ++b) {
+    //             int detectedCorners = boards[b].size();
+    //             int expectedCorners = W_ * H_;
+
+    //             if (detectedCorners == expectedCorners) {
+    //                 emit text(QString(u8"平台 %1 - 图像 %2 - 棋盘格 %3：角点数 %4 ✔ 符合规格 (%5×%6)")
+    //                               .arg(p)
+    //                               .arg(imgIdx)
+    //                               .arg(b)
+    //                               .arg(detectedCorners)
+    //                               .arg(W_)
+    //                               .arg(H_));
+    //             } else {
+    //                 emit text(QString(u8"平台 %1 - 图像 %2 - 棋盘格 %3：角点数 %4 ✘ 不符合规格 (%5×%6)")
+    //                               .arg(p)
+    //                               .arg(imgIdx)
+    //                               .arg(b)
+    //                               .arg(detectedCorners)
+    //                               .arg(W_)
+    //                               .arg(H_));
+    //             }
+    //         }
+    //     }
+    // }
+    // emit text(QString(u8"所有平台棋盘格检测完成！"));
+    // TelecentricPlatformCalib calibCamera2Plat(K_, coff_dis_, v_rot, v_trans);
+    // calibCamera2Plat.runDemo();
+    // for (size_t p = 0; p < allPlatformsBoardsPts.size(); ++p) {
+    //     Eigen::Vector3d r, t;
+    //     emit text(QString(u8"平台 %1：求解平台姿态...").arg(p));
+
+    //     if (!calibCamera2Plat.estimatePlatformPoseFromBoards(allPlatformsBoardsPts[p], r, t)) {
+    //         emit text(QString(u8"平台 %1 姿态求解失败！").arg(p));
+    //         continue;
+    //     }
+    //     emit text(QString(u8"平台 %1 姿态求解成功！").arg(p));
+    //     poseData.allRotVecs[p] = r;
+    //     poseData.allTransVecs[p] = t;
+    // }
+    // poseData.save("./data/calibration_config/platform_pose.json");
+    // allRotVecs_ = poseData.allRotVecs;
+    // allTransVecs_ = poseData.allTransVecs;
+
+    // emit text(QString(u8"所有平台的姿态求解完成！"));
 }
 std::vector<Eigen::Vector2d> CameraImageProcessor::convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts) {
     if (pix_pts.empty()) return {};

@@ -33,6 +33,8 @@ private:
     Eigen::Vector2d computeRotationCenterSequential(const std::vector<std::vector<Eigen::Vector2d>>& pts);
     Eigen::Vector2d fitCircleTaubin(const std::vector<Eigen::Vector2d>& pts);
     Eigen::Vector2d computeRotationCenterCircleFit(const std::vector<std::vector<Eigen::Vector2d>>& pts);
+    void solveAffineFromRelativeMotion(const std::vector<Eigen::Vector2d>& w1, const std::vector<Eigen::Vector2d>& w2,
+                                       const std::vector<Eigen::Vector2d>& w3, Eigen::Matrix2d& A_ls, int method);
 
 private:
     // 相机参数

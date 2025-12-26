@@ -684,7 +684,6 @@ Eigen::MatrixXd TelecentricLineCalibrator::pixelToCameraCoordinates(const Eigen:
     Eigen::MatrixXd homo = toHomogeneous(processed_px);
     Eigen::Matrix3d K_inv = K.inverse();
     Eigen::MatrixXd cam_pts = (K_inv * homo.transpose()).transpose();
-
     Eigen::MatrixXd result(cam_pts.rows(), 2);
     result.col(0) = cam_pts.col(0).array() / cam_pts.col(2).array();
     result.col(1) = cam_pts.col(1).array() / cam_pts.col(2).array();
@@ -709,16 +708,73 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen:
     // -------- 3. 平面逆变换（相机 -> 世界）--------
     Eigen::MatrixXd world_pts(cam_pts.rows(), 2);
     Eigen::Matrix2d R2_inv = R2.inverse();
-
     for (int i = 0; i < cam_pts.rows(); ++i) {
         Eigen::Vector2d Xc = cam_pts.row(i);
         Eigen::Vector2d Xw = R2_inv * (Xc - t2);
         world_pts.row(i) = Xw.transpose();
     }
+    std::cout << std::fixed << std::setprecision(15);
+
+    std::cout << "v_rot =\n" << v_rot << std::endl;
+    // -------- 打印 R2 --------
+    std::cout << "R2 =\n" << R2 << std::endl;
+
+    // -------- 打印 R2_inv --------
+    std::cout << "R2_inv =\n" << R2_inv << std::endl;
+
+    // -------- 打印 t2 --------
+    std::cout << "t2 = " << t2.transpose() << std::endl;
+
+    // -------- 打印 Xc / Xw（只打印第一个点）--------
+    Eigen::Vector2d Xc = cam_pts.row(0);
+    Eigen::Vector2d Xw = R2_inv * (Xc - t2);
+
+    std::cout << "Xc = " << Xc.transpose() << std::endl;
+    std::cout << "Xw = " << Xw.transpose() << std::endl;
+    return world_pts;
+}
+// -------------------- 相机坐标 → 世界坐标（SO(2) 修正） --------------------
+Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinatesSO2(const Eigen::MatrixXd& cam_pts,
+                                                                       const Eigen::Vector3d& v_rot,
+                                                                       const Eigen::Vector3d& v_trans) {
+    // -------- 1. Rodrigues：world -> camera --------
+    cv::Mat rvec(3, 1, CV_64F);
+    for (int i = 0; i < 3; ++i) rvec.at<double>(i, 0) = v_rot(i);
+
+    cv::Mat R_cv;
+    cv::Rodrigues(rvec, R_cv);
+
+    Eigen::Matrix3d R;
+    cv::cv2eigen(R_cv, R);
+
+    // -------- 2. 取 2D 平面部分 --------
+    Eigen::Matrix2d R2 = R.block<2, 2>(0, 0);
+    Eigen::Vector2d t2 = v_trans.head<2>();
+
+    // -------- 3. 对 R2 做极分解：R2 = U * S --------
+    Eigen::JacobiSVD<Eigen::Matrix2d> svd(R2, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+    Eigen::Matrix2d U = svd.matrixU() * svd.matrixV().transpose();  // 最近 SO(2)
+
+    // 防止反射（det = -1）
+    if (U.determinant() < 0) {
+        Eigen::Matrix2d V = svd.matrixV();
+        V.col(1) *= -1;
+        U = svd.matrixU() * V.transpose();
+    }
+
+    // -------- 4. 用“纯旋转”做相机 -> 世界 --------
+    Eigen::MatrixXd world_pts(cam_pts.rows(), 2);
+    Eigen::Matrix2d U_inv = U.transpose();  // SO(2): inverse = transpose
+
+    for (int i = 0; i < cam_pts.rows(); ++i) {
+        Eigen::Vector2d Xc = cam_pts.row(i);
+        Eigen::Vector2d Xw = U_inv * (Xc - t2);
+        world_pts.row(i) = Xw.transpose();
+    }
 
     return world_pts;
 }
-
 bool TelecentricLineCalibrator::optimizeExtrinsicsWithLeastSquares(const Eigen::MatrixXd& transformedPts,
                                                                    const std::vector<Eigen::Vector2d>& trueWorldPts,
                                                                    const Eigen::Matrix3d& R_in, const Eigen::Vector3d& t_in,
@@ -943,8 +999,8 @@ Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K
         // for (size_t i = 0; i < imgPts.size(); ++i) {
         //     std::cout << "  [" << i << "] " << imgPts[i].transpose() << "\n";
         // }
-        double test = computeReprojectionError(worldPts, imgPts, pose, K, txtPath, coff_dis);
-        std::cout << "test err" << test << std::endl;
+        // double test = computeReprojectionError(worldPts, imgPts, pose, K, txtPath, coff_dis);
+        // std::cout << "test err" << test << std::endl;
 
         // // ---------- Step 6. 调用最小二乘法进一步优化外参 ----------
         // std::cout << "[6] 正在使用最小二乘法进一步优化外参..." << std::endl;
@@ -981,7 +1037,7 @@ Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K
         // }
     }
 
-    std::cout << "======== [estimateTelecentricPose] 完成初值 + 优化 + 最小二乘精调 ========" << std::endl;
+    std::cout << "======== [estimateTelecentricPose] 完成 ========" << std::endl;
     return pose;
 }
 // =========================================================
