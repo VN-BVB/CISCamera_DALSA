@@ -1,5 +1,11 @@
 ﻿#include "cis_camera_image.h"
 
+#include "src/cameraFactory/abstract_camera.h"
+#include "src/cameraFactory/abstract_camera_factory.h"
+#include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
+#include "src/rail/rail_widget.h"
+#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
+#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 #include "ui_cis_camera_image.h"
 #define ENABLE_SLAVE_CAMERA
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {

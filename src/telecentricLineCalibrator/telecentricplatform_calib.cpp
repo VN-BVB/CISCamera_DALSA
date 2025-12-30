@@ -513,6 +513,27 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
 
     Eigen::Vector3d rvec_platform_to_camera(rvec_cv45.at<double>(0), rvec_cv45.at<double>(1), rvec_cv45.at<double>(2));
     Eigen::Vector3d t_platform_to_camera(b.x(), b.y(), 0.0);
+
+    // -------------------- 非线性优化 --------------------
+    TelecentricPYOptimizer optimizer;
+
+    Eigen::Vector3d rvec_opt, tvec_opt;
+    double rms = 0.0;
+
+    std::vector<std::vector<Eigen::Vector2d>> all_pts{p1, p2, p3, p4, p5};
+
+    bool ok = optimizer.refinePlatformExtrinsicsLM(K_, dist_, all_pts, rvec_platform_to_camera, t_platform_to_camera,
+                                                   50.0,  // dx 约束
+                                                   50.0,  // dy 约束
+                                                   45.0,  // 旋转角约束（deg）
+                                                   rvec_opt, tvec_opt, rms);
+
+    if (ok) {
+        std::cout << "LM 优化成功\n";
+        std::cout << "rvec_opt = " << rvec_opt.transpose() << std::endl;
+        std::cout << "tvec_opt = " << tvec_opt.transpose() << std::endl;
+        std::cout << "RMS = " << rms << std::endl;
+    }
     // // ==================== 1. 提取像素坐标（复用已加载的 p1~p5） ====================
     // auto p1_pix = p1;  // platform10.txt
     // auto p2_pix = p2;  // platform21.txt
@@ -732,7 +753,7 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     Eigen::Vector3d rvec_plat;
     for (int i = 0; i < 3; ++i) rvec_plat(i) = rvec_plat_cv.at<double>(i, 0);
 
-    // -------------------- 9. 给定像素点转换到平台坐标系 --------------------
+    // -------------------- 给定像素点转换到平台坐标系 --------------------
     Eigen::MatrixXd px(1, 2);
     px(0, 0) = 6937.323892;
     px(0, 1) = 2816.240515;
@@ -745,16 +766,15 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     // 直接用平台到相机的外参进行相机 -> 平台坐标系转换
     Eigen::MatrixXd plat_pts = lineCalib_->cameraToWorldCoordinates(cam_norm, rvec_plat, t_plat_cam);
     // 直接用平台到相机的外参进行相机 -> 平台坐标系转换
-    Eigen::MatrixXd plat_pts2 = lineCalib_->cameraToWorldCoordinates(cam_norm, rvec_platform_to_camera, t_platform_to_camera);
+    Eigen::MatrixXd plat_pts2 = lineCalib_->cameraToWorldCoordinates(cam_norm, rvec_opt, tvec_opt);
     // 输出结果
     std::cout << "像素点在平台坐标系 = " << plat_pts(0, 0) << ", " << plat_pts(0, 1) << "\n";
     // 输出结果
     std::cout << "像素点在平台坐标系2 = " << plat_pts2(0, 0) << ", " << plat_pts2(0, 1) << "\n";
     std::cout << "\nRecovered rotation vector (platform -> camera): " << rvec_plat.transpose() << " [rad]" << std::endl;
     std::cout << "\nTrans vector (platform -> camera): " << t_plat_cam.transpose() << std::endl;
-    std::cout << "\nRecovered rotation vector (platform -> camera): " << rvec_platform_to_camera.transpose() << " [rad]"
-              << std::endl;
-    std::cout << "\nTrans vector (platform -> camera): " << t_platform_to_camera.transpose() << std::endl;
+    std::cout << "\nRecovered rotation vector (platform -> camera): " << rvec_opt.transpose() << " [rad]" << std::endl;
+    std::cout << "\nTrans vector (platform -> camera): " << tvec_opt.transpose() << std::endl;
 }
 bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(
     const std::vector<std::vector<std::vector<cv::Point2d>>>& onePlatformBoards, Eigen::Vector3d& vRotPlat,

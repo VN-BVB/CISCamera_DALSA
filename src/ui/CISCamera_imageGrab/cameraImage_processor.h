@@ -13,9 +13,10 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
-#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
-#include "src/telecentricLineCalibrator/telecentricplatform_calib.h"
+#include "src/config/calibration_data_io.h"
+class LibCBDetector;
+class TelecentricLineCalibrator;
+class TelecentricPlatformCalib;
 class CameraImageProcessor : public QObject {
     Q_OBJECT
 public:

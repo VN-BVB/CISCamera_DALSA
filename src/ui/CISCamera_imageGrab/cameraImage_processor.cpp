@@ -1,5 +1,8 @@
 ﻿#include "cameraImage_processor.h"
 
+#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
+#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
+#include "src/telecentricLineCalibrator/telecentricplatform_calib.h"
 CameraImageProcessor::CameraImageProcessor(QObject* parent) : QObject(parent) {}
 
 CameraImageProcessor::~CameraImageProcessor() {}

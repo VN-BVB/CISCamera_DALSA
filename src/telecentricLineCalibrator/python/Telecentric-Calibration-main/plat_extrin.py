@@ -169,44 +169,85 @@ def compute_center_angle(P, Q):
 
     angle = np.arctan2(R[1, 0], R[0, 0])
     return C, angle
-def residual_lm(theta, K, D, pts):
+def residual_extrinsics(theta, K, D, pts, dx, dy, ang):
     """
-    theta: [rx, ry, rz, tx, ty]
-    pts: [p1, p2, p3, p4, p5]
+    LM 非线性优化残差函数
+
+    theta: [rx, ry, rz, tx, ty] 旋转向量和平移向量（只用前两项）
+    pts: [p1, p2, p3, p4, p5] 五组像素点列表，每组 Nx2
+    dx, dy: 平移约束（单位 mm）
+    ang: 旋转约束（单位 rad）
     """
     rvec = theta[:3]
     tvec = theta[3:5]
 
     p1, p2, p3, p4, p5 = pts
 
-    w1 = pixel_to_world(p1, K, D, rvec, tvec)
-    w2 = pixel_to_world(p2, K, D, rvec, tvec)
-    w3 = pixel_to_world(p3, K, D, rvec, tvec)
-    w4 = pixel_to_world(p4, K, D, rvec, tvec)
-    w5 = pixel_to_world(p5, K, D, rvec, tvec)
+    # 将像素点转换到世界坐标系
+    w1 = pixel_to_world(p1, K, D, rvec, np.append(tvec, 0.0))
+    w2 = pixel_to_world(p2, K, D, rvec, np.append(tvec, 0.0))
+    w3 = pixel_to_world(p3, K, D, rvec, np.append(tvec, 0.0))
+    w4 = pixel_to_world(p4, K, D, rvec, np.append(tvec, 0.0))
+    w5 = pixel_to_world(p5, K, D, rvec, np.append(tvec, 0.0))
 
     res = []
 
     # ---------- 平移约束 ----------
     for i in range(len(w1)):
-        res.extend(w2[i] - w1[i] - np.array([50.0, 0.0]))
-        res.extend(w3[i] - w2[i] - np.array([0.0, 50.0]))
+        res.extend(w2[i] - w1[i] - np.array([dx, 0.0]))
+        res.extend(w3[i] - w2[i] - np.array([0.0, dy]))
 
     # ---------- 旋转约束 ----------
     C34, ang34 = compute_center_angle(w3, w4)
     C45, ang45 = compute_center_angle(w4, w5)
 
-    res.append(ang34 - np.pi / 4)
-    res.append(ang45 - np.pi / 4)
+    res.append(ang34 - ang)
+    res.append(ang45 - ang)
 
     # 旋转中心约束（假设在原点）
     res.extend(C34)
     res.extend(C45)
 
     return np.array(res)
-# ==================== main ====================
+
+
+def refine_extrinsics_lm(K, D, pts, rvec_init, tvec_init, dx, dy, ang_deg):
+    """
+    利用 Levenberg-Marquardt 方法优化外参（旋转向量和平移向量）
+
+    K: 内参矩阵 3x3
+    D: 畸变系数 1x5
+    pts: 五组像素点列表 [p1, p2, p3, p4, p5]
+    rvec_init: 初始旋转向量 [rx, ry, rz]
+    tvec_init: 初始平移向量 [tx, ty]
+    dx, dy: 平移量约束
+    ang_deg: 旋转角约束（单位 deg）
+    """
+    ang_rad = np.deg2rad(ang_deg)
+
+    # 打包初始外参
+    init_params = np.hstack([rvec_init, tvec_init[:2]])
+
+    result = least_squares(
+        residual_extrinsics,
+        init_params,
+        method="trf",
+        args=(K, D, pts, dx, dy, ang_rad),
+        verbose=2,
+        max_nfev=2000
+    )
+
+    rvec_opt = result.x[:3]
+    tvec_opt = result.x[3:5]
+    final_rms = np.sqrt(np.mean(result.fun ** 2))
+    print("rvec:", rvec_opt)
+    print("tvec:", tvec_opt)
+    print("RMS:", final_rms)
+    return rvec_opt, tvec_opt, final_rms
+
+
+# ==================== main 测试 ====================
 if __name__ == "__main__":
-    # -------- 相机参数 --------
     K = np.array([
         [47.283237490301396, -0.657929607742621, 15551.964431991371],
         [0.0, 47.05230788272559, 8043.186819107249],
@@ -221,17 +262,13 @@ if __name__ == "__main__":
         -2.0074419972225162e-06
     ])
 
-    # -------- 初始外参（C++结果）--------
-    init_params = np.array([
-        0.165329144509388,
-        0.234669704479263,
-        - 1.569108596273157,   # rvec -0.165676,-0.234431,-1.56911
-        -208.388846092279550,-86.695497810272997            # tvec (平面，只用前两项)
-    ])
+    # 初始旋转向量和平移向量（平面只用前两项）
+    rvec_init = np.array([ 0.165329144509388,
+ 0.234669704479263,
+-1.569108596273157])
+    tvec_init = np.array([-208.387787176078490,-86.695384037745484, 0.0])
 
-    rvec = init_params[:3]
-    tvec = np.array([init_params[3], init_params[4], 0.0])
-    # -------- 读取五组点 --------
+    # 读取五组点
     paths = [
         "D:/Code/CISCamera_DALSA/src/telecentricLineCalibrator/matlab/xysita/chessboard_platform10.txt",
         "D:/Code/CISCamera_DALSA/src/telecentricLineCalibrator/matlab/xysita/chessboard_platform21.txt",
@@ -239,28 +276,10 @@ if __name__ == "__main__":
         "D:/Code/CISCamera_DALSA/src/telecentricLineCalibrator/matlab/xysita/chessboard_platform40d.txt",
         "D:/Code/CISCamera_DALSA/src/telecentricLineCalibrator/matlab/xysita/chessboard_platform50d.txt",
     ]
+    pts = [read_points_from_txt(p)[1] for p in paths]
 
-    pts = []
-    for p in paths:
-        ok, data = read_points_from_txt(p)
-        if not ok:
-            raise RuntimeError(f"Failed to read {p}")
-        pts.append(data)
+    rvec_opt, tvec_opt, rms = refine_extrinsics_lm(K, D, pts, rvec_init, tvec_init,50.0,50.0,45.0)
 
-    # -------- LM 优化 --------
-    result = least_squares(
-        residual_lm,
-        init_params,
-        method="lm",
-        args=(K, D, pts),
-        verbose=2,
-        max_nfev=200
-    )
-
-    print("\n===== 优化结果 =====")
-    print("rvec =", result.x[:3])
-    print("tvec =", result.x[3:5])
-    print("final RMS =", np.sqrt(np.mean(result.fun ** 2)))
     # ====================== 测试像素点 ======================
     px = np.array([[6937.323892, 2816.240515]], dtype=np.float64)
 
@@ -272,14 +291,11 @@ if __name__ == "__main__":
         px,
         K,
         D,
-        rvec,  # 初始 rvec
-        tvec  # 初始 tvec
+        rvec_init,  # 初始 rvec
+        tvec_init  # 初始 tvec
     )
 
     # ====================== LM 优化后外参 ======================
-    rvec_opt = result.x[:3]
-    tvec_opt = result.x[3:5]
-
     world_opt = pixel_to_world(
         px,
         K,
