@@ -1,5 +1,4 @@
 SOURCES += \
-    $$PWD/plc_variableaddress.cpp \
     $$PWD/rail.cpp \
     $$PWD/rail_widget.cpp
 
