@@ -78,8 +78,8 @@ bool CameraImageProcessor::prepareForConcat(const cv::Mat& m, const cv::Mat& s, 
     return true;
 }
 
-void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave,
-                                       bool spliceEnabledFromCaller, bool useColumnCheck) {
+void CameraImageProcessor::processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave, bool spliceEnabledFromCaller,
+                                       bool useColumnCheck) {
     if (!master || master->empty()) {
         emit error(QString(u8"拼接：Master 为空"));
         return;
@@ -317,7 +317,7 @@ bool CameraImageProcessor::readPointsFromTxt(const std::string& path, std::vecto
 }
 void CameraImageProcessor::whenCameraCalibrate() {
     all_image_points.clear();
-    std::string folder = "./data/CISCamera_Image/halcon";
+    std::string folder = "./data/CISCamera_Image/mattxt";
 
     // 遍历文件夹读取所有txt
     for (auto& entry : std::filesystem::directory_iterator(folder)) {

@@ -18,6 +18,7 @@
 #include "src/rail/rail_widget.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
+// #define Internal
 class RailWidget;
 class AbstractCamera;
 class ExternalExeRunner;
@@ -57,6 +58,13 @@ private:
     std::shared_ptr<LibCBDetector> libcbDetector{nullptr};
     std::shared_ptr<TelecentricLineCalibrator> telecentricLineCalibrator{nullptr};
     std::shared_ptr<cv::Mat> masterImg, slaveImg;
+#ifdef Internal
+    QString masterCameraCCF_ = "./data/CISConfig/MasterInternalFrameInternal.ccf ";
+    QString slaveCameraCCF_ = "./data/CISConfig/SlaveInternalFrameInternal.ccf";
+#else
+    QString masterCameraCCF_ = "./data/CISConfig/MasterEncoderDriver.ccf ";
+    QString slaveCameraCCF_ = "./data/CISConfig/SlaveEncoderDriver.ccf";
+#endif
     bool masterReady = false;
     bool slaveReady = false;
     bool triggerRunning = false;

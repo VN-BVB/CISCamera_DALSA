@@ -308,7 +308,7 @@ public:
         label_2->setText(QCoreApplication::translate("CISWidget", "\350\265\267\347\202\271\357\274\232mm", nullptr));
         speed_lineEdit->setText(QCoreApplication::translate("CISWidget", "30", nullptr));
         label_3->setText(QCoreApplication::translate("CISWidget", "\347\273\210\347\202\271\357\274\232mm", nullptr));
-        end_lineEdit->setText(QCoreApplication::translate("CISWidget", "260", nullptr));
+        end_lineEdit->setText(QCoreApplication::translate("CISWidget", "270", nullptr));
         btn_ChessboardDetector->setText(QCoreApplication::translate("CISWidget", "\346\243\213\347\233\230\346\240\274\350\247\222\347\202\271\346\243\200\346\265\213", nullptr));
         btnCameraCalibrate->setText(QCoreApplication::translate("CISWidget", "\347\233\270\346\234\272\345\206\205\345\217\202\346\240\207\345\256\232", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_3), QCoreApplication::translate("CISWidget", "\350\256\276\347\275\256", nullptr));

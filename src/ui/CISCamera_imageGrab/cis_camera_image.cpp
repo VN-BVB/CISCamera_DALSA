@@ -53,8 +53,7 @@ void CISWidget::initCISCameraConfig() {
     configCISCamera = std::make_shared<ExternalExeRunner>();
     configCISCamera->moveToThread(cameraThreadConfig);
     cameraThreadConfig->start();
-    connect(configCISCamera.get(), &ExternalExeRunner::sendMessage2UI, this, &CISWidget::whenAppendMessageLog,
-            Qt::QueuedConnection);
+    connect(configCISCamera.get(), &ExternalExeRunner::sendMessage2UI, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
 }
 
 void CISWidget::initCamera() {
@@ -63,7 +62,7 @@ void CISWidget::initCamera() {
         whenAppendMessageLog(QString(u8"DALSA采集卡初始化中"));
         // Master
         masterCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
-        if (!masterCISCamera->initCamera("./data/CISConfig/MasterEncoder.ccf", 0)) {
+        if (!masterCISCamera->initCamera(masterCameraCCF_, 0)) {
             PLOGE << "Master 初始化失败";
             whenAppendMessageLog(QString(u8"Master 初始化失败"));
             return;
@@ -74,7 +73,7 @@ void CISWidget::initCamera() {
 
         // Slave
         slaveCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
-        if (!slaveCISCamera->initCamera("./data/CISConfig/SlaveEncoder.ccf", 1)) {
+        if (!slaveCISCamera->initCamera(slaveCameraCCF_, 1)) {
             PLOGE << "Slave 初始化失败";
             whenAppendMessageLog(QString(u8"Slave 初始化失败"));
             return;
@@ -156,18 +155,16 @@ void CISWidget::tryStitchImages() {
     if (ui->ckbSplice->isChecked() && masterReady && slaveReady) {
         masterReady = slaveReady = false;
 
-        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection,
-                                  Q_ARG(std::shared_ptr<cv::Mat>, masterImg), Q_ARG(std::shared_ptr<cv::Mat>, slaveImg),
-                                  Q_ARG(bool, true), Q_ARG(bool, false)  // 或 ui->ckbSplice->isChecked()
+        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection, Q_ARG(std::shared_ptr<cv::Mat>, masterImg),
+                                  Q_ARG(std::shared_ptr<cv::Mat>, slaveImg), Q_ARG(bool, true), Q_ARG(bool, false)  // 或 ui->ckbSplice->isChecked()
         );
     }
 }
 void CISWidget::on_btnSave_clicked() {
     if (ui->ckbSplice->isChecked()) {
-        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection,
-                                  Q_ARG(QString, "./data/CISCamera_Image"), Q_ARG(QString, "Splice"),
-                                  Q_ARG(QString, ".bmp"),  // 需要更高精度可改 ".tif" / ".exr"
-                                  Q_ARG(bool, false)       // 是否同时保存主/从
+        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection, Q_ARG(QString, "./data/CISCamera_Image"),
+                                  Q_ARG(QString, "Splice"), Q_ARG(QString, ".bmp"),  // 需要更高精度可改 ".tif" / ".exr"
+                                  Q_ARG(bool, false)                                 // 是否同时保存主/从
         );
     } else {
         bool checked = true;
@@ -218,7 +215,7 @@ void CISWidget::on_btnContinue_clicked() {
 
 // 软件触发
 void CISWidget::on_btnSoftWareTrigger_clicked() {
-    startPos = ui->end_lineEdit->text().toDouble();
+    startPos = ui->start_lineEdit->text().toDouble();
     endPos = ui->end_lineEdit->text().toDouble();
     speed = ui->speed_lineEdit->text().toDouble();
     if (triggerRunning) {
@@ -230,8 +227,7 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
     on_btnStart_clicked();
     double currentPos = ui->railWidget->getCurrentXPosition();
     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
-    // 如果当前未在380附近，则先运动到380
-    if (std::abs(currentPos - startPos) > 1.0) {
+    if (std::abs(currentPos - startPos) > 0.5) {
         ui->railWidget->on_chk_Stop_toggled(false);
         connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
         ui->railWidget->setEditAbsPosition(QString::number(startPos));
@@ -293,8 +289,7 @@ void CISWidget::on_btnCISConfig_clicked() {
 
 void CISWidget::on_btn_ChessboardDetector_clicked() {
     QMetaObject::invokeMethod(
-        libcbDetector.get(), [=]() { libcbDetector->processImagesInDirectory("./data/CISCamera_Image/qpg"); },
-        Qt::QueuedConnection);
+        libcbDetector.get(), [=]() { libcbDetector->processImagesInDirectory("./data/CISCamera_Image/qpg"); }, Qt::QueuedConnection);
 }
 
 void CISWidget::on_btnCameraCalibrate_clicked() {
