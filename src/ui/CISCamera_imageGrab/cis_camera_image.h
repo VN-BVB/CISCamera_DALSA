@@ -60,6 +60,7 @@ private:
     bool masterReady = false;
     bool slaveReady = false;
     bool triggerRunning = false;
+    double leadInTimer;
     double startPos;
     double endPos;
     double speed;

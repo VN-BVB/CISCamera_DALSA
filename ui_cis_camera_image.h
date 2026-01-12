@@ -49,12 +49,13 @@ public:
     QPushButton *btn_ChessboardDetector;
     QPushButton *btnCameraCalibrate;
     QGroupBox *groupBox;
-    QGridLayout *gridLayout_7;
     QGridLayout *gridLayout_6;
     QLabel *label;
-    QLineEdit *start_lineEdit;
-    QLabel *label_2;
     QLineEdit *speed_lineEdit;
+    QLabel *label_5;
+    QLineEdit *lead_lineEdit;
+    QLabel *label_2;
+    QLineEdit *start_lineEdit;
     QLabel *label_3;
     QLineEdit *end_lineEdit;
     QWidget *tab_2;
@@ -195,9 +196,7 @@ public:
         groupBox->setFont(font1);
         groupBox->setTabletTracking(false);
         groupBox->setLayoutDirection(Qt::LeftToRight);
-        gridLayout_7 = new QGridLayout(groupBox);
-        gridLayout_7->setObjectName(QString::fromUtf8("gridLayout_7"));
-        gridLayout_6 = new QGridLayout();
+        gridLayout_6 = new QGridLayout(groupBox);
         gridLayout_6->setObjectName(QString::fromUtf8("gridLayout_6"));
         label = new QLabel(groupBox);
         label->setObjectName(QString::fromUtf8("label"));
@@ -207,40 +206,47 @@ public:
 
         gridLayout_6->addWidget(label, 0, 0, 1, 1);
 
-        start_lineEdit = new QLineEdit(groupBox);
-        start_lineEdit->setObjectName(QString::fromUtf8("start_lineEdit"));
-        start_lineEdit->setFont(font1);
-
-        gridLayout_6->addWidget(start_lineEdit, 1, 1, 1, 1);
-
-        label_2 = new QLabel(groupBox);
-        label_2->setObjectName(QString::fromUtf8("label_2"));
-        label_2->setFont(font2);
-
-        gridLayout_6->addWidget(label_2, 1, 0, 1, 1);
-
         speed_lineEdit = new QLineEdit(groupBox);
         speed_lineEdit->setObjectName(QString::fromUtf8("speed_lineEdit"));
         speed_lineEdit->setFont(font1);
 
         gridLayout_6->addWidget(speed_lineEdit, 0, 1, 1, 1);
 
+        label_5 = new QLabel(groupBox);
+        label_5->setObjectName(QString::fromUtf8("label_5"));
+        label_5->setFont(font2);
+
+        gridLayout_6->addWidget(label_5, 1, 0, 1, 1);
+
+        lead_lineEdit = new QLineEdit(groupBox);
+        lead_lineEdit->setObjectName(QString::fromUtf8("lead_lineEdit"));
+        lead_lineEdit->setFont(font1);
+
+        gridLayout_6->addWidget(lead_lineEdit, 1, 1, 1, 1);
+
+        label_2 = new QLabel(groupBox);
+        label_2->setObjectName(QString::fromUtf8("label_2"));
+        label_2->setFont(font2);
+
+        gridLayout_6->addWidget(label_2, 2, 0, 1, 1);
+
+        start_lineEdit = new QLineEdit(groupBox);
+        start_lineEdit->setObjectName(QString::fromUtf8("start_lineEdit"));
+        start_lineEdit->setFont(font1);
+
+        gridLayout_6->addWidget(start_lineEdit, 2, 1, 1, 1);
+
         label_3 = new QLabel(groupBox);
         label_3->setObjectName(QString::fromUtf8("label_3"));
         label_3->setFont(font2);
 
-        gridLayout_6->addWidget(label_3, 2, 0, 1, 1);
+        gridLayout_6->addWidget(label_3, 3, 0, 1, 1);
 
         end_lineEdit = new QLineEdit(groupBox);
         end_lineEdit->setObjectName(QString::fromUtf8("end_lineEdit"));
         end_lineEdit->setFont(font1);
 
-        gridLayout_6->addWidget(end_lineEdit, 2, 1, 1, 1);
-
-        gridLayout_6->setColumnStretch(0, 10);
-        gridLayout_6->setColumnStretch(1, 15);
-
-        gridLayout_7->addLayout(gridLayout_6, 0, 0, 1, 1);
+        gridLayout_6->addWidget(end_lineEdit, 3, 1, 1, 1);
 
 
         gridLayout_8->addWidget(groupBox, 0, 0, 1, 1);
@@ -481,9 +487,11 @@ public:
         btnCameraCalibrate->setText(QCoreApplication::translate("CISWidget", "\347\233\270\346\234\272\345\206\205\345\217\202\346\240\207\345\256\232", nullptr));
         groupBox->setTitle(QCoreApplication::translate("CISWidget", "\350\275\257\344\273\266\350\247\246\345\217\221\350\275\250\351\201\223\350\256\276\347\275\256", nullptr));
         label->setText(QCoreApplication::translate("CISWidget", "\351\200\237\345\272\246\357\274\232mm/s", nullptr));
-        start_lineEdit->setText(QCoreApplication::translate("CISWidget", "-80", nullptr));
-        label_2->setText(QCoreApplication::translate("CISWidget", "\350\265\267\347\202\271\357\274\232mm", nullptr));
         speed_lineEdit->setText(QCoreApplication::translate("CISWidget", "30", nullptr));
+        label_5->setText(QCoreApplication::translate("CISWidget", "\351\242\204\350\265\260\357\274\232ms", nullptr));
+        lead_lineEdit->setText(QCoreApplication::translate("CISWidget", "1000", nullptr));
+        label_2->setText(QCoreApplication::translate("CISWidget", "\350\265\267\347\202\271\357\274\232mm", nullptr));
+        start_lineEdit->setText(QCoreApplication::translate("CISWidget", "-80", nullptr));
         label_3->setText(QCoreApplication::translate("CISWidget", "\347\273\210\347\202\271\357\274\232mm", nullptr));
         end_lineEdit->setText(QCoreApplication::translate("CISWidget", "260", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab), QCoreApplication::translate("CISWidget", "\347\233\270\346\234\272\346\265\213\350\257\225\345\212\237\350\203\275", nullptr));
