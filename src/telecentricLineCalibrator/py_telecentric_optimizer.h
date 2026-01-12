@@ -1,41 +1,30 @@
 ﻿#ifndef PY_TELECENTRIC_OPTIMIZER_H
 #define PY_TELECENTRIC_OPTIMIZER_H
 #include <pybind11/embed.h>
+#include <pybind11/iostream.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 
-#include <iostream>
+#include "src/config/calibration_data_io.h"
+#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 
-#include "plog/Log.h"
 class TelecentricPYOptimizer {
 public:
-    TelecentricPYOptimizer() = default;
-    bool invokeTelecentricCalibration() {
-        std::cout << "正在进行非线性优化" << std::endl;
-        _putenv("PYTHONHOME=D:\\anaconda\\envs\\Telecentric-Calibration");
-        _putenv(
-            "PYTHONPATH=D:\\anaconda\\envs\\Telecentric-Calibration\\Lib;"
-            "D:\\anaconda\\envs\\Telecentric-Calibration\\Lib\\site-packages;"
-            ".\\src\\telecentricLineCalibrator\\python\\Telecentric-Calibration-main");
+    TelecentricPYOptimizer();
 
-        try {
-            pybind11::scoped_interpreter guard{};
+    bool invokeTelecentricCalibration();
 
-            pybind11::exec(R"(
-            import sys
-            print('Python from:', sys.executable)
-            print('sys.path =', sys.path)
-        )");
+    bool optTelecentricExtrinsicParameters(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
+                                           const std::vector<Eigen::Vector2d>& imgPts,
+                                           const std::vector<Eigen::Vector2d>& worldPts, Eigen::Vector3d& v_rot,
+                                           Eigen::Vector3d& v_trans, double& err);
+    bool refinePlatformExtrinsicsLM(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& D,
+                                    const std::vector<std::vector<Eigen::Vector2d>>& pts, const Eigen::Vector3d& rvec_init,
+                                    const Eigen::Vector3d& tvec_init, double dx, double dy, double ang_deg,
+                                    Eigen::Vector3d& rvec_opt, Eigen::Vector3d& tvec_opt, double& final_rms);
 
-            std::string scriptPath =
-                R"(D:\Code\CISCamera_DALSA\src\telecentricLineCalibrator\python\Telecentric-Calibration-main\load.py)";
-
-            pybind11::eval_file(scriptPath);
-            return true;
-
-        } catch (pybind11::error_already_set &e) {
-            std::cerr << "❌ Python 执行错误:\n" << std::endl;
-            return false;
-        }
-    }
+private:
+    static bool pythonInitialized;
 };
 
 #endif  // PY_TELECENTRIC_OPTIMIZER_H

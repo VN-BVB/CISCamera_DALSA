@@ -5,7 +5,7 @@ clear; clc; close all;
 root_path = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\';
 dirs = {
     fullfile(root_path, 'txt'),    
-    fullfile(root_path, 'txt1'),   
+    fullfile(root_path, 'txt2'),   
     fullfile(root_path, 'txt3')    
 };
 
@@ -96,9 +96,9 @@ end
 
 %% ===================== 4. 总平均误差 =====================
 valid_idx = (err1_per_img > 0) & (err2_per_img > 0);
-if sum(valid_idx)==0
-    error('无有效图像！');
-end
+% if sum(valid_idx)==0
+%     error('无有效图像！');
+% end
 total_err1 = mean(err1_per_img(valid_idx));
 total_err2 = mean(err2_per_img(valid_idx));
 
@@ -109,6 +109,10 @@ fprintf('重投影2总平均误差：%.6f\n', total_err2);
 fprintf('=====================================================\n');
 
 %% ===================== 5. 可视化所有有效图像 =====================
+
+% img_path = '';  
+img_path = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\test\Splice_20251030_214803209.bmp';  % 若你提供路径，在图像上作画
+
 for img_idx = find(valid_idx)'
     gt_vis = all_gt{img_idx};
     r1_vis = all_r1{img_idx};
@@ -117,32 +121,57 @@ for img_idx = find(valid_idx)'
     res1 = r1_vis - gt_vis;
     res2 = r2_vis - gt_vis;
 
-    figure('Name', sprintf('残差图 %d', img_idx), 'NumberTitle','off', 'Position',[100,100,1200,800]);
+    % ==================== 新功能：如果提供了图片路径 → 在图片上作画 ====================
+    if ~isempty(img_path) && exist(img_path,'file')
+
+        img = imread(img_path);
+
+        figure('Name', sprintf('残差图 %d (原图叠加)', img_idx), ...
+               'NumberTitle','off', 'Position',[100,100,1200,800]);
+
+        imshow(img); hold on;
+
+        title(sprintf('第 %d 幅图像重投影可视化（叠加原图）', img_idx));
+
+        plot(gt_vis(:,1), gt_vis(:,2), 'ko', 'MarkerSize', config.marker_size, 'LineWidth',1.2);
+        plot(r1_vis(:,1), r1_vis(:,2), 'o', 'Color', config.color1, ...
+             'MarkerSize', config.marker_size-1, 'LineWidth',1.2);
+        plot(r2_vis(:,1), r2_vis(:,2), 's', 'Color', config.color2, ...
+             'MarkerSize', config.marker_size-1, 'LineWidth',1.2);
+
+        quiver(gt_vis(:,1), gt_vis(:,2), res1(:,1), res1(:,2), 0, ...
+               'Color', config.color1, 'LineStyle', config.line1, 'LineWidth', 1.2);
+        quiver(gt_vis(:,1), gt_vis(:,2), res2(:,1), res2(:,2), 0, ...
+               'Color', config.color2, 'LineStyle', config.line2, 'LineWidth', 1.2);
+
+        legend('原检测点', config.legend1, config.legend2, 'Location','southeast');
+        continue;  % ★ 不走下面的原图逻辑，进入下一个循环
+    end
+    % ==========================================================================
+
+
+    % ==================== 原来的纯点云绘图逻辑（保留） ====================
+    figure('Name', sprintf('残差图 %d', img_idx), ...
+           'NumberTitle','off', 'Position',[100,100,1200,800]);
     hold on; grid on; axis equal;
+
     xlabel('X 坐标（像素）'); ylabel('Y 坐标（像素）');
     title(sprintf('第 %d 幅图像重投影残差可视化（err1=%.4f px, err2=%.4f px）', ...
           img_idx, err1_per_img(img_idx), err2_per_img(img_idx)));
 
-    plot(gt_vis(:,1), gt_vis(:,2), 'ko', 'MarkerSize', config.marker_size, 'DisplayName', '原检测点');
+    plot(gt_vis(:,1), gt_vis(:,2), 'ko', 'MarkerSize', config.marker_size);
     plot(r1_vis(:,1), r1_vis(:,2), 'o', 'Color', config.color1, ...
-         'MarkerSize', config.marker_size-1, 'DisplayName', '重投影1 点');
+         'MarkerSize', config.marker_size-1);
     plot(r2_vis(:,1), r2_vis(:,2), 's', 'Color', config.color2, ...
-         'MarkerSize', config.marker_size-1, 'DisplayName', '重投影2 点');
+         'MarkerSize', config.marker_size-1);
 
     quiver(gt_vis(:,1), gt_vis(:,2), res1(:,1), res1(:,2), config.quiver_scale, ...
-           'Color', config.color1, 'LineStyle', config.line1, 'LineWidth', 1.2, 'DisplayName', config.legend1);
+           'Color', config.color1, 'LineStyle', config.line1, 'LineWidth', 1.2);
     quiver(gt_vis(:,1), gt_vis(:,2), res2(:,1), res2(:,2), config.quiver_scale, ...
-           'Color', config.color2, 'LineStyle', config.line2, 'LineWidth', 1.2, 'DisplayName', config.legend2);
+           'Color', config.color2, 'LineStyle', config.line2, 'LineWidth', 1.2);
 
-    legend('Location','northeastoutside', 'Orientation','vertical');
-    
-    % --- 保存功能（已注释） ---
-    % save_path = fullfile(root_path, sprintf('residual_visualization_img%d.png', img_idx));
-    % print(save_path, '-dpng', '-r300');
-    % fprintf('残差图 %d 已保存: %s\n', img_idx, save_path);
+    legend('原检测点', config.legend1, config.legend2, 'Location','northeastoutside');
 end
-
-
 %% ===================== 6. 辅助函数 =====================
 function sorted_files = get_sorted_txt(dir_path)
     dir_files = dir(fullfile(dir_path,'*.txt'));

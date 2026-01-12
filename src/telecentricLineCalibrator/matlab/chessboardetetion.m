@@ -1,5 +1,5 @@
 % 定义要处理的图像文件夹路径
-imageFolder = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\qpg\';
+imageFolder = 'D:\Code\CISCamera_DALSA\data\CISCamera_Image\qpgpc\';
 
 % 获取文件夹下所有的 .bmp 文件
 imageFileNames = dir(fullfile(imageFolder, '*.bmp'));

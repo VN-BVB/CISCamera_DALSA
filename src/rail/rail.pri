@@ -1,9 +1,9 @@
 SOURCES += \
-    $$PWD/plc_variableaddress.cpp \
     $$PWD/rail.cpp \
     $$PWD/rail_widget.cpp
 
 HEADERS += \
+    $$PWD/axis_register.h \
     $$PWD/plc_variableaddress.h \
     $$PWD/rail.h \
     $$PWD/rail_widget.h

@@ -1,60 +1,203 @@
-#ifndef PLC_VARIABLEADDRESS_H
+﻿#ifndef PLC_VARIABLEADDRESS_H
 #define PLC_VARIABLEADDRESS_H
-
-extern int PLC1_Id;
+// PLCid
+constexpr int PLC1_Id = 0;
 // B0-B32767 (0x3000-0xAFFF)
-extern int X_ServoEnable;
-extern int X_Stop;
-extern int X_Reset;
-extern int X_JogForward;
-extern int X_JogReverse;
-extern int X_HomeCommand;
-extern int X_AbsPositionCommand;
-extern int X_RelPositionCommand;
-extern int X_TorqueCommand;
-extern int X_ImmediateStop;
-extern int X_Acceleration;
-extern int X_Deceleration;
-extern int X_CurveType;
-extern int TEST;
+constexpr int X_ServoEnable = 0x3000;         // IN_使能 (B0)
+constexpr int X_Stop = 0x3001;                // IN_停止 (B1)
+constexpr int X_Reset = 0x3002;               // IN_复位 (B2)
+constexpr int X_JogForward = 0x3003;          // IN_正向点动 (B3)
+constexpr int X_JogReverse = 0x3004;          // IN_反向点动 (B4)
+constexpr int X_HomeCommand = 0x3005;         // IN_回原命令 (B5)
+constexpr int X_AbsPositionCommand = 0x3006;  // IN_绝对定位命令 (B6)
+constexpr int X_RelPositionCommand = 0x3007;  // IN_相对定位命令 (B7)
+constexpr int X_TorqueCommand = 0x3008;       // IN_力矩定位命令 (B8)
+constexpr int X_ImmediateStop = 0x3009;       // IN_急停 (B9)
+constexpr int X_SetOverRide = 0x300A;         // IN_运动超调使能 (B10)
+constexpr int Y_ServoEnable = 0x300B;         // IN_使能 (B11)
+constexpr int Y_Stop = 0x300C;                // IN_停止 (B12)
+constexpr int Y_Reset = 0x300D;               // IN_复位 (B13)
+constexpr int Y_JogForward = 0x300E;          // IN_正向点动 (B14)
+constexpr int Y_JogReverse = 0x300F;          // IN_反向点动 (B15)
+constexpr int Y_HomeCommand = 0x3010;         // IN_回原命令 (B16)
+constexpr int Y_AbsPositionCommand = 0x3011;  // IN_绝对定位命令 (B17)
+constexpr int Y_RelPositionCommand = 0x3012;  // IN_相对定位命令 (B18)
+constexpr int Y_TorqueCommand = 0x3013;       // IN_力矩定位命令 (B19)
+constexpr int Y_ImmediateStop = 0x3014;       // IN_急停 (B20)
+constexpr int Y_SetOverRide = 0x3015;         // IN_运动超调使能 (B21)
+constexpr int Z_ServoEnable = 0x3016;         // IN_使能 (B22)
+constexpr int Z_Stop = 0x3017;                // IN_停止 (B23)
+constexpr int Z_Reset = 0x3018;               // IN_复位 (B24)
+constexpr int Z_JogForward = 0x3019;          // IN_正向点动 (B25)
+constexpr int Z_JogReverse = 0x301A;          // IN_反向点动 (B26)
+constexpr int Z_HomeCommand = 0x301B;         // IN_回原命令 (B27)
+constexpr int Z_AbsPositionCommand = 0x301C;  // IN_绝对定位命令 (B28)
+constexpr int Z_RelPositionCommand = 0x301D;  // IN_相对定位命令 (B29)
+constexpr int Z_TorqueCommand = 0x301E;       // IN_力矩定位命令 (B30)
+constexpr int Z_ImmediateStop = 0x301F;       // IN_急停 (B31)
+constexpr int Z_SetOverRide = 0x3020;         // IN_运动超调使能 (B32)
 // R0-R32767 (0x3000-0xAFFF)
-extern int X_JogSpeed;
-extern int X_AbsPosition;
-extern int X_AbsSpeed;
-extern int X_RelPosition;
-extern int X_RelSpeed;
-extern int X_TorqueForce;
-extern int X_TorqueSpeed;
+constexpr int X_JogSpeed = 0x3000;        // IN_点动速度 (R0)
+constexpr int X_AbsPosition = 0x3002;     // IN_绝对定位位置 (R2)
+constexpr int X_AbsSpeed = 0x3004;        // IN_绝对定位速度 (R4)
+constexpr int X_RelPosition = 0x3006;     // IN_相对定位位置 (R6)
+constexpr int X_RelSpeed = 0x3008;        // IN_相对定位速度 (R8)
+constexpr int X_TorqueForce = 0x300A;     // IN_力矩定位力 (R10)
+constexpr int X_TorqueSpeed = 0x300C;     // IN_力矩定位速度 (R12)
+constexpr int X_Acceleration = 0x300E;    // IN_加速度 (R14)
+constexpr int X_Deceleration = 0x3010;    // IN_减速度 (R16)
+constexpr int X_CurveType = 0x3012;       // IN_曲线类型 (R18)
+constexpr int X_ORSpeed = 0x3014;         // IN_超调速度 (R20)
+constexpr int X_ORAcceleration = 0x3016;  // IN_超调加速度 (R22)
+// ---------- Y Axis ----------
+constexpr int Y_JogSpeed = 0x3018;        // IN_点动速度 (R24)
+constexpr int Y_AbsPosition = 0x301A;     // IN_绝对定位位置 (R26)
+constexpr int Y_AbsSpeed = 0x301C;        // IN_绝对定位速度 (R28)
+constexpr int Y_RelPosition = 0x301E;     // IN_相对定位位置 (R30)
+constexpr int Y_RelSpeed = 0x3020;        // IN_相对定位速度 (R32)
+constexpr int Y_TorqueForce = 0x3022;     // IN_力矩定位力 (R34)
+constexpr int Y_TorqueSpeed = 0x3024;     // IN_力矩定位速度 (R36)
+constexpr int Y_Acceleration = 0x3026;    // IN_加速度 (R38)
+constexpr int Y_Deceleration = 0x3028;    // IN_减速度 (R40)
+constexpr int Y_CurveType = 0x302A;       // IN_曲线类型 (R42)
+constexpr int Y_ORSpeed = 0x302C;         // IN_超调速度 (R44)
+constexpr int Y_ORAcceleration = 0x302E;  // IN_超调加速度 (R46)
+
+// ---------- Z Axis ----------
+constexpr int Z_JogSpeed = 0x3030;        // IN_点动速度 (R48)
+constexpr int Z_AbsPosition = 0x3032;     // IN_绝对定位位置 (R50)
+constexpr int Z_AbsSpeed = 0x3034;        // IN_绝对定位速度 (R52)
+constexpr int Z_RelPosition = 0x3036;     // IN_相对定位位置 (R54)
+constexpr int Z_RelSpeed = 0x3038;        // IN_相对定位速度 (R56)
+constexpr int Z_TorqueForce = 0x303A;     // IN_力矩定位力 (R58)
+constexpr int Z_TorqueSpeed = 0x303C;     // IN_力矩定位速度 (R60)
+constexpr int Z_Acceleration = 0x303E;    // IN_加速度 (R62)
+constexpr int Z_Deceleration = 0x3040;    // IN_减速度 (R64)
+constexpr int Z_CurveType = 0x3042;       // IN_曲线类型 (R66)
+constexpr int Z_ORSpeed = 0x3044;         // IN_超调速度 (R68)
+constexpr int Z_ORAcceleration = 0x3046;  // IN_超调加速度 (R70)
 
 // S0-S4095 (0xE000-0xEFFF)
-extern int X_PosLimitSignal;
-extern int X_PosLimitAlarm;
-extern int X_NegLimitSignal;
-extern int X_NegLimitAlarm;
-extern int X_HomeSignal;
-extern int X_EnableComplete;
-extern int X_StopComplete;
-extern int X_ResetComplete;
-extern int X_AbsPosComplete;
-extern int X_DriverAlarm;
-extern int X_AxisFault;
-extern int X_FBError;
-extern int X_RelativeMoving;
-extern int X_RelativePosHolding;
-extern int X_RelativePosComplete;
-extern int X_AbsoluteMoving;
-extern int X_AbsolutePosHolding;
-extern int X_AbsolutePosComplete;
-extern int X_HomingMoving;
-extern int X_HomingHolding;
-extern int X_HomingComplete;
-extern int X_JogRunning;
-extern int X_IStopDone;
-extern int X_IStopError;
+constexpr int X_PosLimitSignal = 0xE000;       // OUT_正极限位信号 (S0)
+constexpr int X_PosLimitAlarm = 0xE001;        // OUT_正限位报警 (S1)
+constexpr int X_NegLimitSignal = 0xE002;       // OUT_负极限位信号 (S2)
+constexpr int X_NegLimitAlarm = 0xE003;        // OUT_负限位报警 (S3)
+constexpr int X_HomeSignal = 0xE004;           // OUT_原点信号 (S4)
+constexpr int X_EnableComplete = 0xE005;       // OUT_使能完成 (S5)
+constexpr int X_StopComplete = 0xE006;         // OUT_停止完成 (S6)
+constexpr int X_ResetComplete = 0xE007;        // OUT_复位完成 (S7)
+constexpr int X_AbsPosComplete = 0xE008;       // OUT_在当前绝对定位位置 (S8)
+constexpr int X_DriverAlarm = 0xE009;          // OUT_驱动器报警 (S9)
+constexpr int X_AxisFault = 0xE00A;            // OUT_轴故障中 (S10)
+constexpr int X_FBError = 0xE00B;              // OUT_FB执行错误 (S11)
+constexpr int X_RelativeMoving = 0xE00C;       // OUT_相对定位执行中 (S12)
+constexpr int X_RelativePosHolding = 0xE00D;   // OUT_相对定位完成保持 (S13)
+constexpr int X_RelativePosComplete = 0xE00E;  // OUT_相对定位完成 (S14)
+constexpr int X_AbsoluteMoving = 0xE00F;       // OUT_绝对定位执行中 (S15)
+constexpr int X_AbsolutePosHolding = 0xE010;   // OUT_绝对定位完成保持 (S16)
+constexpr int X_AbsolutePosComplete = 0xE011;  // OUT_绝对定位完成 (S17)
+constexpr int X_HomingMoving = 0xE012;         // OUT_回原执行中 (S18)
+constexpr int X_HomingHolding = 0xE013;        // OUT_回原完成保持 (S19)
+constexpr int X_HomingComplete = 0xE014;       // OUT_回原完成 (S20)
+constexpr int X_JogRunning = 0xE015;           // OUT_点动运行中 (S21)
+constexpr int X_IStopDone = 0xE016;            // OUT_急停完成 (S22)
+constexpr int X_IStopError = 0xE017;           // OUT_急停错误 (S23)
+constexpr int X_OREnabled = 0xE018;            // OUT_运动超调有效 (S24)
+constexpr int X_ORBusy = 0xE019;               // OUT_运动超调忙 (S25)
+constexpr int X_ORError = 0xE01A;              // OUT_运动超调故障 (S26)
+constexpr int X_Disabled = 0xE01B;             // OUT_去使能状态 (S27)
+constexpr int X_StandStill = 0xE01C;           // OUT_使能非运行 (S28)
+constexpr int X_ConstantVelocity = 0xE01D;     // OUT_恒速运动 (S29)
+constexpr int X_Accelerating = 0xE01E;         // OUT_加速运动 (S30)
+constexpr int X_Decelerating = 0xE01F;         // OUT_减速运动 (S31)
+// ---------- Y Axis ----------
+constexpr int Y_PosLimitSignal = 0xE020;       // OUT_正极限位信号 (S32)
+constexpr int Y_PosLimitAlarm = 0xE021;        // OUT_正限位报警 (S33)
+constexpr int Y_NegLimitSignal = 0xE022;       // OUT_负极限位信号 (S34)
+constexpr int Y_NegLimitAlarm = 0xE023;        // OUT_负限位报警 (S35)
+constexpr int Y_HomeSignal = 0xE024;           // OUT_原点信号 (S36)
+constexpr int Y_EnableComplete = 0xE025;       // OUT_使能完成 (S37)
+constexpr int Y_StopComplete = 0xE026;         // OUT_停止完成 (S38)
+constexpr int Y_ResetComplete = 0xE027;        // OUT_复位完成 (S39)
+constexpr int Y_AbsPosComplete = 0xE028;       // OUT_在当前绝对定位位置 (S40)
+constexpr int Y_DriverAlarm = 0xE029;          // OUT_驱动器报警 (S41)
+constexpr int Y_AxisFault = 0xE02A;            // OUT_轴故障中 (S42)
+constexpr int Y_FBError = 0xE02B;              // OUT_FB执行错误 (S43)
+constexpr int Y_RelativeMoving = 0xE02C;       // OUT_相对定位执行中 (S44)
+constexpr int Y_RelativePosHolding = 0xE02D;   // OUT_相对定位完成保持 (S45)
+constexpr int Y_RelativePosComplete = 0xE02E;  // OUT_相对定位完成 (S46)
+constexpr int Y_AbsoluteMoving = 0xE02F;       // OUT_绝对定位执行中 (S47)
+constexpr int Y_AbsolutePosHolding = 0xE030;   // OUT_绝对定位完成保持 (S48)
+constexpr int Y_AbsolutePosComplete = 0xE031;  // OUT_绝对定位完成 (S49)
+constexpr int Y_HomingMoving = 0xE032;         // OUT_回原执行中 (S50)
+constexpr int Y_HomingHolding = 0xE033;        // OUT_回原完成保持 (S51)
+constexpr int Y_HomingComplete = 0xE034;       // OUT_回原完成 (S52)
+constexpr int Y_JogRunning = 0xE035;           // OUT_点动运行中 (S53)
+constexpr int Y_IStopDone = 0xE036;            // OUT_急停完成 (S54)
+constexpr int Y_IStopError = 0xE037;           // OUT_急停错误 (S55)
+constexpr int Y_OREnabled = 0xE038;            // OUT_运动超调有效 (S56)
+constexpr int Y_ORBusy = 0xE039;               // OUT_运动超调忙 (S57)
+constexpr int Y_ORError = 0xE03A;              // OUT_运动超调故障 (S58)
+constexpr int Y_Disabled = 0xE03B;             // OUT_去使能状态 (S59)
+constexpr int Y_StandStill = 0xE03C;           // OUT_使能非运行 (S60)
+constexpr int Y_ConstantVelocity = 0xE03D;     // OUT_恒速运动 (S61)
+constexpr int Y_Accelerating = 0xE03E;         // OUT_加速运动 (S62)
+constexpr int Y_Decelerating = 0xE03F;         // OUT_减速运动 (S63)
+
+// ---------- Z Axis ----------
+constexpr int Z_PosLimitSignal = 0xE040;       // OUT_正极限位信号 (S64)
+constexpr int Z_PosLimitAlarm = 0xE041;        // OUT_正限位报警 (S65)
+constexpr int Z_NegLimitSignal = 0xE042;       // OUT_负极限位信号 (S66)
+constexpr int Z_NegLimitAlarm = 0xE043;        // OUT_负限位报警 (S67)
+constexpr int Z_HomeSignal = 0xE044;           // OUT_原点信号 (S68)
+constexpr int Z_EnableComplete = 0xE045;       // OUT_使能完成 (S69)
+constexpr int Z_StopComplete = 0xE046;         // OUT_停止完成 (S70)
+constexpr int Z_ResetComplete = 0xE047;        // OUT_复位完成 (S71)
+constexpr int Z_AbsPosComplete = 0xE048;       // OUT_在当前绝对定位位置 (S72)
+constexpr int Z_DriverAlarm = 0xE049;          // OUT_驱动器报警 (S73)
+constexpr int Z_AxisFault = 0xE04A;            // OUT_轴故障中 (S74)
+constexpr int Z_FBError = 0xE04B;              // OUT_FB执行错误 (S75)
+constexpr int Z_RelativeMoving = 0xE04C;       // OUT_相对定位执行中 (S76)
+constexpr int Z_RelativePosHolding = 0xE04D;   // OUT_相对定位完成保持 (S77)
+constexpr int Z_RelativePosComplete = 0xE04E;  // OUT_相对定位完成 (S78)
+constexpr int Z_AbsoluteMoving = 0xE04F;       // OUT_绝对定位执行中 (S79)
+constexpr int Z_AbsolutePosHolding = 0xE050;   // OUT_绝对定位完成保持 (S80)
+constexpr int Z_AbsolutePosComplete = 0xE051;  // OUT_绝对定位完成 (S81)
+constexpr int Z_HomingMoving = 0xE052;         // OUT_回原执行中 (S82)
+constexpr int Z_HomingHolding = 0xE053;        // OUT_回原完成保持 (S83)
+constexpr int Z_HomingComplete = 0xE054;       // OUT_回原完成 (S84)
+constexpr int Z_JogRunning = 0xE055;           // OUT_点动运行中 (S85)
+constexpr int Z_IStopDone = 0xE056;            // OUT_急停完成 (S86)
+constexpr int Z_IStopError = 0xE057;           // OUT_急停错误 (S87)
+constexpr int Z_OREnabled = 0xE058;            // OUT_运动超调有效 (S88)
+constexpr int Z_ORBusy = 0xE059;               // OUT_运动超调忙 (S89)
+constexpr int Z_ORError = 0xE05A;              // OUT_运动超调故障 (S90)
+constexpr int Z_Disabled = 0xE05B;             // OUT_去使能状态 (S91)
+constexpr int Z_StandStill = 0xE05C;           // OUT_使能非运行 (S92)
+constexpr int Z_ConstantVelocity = 0xE05D;     // OUT_恒速运动 (S93)
+constexpr int Z_Accelerating = 0xE05E;         // OUT_加速运动 (S94)
+constexpr int Z_Decelerating = 0xE05F;         // OUT_减速运动 (S95)
 // D0-D7999 (0x0000-0x1F3F)
-extern int X_CurrentPosition;
-extern int X_CurrentSpeed;
-extern int X_CurrentTorque;
-extern int X_DriverFaultCode;
-extern int X_AxisFaultCode;
+constexpr int X_CurrentPosition = 0x0000;  // OUT_当前位置 (D0)
+constexpr int X_CurrentSpeed = 0x0002;     // OUT_当前速度 (D2)
+constexpr int X_CurrentTorque = 0x0004;    // OUT_当前转矩 (D4)
+constexpr int X_DriverFaultCode = 0x0006;  // OUT_驱动器故障码 (D6)
+constexpr int X_AxisFaultCode = 0x0007;    // OUT_轴故障码 (D7)
+constexpr int X_CurrentValue = 0x0008;     // OUT_电流 (D8)
+// ---------- Y Axis ----------
+constexpr int Y_CurrentPosition = 0x000A;  // OUT_当前位置 (D10)
+constexpr int Y_CurrentSpeed = 0x000C;     // OUT_当前速度 (D12)
+constexpr int Y_CurrentTorque = 0x000E;    // OUT_当前转矩 (D14)
+constexpr int Y_DriverFaultCode = 0x0010;  // OUT_驱动器故障码 (D16)
+constexpr int Y_AxisFaultCode = 0x0011;    // OUT_轴故障码 (D17)
+constexpr int Y_CurrentValue = 0x0012;     // OUT_电流 (D18)
+
+// ---------- Z Axis ----------
+constexpr int Z_CurrentPosition = 0x0014;  // OUT_当前位置 (D20)
+constexpr int Z_CurrentSpeed = 0x0016;     // OUT_当前速度 (D22)
+constexpr int Z_CurrentTorque = 0x0018;    // OUT_当前转矩 (D24)
+constexpr int Z_DriverFaultCode = 0x001A;  // OUT_驱动器故障码 (D26)
+constexpr int Z_AxisFaultCode = 0x001B;    // OUT_轴故障码 (D27)
+constexpr int Z_CurrentValue = 0x001C;     // OUT_电流 (D28)
+// 关于限位加减速度，可调整6085h数值
 #endif  // PLC_VARIABLEADDRESS_H
