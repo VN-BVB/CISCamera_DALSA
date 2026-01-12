@@ -278,7 +278,6 @@ void CISWidget::on_ckbSplice_toggled(bool checked) {
 
 void CISWidget::on_btnCISConfig_clicked() {
     if (!configCISCamera) return;
-
     QMetaObject::invokeMethod(
         configCISCamera.get(),
         [this]() {
@@ -291,7 +290,7 @@ void CISWidget::on_btnCISConfig_clicked() {
 }
 
 void CISWidget::on_btn_ChessboardDetector_clicked() {
-    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->whenDetectChessboard(); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(imageProcessor.get(), &CameraImageProcessor::whenDetectChessboard, Qt::QueuedConnection);
 }
 
 void CISWidget::on_btnCameraCalibrate_clicked() {
@@ -314,8 +313,9 @@ void CISWidget::on_btnReadLocalImg_clicked() {
 }
 
 void CISWidget::on_btnClearCPImg_clicked() {
-    QMetaObject::invokeMethod(
-        imageProcessor.get(), [=]() { imageProcessor->whenClearPlatFromFile("img"); }, Qt::QueuedConnection);
+    if (imageProcessor) {
+        QMetaObject::invokeMethod(imageProcessor.get(), "whenClearPlatFromFile", Qt::QueuedConnection, Q_ARG(QString, "img"));
+    }
 }
 
 void CISWidget::on_btnClearCPDetectResult_clicked() {

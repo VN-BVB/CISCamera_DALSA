@@ -1,7 +1,6 @@
 ﻿#include "rail.h"
 
 #include "./src/ui/utils/stateLight/StateLight.h"
-#include "plc_variableaddress.h"
 
 #pragma execution_character_set("utf-8")
 
@@ -79,7 +78,7 @@ void Rail::tryToConnect() {
         emit sendText("Modbus 状态: 重连成功！");
     }
 }
-void Rail::disonnectPLC() {
+void Rail::disConnectPLC() {
     writeCoils(X_ServoEnable, {false});
     // 断开 libmodbus 连接
     if (modbusTcp != nullptr) {

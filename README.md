@@ -1,7 +1,7 @@
 # ground_rail_welding
 
 ◮◮◮ 注意:
-1. 项目仅限MSVC2017;
+1. 项目仅限MSVC2017，C++11;
 2. 除3rdParty.pri中涉及的库以外, 还需要在visual studio中安装MFC, 并正确配置相关环境;
 
 ◮◮◮ 多人协作代码准则:

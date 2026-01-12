@@ -12,7 +12,8 @@
 #include <QThread>
 #include <QTimer>
 
-#include "PLC_VariableAddress.h"
+#include "axis_register.h"
+#include "plc_variableaddress.h"
 // libmodbus
 #include "modbus-tcp.h"
 #include "modbus.h"
@@ -54,7 +55,7 @@ public slots:
     void writeCoils(int address, const QVector<bool> &values);
     void writeRegisters(int address, const QVector<quint16> &values);
     void connectPLC(const QString ip, int port);
-    void disonnectPLC();
+    void disConnectPLC();
     void tryToConnect();
 
     void whenMove2AbsPosition(float vel, float pos);  // 运动到绝对位置

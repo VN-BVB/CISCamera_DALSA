@@ -21,7 +21,7 @@ RailWidget::RailWidget(QWidget *parent) : QWidget(parent), ui(new Ui::RailWidget
     connect(rail, &Rail::sendPositionAndSpeed, this, &RailWidget::whenUpdatePositionAndSpeed);
 
     connect(this, &RailWidget::sendConnectToPLC, rail, &Rail::connectPLC);
-    connect(this, &RailWidget::sendDisconnectToPLC, rail, &Rail::disonnectPLC);
+    connect(this, &RailWidget::sendDisconnectToPLC, rail, &Rail::disConnectPLC);
     connect(this, &RailWidget::sendWriteCoils, rail, &Rail::writeCoils);
     connect(this, &RailWidget::sendWriteRegisters, rail, &Rail::writeRegisters);
     connect(this, &RailWidget::sendMove2AbsPosition, rail, &Rail::whenMove2AbsPosition);
