@@ -241,12 +241,39 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
         whenMoveToStartFinished();
     }
 }
+// void CISWidget::whenMoveToStartFinished() {
+//     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+
+//     // 启动相机采集（软件触发）
+//     if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
+// #ifdef ENABLE_SLAVE_CAMERA
+//     if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
+// #endif
+//     ui->railWidget->setEditAbsPosition(QString::number(endPos));
+//     ui->railWidget->setEditSpeed(QString::number(speed));
+//     ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
+
+//     // connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+//     //     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, nullptr, nullptr);
+//     //     on_btnStop_clicked();
+//     // });
+//     // 使用QMetaObject::Connection来管理信号连接，以便精确断开
+//     static QMetaObject::Connection endMoveConnection;
+//     endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+//         // 只断开当前建立的连接
+//         disconnect(endMoveConnection);
+//         on_btnStop_clicked();
+//     });
+//     triggerRunning = false;
+// }
 void CISWidget::whenMoveToStartFinished() {
     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+    // 下发扫描运动
     ui->railWidget->setEditAbsPosition(QString::number(endPos));
     ui->railWidget->setEditSpeed(QString::number(speed));
     ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
-    // 启动相机采集（软件触发）定时预走
+
+    whenAppendMessageLog(u8"扫描运动已下发，进入 lead-in 阶段");
     QTimer::singleShot(static_cast<int>(leadInTimer), this, [this]() {
         if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
 
@@ -254,26 +281,30 @@ void CISWidget::whenMoveToStartFinished() {
         if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
 #endif
 
-        whenAppendMessageLog(QString(u8"Lead-in 时间 %1 ms 到达，开始相机触发").arg(leadInTimer));
+        whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发").arg(leadInTimer));
+        // 记录扫描起始位置（真实）
+        scanStartPosReal = ui->railWidget->getCurrentXPosition();
+
+        whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
+                                     u8"扫描起始位置：%2")
+                                 .arg(leadInTimer)
+                                 .arg(scanStartPosReal, 0, 'f', 3));
+        int stopDelayMs = 2000;
+        QTimer::singleShot(stopDelayMs, this, [this]() {
+            scanEndPosReal = ui->railWidget->getCurrentXPosition();
+
+            whenAppendMessageLog(QString(u8"扫描结束\n"
+                                         u8"  起始位置：%1\n"
+                                         u8"  结束位置：%2\n"
+                                         u8"  实际位移：%3")
+                                     .arg(scanStartPosReal, 0, 'f', 3)
+                                     .arg(scanEndPosReal, 0, 'f', 3)
+                                     .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
+
+            on_btnStop_clicked();
+            triggerRunning = false;
+        });
     });
-
-    // // 使用QMetaObject::Connection来管理信号连接，以便精确断开
-    // static QMetaObject::Connection endMoveConnection;
-    // endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
-    //     // 只断开当前建立的连接
-    //     disconnect(endMoveConnection);
-    //     on_btnStop_clicked();
-    // });
-    double scanTimeMs = (endPos - startPos) / speed * 1000.0;
-
-    int stopDelayMs = static_cast<int>(scanTimeMs + 100);  // 裕量
-
-    QTimer::singleShot(stopDelayMs, this, [this]() {
-        whenAppendMessageLog(QString(u8"扫描时间到，自动停止"));
-        on_btnStop_clicked();
-    });
-
-    triggerRunning = false;
 }
 
 void CISWidget::on_btnStopTrigger_clicked() {

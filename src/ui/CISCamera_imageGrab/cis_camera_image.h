@@ -64,6 +64,7 @@ private:
     double startPos;
     double endPos;
     double speed;
+    double scanStartPosReal, scanEndPosReal;
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();

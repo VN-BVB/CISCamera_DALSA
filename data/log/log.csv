@@ -49573,3 +49573,7 @@
 2026/01/12;21:29:10.368;DEBUG;11004;0000000000000000;DalsaCamera::initCamera@38;"DALSA采集卡初始化中..."
 2026/01/12;21:29:10.373;DEBUG;30336;0000000000000000;CalibrationData::load@105;"[OK] Calibration data loaded: ./data/calibration_config/optimized_calib_data.json"
 2026/01/12;21:29:12.347;DEBUG;31884;0000000000000000;DalsaCamera::stopGrab@189;" 相机停止采集图像"
+2026/01/12;22:15:54.530;DEBUG;37408;0000000000000000;DalsaCamera::initCamera@38;"DALSA采集卡初始化中..."
+2026/01/12;22:15:54.530;DEBUG;36572;0000000000000000;CISWidget::CISWidget@19;"当前主线程"
+2026/01/12;22:15:54.532;DEBUG;36160;0000000000000000;CalibrationData::load@105;"[OK] Calibration data loaded: ./data/calibration_config/optimized_calib_data.json"
+2026/01/12;22:15:56.623;DEBUG;36572;0000000000000000;DalsaCamera::stopGrab@189;" 相机停止采集图像"
