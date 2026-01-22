@@ -29,8 +29,7 @@ bool TelecentricPYOptimizer::invokeTelecentricCalibration() {
                 print("  ", p)
         )");
 
-        std::string scriptPath =
-            R"(D:\Code\CISCamera_DALSA\src\telecentricLineCalibrator\python\Telecentric-Calibration-main\load.py)";
+        std::string scriptPath = R"(./src/telecentricLineCalibrator/python/Telecentric-Calibration-main/load.py)";
 
         pybind11::eval_file(scriptPath);
 

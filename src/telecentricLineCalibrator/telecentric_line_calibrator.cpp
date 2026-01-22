@@ -1157,18 +1157,18 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     if (!calib2.load("./data/calibration_config/optimized_calib_data.json")) {
         throw std::runtime_error("无法加载标定文件");
     }
+    // ------------读取初步标定数据沿着非线性优化求取外参是否合理----------
+    // // 从标定数据中读取参数
+    // Eigen::Matrix3d K1 = calib2.K;
+    // Eigen::Matrix<double, 1, 5> coff_dis1 = calib2.coff_dis;
+    // double m1 = calib2.m;
+    // double u01 = calib2.u0;
+    // double v01 = calib2.v0;
+    // double dx1 = calib2.dx;
+    // double dy1 = calib2.dy;
 
-    // 从标定数据中读取参数
-    Eigen::Matrix3d K1 = calib2.K;
-    Eigen::Matrix<double, 1, 5> coff_dis1 = calib2.coff_dis;
-    double m1 = calib2.m;
-    double u01 = calib2.u0;
-    double v01 = calib2.v0;
-    double dx1 = calib2.dx;
-    double dy1 = calib2.dy;
-
-    std::vector<Eigen::Vector3d> v_rot1 = calib2.v_rot;
-    std::vector<Eigen::Vector3d> v_trans1 = calib2.v_trans;
+    // std::vector<Eigen::Vector3d> v_rot1 = calib2.v_rot;
+    // std::vector<Eigen::Vector3d> v_trans1 = calib2.v_trans;
 
     // // Pose aaa;
     // // cv::Vec3d rvec_new(2.0747767, 2.05844074, -0.21906585);
@@ -1180,16 +1180,17 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     // // aaa.reprojErr = computeReprojectionErrorDemo(worldPts, all_imgPts[3], aaa, K1, " ", coff_dis1);
     // // std::cout << "平均重投影误差 = " << aaa.reprojErr << std::endl;
     // // 调用姿态估计函数
-    std::vector<Eigen::Vector2d> pts;
-    if (readPointsFromTxt("D:/Code/CISCamera_DALSA/data/PaltfromCalibrate/orignCor/txt/Splice_20251108_160806374.txt", pts)) {
-        Pose pos1e = estimateTelecentricPose(K1, coff_dis1, m1, u0_, v0_, dx_, dy_, worldPts, pts);
-    }
-
-    // PLOGD << " 开始非线性优化";
-    // TelecentricPYOptimizer opt;
-    // if (!opt.invokeTelecentricCalibration()) {
-    //     PLOGE << "Python 调用失败！";
+    // std::vector<Eigen::Vector2d> pts;
+    // if (readPointsFromTxt("D:/Code/CISCamera_DALSA/data/PaltfromCalibrate/orignCor/txt/Splice_20251108_160806374.txt", pts)) {
+    //     Pose pos1e = estimateTelecentricPose(K1, coff_dis1, m1, u0_, v0_, dx_, dy_, worldPts, pts);
     // }
+    //------------------------------------------------------
+
+    PLOGD << " 开始非线性优化";
+    TelecentricPYOptimizer opt;
+    if (!opt.invokeTelecentricCalibration()) {
+        PLOGE << "Python 调用失败！";
+    }
     emit sendSignalSuccessCalib();
     return true;
 }
