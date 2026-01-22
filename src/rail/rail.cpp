@@ -141,7 +141,7 @@ void Rail::whenMove2AbsPosition(float vel, float pos) {
     } else {
         QVector<bool> Commands = {false};
         writeCoils(X_AbsPositionCommand, Commands);
-        QThread::msleep(100);
+        // QThread::msleep(100);
         Commands = {true};
         writeCoils(X_AbsPositionCommand, Commands);
     }

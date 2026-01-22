@@ -34,9 +34,8 @@ signals:
     void text(const QString& msg);
     void error(const QString& msg);
     void imageReady(std::shared_ptr<cv::Mat> result);
-    void sendSignalToCalibrate(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
-                               const std::vector<Eigen::Vector2d>& worldPts, int width, int height, double dx, double dy,
-                               Eigen::Matrix3d K_out, double rmse_out, std::vector<Pose> poses_out);
+    void sendSignalToCalibrate(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts, const std::vector<Eigen::Vector2d>& worldPts, int width,
+                               int height, double dx, double dy, Eigen::Matrix3d K_out, double rmse_out, std::vector<Pose> poses_out);
 
 public slots:
     void processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave, bool spliceEnabled, bool useColumnCheck);
@@ -47,8 +46,7 @@ public slots:
     // 保存最近一次处理结果（或回退到master/slave）
     // dir：目录；prefix：文件前缀；ext：后缀（".png" ".tif" ".exr" …）
     // alsoSaveSingles：是否同时保存 master/slave（若存在）
-    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png",
-                    bool alsoSaveSingles = false);
+    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png", bool alsoSaveSingles = false);
 
     // 清空内部缓存
     void clear();

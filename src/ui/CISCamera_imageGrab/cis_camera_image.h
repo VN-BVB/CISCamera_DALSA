@@ -1,6 +1,6 @@
 ﻿#ifndef CIS_CAMERA_IMAGE_H
 #define CIS_CAMERA_IMAGE_H
-// #define Internal
+// #define Internal1
 #include <QDateTime>
 #include <QImage>
 #include <QPainter>
@@ -50,7 +50,7 @@ private:
     std::shared_ptr<AbstractCamera> slaveCISCamera{nullptr};
     std::shared_ptr<ExternalExeRunner> configCISCamera{nullptr};
     std::shared_ptr<cv::Mat> masterImg, slaveImg;
-#ifdef Internal
+#ifdef Internal1
     QString masterCameraCCF_ = "./data/CISConfig/MasterInternalFrameInternal.ccf ";
     QString slaveCameraCCF_ = "./data/CISConfig/SlaveInternalFrameInternal.ccf";
 #else

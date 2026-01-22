@@ -29,8 +29,7 @@ bool TelecentricPYOptimizer::invokeTelecentricCalibration() {
                 print("  ", p)
         )");
 
-        std::string scriptPath =
-            R"(D:\Code\CISCamera_DALSA\src\telecentricLineCalibrator\python\Telecentric-Calibration-main\load.py)";
+        std::string scriptPath = R"(D:\Code\CISCamera_DALSA\src\telecentricLineCalibrator\python\Telecentric-Calibration-main\load.py)";
 
         pybind11::eval_file(scriptPath);
 
@@ -269,11 +268,10 @@ bool TelecentricPYOptimizer::invokeTelecentricCalibration() {
 
 //     return true;
 // }
-bool TelecentricPYOptimizer::optTelecentricExtrinsicParameters(const Eigen::Matrix3d& K,
-                                                               const Eigen::Matrix<double, 1, 5>& coff_dis,
+bool TelecentricPYOptimizer::optTelecentricExtrinsicParameters(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
                                                                const std::vector<Eigen::Vector2d>& imgPts,
-                                                               const std::vector<Eigen::Vector2d>& worldPts,
-                                                               Eigen::Vector3d& v_rot, Eigen::Vector3d& v_trans, double& err) {
+                                                               const std::vector<Eigen::Vector2d>& worldPts, Eigen::Vector3d& v_rot,
+                                                               Eigen::Vector3d& v_trans, double& err) {
     try {
         pybind11::gil_scoped_acquire acquire;
 
@@ -334,10 +332,9 @@ bool TelecentricPYOptimizer::optTelecentricExtrinsicParameters(const Eigen::Matr
     }
 }
 bool TelecentricPYOptimizer::refinePlatformExtrinsicsLM(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& D,
-                                                        const std::vector<std::vector<Eigen::Vector2d>>& pts,
-                                                        const Eigen::Vector3d& rvec_init, const Eigen::Vector3d& tvec_init,
-                                                        double dx, double dy, double ang_deg, Eigen::Vector3d& rvec_opt,
-                                                        Eigen::Vector3d& tvec_opt, double& final_rms) {
+                                                        const std::vector<std::vector<Eigen::Vector2d>>& pts, const Eigen::Vector3d& rvec_init,
+                                                        const Eigen::Vector3d& tvec_init, double dx, double dy, double ang_deg,
+                                                        Eigen::Vector3d& rvec_opt, Eigen::Vector3d& tvec_opt, double& final_rms) {
     try {
         pybind11::gil_scoped_acquire acquire;
 

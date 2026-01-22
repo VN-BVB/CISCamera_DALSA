@@ -60,8 +60,7 @@ void CISWidget::initCISCameraConfig() {
     configCISCamera = std::make_shared<ExternalExeRunner>();
     configCISCamera->moveToThread(cameraThreadConfig);
     cameraThreadConfig->start();
-    connect(configCISCamera.get(), &ExternalExeRunner::sendMessage2UI, this, &CISWidget::whenAppendMessageLog,
-            Qt::QueuedConnection);
+    connect(configCISCamera.get(), &ExternalExeRunner::sendMessage2UI, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
 }
 
 void CISWidget::initCamera() {
@@ -155,18 +154,16 @@ void CISWidget::tryStitchImages() {
     if (ui->ckbSplice->isChecked() && masterReady && slaveReady) {
         masterReady = slaveReady = false;
 
-        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection,
-                                  Q_ARG(std::shared_ptr<cv::Mat>, masterImg), Q_ARG(std::shared_ptr<cv::Mat>, slaveImg),
-                                  Q_ARG(bool, true), Q_ARG(bool, false)  // 或 ui->ckbSplice->isChecked()
+        QMetaObject::invokeMethod(imageProcessor.get(), "processPair", Qt::QueuedConnection, Q_ARG(std::shared_ptr<cv::Mat>, masterImg),
+                                  Q_ARG(std::shared_ptr<cv::Mat>, slaveImg), Q_ARG(bool, true), Q_ARG(bool, false)  // 或 ui->ckbSplice->isChecked()
         );
     }
 }
 void CISWidget::on_btnSave_clicked() {
     if (ui->ckbSplice->isChecked()) {
-        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection,
-                                  Q_ARG(QString, "./data/CISCamera_Image"), Q_ARG(QString, "Splice"),
-                                  Q_ARG(QString, ".bmp"),  // 需要更高精度可改 ".tif" / ".exr"
-                                  Q_ARG(bool, false)       // 是否同时保存主/从
+        QMetaObject::invokeMethod(imageProcessor.get(), "saveResult", Qt::QueuedConnection, Q_ARG(QString, "./data/CISCamera_Image"),
+                                  Q_ARG(QString, "Splice"), Q_ARG(QString, ".bmp"),  // 需要更高精度可改 ".tif" / ".exr"
+                                  Q_ARG(bool, false)                                 // 是否同时保存主/从
         );
     } else {
         bool checked = true;
@@ -214,15 +211,13 @@ void CISWidget::on_btnContinue_clicked() {
     if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "freezeGrab", Q_ARG(bool, false));
 #endif
 }
-
 // 软件触发
 void CISWidget::on_btnSoftWareTrigger_clicked() {
-    leadInTimer = ui->lead_lineEdit->text().toDouble();
     startPos = ui->start_lineEdit->text().toDouble();
     endPos = ui->end_lineEdit->text().toDouble();
     speed = ui->speed_lineEdit->text().toDouble();
     if (triggerRunning) {
-        whenAppendMessageLog(QString(u8"帧触发进行中，跳过操作。\n如需操作请停止触发。"));
+        whenAppendMessageLog(QString(u8"帧触发进行中"));
         return;
     } else {
         triggerRunning = true;
@@ -230,7 +225,7 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
     on_btnStart_clicked();
     double currentPos = ui->railWidget->getCurrentXPosition();
     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
-    if (std::abs(currentPos - startPos) > 0.5) {
+    if (std::abs(currentPos - startPos) > 0.05) {
         ui->railWidget->on_chk_Stop_toggled(false);
         connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
         ui->railWidget->setEditAbsPosition(QString::number(startPos));
@@ -261,11 +256,15 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
 //     static QMetaObject::Connection endMoveConnection;
 //     endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
 //         // 只断开当前建立的连接
-//         disconnect(endMoveConnection);
-//         on_btnStop_clicked();
+//         double currentPos = ui->railWidget->getCurrentXPosition();
+//         if (std::abs(currentPos - endPos) < 0.5) {
+//             disconnect(endMoveConnection);
+//             on_btnStop_clicked();
+//         }
 //     });
 //     triggerRunning = false;
 // }
+
 void CISWidget::whenMoveToStartFinished() {
     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
     // 下发扫描运动
@@ -274,24 +273,52 @@ void CISWidget::whenMoveToStartFinished() {
     ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
 
     whenAppendMessageLog(u8"扫描运动已下发，进入 lead-in 阶段");
-    QTimer::singleShot(static_cast<int>(leadInTimer), this, [this]() {
+    if (leadInTimer == 10) {
         if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
 
 #ifdef ENABLE_SLAVE_CAMERA
         if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
 #endif
+        scanStartPosReal = startPos;
+    } else {
+        QTimer::singleShot(static_cast<int>(leadInTimer), this, [this]() {
+            if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
 
-        whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发").arg(leadInTimer));
-        // 记录扫描起始位置（真实）
-        scanStartPosReal = ui->railWidget->getCurrentXPosition();
+#ifdef ENABLE_SLAVE_CAMERA
+            if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
+#endif
+            // 记录扫描起始位置（真实）
+            scanStartPosReal = ui->railWidget->getCurrentXPosition();
 
-        whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
-                                     u8"扫描起始位置：%2")
-                                 .arg(leadInTimer)
-                                 .arg(scanStartPosReal, 0, 'f', 3));
-        int stopDelayMs = 2000;
-        QTimer::singleShot(stopDelayMs, this, [this]() {
-            scanEndPosReal = ui->railWidget->getCurrentXPosition();
+            whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
+                                         u8"扫描起始位置：%2")
+                                     .arg(leadInTimer)
+                                     .arg(scanStartPosReal, 0, 'f', 3));
+            // int stopDelayMs = 4000;
+            // QTimer::singleShot(stopDelayMs, this, [this]() {
+            //     scanEndPosReal = ui->railWidget->getCurrentXPosition();
+
+            //     whenAppendMessageLog(QString(u8"扫描结束\n"
+            //                                  u8"  起始位置：%1\n"
+            //                                  u8"  结束位置：%2\n"
+            //                                  u8"  实际位移：%3")
+            //                              .arg(scanStartPosReal, 0, 'f', 3)
+            //                              .arg(scanEndPosReal, 0, 'f', 3)
+            //                              .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
+
+            //     on_btnStop_clicked();
+            //     triggerRunning = false;
+            // });
+        });
+    }
+
+    // 使用QMetaObject::Connection来管理信号连接，以便精确断开
+    static QMetaObject::Connection endMoveConnection;
+    endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+        // 只断开当前建立的连接
+        scanEndPosReal = ui->railWidget->getCurrentXPosition();
+        if (std::abs(scanEndPosReal - endPos) < 0.5) {
+            disconnect(endMoveConnection);
 
             whenAppendMessageLog(QString(u8"扫描结束\n"
                                          u8"  起始位置：%1\n"
@@ -300,11 +327,17 @@ void CISWidget::whenMoveToStartFinished() {
                                      .arg(scanStartPosReal, 0, 'f', 3)
                                      .arg(scanEndPosReal, 0, 'f', 3)
                                      .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
-
+            whenAppendMessageLog(QString(u8"扫描结束\n"
+                                         u8"  起始位置：%1\n"
+                                         u8"  结束位置2：%2\n"
+                                         u8"  实际位移2：%3")
+                                     .arg(scanStartPosReal, 0, 'f', 3)
+                                     .arg(endPos, 0, 'f', 3)
+                                     .arg(endPos - scanStartPosReal, 0, 'f', 3));
             on_btnStop_clicked();
-            triggerRunning = false;
-        });
+        }
     });
+    triggerRunning = false;
 }
 
 void CISWidget::on_btnStopTrigger_clicked() {
@@ -340,8 +373,7 @@ void CISWidget::on_btnCameraCalibrate_clicked() {
 void CISWidget::on_btnSaveAligenmentPlatImg_clicked() {
     int idx = ui->cbxPlatform->currentIndex();
 
-    QMetaObject::invokeMethod(
-        imageProcessor.get(), [=]() { imageProcessor->savePlatfromCailbImg("Splice", ".bmp", idx); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->savePlatfromCailbImg("Splice", ".bmp", idx); }, Qt::QueuedConnection);
 }
 
 void CISWidget::on_btnCalibratePlat_clicked() {
@@ -359,12 +391,10 @@ void CISWidget::on_btnClearCPImg_clicked() {
 }
 
 void CISWidget::on_btnClearCPDetectResult_clicked() {
-    QMetaObject::invokeMethod(
-        imageProcessor.get(), [=]() { imageProcessor->whenClearPlatFromFile("txt"); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->whenClearPlatFromFile("txt"); }, Qt::QueuedConnection);
 }
 std::vector<Eigen::Vector2d> CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {
     std::vector<Eigen::Vector2d> world;
-    QMetaObject::invokeMethod(
-        imageProcessor.get(), [&]() { world = imageProcessor->convertToWorld(pix_pts); }, Qt::BlockingQueuedConnection);
+    QMetaObject::invokeMethod(imageProcessor.get(), [&]() { world = imageProcessor->convertToWorld(pix_pts); }, Qt::BlockingQueuedConnection);
     return world;
 }
