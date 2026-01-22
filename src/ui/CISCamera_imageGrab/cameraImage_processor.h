@@ -83,7 +83,7 @@ private:
     const double dy_ = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）
     const int width_ = 31104, height_ = 16100;
     std::string readPointsPath_ = "./data/CISCamera_Image/mattxt";
-    std::string readImgPath_ = "./data/CISCamera_Image/cameraCalibrate";
+    std::string readImgPath_ = "./data/CISCamera_Image/cameraCalibrate/img";
     // const int W = 8, H = 11;
     // const double spacingMM = 10.0;
     // const double dx = 25.4 / 1200.0;

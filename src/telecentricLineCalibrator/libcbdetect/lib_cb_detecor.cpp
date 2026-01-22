@@ -110,7 +110,7 @@ void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path
     allImagesBoardsPts.clear();
 
     parent_path_ = std::filesystem::path(dir_path).parent_path().string();
-
+    std::cout << "parent" << parent_path_ << std::endl;
     QDir dir(QString::fromStdString(dir_path));
     QFileInfoList files = dir.entryInfoList(QDir::Files);
 

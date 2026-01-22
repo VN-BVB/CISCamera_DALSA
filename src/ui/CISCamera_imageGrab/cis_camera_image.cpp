@@ -290,52 +290,33 @@ void CISWidget::whenMoveToStartFinished() {
             // 记录扫描起始位置（真实）
             scanStartPosReal = ui->railWidget->getCurrentXPosition();
 
-            whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
-                                         u8"扫描起始位置：%2")
-                                     .arg(leadInTimer)
-                                     .arg(scanStartPosReal, 0, 'f', 3));
-            // int stopDelayMs = 4000;
-            // QTimer::singleShot(stopDelayMs, this, [this]() {
-            //     scanEndPosReal = ui->railWidget->getCurrentXPosition();
+        whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
+                                     u8"扫描起始位置：%2")
+                                 .arg(leadInTimer)
+                                 .arg(scanStartPosReal, 0, 'f', 3));
+        // int stopDelayMs = 2000;
+        // QTimer::singleShot(stopDelayMs, this, [this]() {
+        //     scanEndPosReal = ui->railWidget->getCurrentXPosition();
 
-            //     whenAppendMessageLog(QString(u8"扫描结束\n"
-            //                                  u8"  起始位置：%1\n"
-            //                                  u8"  结束位置：%2\n"
-            //                                  u8"  实际位移：%3")
-            //                              .arg(scanStartPosReal, 0, 'f', 3)
-            //                              .arg(scanEndPosReal, 0, 'f', 3)
-            //                              .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
+        //     whenAppendMessageLog(QString(u8"扫描结束\n"
+        //                                  u8"  起始位置：%1\n"
+        //                                  u8"  结束位置：%2\n"
+        //                                  u8"  实际位移：%3")
+        //                              .arg(scanStartPosReal, 0, 'f', 3)
+        //                              .arg(scanEndPosReal, 0, 'f', 3)
+        //                              .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
 
-            //     on_btnStop_clicked();
-            //     triggerRunning = false;
-            // });
-        });
-    }
-
-    // 使用QMetaObject::Connection来管理信号连接，以便精确断开
-    static QMetaObject::Connection endMoveConnection;
-    endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
-        // 只断开当前建立的连接
-        scanEndPosReal = ui->railWidget->getCurrentXPosition();
-        if (std::abs(scanEndPosReal - endPos) < 0.5) {
+        //     on_btnStop_clicked();
+        //     triggerRunning = false;
+        // });
+        // 使用QMetaObject::Connection来管理信号连接，以便精确断开
+        static QMetaObject::Connection endMoveConnection;
+        endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+            // 只断开当前建立的连接
             disconnect(endMoveConnection);
-
-            whenAppendMessageLog(QString(u8"扫描结束\n"
-                                         u8"  起始位置：%1\n"
-                                         u8"  结束位置：%2\n"
-                                         u8"  实际位移：%3")
-                                     .arg(scanStartPosReal, 0, 'f', 3)
-                                     .arg(scanEndPosReal, 0, 'f', 3)
-                                     .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
-            whenAppendMessageLog(QString(u8"扫描结束\n"
-                                         u8"  起始位置：%1\n"
-                                         u8"  结束位置2：%2\n"
-                                         u8"  实际位移2：%3")
-                                     .arg(scanStartPosReal, 0, 'f', 3)
-                                     .arg(endPos, 0, 'f', 3)
-                                     .arg(endPos - scanStartPosReal, 0, 'f', 3));
             on_btnStop_clicked();
-        }
+        });
+        triggerRunning = false;
     });
     triggerRunning = false;
 }

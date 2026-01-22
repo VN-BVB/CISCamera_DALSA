@@ -154,8 +154,8 @@ void plot_board_points(const cv::Mat& img, const Corner& corners, const std::vec
     cv::namedWindow("board_points", cv::WINDOW_NORMAL);
     cv::imshow("board_points", img_show);
     static int a = 0;
-    cv::imwrite("./data/CISCamera_Image/libdetect/calibdect" + std::to_string(a++) + ".bmp", img_show);
-    cv::waitKey(5);
+    // cv::imwrite("./data/CISCamera_Image/libdetect/calibdect" + std::to_string(a++) + ".bmp", img_show);
+    // cv::waitKey(5);
 }
 cv::Mat warpToPlane(const cv::Mat& img,                       // 输入原图
                     const std::vector<cv::Point2f>& img_pts,  // 图像角点（检测到的）
