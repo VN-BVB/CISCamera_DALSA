@@ -108,6 +108,70 @@ void JointView::clearAllResultItems()
 void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
                                      std::shared_ptr<JointSeam> jointSeam)
 {
+    #include "src/utils/geometry_utils.h"
+    // ===============计算两条直线间的距离，测试用===================
+    std::vector<std::vector<cv::Point2f>> lines;
+    for (auto& cd : jointSeam->getContourDatas()) {
+        lines.push_back(cd.getSortedSegments()[2]);
+    }
+
+    std::vector<std::vector<Eigen::Vector2d>> worldLines;
+    for (auto& line : lines) {
+        worldLines.push_back(GeometryUtils::pixel2World(line));
+    }
+    // Eigen::Vector2d 转回 cv::Point2f 的 lambda 函数
+    auto eigenToCvPoints = [](const std::vector<Eigen::Vector2d>& eigenPts) {
+        std::vector<cv::Point2f> cvPts;
+        cvPts.reserve(eigenPts.size());
+        for (const auto& pt : eigenPts) {
+            cvPts.emplace_back(static_cast<float>(pt.x()), static_cast<float>(pt.y()));
+        }
+        return cvPts;
+    };
+    // 将世界坐标转换为 cv::Point2f 类型
+    std::vector<cv::Point2f> up_line_pts = eigenToCvPoints(worldLines[0]);
+    std::vector<cv::Point2f> down_line_pts = eigenToCvPoints(worldLines[1]);
+
+    cv::Vec4f up_line;
+    cv::fitLine(up_line_pts, up_line, cv::DIST_L2, 0, 0.01, 0.01);
+    cv::Vec4f down_line;
+    cv::fitLine(down_line_pts, down_line, cv::DIST_L2, 0, 0.01, 0.01);
+    double D = 0.0;
+    // 随机采样lambda函数，按比例采样
+    auto random_sample = [](const auto& src, float ratio=0.3) {
+        std::vector<cv::Point2f> sampled;
+        if(src.empty()) return sampled;
+
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::sample(src.begin(), src.end(), std::back_inserter(sampled),
+                    std::max(1, (int)(src.size()*ratio)), g);
+        return sampled;
+    };
+
+    // 计算平均距离
+    auto calc_avg_distance = [&](const std::vector<cv::Point2f>& pts, const cv::Vec4f& line) {
+        double sum = 0.0;
+        for (auto& pt : pts) {
+            sum += std::abs(line[0]*(line[3] - pt.y) - line[1]*(line[2] - pt.x)) /
+                   std::sqrt(line[0]*line[0] + line[1]*line[1]);
+        }
+        return pts.empty() ? 0.0 : sum / pts.size();
+    };
+
+    // 从两条直线各取30%的点进行双向计算
+    auto sampled_up = random_sample(up_line_pts);
+    auto sampled_down = random_sample(down_line_pts);
+
+    double avg_up = calc_avg_distance(sampled_up, down_line);
+    double avg_down = calc_avg_distance(sampled_down, up_line);
+    D = (avg_up + avg_down) / 2.0;
+    // ==================================
+
+
+
+
+
     clearAllResultItems();
     m_currentImage = processedImage;
 

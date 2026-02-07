@@ -14,6 +14,7 @@
 #include "src/test/test_dxf_writer.h"
 #include "src/test/test_convert_coordinate.h"
 #include "src/config/config_manager.h"
+#include "src/test/test_pixel2world.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -31,8 +32,11 @@ int main(int argc, char *argv[]) {
     // TestConvertCoordinate t;
     // t.pixel2World();
 
-    JointView w;
-    w.show();
+    // JointView w;
+    // w.show();
+
+    TestPixel2World test;
+    test.testPixel2World();
 
     return a.exec();
 }
