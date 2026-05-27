@@ -80,7 +80,7 @@ private:
     const int W_ = 8, H_ = 11;
     const double spacingMM_ = 10.0;
     const double dx_ = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
-    const double dy_ = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）
+    const double dy_ = 20.0 / 945.0;   // 正方像素 （2（D + 1 ） / M）
     const int width_ = 31104, height_ = 16100;
     std::string readPointsPath_ = "./data/CISCamera_Image/mattxt";
     std::string readImgPath_ = "./data/CISCamera_Image/cameraCalibrate/img";

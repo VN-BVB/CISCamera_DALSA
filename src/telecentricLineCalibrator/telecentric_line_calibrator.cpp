@@ -9,8 +9,7 @@ TelecentricLineCalibrator::TelecentricLineCalibrator() {
     K_.setIdentity();
     coff_dis_ = Eigen::VectorXd::Zero(5);
 }
-bool TelecentricLineCalibrator::calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize,
-                                                       std::vector<cv::Point2d>& imagePoints) {
+bool TelecentricLineCalibrator::calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize, std::vector<cv::Point2d>& imagePoints) {
     // ---------- 1. 灰度化与反色 ----------
     cv::Mat gray;
     if (imageInput.channels() == 3)
@@ -44,8 +43,7 @@ bool TelecentricLineCalibrator::calculate_Image_Points(cv::Mat imageInput, cv::S
     std::string timestamp = oss.str();
 
     // ---------- 4. 圆阵检测 ----------
-    bool found =
-        cv::findCirclesGrid(gray, boardSize, imagePoints, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
+    bool found = cv::findCirclesGrid(gray, boardSize, imagePoints, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
 
     if (!found) {
         std::cout << "未检测到圆心，结果图已保存为: " << std::endl;
@@ -213,9 +211,8 @@ double TelecentricLineCalibrator::compute_m_from_H(const Eigen::Matrix3d& H, dou
 // Step 2. 从单应矩阵提取姿态
 // =========================================================
 Pose TelecentricLineCalibrator::extractPoseFromHomography(const Eigen::Matrix3d& H, const Eigen::Matrix3d& K,
-                                                          const std::vector<Eigen::Vector2d>& worldPts,
-                                                          const std::vector<Eigen::Vector2d>& imagePts, const double m,
-                                                          const double u0, const double v0, const double dx, const double dy) {
+                                                          const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
+                                                          const double m, const double u0, const double v0, const double dx, const double dy) {
     Pose pose;
 
     const double h11 = H(0, 0), h12 = H(0, 1), h13 = H(0, 2);
@@ -349,8 +346,7 @@ Eigen::Matrix3d TelecentricLineCalibrator::initIntrinsic(double m, double dx, do
     K << m / dx, 0.0, u0, 0.0, 1 / dy, v0 / m, 0.0, 0.0, 1.0;
     return K;
 }
-bool TelecentricLineCalibrator::estimateIntrinsicsFromHomographies(const std::vector<Eigen::Matrix3d>& Hs, double dx, double dy,
-                                                                   double u0, double v0,
+bool TelecentricLineCalibrator::estimateIntrinsicsFromHomographies(const std::vector<Eigen::Matrix3d>& Hs, double dx, double dy, double u0, double v0,
                                                                    const std::vector<double>& reprojErrors) {
     std::vector<double> ms;
     ms.reserve(Hs.size());
@@ -390,9 +386,8 @@ bool TelecentricLineCalibrator::estimateIntrinsicsFromHomographies(const std::ve
 // =========================================================
 // Step 4. 计算重投影误差
 // =========================================================
-double TelecentricLineCalibrator::computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts,
-                                                           const std::vector<Eigen::Vector2d>& imagePts, const Pose& pose,
-                                                           const Eigen::Matrix3d& K, const std::string& savePath,
+double TelecentricLineCalibrator::computeReprojectionError(const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imagePts,
+                                                           const Pose& pose, const Eigen::Matrix3d& K, const std::string& savePath,
                                                            const Eigen::Matrix<double, 1, 5>& coff_dis) {
     const int n = static_cast<int>(worldPts.size());
     if (n == 0) return 0.0;
@@ -610,17 +605,16 @@ Eigen::MatrixXd TelecentricLineCalibrator::toHomogeneous(const Eigen::MatrixXd& 
 }
 
 // -------------------- 正向畸变 --------------------
-Eigen::MatrixXd TelecentricLineCalibrator::distort(const Eigen::Matrix<double, 1, 5>& coff_dis,
-                                                   const Eigen::MatrixXd& normalized_proj) {
+Eigen::MatrixXd TelecentricLineCalibrator::distort(const Eigen::Matrix<double, 1, 5>& coff_dis, const Eigen::MatrixXd& normalized_proj) {
     double k1 = coff_dis(0), h1 = coff_dis(1), h2 = coff_dis(2), s1 = coff_dis(3), s2 = coff_dis(4);
     Eigen::VectorXd x = normalized_proj.col(0);
     Eigen::VectorXd y = normalized_proj.col(1);
     Eigen::VectorXd r = x.array().square() + y.array().square();
 
-    Eigen::VectorXd deltaX = k1 * x.array() * r.array() + h1 * (3 * x.array().square() + y.array().square()) +
-                             2 * h2 * x.array() * y.array() + s1 * r.array();
-    Eigen::VectorXd deltaY = k1 * y.array() * r.array() + 2 * h1 * x.array() * y.array() +
-                             h2 * (x.array().square() + 3 * y.array().square()) + s2 * r.array();
+    Eigen::VectorXd deltaX =
+        k1 * x.array() * r.array() + h1 * (3 * x.array().square() + y.array().square()) + 2 * h2 * x.array() * y.array() + s1 * r.array();
+    Eigen::VectorXd deltaY =
+        k1 * y.array() * r.array() + 2 * h1 * x.array() * y.array() + h2 * (x.array().square() + 3 * y.array().square()) + s2 * r.array();
 
     Eigen::MatrixXd distorted(normalized_proj.rows(), 2);
     distorted.col(0) = x + deltaX;
@@ -631,8 +625,7 @@ Eigen::MatrixXd TelecentricLineCalibrator::distort(const Eigen::Matrix<double, 1
 
 // -------------------- 迭代去畸变 --------------------
 Eigen::MatrixXd TelecentricLineCalibrator::undistortPointsIter(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
-                                                               const Eigen::Matrix<double, 1, 5>& coff_dis, int max_iter,
-                                                               double tol) {
+                                                               const Eigen::Matrix<double, 1, 5>& coff_dis, int max_iter, double tol) {
     if (points_px.cols() != 2) throw std::runtime_error("输入点应为 Nx2");
 
     Eigen::MatrixXd undistorted(points_px.rows(), 2);
@@ -734,8 +727,7 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen:
     return world_pts;
 }
 // -------------------- 相机坐标 → 世界坐标（SO(2) 修正） --------------------
-Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinatesSO2(const Eigen::MatrixXd& cam_pts,
-                                                                       const Eigen::Vector3d& v_rot,
+Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinatesSO2(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
                                                                        const Eigen::Vector3d& v_trans) {
     // -------- 1. Rodrigues：world -> camera --------
     cv::Mat rvec(3, 1, CV_64F);
@@ -776,9 +768,8 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinatesSO2(const Eig
     return world_pts;
 }
 bool TelecentricLineCalibrator::optimizeExtrinsicsWithLeastSquares(const Eigen::MatrixXd& transformedPts,
-                                                                   const std::vector<Eigen::Vector2d>& trueWorldPts,
-                                                                   const Eigen::Matrix3d& R_in, const Eigen::Vector3d& t_in,
-                                                                   Eigen::Matrix3d& R_out, Eigen::Vector3d& t_out) {
+                                                                   const std::vector<Eigen::Vector2d>& trueWorldPts, const Eigen::Matrix3d& R_in,
+                                                                   const Eigen::Vector3d& t_in, Eigen::Matrix3d& R_out, Eigen::Vector3d& t_out) {
     if (transformedPts.rows() != trueWorldPts.size() || transformedPts.rows() < 3) {
         std::cerr << "[optimizeExtrinsicsWithLeastSquares] 点数量不足或不匹配" << std::endl;
         return false;
@@ -881,8 +872,8 @@ bool TelecentricLineCalibrator::optimizeExtrinsicsWithLeastSquares(const Eigen::
         corrected_error += err * err;
 
         if (&p == &data[0] || &p == &data[8] || &p == &data[16]) {
-            std::cout << "像素(" << p.transformed_x << "," << p.transformed_y << ") -> 预测(" << world_pred[0] << ","
-                      << world_pred[1] << ") 真实(" << p.true_x << "," << p.true_y << ") 误差: " << err << std::endl;
+            std::cout << "像素(" << p.transformed_x << "," << p.transformed_y << ") -> 预测(" << world_pred[0] << "," << world_pred[1] << ") 真实("
+                      << p.true_x << "," << p.true_y << ") 误差: " << err << std::endl;
         }
     }
     // 7. 输出补偿前/补偿后的对比结果
@@ -892,9 +883,9 @@ bool TelecentricLineCalibrator::optimizeExtrinsicsWithLeastSquares(const Eigen::
 
     // 7. 输出所有补偿后坐标及误差（加入补偿前误差）
     std::cout << "\n=== 所有坐标补偿结果及误差 ===" << std::endl;
-    std::cout << std::left << std::setw(15) << "像素X" << std::setw(15) << "像素Y" << std::setw(18) << "补偿后世界X"
-              << std::setw(18) << "补偿后世界Y" << std::setw(15) << "真实世界X" << std::setw(15) << "真实世界Y" << std::setw(15)
-              << "点误差" << std::setw(15) << "原始误差"  //  新增这一列
+    std::cout << std::left << std::setw(15) << "像素X" << std::setw(15) << "像素Y" << std::setw(18) << "补偿后世界X" << std::setw(18) << "补偿后世界Y"
+              << std::setw(15) << "真实世界X" << std::setw(15) << "真实世界Y" << std::setw(15) << "点误差" << std::setw(15)
+              << "原始误差"  //  新增这一列
               << std::endl;
 
     std::cout << std::string(130, '-') << std::endl;
@@ -907,9 +898,9 @@ bool TelecentricLineCalibrator::optimizeExtrinsicsWithLeastSquares(const Eigen::
         double err_after = (world_pred - world_true).norm();  // 补偿后误差
         double err_before = (pixel - world_true).norm();      // 补偿前误差
 
-        std::cout << std::left << std::setw(15) << p.transformed_x << std::setw(15) << p.transformed_y << std::setw(18)
-                  << world_pred[0] << std::setw(18) << world_pred[1] << std::setw(15) << p.true_x << std::setw(15) << p.true_y
-                  << std::setw(15) << err_after << std::setw(15) << err_before  // 输出原始误差
+        std::cout << std::left << std::setw(15) << p.transformed_x << std::setw(15) << p.transformed_y << std::setw(18) << world_pred[0]
+                  << std::setw(18) << world_pred[1] << std::setw(15) << p.true_x << std::setw(15) << p.true_y << std::setw(15) << err_after
+                  << std::setw(15) << err_before  // 输出原始误差
                   << std::endl;
     }
 
@@ -922,14 +913,12 @@ bool TelecentricLineCalibrator::optimizeExtrinsicsWithLeastSquares(const Eigen::
     std::cout << "[最小二乘优化] 外参优化完成" << std::endl;
     return true;
 }
-Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis,
-                                                        const double m, const double u0, const double v0, const double dx,
-                                                        const double dy, const std::vector<Eigen::Vector2d>& worldPts,
-                                                        const std::vector<Eigen::Vector2d>& imgPts) {
+Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& coff_dis, const double m,
+                                                        const double u0, const double v0, const double dx, const double dy,
+                                                        const std::vector<Eigen::Vector2d>& worldPts, const std::vector<Eigen::Vector2d>& imgPts) {
     std::cout << "======== [estimateTelecentricPose] 开始求解外参 ========" << std::endl;
 
-    if (worldPts.size() != imgPts.size() || worldPts.size() < 4)
-        throw std::runtime_error("estimateTelecentricPose: 输入点数量不足或不匹配");
+    if (worldPts.size() != imgPts.size() || worldPts.size() < 4) throw std::runtime_error("estimateTelecentricPose: 输入点数量不足或不匹配");
 
     std::cout << "Step 1. 输入点数量: " << worldPts.size() << " 对" << std::endl;
     std::cout << "Step 1. 相机内参:\n" << K << std::endl;
@@ -1044,9 +1033,8 @@ Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K
 // Step 5. 主函数：标定流程（DLT 初值）
 // =========================================================
 bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
-                                                              const std::vector<Eigen::Vector2d>& worldPts, int width, int height,
-                                                              double dx, double dy, Eigen::Matrix3d K_out, double rmse_out,
-                                                              std::vector<Pose> poses_out) {
+                                                              const std::vector<Eigen::Vector2d>& worldPts, int width, int height, double dx,
+                                                              double dy, Eigen::Matrix3d K_out, double rmse_out, std::vector<Pose> poses_out) {
     // std::cout << "检查all_imgPts顺序:\n";
     // for (size_t i = 0; i < all_imgPts.size(); ++i) {
     //     std::cout << "Image " << i << ":\n";
@@ -1186,11 +1174,11 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     // }
     //------------------------------------------------------
 
-    PLOGD << " 开始非线性优化";
-    TelecentricPYOptimizer opt;
-    if (!opt.invokeTelecentricCalibration()) {
-        PLOGE << "Python 调用失败！";
-    }
+    // PLOGD << " 开始非线性优化";
+    // TelecentricPYOptimizer opt;
+    // if (!opt.invokeTelecentricCalibration()) {
+    //     PLOGE << "Python 调用失败！";
+    // }
     emit sendSignalSuccessCalib();
     return true;
 }
