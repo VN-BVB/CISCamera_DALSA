@@ -1175,10 +1175,10 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
     //------------------------------------------------------
 
     // PLOGD << " 开始非线性优化";
-    // TelecentricPYOptimizer opt;
-    // if (!opt.invokeTelecentricCalibration()) {
-    //     PLOGE << "Python 调用失败！";
-    // }
+    TelecentricPYOptimizer opt;
+    if (!opt.invokeTelecentricCalibration()) {
+        PLOGE << "Python 调用失败！";
+    }
     emit sendSignalSuccessCalib();
     return true;
 }

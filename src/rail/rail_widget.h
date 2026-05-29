@@ -65,7 +65,7 @@ private:
 
     Rail *rail = new Rail;
     QThread *railThread = new QThread;  // 标定线程
-    QString ip = "192.168.100.88";
+    QString ip = "192.168.6.6";
     int port = 502;
 
     friend class CISWidget;

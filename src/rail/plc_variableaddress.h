@@ -3,9 +3,9 @@
 // PLCid
 constexpr int PLC1_Id = 0;
 // B0-B32767 (0x3000-0xAFFF)
-constexpr int X_ServoEnable = 0x3000;         // IN_使能 (B0)
+constexpr int X_ServoEnable = 0;              // IN_使能 (B0)
 constexpr int X_Stop = 0x3001;                // IN_停止 (B1)
-constexpr int X_Reset = 0x3002;               // IN_复位 (B2)
+constexpr int X_Reset = 41062;                // IN_复位 (B2)
 constexpr int X_JogForward = 0x3003;          // IN_正向点动 (B3)
 constexpr int X_JogReverse = 0x3004;          // IN_反向点动 (B4)
 constexpr int X_HomeCommand = 0x3005;         // IN_回原命令 (B5)

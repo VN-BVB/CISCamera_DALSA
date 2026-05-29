@@ -93,7 +93,7 @@ public:
     {
         if (CISWidget->objectName().isEmpty())
             CISWidget->setObjectName(QString::fromUtf8("CISWidget"));
-        CISWidget->resize(800, 600);
+        CISWidget->resize(893, 600);
         CISWidget->setBaseSize(QSize(0, 0));
         gridLayout_14 = new QGridLayout(CISWidget);
         gridLayout_14->setObjectName(QString::fromUtf8("gridLayout_14"));

@@ -189,6 +189,11 @@ void Rail::writeCoils(int address, const QVector<bool> &values) {
         // if (readRealTimer) readRealTimer->start();
         return;
     }
+    emit sendText(QString("Modbus 状态: 写入线圈成功，地址 0x%1，大小 %2").arg(address, 0, 16).arg(size));
+    if (!mobusDisconnect) {
+        emit sendText("Modbus连接PLC");
+        mobusDisconnect = 0;
+    }
     emit sendSignalFinishWriteCoils();
 
     // if(readStateTimer) readStateTimer->start();
