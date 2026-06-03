@@ -24,7 +24,7 @@ RailWidget::RailWidget(QWidget *parent) : QWidget(parent), ui(new Ui::RailWidget
     connect(this, &RailWidget::sendDisconnectToPLC, rail, &Rail::disConnectPLC);
     connect(this, &RailWidget::sendWriteCoils, rail, &Rail::writeCoils);
     connect(this, &RailWidget::sendWriteRegisters, rail, &Rail::writeRegisters);
-    connect(this, &RailWidget::sendMove2AbsPosition, rail, &Rail::whenMove2AbsPosition);
+    connect(this, &RailWidget::sendMove2AbsPosition, rail, &Rail::whenMove2AbsPositionDouble);
     connect(this, &RailWidget::sendForward, rail, &Rail::whenForward);
     connect(this, &RailWidget::sendReverse, rail, &Rail::whenReverse);
 
@@ -73,7 +73,11 @@ void RailWidget::whenUpdatePositionAndSpeed(float position, float speed) {
 
 // --------------------------------------- 按钮调用 --------------------------------------------
 // 地轨回归原点按钮点击事件
-void RailWidget::on_btn_regressOrigin_clicked() { emit sendWriteCoils(X_HomeCommand, {true}); }
+void RailWidget::on_btn_regressOrigin_clicked() {
+    emit sendWriteCoils(X_HomeCommand, {true});
+    QThread::msleep(100);
+    emit sendWriteCoils(X_HomeCommand, {false});
+}
 
 // 连接PLC按钮点击事件
 void RailWidget::connectRail() { emit sendConnectToPLC(ip, port); }
@@ -90,7 +94,7 @@ void RailWidget::on_btn_X_AbsPositionCommand_clicked() {
         whenAppendCalibrationLog(QString(u8"轨道未连接"));
         return;
     }
-    emit sendMove2AbsPosition(ui->edit_X_AbsSpeed->text().toFloat(), ui->edit_X_AbsPosition->text().toFloat());
+    emit sendMove2AbsPosition(ui->edit_X_AbsPosition->text().toDouble(), ui->edit_X_AbsSpeed->text().toDouble(), 100.0, 100.0);
 }
 
 // 运动绝对位置滑块
@@ -103,22 +107,35 @@ void RailWidget::on_horizontalSlider_X_AbsSpeed_sliderMoved(int val) { ui->edit_
 void RailWidget::on_chk_Stop_toggled(bool checked) { emit sendWriteCoils(X_Stop, {checked}); }
 
 // 地轨重置按钮状态切换事件
-void RailWidget::on_btn_chk_Rest_clicked() { emit sendWriteCoils(X_Reset, {true}); }
+void RailWidget::on_btn_chk_Rest_clicked() {
+    emit sendWriteCoils(X_Reset, {true});
+    QThread::msleep(100);
+    emit sendWriteCoils(X_Reset, {false});
+}
 
 // 地轨紧急停止按钮状态切换事件
 void RailWidget::on_chk_ImmediateStop_toggled(bool checked) { emit sendWriteCoils(X_ImmediateStop, {checked}); }
 
 // 地轨正向点动按钮按下事件
-void RailWidget::on_btn_X_JogForward_pressed() { emit sendForward(ui->edit_X_AbsSpeed->text().toFloat()); }
+void RailWidget::on_btn_X_JogForward_pressed() { emit sendForward(ui->edit_X_AbsSpeed->text().toDouble()); }
 
 // 地轨正向点动按钮释放事件
-void RailWidget::on_btn_X_JogForward_released() { emit sendWriteCoils(X_JogForward, {false}); }
+void RailWidget::on_btn_X_JogForward_released() {
+    emit sendWriteCoils(X_Stop, {true});
+    emit sendWriteCoils(X_JogForward, {false});
+    QThread::msleep(100);
+    emit sendWriteCoils(X_Stop, {false});
+}
 
 // 地轨反向点动按钮按下事件
-void RailWidget::on_btn_X_JogReverse_pressed() { emit sendReverse(ui->edit_X_AbsSpeed->text().toFloat()); }
+void RailWidget::on_btn_X_JogReverse_pressed() { emit sendReverse(ui->edit_X_AbsSpeed->text().toDouble()); }
 
 // 地轨反向点动按钮释放事件
-void RailWidget::on_btn_X_JogReverse_released() { emit sendWriteCoils(X_JogReverse, {false}); }
+void RailWidget::on_btn_X_JogReverse_released() {
+    emit sendWriteCoils(X_Stop, {true});
+    emit sendWriteCoils(X_JogForward, {false});
+    emit sendWriteCoils(X_Stop, {false});
+}
 
 // 地轨速度改变
 void RailWidget::on_edit_X_AbsSpeed_textChanged(const QString &arg1) { rail->vel = arg1.toFloat(); }

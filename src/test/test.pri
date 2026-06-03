@@ -11,7 +11,8 @@ SOURCES += \
     $$PWD/test_curve_seg.cpp \
     $$PWD/test_edge_assembly.cpp \
     $$PWD/test_frmVisionDisplay.cpp \
-    $$PWD/test_tiny_spline.cpp
+    $$PWD/test_tiny_spline.cpp \
+    $$PWD/test_write_plc.cpp
 
 
 

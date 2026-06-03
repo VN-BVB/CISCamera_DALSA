@@ -10,6 +10,7 @@
 // clang-format on
 #include "src/crashHandler/CrashHandler.h"
 #include "src/test/test_tiny_spline.h"
+#include "src/test/test_write_plc.cpp"
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 
 void initPlog();  // 初始化日志类
@@ -19,6 +20,7 @@ int main(int argc, char* argv[]) {
     initPlog();                         // 初始化日志类
     CISWidget w;
     w.show();
+    // test_write_plc();
 
     return a.exec();
 }
