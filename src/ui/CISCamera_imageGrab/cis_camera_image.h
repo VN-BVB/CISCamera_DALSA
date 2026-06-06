@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QThread>
+#include <QTimer>
 #include <QWidget>
 #include <memory>
 // clang-format off
@@ -54,17 +55,18 @@ private:
     QString masterCameraCCF_ = "./data/CISConfig/MasterInternalFrameInternal.ccf ";
     QString slaveCameraCCF_ = "./data/CISConfig/SlaveInternalFrameInternal.ccf";
 #else
-    QString masterCameraCCF_ = "./data/CISConfig/MasterEncoderDriver.ccf ";
+    QString masterCameraCCF_ = "./data/CISConfig/MasterEncoderDriver.ccf";
     QString slaveCameraCCF_ = "./data/CISConfig/SlaveEncoderDriver.ccf";
 #endif
     bool masterReady = false;
     bool slaveReady = false;
     bool triggerRunning = false;
-    double leadInTimer;
-    double startPos;
-    double endPos;
-    double speed;
-    double scanStartPosReal, scanEndPosReal;
+    double leadInTimer = 1000.0;
+    double startPos = 0.0;
+    double endPos = 0.0;
+    double speed = 0.0;
+    double scanStartPosReal = 0.0, scanEndPosReal = 0.0;
+    QMetaObject::Connection endMoveConnection_;
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();

@@ -175,15 +175,24 @@ void CISWidget::on_btnSave_clicked() {
     }
 }
 
+// 添加返回值检查和显式连接类型
 void CISWidget::on_btnStart_clicked() {
     if (masterCISCamera) {
         PLOGD << "启动 master camera";
-        QMetaObject::invokeMethod(masterCISCamera.get(), "startGrab");
+        bool ok = QMetaObject::invokeMethod(masterCISCamera.get(), "startGrab", Qt::QueuedConnection);
+        if (!ok) {
+            PLOGE << "Master startGrab invokeMethod 失败";
+            whenAppendMessageLog(u8"Master 采集启动失败");
+        }
     }
 #ifdef ENABLE_SLAVE_CAMERA
     if (slaveCISCamera) {
         PLOGD << "启动 slave camera";
-        QMetaObject::invokeMethod(slaveCISCamera.get(), "startGrab");
+        bool ok = QMetaObject::invokeMethod(slaveCISCamera.get(), "startGrab", Qt::QueuedConnection);
+        if (!ok) {
+            PLOGE << "Slave startGrab invokeMethod 失败";
+            whenAppendMessageLog(u8"Slave 采集启动失败");
+        }
     } else {
         PLOGE << "slaveCISCamera is null!";
     }
@@ -191,10 +200,11 @@ void CISWidget::on_btnStart_clicked() {
     ui->btnSoftWareTrigger->setEnabled(true);
 }
 
+// 添加返回值检查和显式连接类型
 void CISWidget::on_btnStop_clicked() {
-    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "stopGrab");
+    if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "stopGrab", Qt::QueuedConnection);
 #ifdef ENABLE_SLAVE_CAMERA
-    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "stopGrab");
+    if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "stopGrab", Qt::QueuedConnection);
 #endif
 }
 
@@ -216,13 +226,21 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
     startPos = ui->start_lineEdit->text().toDouble();
     endPos = ui->end_lineEdit->text().toDouble();
     speed = ui->speed_lineEdit->text().toDouble();
+    bool leadOk = false;
+    const double leadMs = ui->lead_lineEdit->text().toDouble(&leadOk);
+    leadInTimer = (leadOk && leadMs >= 0.0) ? leadMs : 1000.0;
     if (triggerRunning) {
         whenAppendMessageLog(QString(u8"帧触发进行中"));
         return;
     } else {
         triggerRunning = true;
     }
+    masterReady = false;
+    slaveReady = false;
+    masterImg.reset();
+    slaveImg.reset();
     on_btnStart_clicked();
+    ui->btnSoftWareTrigger->setEnabled(false);
     double currentPos = ui->railWidget->getCurrentXPosition();
     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
     if (std::abs(currentPos - startPos) > 0.05) {
@@ -267,82 +285,64 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
 
 void CISWidget::whenMoveToStartFinished() {
     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+    disconnect(endMoveConnection_);
     // 下发扫描运动
     ui->railWidget->setEditAbsPosition(QString::number(endPos));
     ui->railWidget->setEditSpeed(QString::number(speed));
     ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
 
     whenAppendMessageLog(u8"扫描运动已下发，进入 lead-in 阶段");
-    if (leadInTimer == 10) {
-        if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
+    const int leadMs = static_cast<int>(leadInTimer);
+    QTimer::singleShot(leadMs, this, [this]() {
+        if (!triggerRunning) return;
 
+        if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger", Qt::QueuedConnection);
 #ifdef ENABLE_SLAVE_CAMERA
-        if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
+        if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger", Qt::QueuedConnection);
 #endif
-        scanStartPosReal = startPos;
-    } else {
-        QTimer::singleShot(static_cast<int>(leadInTimer), this, [this]() {
-            if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
+        // 记录扫描起始位置（真实）
+        scanStartPosReal = ui->railWidget->getCurrentXPosition();
 
-#ifdef ENABLE_SLAVE_CAMERA
-            if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
-#endif
-            // 记录扫描起始位置（真实）
-            scanStartPosReal = ui->railWidget->getCurrentXPosition();
+        whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
+                                     u8"扫描起始位置：%2")
+                                 .arg(leadInTimer)
+                                 .arg(scanStartPosReal, 0, 'f', 3));
 
-            whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
-                                         u8"扫描起始位置：%2")
-                                     .arg(leadInTimer)
-                                     .arg(scanStartPosReal, 0, 'f', 3));
-            // int stopDelayMs = 4000;
-            // QTimer::singleShot(stopDelayMs, this, [this]() {
-            //     scanEndPosReal = ui->railWidget->getCurrentXPosition();
+        // 相机触发之后，再连接扫描结束监听（确保帧不会被过早 Abort）
+        endMoveConnection_ = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+            scanEndPosReal = ui->railWidget->getCurrentXPosition();
+            if (std::abs(scanEndPosReal - endPos) < 0.5) {
+                disconnect(endMoveConnection_);
 
-            //     whenAppendMessageLog(QString(u8"扫描结束\n"
-            //                                  u8"  起始位置：%1\n"
-            //                                  u8"  结束位置：%2\n"
-            //                                  u8"  实际位移：%3")
-            //                              .arg(scanStartPosReal, 0, 'f', 3)
-            //                              .arg(scanEndPosReal, 0, 'f', 3)
-            //                              .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
-
-            //     on_btnStop_clicked();
-            //     triggerRunning = false;
-            // });
+                whenAppendMessageLog(QString(u8"扫描结束\n"
+                                             u8"  起始位置：%1\n"
+                                             u8"  结束位置：%2\n"
+                                             u8"  实际位移：%3")
+                                         .arg(scanStartPosReal, 0, 'f', 3)
+                                         .arg(scanEndPosReal, 0, 'f', 3)
+                                         .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
+                whenAppendMessageLog(QString(u8"扫描结束\n"
+                                             u8"  起始位置：%1\n"
+                                             u8"  结束位置2：%2\n"
+                                             u8"  实际位移2：%3")
+                                         .arg(scanStartPosReal, 0, 'f', 3)
+                                         .arg(endPos, 0, 'f', 3)
+                                         .arg(endPos - scanStartPosReal, 0, 'f', 3));
+                on_btnStop_clicked();
+                triggerRunning = false;
+                ui->btnSoftWareTrigger->setEnabled(true);
+            }
         });
-    }
-
-    // 使用QMetaObject::Connection来管理信号连接，以便精确断开
-    static QMetaObject::Connection endMoveConnection;
-    endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
-        // 只断开当前建立的连接
-        scanEndPosReal = ui->railWidget->getCurrentXPosition();
-        if (std::abs(scanEndPosReal - endPos) < 0.5) {
-            disconnect(endMoveConnection);
-
-            whenAppendMessageLog(QString(u8"扫描结束\n"
-                                         u8"  起始位置：%1\n"
-                                         u8"  结束位置：%2\n"
-                                         u8"  实际位移：%3")
-                                     .arg(scanStartPosReal, 0, 'f', 3)
-                                     .arg(scanEndPosReal, 0, 'f', 3)
-                                     .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
-            whenAppendMessageLog(QString(u8"扫描结束\n"
-                                         u8"  起始位置：%1\n"
-                                         u8"  结束位置2：%2\n"
-                                         u8"  实际位移2：%3")
-                                     .arg(scanStartPosReal, 0, 'f', 3)
-                                     .arg(endPos, 0, 'f', 3)
-                                     .arg(endPos - scanStartPosReal, 0, 'f', 3));
-            on_btnStop_clicked();
-        }
     });
-    triggerRunning = false;
 }
 
 void CISWidget::on_btnStopTrigger_clicked() {
+    disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+    disconnect(endMoveConnection_);
     triggerRunning = false;
+    ui->btnSoftWareTrigger->setEnabled(true);
     ui->railWidget->on_chk_Stop_toggled(true);
+    on_btnStop_clicked();
 }
 void CISWidget::on_ckbSplice_toggled(bool checked) {
     if (!checked) {

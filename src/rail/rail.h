@@ -74,6 +74,8 @@ private:
     int plcPort;
     bool AbMoveDone = true;
     bool AbMoveStart = false;
+    double targetAbsPos = 0.0;
+    double absFinishTolerance = 0.5;
     float vel = 150;  // 地轨速度
 
     QVector<bool> previousCoilStatuses;  // 存储上一时刻的线圈状态

@@ -1,7 +1,7 @@
 [Board]
 Server Name=Xtium-CL_MX4
-Device Name=CameraLink Base Mono #2
-Device Index=1
+Device Name=CameraLink Base Mono #1
+Device Index=0
 [General]
 Version=301
 Vic Name=Default Area Scan 1 tap Mono
@@ -46,7 +46,7 @@ Saturation=100000
 Sharpness=0
 [Stream Conditioning]
 Crop Activation=0
-Crop Height=16100
+Crop Height=35000
 Crop Left=0
 Crop Top=0
 Crop Width=15552
@@ -61,7 +61,7 @@ Lut Number=0
 Pixel Mask=255
 Scale Horizontal=15552
 Scale Horizontal Method=1
-Scale Vertical=16100
+Scale Vertical=33300
 Scale Vertical Method=1
 Snap Count=1
 Vertical Sync Reference=2
@@ -82,7 +82,7 @@ Board Sync Output 2 Source=0
 External Frame Trigger Detection=8
 External Frame Trigger Enable=1
 External Frame Trigger Level=2
-External Frame Trigger Source=0
+External Frame Trigger Source=5
 External Line Trigger Detection=4
 External Line Trigger Enable=0
 External Line Trigger Level=2
