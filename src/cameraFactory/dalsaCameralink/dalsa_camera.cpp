@@ -52,7 +52,7 @@ bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
 
     SapLocation loc(serverName, resourceIndex);
     m_Acquisition = new SapAcquisition(loc, m_ccfPath.toStdString().c_str());
-    m_Buffers = new SapBufferWithTrash(3, m_Acquisition);  // 设立缓冲区， 若用于实时显示，则设立多个缓冲区，并用settrash来标记使用的
+    m_Buffers = new SapBufferWithTrash(1, m_Acquisition);  // 设立缓冲区， 若用于实时显示，则设立多个缓冲区，并用settrash来标记使用的
     m_View = new SapView(m_Buffers, SapHwndAutomatic);
     m_Xfer = new SapAcqToBuf(m_Acquisition, m_Buffers, XferCallBack, this);
     m_pAcqDevice = new SapAcqDevice(loc);
@@ -277,8 +277,9 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
         if (cam->m_maxFrames > 0 && cam->m_frameCount >= cam->m_maxFrames) {
             cam->m_saveEnabled = false;
         }
+    } else {
+        cam->m_frameCount++;
     }
-    cam->m_frameCount++;
 }
 
 // =================== 信号 ===================
