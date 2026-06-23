@@ -304,6 +304,18 @@ void DisplayView::whenUpdateDisplayFit() {
  将图像缩放到合适视图的大小，并调整显示位置
 */
 void DisplayView::whenZoomToDisplayFit() {
+    // 基于当前视口和场景重新计算 fit 参数，避免使用过期缓存（窗口尺寸变化、图像更换等）
+    QRectF sceneBoundingRect = m_scene->itemsBoundingRect();
+    if (!sceneBoundingRect.isEmpty() && viewport()->width() > 0) {
+        double winWidth = viewport()->width() - 20.0;   // 留少量边距
+        double winHeight = viewport()->height() - 20.0;
+        double scale = std::max(sceneBoundingRect.width() / winWidth,
+                                sceneBoundingRect.height() / winHeight);
+        m_rZoomFit = (scale > 0) ? 1.0 / scale : 1.0;
+        m_rFitPixX = sceneBoundingRect.center().x() * m_rZoomFit;
+        m_rFitPixY = sceneBoundingRect.center().y() * m_rZoomFit;
+    }
+
     // fit 是居中显示，临时切回中心锚点，避免受 AnchorUnderMouse 影响
     setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 
@@ -318,6 +330,9 @@ void DisplayView::whenZoomToDisplayFit() {
 
     // 确保所有内容都在视图内
     this->ensureVisible(m_scene->itemsBoundingRect());
+
+    // 同步当前缩放值，避免后续 wheel/+/- 的钳制与比例计算失真
+    m_rZoomValue = m_rZoomFit;
 
     // 恢复光标锚点，便于后续缩放
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
