@@ -100,7 +100,6 @@ private:
     int maxPlatformCount_ = 20;
     QString readPlatfromImg_ = "./data/PaltfromCalibrate/";
     struct PlatformImageGroups {
-        std::vector<std::string> origin;  // 原点, 1张 (文件路径)
         std::vector<std::string> x;       // X平移, 多张 (文件路径)
         std::vector<std::string> y;       // Y平移, 多张 (文件路径)
         std::vector<std::string> rot;     // 纯旋转, 多张 (文件路径)

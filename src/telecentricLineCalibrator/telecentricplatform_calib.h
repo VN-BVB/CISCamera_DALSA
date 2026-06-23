@@ -19,7 +19,7 @@ public:
 
     // 主流程
     void runDemo(std::vector<std::vector<Eigen::Vector2d>> pts = {});
-    bool estimatePlatformPoseFromBoards(const std::vector<Eigen::Vector2d>& originWorld, const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
+    bool estimatePlatformPoseFromBoards(const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
                                         const std::vector<std::vector<Eigen::Vector2d>>& yWorlds,
                                         const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds, Eigen::Vector3d& vRotPlat,
                                         Eigen::Vector3d& vTransPlat);

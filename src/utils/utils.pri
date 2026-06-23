@@ -3,4 +3,5 @@ HEADERS += \
     $$PWD/geometry_utils.h
 
 SOURCES += \
-    $$PWD/geometry_utils.cpp
+    $$PWD/geometry_utils.cpp \
+    $$PWD/image_utils.cpp

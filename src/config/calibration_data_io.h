@@ -9,6 +9,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
@@ -130,6 +131,145 @@ public:
         } catch (...) {
             return false;
         }
+    }
+
+    // 保存为世界坐标系（Rodrigues + 平移），跳过无效和最后一个（世界外参）
+    bool saveCompact(const std::string& path, const Eigen::Vector3d& worldRvecBack, const Eigen::Vector3d& worldTvecBack) {
+        try {
+            cv::Mat r_wc(3, 1, CV_64F), R_wc(3, 3, CV_64F);
+            for (int i = 0; i < 3; ++i) r_wc.at<double>(i) = worldRvecBack(i);
+            cv::Rodrigues(r_wc, R_wc);
+            cv::Mat R_cw = R_wc.t();
+            cv::Mat t_wc(3, 1, CV_64F);
+            for (int i = 0; i < 3; ++i) t_wc.at<double>(i) = worldTvecBack(i);
+
+            std::ofstream os(path);
+            os << std::setprecision(12);
+            os << "{\"PlatformPoseData\":{\"platforms\":[\n";
+            bool first = true;
+            for (size_t i = 0; i + 1 < allRotVecs.size(); ++i) {  // 跳过最后一个(世界外参)
+                if (allTransVecs[i].norm() < 1e-6) continue;       // 跳过未标定
+
+                cv::Mat r_pc(3, 1, CV_64F), R_pc(3, 3, CV_64F);
+                for (int j = 0; j < 3; ++j) r_pc.at<double>(j) = allRotVecs[i](j);
+                cv::Rodrigues(r_pc, R_pc);
+                cv::Mat t_pc(3, 1, CV_64F);
+                for (int j = 0; j < 3; ++j) t_pc.at<double>(j) = allTransVecs[i](j);
+
+                // 平台→相机 → 平台→世界
+                cv::Mat R_pw = R_cw * R_pc;
+                cv::Mat t_pw = R_cw * (t_pc - t_wc);
+                cv::Mat r_pw;
+                cv::Rodrigues(R_pw, r_pw);
+
+                if (!first) os << ",\n";
+                first = false;
+                os << "  {\"id\":" << i << ",\"R\":[" << r_pw.at<double>(0) << "," << r_pw.at<double>(1) << "," << r_pw.at<double>(2) << "]";
+                os << ",\"T\":[" << t_pw.at<double>(0) << "," << t_pw.at<double>(1) << "," << t_pw.at<double>(2) << "]}";
+            }
+            // 写入世界→相机外参（orignCor），加载时用于转回相机坐标
+            os << "\n],\"worldPose\":{";
+            os << "\"R\":[" << worldRvecBack(0) << "," << worldRvecBack(1) << "," << worldRvecBack(2) << "]";
+            os << ",\"T\":[" << worldTvecBack(0) << "," << worldTvecBack(1) << "," << worldTvecBack(2) << "]";
+            os << "}}}\n";
+            return true;
+        } catch (...) { return false; }
+    }
+
+    // 从新格式加载：世界坐标 → 相机坐标，存回 allRotVecs/allTransVecs
+    bool loadCompact(const std::string& path) {
+        try {
+            std::ifstream is(path);
+            std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+            allRotVecs.clear();
+            allTransVecs.clear();
+
+            // 1. 先读 worldPose（世界→相机外参）
+            auto extractVec = [&](const std::string& key, size_t from) -> Eigen::Vector3d {
+                size_t p = json.find("\"" + key + "\":[", from);
+                if (p == std::string::npos) return Eigen::Vector3d::Zero();
+                p = json.find('[', p) + 1;
+                size_t q = json.find(']', p);
+                double v0, v1, v2;
+                sscanf(json.substr(p, q - p).c_str(), "%lf,%lf,%lf", &v0, &v1, &v2);
+                return Eigen::Vector3d(v0, v1, v2);
+            };
+            size_t wp = json.find("\"worldPose\":{");
+            Eigen::Vector3d wRvec = extractVec("R", wp);
+            Eigen::Vector3d wTvec = extractVec("T", wp);
+
+            cv::Mat r_wc(3, 1, CV_64F), R_wc(3, 3, CV_64F);
+            for (int i = 0; i < 3; ++i) r_wc.at<double>(i) = wRvec(i);
+            cv::Rodrigues(r_wc, R_wc);
+            cv::Mat t_wc(3, 1, CV_64F);
+            for (int i = 0; i < 3; ++i) t_wc.at<double>(i) = wTvec(i);
+
+            // 2. 读平台列表，转回相机坐标（按 id 放到正确位置）
+            size_t pos = json.find("\"platforms\":[");
+            pos = json.find('[', pos) + 1;
+            size_t maxId = 0;
+            std::vector<std::pair<size_t, std::pair<Eigen::Vector3d, Eigen::Vector3d>>> entries;
+            while (true) {
+                size_t start = json.find('{', pos);
+                if (start == std::string::npos || start >= json.find(']', pos)) break;
+                size_t end = json.find('}', start) + 1;
+                std::string entry = json.substr(start, end - start);
+
+                // 解析 id
+                size_t pid = 0;
+                {
+                    size_t p = entry.find("\"id\":");
+                    if (p != std::string::npos) pid = atoi(entry.c_str() + p + 5);
+                }
+
+                Eigen::Vector3d r_pw = Eigen::Vector3d::Zero();
+                Eigen::Vector3d t_pw = Eigen::Vector3d::Zero();
+                {
+                    size_t p = entry.find("\"R\":[");
+                    if (p != std::string::npos) {
+                        p = entry.find('[', p) + 1;
+                        size_t q = entry.find(']', p);
+                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &r_pw(0), &r_pw(1), &r_pw(2));
+                    }
+                    p = entry.find("\"T\":[");
+                    if (p != std::string::npos) {
+                        p = entry.find('[', p) + 1;
+                        size_t q = entry.find(']', p);
+                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &t_pw(0), &t_pw(1), &t_pw(2));
+                    }
+                }
+
+                // 世界→相机
+                cv::Mat r_pw_cv(3, 1, CV_64F), R_pw_cv(3, 3, CV_64F);
+                for (int j = 0; j < 3; ++j) r_pw_cv.at<double>(j) = r_pw(j);
+                cv::Rodrigues(r_pw_cv, R_pw_cv);
+                cv::Mat t_pw_cv(3, 1, CV_64F);
+                for (int j = 0; j < 3; ++j) t_pw_cv.at<double>(j) = t_pw(j);
+
+                cv::Mat R_pc = R_wc * R_pw_cv;
+                cv::Mat t_pc = R_wc * t_pw_cv + t_wc;
+                cv::Mat r_pc;
+                cv::Rodrigues(R_pc, r_pc);
+
+                if (pid > maxId) maxId = pid;
+                entries.push_back({pid,
+                    {Eigen::Vector3d(r_pc.at<double>(0), r_pc.at<double>(1), r_pc.at<double>(2)),
+                     Eigen::Vector3d(t_pc.at<double>(0), t_pc.at<double>(1), t_pc.at<double>(2))}});
+
+                pos = end + 1;
+            }
+            // 按 id 填充到正确位置
+            allRotVecs.resize(maxId + 1, Eigen::Vector3d(0, 0, 0));
+            allTransVecs.resize(maxId + 1, Eigen::Vector3d(0, 0, 0));
+            for (auto& e : entries) {
+                allRotVecs[e.first] = e.second.first;
+                allTransVecs[e.first] = e.second.second;
+            }
+            // 最后补上 worldPose（兼容 .back() 用法）
+            allRotVecs.push_back(wRvec);
+            allTransVecs.push_back(wTvec);
+            return true;
+        } catch (...) { return false; }
     }
 
     // 从 JSON 文件加载

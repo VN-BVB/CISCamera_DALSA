@@ -467,7 +467,7 @@ public:
 
         retranslateUi(CISWidget);
 
-        tabWidget->setCurrentIndex(2);
+        tabWidget->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(CISWidget);
@@ -489,11 +489,11 @@ public:
         label->setText(QCoreApplication::translate("CISWidget", "\351\200\237\345\272\246\357\274\232mm/s", nullptr));
         speed_lineEdit->setText(QCoreApplication::translate("CISWidget", "30", nullptr));
         label_5->setText(QCoreApplication::translate("CISWidget", "\351\242\204\350\265\260\357\274\232ms", nullptr));
-        lead_lineEdit->setText(QCoreApplication::translate("CISWidget", "1000", nullptr));
+        lead_lineEdit->setText(QCoreApplication::translate("CISWidget", "0", nullptr));
         label_2->setText(QCoreApplication::translate("CISWidget", "\350\265\267\347\202\271\357\274\232mm", nullptr));
-        start_lineEdit->setText(QCoreApplication::translate("CISWidget", "200", nullptr));
+        start_lineEdit->setText(QCoreApplication::translate("CISWidget", "60", nullptr));
         label_3->setText(QCoreApplication::translate("CISWidget", "\347\273\210\347\202\271\357\274\232mm", nullptr));
-        end_lineEdit->setText(QCoreApplication::translate("CISWidget", "500", nullptr));
+        end_lineEdit->setText(QCoreApplication::translate("CISWidget", "800", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab), QCoreApplication::translate("CISWidget", "\347\233\270\346\234\272\346\265\213\350\257\225\345\212\237\350\203\275", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_2), QCoreApplication::translate("CISWidget", "\350\275\250\351\201\223\350\277\220\345\212\250\345\212\237\350\203\275", nullptr));
         ckbShowPLlatImg->setText(QCoreApplication::translate("CISWidget", "\346\230\276\347\244\272\345\233\276\345\203\217", nullptr));

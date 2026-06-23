@@ -788,27 +788,15 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     std::cout << "\nTrans vector (platform -> camera): " << tvec_opt.transpose() << std::endl;
 }
 
-bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<Eigen::Vector2d>& originWorld,
-                                                              const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
+bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
                                                               const std::vector<std::vector<Eigen::Vector2d>>& yWorlds,
                                                               const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds, Eigen::Vector3d& vRotPlat,
                                                               Eigen::Vector3d& vTransPlat) {
-    auto& ow = originWorld;  // 简称
-    if (ow.empty() || xWorlds.empty() || yWorlds.empty() || rotWorlds.size() < 2) return false;
+    if (xWorlds.size() < 1 || yWorlds.size() < 1 || rotWorlds.size() < 2) return false;
 
-    // === 1. xdir: 所有相邻 X 组的平均位移 ===
+    // === 1. xdir: 相邻 X 组的平均位移 ===
     Eigen::Vector2d xdir2d = Eigen::Vector2d::Zero();
     int xCnt = 0;
-    {
-        double sum_dx = 0, sum_dy = 0;
-        int n = std::min(ow.size(), xWorlds[0].size());
-        for (int i = 0; i < n; ++i) {
-            sum_dx += xWorlds[0][i].x() - ow[i].x();
-            sum_dy += xWorlds[0][i].y() - ow[i].y();
-        }
-        xdir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
-        ++xCnt;
-    }
     for (size_t k = 1; k < xWorlds.size(); ++k) {
         double sum_dx = 0, sum_dy = 0;
         int n = std::min(xWorlds[k - 1].size(), xWorlds[k].size());
@@ -819,21 +807,15 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         xdir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
         ++xCnt;
     }
+    if (xCnt == 0) {
+        std::cerr << "X 方向需要至少 2 张图" << std::endl;
+        return false;
+    }
     xdir2d /= xCnt;
 
-    // === 2. ydir: 所有相邻 Y 组的平均位移 ===
+    // === 2. ydir: 相邻 Y 组的平均位移 ===
     Eigen::Vector2d ydir2d = Eigen::Vector2d::Zero();
     int yCnt = 0;
-    {
-        double sum_dx = 0, sum_dy = 0;
-        int n = std::min(ow.size(), yWorlds[0].size());
-        for (int i = 0; i < n; ++i) {
-            sum_dx += yWorlds[0][i].x() - ow[i].x();
-            sum_dy += yWorlds[0][i].y() - ow[i].y();
-        }
-        ydir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
-        ++yCnt;
-    }
     for (size_t k = 1; k < yWorlds.size(); ++k) {
         double sum_dx = 0, sum_dy = 0;
         int n = std::min(yWorlds[k - 1].size(), yWorlds[k].size());
@@ -843,6 +825,10 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         }
         ydir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
         ++yCnt;
+    }
+    if (yCnt == 0) {
+        std::cerr << "Y 方向需要至少 2 张图" << std::endl;
+        return false;
     }
     ydir2d /= yCnt;
 
@@ -856,11 +842,8 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         return false;
     }
 
-    // === 3. C₀: 原点处直接转, 求出的就是零位旋转中心 ===
-    std::vector<std::vector<Eigen::Vector2d>> rotSeq;
-    rotSeq.push_back(ow);
-    for (auto& rw : rotWorlds) rotSeq.push_back(rw);
-    Eigen::Vector2d C0 = computeRotationCenterSequential(rotSeq);
+    // === 3. C₀: rot 序列直接求旋转中心（不需要 origin） ===
+    Eigen::Vector2d C0 = computeRotationCenterSequential(rotWorlds);
     std::cout << "旋转中心 C₀ = " << C0.transpose() << std::endl;
 
     // === 4. 平台 → 世界 ===

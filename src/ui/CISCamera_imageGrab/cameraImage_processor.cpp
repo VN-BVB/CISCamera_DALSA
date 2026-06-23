@@ -41,7 +41,8 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
     allRotVecs_.clear();
     allTransVecs_.clear();
     PlatformPoseData cam2PlatParam;
-    if (!cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
+    if (!cam2PlatParam.loadCompact("./data/calibration_config/platform_pose.json") &&
+        !cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
         throw std::runtime_error("无法加载标定文件");
     }
     allRotVecs_ = cam2PlatParam.allRotVecs;
@@ -401,14 +402,12 @@ void CameraImageProcessor::loadPlatformCalibImages() {
             return paths;
         };
 
-        platformGroups_[idx].origin = loadDir("origin");
         platformGroups_[idx].x = loadDir("x");
         platformGroups_[idx].y = loadDir("y");
         platformGroups_[idx].rot = loadDir("rot");
 
-        emit text(QString(u8"平台 %1: origin=%2, x=%3, y=%4, rot=%5")
+        emit text(QString(u8"平台 %1: x=%2, y=%3, rot=%4")
                       .arg(idx)
-                      .arg(platformGroups_[idx].origin.size())
                       .arg(platformGroups_[idx].x.size())
                       .arg(platformGroups_[idx].y.size())
                       .arg(platformGroups_[idx].rot.size()));
@@ -518,13 +517,13 @@ void CameraImageProcessor::whenCalibrateCP() {
         }
     }
 
-    // libcbdetect 原生顺序是行优先、上→下，生成匹配的 worldPts（不排序 imgPts）
-    std::vector<Eigen::Vector2d> worldPtsRowMajor;
-    worldPtsRowMajor.reserve(W_ * H_);
-    for (int r = 0; r < H_; ++r)
-        for (int c = 0; c < W_; ++c) worldPtsRowMajor.emplace_back(c * spacingMM_, (H_ - 1 - r) * spacingMM_);
+    // libcbdetect 输出是列优先、上→下，生成匹配的 worldPts
+    std::vector<Eigen::Vector2d> worldPtsMatch;
+    worldPtsMatch.reserve(W_ * H_);
+    for (int c = 0; c < W_; ++c)
+        for (int r = 0; r < H_; ++r) worldPtsMatch.emplace_back(c * spacingMM_, r * spacingMM_);
 
-    Pose pose = telecentricLineCalibrator->estimateTelecentricPose(K_, coff_dis_, m_, width_ / 2, height_ / 2, dx_, dy_, worldPtsRowMajor, imgPts);
+    Pose pose = telecentricLineCalibrator->estimateTelecentricPose(K_, coff_dis_, m_, width_ / 2, height_ / 2, dx_, dy_, worldPtsMatch, imgPts);
     Eigen::Vector3d v_rot = rotMatToVec(pose.R);
     Eigen::Vector3d v_trans = pose.t;
     poseData.allRotVecs.back() = v_rot;
@@ -566,15 +565,8 @@ void CameraImageProcessor::whenCalibrateCP() {
 
     for (size_t p = 0; p < platformGroups_.size(); ++p) {
         auto& g = platformGroups_[p];
-        if (g.origin.empty() || g.x.empty() || g.y.empty() || g.rot.empty()) {
-            emit text(QString(u8"平台 %1 数据不全，跳过").arg(p));
-            continue;
-        }
-
-        emit text(QString(u8"平台 %1：检测原点...").arg(p));
-        auto ow = detectAndConvert(g.origin[0]);
-        if (ow.empty()) {
-            emit text(QString(u8"平台 %1 原点检测失败").arg(p));
+        if (g.x.size() < 2 || g.y.size() < 2 || g.rot.size() < 2) {
+            emit text(QString(u8"平台 %1 数据不全（x/y/rot各需≥2张），跳过").arg(p));
             continue;
         }
 
@@ -599,7 +591,7 @@ void CameraImageProcessor::whenCalibrateCP() {
 
         emit text(QString(u8"平台 %1：求解平台姿态...").arg(p));
         Eigen::Vector3d r, t;
-        if (!calibCamera2Plat.estimatePlatformPoseFromBoards(ow, xws, yws, rws, r, t)) {
+        if (!calibCamera2Plat.estimatePlatformPoseFromBoards(xws, yws, rws, r, t)) {
             emit text(QString(u8"平台 %1 姿态求解失败！").arg(p));
             continue;
         }
@@ -608,7 +600,8 @@ void CameraImageProcessor::whenCalibrateCP() {
         emit text(QString(u8"平台 %1 姿态求解成功！").arg(p));
     }
 
-    poseData.save("./data/calibration_config/platform_pose.json");
+    poseData.saveCompact("./data/calibration_config/platform_pose.json",
+                         poseData.allRotVecs.back(), poseData.allTransVecs.back());
     allRotVecs_ = poseData.allRotVecs;
     allTransVecs_ = poseData.allTransVecs;
 

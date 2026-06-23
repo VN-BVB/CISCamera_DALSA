@@ -334,7 +334,7 @@ cv::Mat LibCBDetector::visualizeCorners(const cv::Mat& img, const std::vector<cv
     // 4. 显示 + 保存
     cv::namedWindow("corners", cv::WINDOW_NORMAL);
     cv::imshow("corners", color);
-    cv::waitKey(0);
+    cv::waitKey(1);  // 非阻塞刷新
     if (!save_path.empty()) cv::imwrite(save_path, color);
 
     return color;
