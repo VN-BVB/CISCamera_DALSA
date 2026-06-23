@@ -90,3 +90,4 @@ private slots:
     void on_btnClearCPDetectResult_clicked();
 };
 #endif  // CIS_CAMERA_IMAGE_H
+

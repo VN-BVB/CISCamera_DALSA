@@ -1,5 +1,52 @@
 ﻿#include "py_telecentric_optimizer.h"
 bool TelecentricPYOptimizer::pythonInitialized = false;
+namespace {
+
+struct PyStdoutRedirectGuard {
+    pybind11::object originalStdout;
+
+    explicit PyStdoutRedirectGuard(std::function<void(const std::string&)>* cb) {
+        auto sys = pybind11::module_::import("sys");
+        originalStdout = sys.attr("stdout");
+
+        if (!cb || !*cb) return;
+
+        auto pyCb = pybind11::cpp_function([cb](const std::string& line) { (*cb)(line); });
+
+        auto g = pybind11::globals();
+        g["_qt_cb"] = std::move(pyCb);
+
+        pybind11::exec(R"(
+  import sys
+  _orig_stdout = sys.stdout
+  class _QtWriter:
+      def __init__(self):
+          self._buf = ""
+      def write(self, s):
+          _orig_stdout.write(s)
+          _orig_stdout.flush()
+          self._buf += s
+          while '\n' in self._buf:
+              line, self._buf = self._buf.split('\n', 1)
+              if line.strip():
+                  _qt_cb(line)
+      def flush(self):
+          _orig_stdout.flush()
+  sys.stdout = _QtWriter()
+          )",
+                       pybind11::globals(), g);
+    }
+
+    ~PyStdoutRedirectGuard() {
+        try {
+            auto sys = pybind11::module_::import("sys");
+            sys.attr("stdout") = originalStdout;
+        } catch (...) {
+        }
+    }
+};
+
+}  // namespace
 
 TelecentricPYOptimizer::TelecentricPYOptimizer() {
     if (!pythonInitialized) {
@@ -8,7 +55,7 @@ TelecentricPYOptimizer::TelecentricPYOptimizer() {
             "PYTHONPATH=D:\\anaconda\\envs\\Telecentric-Calibration\\Lib;"
             "D:\\anaconda\\envs\\Telecentric-Calibration\\Lib\\site-packages;"
             ".\\src\\telecentricLineCalibrator\\python\\Telecentric-Calibration-main");
-
+        _putenv("PYTHONUNBUFFERED=1");
         static pybind11::scoped_interpreter guard{};
         pythonInitialized = true;
 
@@ -18,6 +65,7 @@ TelecentricPYOptimizer::TelecentricPYOptimizer() {
 bool TelecentricPYOptimizer::invokeTelecentricCalibration() {
     try {
         pybind11::gil_scoped_acquire acquire;
+        PyStdoutRedirectGuard guard(&logCallback_);
 
         pybind11::scoped_ostream_redirect redirect(std::cout, pybind11::module_::import("sys").attr("stdout"));
 
@@ -274,6 +322,7 @@ bool TelecentricPYOptimizer::optTelecentricExtrinsicParameters(const Eigen::Matr
                                                                Eigen::Vector3d& v_trans, double& err) {
     try {
         pybind11::gil_scoped_acquire acquire;
+        PyStdoutRedirectGuard guard(&logCallback_);
 
         pybind11::scoped_ostream_redirect redirect(std::cout, pybind11::module_::import("sys").attr("stdout"));
 
@@ -337,6 +386,7 @@ bool TelecentricPYOptimizer::refinePlatformExtrinsicsLM(const Eigen::Matrix3d& K
                                                         Eigen::Vector3d& rvec_opt, Eigen::Vector3d& tvec_opt, double& final_rms) {
     try {
         pybind11::gil_scoped_acquire acquire;
+        PyStdoutRedirectGuard guard(&logCallback_);
 
         // ---------- import Python module ----------
         pybind11::module mod = pybind11::module::import("plat_extrin");
@@ -396,3 +446,5 @@ bool TelecentricPYOptimizer::refinePlatformExtrinsicsLM(const Eigen::Matrix3d& K
         return false;
     }
 }
+
+void TelecentricPYOptimizer::setLogCallback(std::function<void(const std::string&)> cb) { logCallback_ = std::move(cb); }

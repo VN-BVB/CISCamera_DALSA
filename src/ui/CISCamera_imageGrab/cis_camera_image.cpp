@@ -6,6 +6,7 @@
 #include "src/rail/rail_widget.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
+#include "src/utils/image_utils.cpp"
 #include "ui_cis_camera_image.h"
 #define ENABLE_SLAVE_CAMERA
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
@@ -19,7 +20,10 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     PLOGD << "当前主线程";
     std::string filePath = R"(D:\Code\CISCamera_DALSA\data\CISCamera_Image\test\Splice_20251030_214803209.bmp)";
     // 读取图像
-    cv::Mat img = cv::imread(filePath, cv::IMREAD_GRAYSCALE);
+    cv::Mat img = readLargeBMP(filePath);
+    if (img.empty()) {
+        img = cv::imread(filePath, cv::IMREAD_GRAYSCALE);  // 回退（小图或非BMP）
+    }
     ui->imgSplice->displayImage(img, true);
 }
 

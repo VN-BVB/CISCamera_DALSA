@@ -100,5 +100,6 @@ private:
     const std::string calib_data_path_ = "./data/calibration_config/before_optimization_calib_data.json";
 signals:
     void sendSignalSuccessCalib();
+    void sendLogMessage(const QString& msg);
 };
 #endif  // TELECENTRIC_LINE_CALIBRATOR_H

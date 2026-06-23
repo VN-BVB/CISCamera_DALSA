@@ -26,11 +26,10 @@ public:
     std::vector<std::vector<cv::Point2d>> processSingleImage(const cv::Mat& img, int file_index);
     void test();
 
-    void processImagesInDirectoryFilePath(const std::string& dir_path,
-                                          std::vector<std::vector<std::vector<cv::Point2d>>>& allImagesBoardsPts);
+    void processImagesInDirectoryFilePath(const std::string& dir_path, std::vector<std::vector<std::vector<cv::Point2d>>>& allImagesBoardsPts);
 
-    void processImagesFromMats(const std::vector<cv::Mat>& images,
-                               std::vector<std::vector<std::vector<cv::Point2d>>>& allImagesBoardsPts);
+    void processImagesFromMats(const std::vector<cv::Mat>& images, std::vector<std::vector<std::vector<cv::Point2d>>>& allImagesBoardsPts);
+    cv::Mat visualizeCorners(const cv::Mat& img, const std::vector<cv::Point2d>& corners, const std::string& save_path);
 
 private:
     void saveBoardPoints(const std::vector<cv::Point2d>& points);

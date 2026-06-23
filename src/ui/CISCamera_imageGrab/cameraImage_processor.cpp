@@ -3,6 +3,8 @@
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 #include "src/telecentricLineCalibrator/telecentricplatform_calib.h"
+#include "src/utils/image_utils.cpp"
+
 CameraImageProcessor::CameraImageProcessor(QObject* parent) : QObject(parent) {}
 
 CameraImageProcessor::~CameraImageProcessor() {}
@@ -11,15 +13,16 @@ void CameraImageProcessor::initCameraCalibrator() {
     lodaCam2PlatCalibrateParams();
     libcbDetector = std::make_shared<LibCBDetector>();
     telecentricLineCalibrator = std::make_shared<TelecentricLineCalibrator>();
-    telecentricPlatCalibrator =
-        std::make_shared<TelecentricPlatformCalib>(K_, coff_dis_, allRotVecs_.back(), allTransVecs_.back());
+    telecentricPlatCalibrator = std::make_shared<TelecentricPlatformCalib>(K_, coff_dis_, allRotVecs_.back(), allTransVecs_.back());
     connect(this, &CameraImageProcessor::sendSignalToCalibrate, telecentricLineCalibrator.get(),
             &TelecentricLineCalibrator::calibrateCameraFromPointsDemo, Qt::QueuedConnection);
     connect(telecentricLineCalibrator.get(), &TelecentricLineCalibrator::sendSignalSuccessCalib, this,
             &CameraImageProcessor::lodaCameraCalibrateParams, Qt::QueuedConnection);
+    connect(telecentricLineCalibrator.get(), &TelecentricLineCalibrator::sendLogMessage, this,
+            &CameraImageProcessor::text);  // text 信号已连到 UI 的 whenAppendMessageLog  // text 信号已连到 UI 的 whenAppendMessageLog
     worldPts.reserve(W_ * H_);
-    for (int r = 0; r < H_; ++r)
-        for (int c = 0; c < W_; ++c) worldPts.emplace_back(c * spacingMM_, r * spacingMM_);
+    for (int c = 0; c < W_; ++c)
+        for (int r = H_ - 1; r >= 0; --r) worldPts.emplace_back(c * spacingMM_, r * spacingMM_);
 }
 void CameraImageProcessor::lodaCameraCalibrateParams() {
     v_rot_s.clear();
@@ -375,67 +378,48 @@ void CameraImageProcessor::savePlatfromCailbImg(const QString& prefix, const QSt
 
     all_platfromCalibImg_[paltIndex].emplace_back((*toSave).clone());
 }
+
 void CameraImageProcessor::loadPlatformCalibImages() {
-    all_platfromCalibImg_.clear();
-    all_platfromCalibImg_.resize(maxPlatformCount_);
-    loadMode_ = true;
+    platformGroups_.clear();
+    platformGroups_.resize(maxPlatformCount_);
 
     QDir rootDir(readPlatfromImg_);
-    if (!rootDir.exists()) {
-        emit error(QString(u8"读取失败：目录不存在 %1").arg(rootDir.path()));
-        return;
-    }
-
-    emit text(QString(u8"正在读取平台标定图像，请稍等..."));
-
-    // ========== 遍历 readPlatfromImg 下的每一个子文件夹 ==========
     QFileInfoList subDirs = rootDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
 
     for (const QFileInfo& info : subDirs) {
-        // 子文件夹名称就是平台编号（如 p1、p2 或数字）
-        QString subName = info.fileName();
-
         bool ok = false;
-        int index = subName.toInt(&ok);
-        if (!ok) {
-            // 名字不是数字，跳过
-            continue;
-        }
+        int idx = info.fileName().toInt(&ok);
+        if (!ok || idx < 0 || idx >= maxPlatformCount_) continue;
 
-        if (index < 0 || index >= all_platfromCalibImg_.size()) continue;
-
-        QString imgDirPath = info.absoluteFilePath() + "/img/";
-        QDir imgDir(imgDirPath);
-
-        if (!imgDir.exists()) continue;
-
-        // 读取所有图像文件
-        QStringList filters;
-        filters << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.tif" << "*.tiff";
-
-        QFileInfoList imgFiles = imgDir.entryInfoList(filters, QDir::Files);
-
-        for (const QFileInfo& imgFile : imgFiles) {
-            cv::Mat img = cv::imread(imgFile.absoluteFilePath().toStdString(), cv::IMREAD_UNCHANGED);
-            if (img.empty()) {
-                emit error(QString(u8"读取失败：%1").arg(imgFile.absoluteFilePath()));
-                continue;
+        auto loadDir = [&](const QString& sub) -> std::vector<std::string> {
+            std::vector<std::string> paths;
+            QDir d(info.absoluteFilePath() + "/" + sub);
+            QStringList filters = {"*.bmp", "*.png", "*.jpg", "*.tif", "*.tiff"};
+            for (auto& f : d.entryInfoList(filters, QDir::Files)) {
+                paths.push_back(f.absoluteFilePath().toStdString());
             }
+            return paths;
+        };
 
-            all_platfromCalibImg_[index].emplace_back(img.clone());
-        }
+        platformGroups_[idx].origin = loadDir("origin");
+        platformGroups_[idx].x = loadDir("x");
+        platformGroups_[idx].y = loadDir("y");
+        platformGroups_[idx].rot = loadDir("rot");
 
-        emit text(QString(u8"平台 %1 已读取图像数：%2").arg(index).arg(all_platfromCalibImg_[index].size()));
+        emit text(QString(u8"平台 %1: origin=%2, x=%3, y=%4, rot=%5")
+                      .arg(idx)
+                      .arg(platformGroups_[idx].origin.size())
+                      .arg(platformGroups_[idx].x.size())
+                      .arg(platformGroups_[idx].y.size())
+                      .arg(platformGroups_[idx].rot.size()));
     }
-
-    emit text(QString(u8"平台标定图像全部读取完成"));
 }
 void CameraImageProcessor::whenClearPlatFromFile(const QString& subFolder) {
     emit text(QString(u8"正在清除平台目录 '%1' 下的所有文件...").arg(subFolder));
 
     // 清空内存中的所有图像
-    all_platfromCalibImg_.clear();
-    all_platfromCalibImg_.resize(maxPlatformCount_);
+    platformGroups_.clear();
+    platformGroups_.resize(maxPlatformCount_);
 
     QDir rootDir(readPlatfromImg_);
     if (!rootDir.exists()) {
@@ -508,103 +492,129 @@ void CameraImageProcessor::whenCameraCalibrate() {
 
     sendSignalToCalibrate(all_image_points_, worldPts, width_, height_, dx_, dy_, K, rmse, poses);
 }
+
 void CameraImageProcessor::whenCalibrateCP() {
-    if (all_platfromCalibImg_.empty()) {
+    if (platformGroups_.empty()) {
         loadPlatformCalibImages();
     }
-    emit text(QString(u8"正在进初始世界平台的棋盘格检测与外参估计..."));
-    PlatformPoseData poseData;
 
-    int N = all_platfromCalibImg_.size();
+    // ====== 1. 世界坐标系（同原来） ======
+    emit text(QString(u8"正在进行初始世界平台的棋盘格检测与外参估计..."));
+    PlatformPoseData poseData;
+    int N = platformGroups_.size();
     poseData.allRotVecs.assign(N + 1, Eigen::Vector3d(0, 0, 0));
     poseData.allTransVecs.assign(N + 1, Eigen::Vector3d(0, 0, 0));
+
     std::vector<std::vector<std::vector<cv::Point2d>>> calcOriCoordinateSystem;
     libcbDetector->processImagesInDirectoryFilePath("./data/PaltfromCalibrate/orignCor/img", calcOriCoordinateSystem);
     std::vector<Eigen::Vector2d> imgPts;
-    for (auto& p : calcOriCoordinateSystem[0][0]) {
-        imgPts.emplace_back(p.x, p.y);
+    for (auto& p : calcOriCoordinateSystem[0][0]) imgPts.emplace_back(p.x, p.y);
+
+    // ---- 可视化: orignCor 原始检测序号 ----
+    {
+        cv::Mat orignImg = readLargeBMP("./data/PaltfromCalibrate/orignCor/img/1.bmp");
+        if (!orignImg.empty()) {
+            libcbDetector->visualizeCorners(orignImg, calcOriCoordinateSystem[0][0], "./data/PaltfromCalibrate/viz_orignCor.png");
+        }
     }
 
-    Pose pose = telecentricLineCalibrator->estimateTelecentricPose(K_, coff_dis_, m_, width_ / 2, height_ / 2, dx_, dy_, worldPts,
-                                                                   imgPts);
+    // libcbdetect 原生顺序是行优先、上→下，生成匹配的 worldPts（不排序 imgPts）
+    std::vector<Eigen::Vector2d> worldPtsRowMajor;
+    worldPtsRowMajor.reserve(W_ * H_);
+    for (int r = 0; r < H_; ++r)
+        for (int c = 0; c < W_; ++c) worldPtsRowMajor.emplace_back(c * spacingMM_, (H_ - 1 - r) * spacingMM_);
+
+    Pose pose = telecentricLineCalibrator->estimateTelecentricPose(K_, coff_dis_, m_, width_ / 2, height_ / 2, dx_, dy_, worldPtsRowMajor, imgPts);
     Eigen::Vector3d v_rot = rotMatToVec(pose.R);
     Eigen::Vector3d v_trans = pose.t;
-    // 保存世界坐标系
     poseData.allRotVecs.back() = v_rot;
     poseData.allTransVecs.back() = v_trans;
+
+    // 立即更新成员变量，让后续 convertToWorld 使用新外参
+    allRotVecs_.back() = v_rot;
+    allTransVecs_.back() = v_trans;
+
+    // ====== 2. 辅助: 逐张读取→检测→转换→释放 ======
+    auto detectAndConvert = [this](const std::string& filePath) -> std::vector<Eigen::Vector2d> {
+        // 读图
+        cv::Mat img = readLargeBMP(filePath);
+        if (img.empty()) {
+            img = cv::imread(filePath, cv::IMREAD_UNCHANGED);
+        }
+        if (img.empty()) return {};
+
+        // 检测角点
+        std::vector<std::vector<std::vector<cv::Point2d>>> boards;
+        libcbDetector->processImagesFromMats({img}, boards);
+
+        if (boards.empty() || boards[0].empty()) return {};
+
+        // ---- 可视化 ----
+        {
+            std::string vizPath = filePath.substr(0, filePath.find_last_of('.')) + "_viz.png";
+            libcbDetector->visualizeCorners(img, boards[0][0], vizPath);
+        }
+
+        std::vector<Eigen::Vector2d> pix;
+        for (auto& pt : boards[0][0]) pix.emplace_back(pt.x, pt.y);
+        auto world = convertToWorld(pix);
+        return world;
+    };
+
+    // ====== 3. 遍历每个平台 ======
     TelecentricPlatformCalib calibCamera2Plat(K_, coff_dis_, v_rot, v_trans);
-    calibCamera2Plat.runDemo();
-    // //  2. 输出结构：platform → image → board → corner
-    // std::vector<std::vector<std::vector<std::vector<cv::Point2d>>>> allPlatformsBoardsPts;
 
-    // allPlatformsBoardsPts.resize(all_platfromCalibImg_.size());
-    // emit text(QString(u8"正在进行所有平台的棋盘格检测..."));
-    // // 3. 遍历每个平台
-    // for (size_t p = 0; p < all_platfromCalibImg_.size(); ++p) {
-    //     emit text(QString(u8"平台 %1：检测棋盘格...").arg(p));
+    for (size_t p = 0; p < platformGroups_.size(); ++p) {
+        auto& g = platformGroups_[p];
+        if (g.origin.empty() || g.x.empty() || g.y.empty() || g.rot.empty()) {
+            emit text(QString(u8"平台 %1 数据不全，跳过").arg(p));
+            continue;
+        }
 
-    //     // 取该平台的所有图像
-    //     const auto& imgs = all_platfromCalibImg_[p];
+        emit text(QString(u8"平台 %1：检测原点...").arg(p));
+        auto ow = detectAndConvert(g.origin[0]);
+        if (ow.empty()) {
+            emit text(QString(u8"平台 %1 原点检测失败").arg(p));
+            continue;
+        }
 
-    //     // 输出：图像 × 标定板 × 角点
-    //     std::vector<std::vector<std::vector<cv::Point2d>>> onePlatformBoards;
+        emit text(QString(u8"平台 %1：检测 X 组(%2张)...").arg(p).arg(g.x.size()));
+        std::vector<std::vector<Eigen::Vector2d>> xws;
+        for (auto& img : g.x) {
+            auto w = detectAndConvert(img);
+            if (!w.empty()) xws.push_back(w);
+        }
+        emit text(QString(u8"平台 %1：检测 Y 组(%2张)...").arg(p).arg(g.y.size()));
+        std::vector<std::vector<Eigen::Vector2d>> yws;
+        for (auto& img : g.y) {
+            auto w = detectAndConvert(img);
+            if (!w.empty()) yws.push_back(w);
+        }
+        emit text(QString(u8"平台 %1：检测 Rot 组(%2张)...").arg(p).arg(g.rot.size()));
+        std::vector<std::vector<Eigen::Vector2d>> rws;
+        for (auto& img : g.rot) {
+            auto w = detectAndConvert(img);
+            if (!w.empty()) rws.push_back(w);
+        }
 
-    //     libcbDetector->processImagesFromMats(imgs, onePlatformBoards);
+        emit text(QString(u8"平台 %1：求解平台姿态...").arg(p));
+        Eigen::Vector3d r, t;
+        if (!calibCamera2Plat.estimatePlatformPoseFromBoards(ow, xws, yws, rws, r, t)) {
+            emit text(QString(u8"平台 %1 姿态求解失败！").arg(p));
+            continue;
+        }
+        poseData.allRotVecs[p] = r;
+        poseData.allTransVecs[p] = t;
+        emit text(QString(u8"平台 %1 姿态求解成功！").arg(p));
+    }
 
-    //     allPlatformsBoardsPts[p] = onePlatformBoards;
-    //     for (size_t imgIdx = 0; imgIdx < onePlatformBoards.size(); ++imgIdx) {
-    //         const auto& boards = onePlatformBoards[imgIdx];
+    poseData.save("./data/calibration_config/platform_pose.json");
+    allRotVecs_ = poseData.allRotVecs;
+    allTransVecs_ = poseData.allTransVecs;
 
-    //         if (boards.empty()) {
-    //             emit text(QString(u8"平台 %1 - 图像 %2：未检测到棋盘格").arg(p).arg(imgIdx));
-    //             continue;
-    //         }
-
-    //         for (size_t b = 0; b < boards.size(); ++b) {
-    //             int detectedCorners = boards[b].size();
-    //             int expectedCorners = W_ * H_;
-
-    //             if (detectedCorners == expectedCorners) {
-    //                 emit text(QString(u8"平台 %1 - 图像 %2 - 棋盘格 %3：角点数 %4 ✔ 符合规格 (%5×%6)")
-    //                               .arg(p)
-    //                               .arg(imgIdx)
-    //                               .arg(b)
-    //                               .arg(detectedCorners)
-    //                               .arg(W_)
-    //                               .arg(H_));
-    //             } else {
-    //                 emit text(QString(u8"平台 %1 - 图像 %2 - 棋盘格 %3：角点数 %4 ✘ 不符合规格 (%5×%6)")
-    //                               .arg(p)
-    //                               .arg(imgIdx)
-    //                               .arg(b)
-    //                               .arg(detectedCorners)
-    //                               .arg(W_)
-    //                               .arg(H_));
-    //             }
-    //         }
-    //     }
-    // }
-    // emit text(QString(u8"所有平台棋盘格检测完成！"));
-    // TelecentricPlatformCalib calibCamera2Plat(K_, coff_dis_, v_rot, v_trans);
-    // calibCamera2Plat.runDemo();
-    // for (size_t p = 0; p < allPlatformsBoardsPts.size(); ++p) {
-    //     Eigen::Vector3d r, t;
-    //     emit text(QString(u8"平台 %1：求解平台姿态...").arg(p));
-
-    //     if (!calibCamera2Plat.estimatePlatformPoseFromBoards(allPlatformsBoardsPts[p], r, t)) {
-    //         emit text(QString(u8"平台 %1 姿态求解失败！").arg(p));
-    //         continue;
-    //     }
-    //     emit text(QString(u8"平台 %1 姿态求解成功！").arg(p));
-    //     poseData.allRotVecs[p] = r;
-    //     poseData.allTransVecs[p] = t;
-    // }
-    // poseData.save("./data/calibration_config/platform_pose.json");
-    // allRotVecs_ = poseData.allRotVecs;
-    // allTransVecs_ = poseData.allTransVecs;
-
-    // emit text(QString(u8"所有平台的姿态求解完成！"));
+    emit text(QString(u8"所有平台的姿态求解完成！"));
 }
+
 std::vector<Eigen::Vector2d> CameraImageProcessor::convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts) {
     if (pix_pts.empty()) return {};
 
@@ -614,7 +624,6 @@ std::vector<Eigen::Vector2d> CameraImageProcessor::convertToWorld(const std::vec
     Eigen::MatrixXd cam_norm = telecentricLineCalibrator->pixelToCameraCoordinates(px, K_, coff_dis_);
 
     // camera → world（逆平面变换）
-    Eigen::MatrixXd world =
-        telecentricLineCalibrator->cameraToWorldCoordinates(cam_norm, allRotVecs_.back(), allTransVecs_.back());
+    Eigen::MatrixXd world = telecentricLineCalibrator->cameraToWorldCoordinates(cam_norm, allRotVecs_.back(), allTransVecs_.back());
     return matToVec(world);
 }

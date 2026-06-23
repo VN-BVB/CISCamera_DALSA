@@ -1176,6 +1176,9 @@ bool TelecentricLineCalibrator::calibrateCameraFromPointsDemo(const std::vector<
 
     // PLOGD << " 开始非线性优化";
     TelecentricPYOptimizer opt;
+    opt.setLogCallback(
+        [this](const std::string& line) { QMetaObject::invokeMethod(this, [this, msg = QString::fromStdString(line)]() {}, Qt::QueuedConnection); });
+
     if (!opt.invokeTelecentricCalibration()) {
         PLOGE << "Python 调用失败！";
     }

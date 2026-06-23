@@ -7,6 +7,8 @@
 #include <ctime>
 #include <iostream>
 
+#include "../../utils/image_utils.cpp"
+
 int LibCBDetector::file_counter_ = 0;  // 初始化静态变量
 
 LibCBDetector::LibCBDetector() {
@@ -46,7 +48,7 @@ std::vector<std::vector<cv::Point2d>> LibCBDetector::processSingleImage(const cv
 
     // 1. 降采样
     cv::Mat downsampled_img;
-    double downsample_scale = 300.0 / 1200.0;
+    double downsample_scale = 150.0 / 1200.0;
     cv::resize(img, downsampled_img, cv::Size(), downsample_scale, downsample_scale, cv::INTER_LINEAR);
 
     // 2. 粗定位
@@ -104,45 +106,45 @@ std::vector<std::vector<cv::Point2d>> LibCBDetector::processSingleImage(const cv
 }
 
 // 手动读取 8-bit 灰度 BMP，绕过 OpenCV 的 CV_IO_MAX_IMAGE_PIXELS 限制
-static cv::Mat readLargeBMP(const std::string& filepath) {
-    std::ifstream file(filepath, std::ios::binary);
-    if (!file) return cv::Mat();
+// static cv::Mat readLargeBMP(const std::string& filepath) {
+//     std::ifstream file(filepath, std::ios::binary);
+//     if (!file) return cv::Mat();
 
-    // BITMAPFILEHEADER (14 bytes)
-    uint16_t bfType;
-    uint32_t bfOffBits;
-    file.read(reinterpret_cast<char*>(&bfType), 2);
-    if (bfType != 0x4D42) return cv::Mat();  // 不是 'BM'
-    file.seekg(8, std::ios::cur);            // 跳过 fileSize(4) + reserved(4)
-    file.read(reinterpret_cast<char*>(&bfOffBits), 4);
+//     // BITMAPFILEHEADER (14 bytes)
+//     uint16_t bfType;
+//     uint32_t bfOffBits;
+//     file.read(reinterpret_cast<char*>(&bfType), 2);
+//     if (bfType != 0x4D42) return cv::Mat();  // 不是 'BM'
+//     file.seekg(8, std::ios::cur);            // 跳过 fileSize(4) + reserved(4)
+//     file.read(reinterpret_cast<char*>(&bfOffBits), 4);
 
-    // BITMAPINFOHEADER (40 bytes)
-    uint32_t biWidth, biHeight;
-    uint16_t biBitCount;
-    uint32_t biCompression;
-    file.seekg(4, std::ios::cur);  // 跳过 headerSize(4)
-    file.read(reinterpret_cast<char*>(&biWidth), 4);
-    file.read(reinterpret_cast<char*>(&biHeight), 4);
-    file.seekg(2, std::ios::cur);  // 跳过 planes(2)
-    file.read(reinterpret_cast<char*>(&biBitCount), 2);
-    file.read(reinterpret_cast<char*>(&biCompression), 4);
+//     // BITMAPINFOHEADER (40 bytes)
+//     uint32_t biWidth, biHeight;
+//     uint16_t biBitCount;
+//     uint32_t biCompression;
+//     file.seekg(4, std::ios::cur);  // 跳过 headerSize(4)
+//     file.read(reinterpret_cast<char*>(&biWidth), 4);
+//     file.read(reinterpret_cast<char*>(&biHeight), 4);
+//     file.seekg(2, std::ios::cur);  // 跳过 planes(2)
+//     file.read(reinterpret_cast<char*>(&biBitCount), 2);
+//     file.read(reinterpret_cast<char*>(&biCompression), 4);
 
-    // 只支持 8-bit 未压缩灰度图
-    if (biBitCount != 8 || biCompression != 0) return cv::Mat();
+//     // 只支持 8-bit 未压缩灰度图
+//     if (biBitCount != 8 || biCompression != 0) return cv::Mat();
 
-    // BMP 每行补齐到 4 字节边界
-    int stride = ((biWidth + 3) / 4) * 4;
-    std::vector<uint8_t> rawData(stride * biHeight);
-    file.seekg(bfOffBits, std::ios::beg);
-    file.read(reinterpret_cast<char*>(rawData.data()), stride * biHeight);
+//     // BMP 每行补齐到 4 字节边界
+//     int stride = ((biWidth + 3) / 4) * 4;
+//     std::vector<uint8_t> rawData(stride * biHeight);
+//     file.seekg(bfOffBits, std::ios::beg);
+//     file.read(reinterpret_cast<char*>(rawData.data()), stride * biHeight);
 
-    // BMP 是 bottom-up 存储，需要翻转
-    cv::Mat img(biHeight, biWidth, CV_8UC1);
-    for (uint32_t r = 0; r < biHeight; r++) {
-        memcpy(img.ptr(r), rawData.data() + (biHeight - 1 - r) * stride, biWidth);
-    }
-    return img;
-}
+//     // BMP 是 bottom-up 存储，需要翻转
+//     cv::Mat img(biHeight, biWidth, CV_8UC1);
+//     for (uint32_t r = 0; r < biHeight; r++) {
+//         memcpy(img.ptr(r), rawData.data() + (biHeight - 1 - r) * stride, biWidth);
+//     }
+//     return img;
+// }
 
 void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path,
                                                      std::vector<std::vector<std::vector<cv::Point2d>>>& allImagesBoardsPts) {
@@ -200,6 +202,7 @@ void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path
             img = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
         }
         PLOGD << "正在检测第 " << file_counter_ << " 图像: " << file_path;
+        std::cout << "imgsize=" << img.size << std::endl;
 
         boardsPtsXY = processSingleImage(img, file_counter_);
 
@@ -295,4 +298,44 @@ void LibCBDetector::saveBoardPointsFile(const std::vector<cv::Point2d>& points, 
     } else {
         std::cerr << "[错误] 无法创建输出文件：" << txtFile << std::endl;
     }
+}
+
+cv::Mat LibCBDetector::visualizeCorners(const cv::Mat& img, const std::vector<cv::Point2d>& corners, const std::string& save_path) {
+    if (corners.empty()) return {};
+    // 1. 找包围盒 + 外扩 20%
+    float min_x = corners[0].x, max_x = corners[0].x;
+    float min_y = corners[0].y, max_y = corners[0].y;
+    for (auto& pt : corners) {
+        if (pt.x < min_x) min_x = pt.x;
+        if (pt.x > max_x) max_x = pt.x;
+        if (pt.y < min_y) min_y = pt.y;
+        if (pt.y > max_y) max_y = pt.y;
+    }
+    float w = max_x - min_x, h = max_y - min_y;
+    float pad_x = w * 0.2f, pad_y = h * 0.2f;
+    cv::Rect roi(static_cast<int>(min_x - pad_x), static_cast<int>(min_y - pad_y), static_cast<int>(w + 2 * pad_x), static_cast<int>(h + 2 * pad_y));
+    roi &= cv::Rect(0, 0, img.cols, img.rows);  // 防越界
+
+    // 2. 裁剪 + 转彩色
+    cv::Mat cropped = img(roi).clone();
+    cv::Mat color;
+    if (cropped.channels() == 1)
+        cv::cvtColor(cropped, color, cv::COLOR_GRAY2BGR);
+    else
+        color = cropped.clone();
+
+    // 3. 画角点 + 序号（转到裁剪图坐标系）
+    for (size_t i = 0; i < corners.size(); ++i) {
+        cv::Point pt(cvRound(corners[i].x - roi.x), cvRound(corners[i].y - roi.y));
+        cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 5, 1);
+        cv::putText(color, std::to_string(i), pt + cv::Point(4, -4), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 0, 255), 1);
+    }
+
+    // 4. 显示 + 保存
+    cv::namedWindow("corners", cv::WINDOW_NORMAL);
+    cv::imshow("corners", color);
+    cv::waitKey(0);
+    if (!save_path.empty()) cv::imwrite(save_path, color);
+
+    return color;
 }

@@ -9,8 +9,8 @@ TelecentricPlatformCalib::TelecentricPlatformCalib() {}
 //     K_ = calibParam.K;
 //     dist_ = calibParam.coff_dis;
 // }
-TelecentricPlatformCalib::TelecentricPlatformCalib(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& dist,
-                                                   const Eigen::Vector3d& rvec, const Eigen::Vector3d& tvec)
+TelecentricPlatformCalib::TelecentricPlatformCalib(const Eigen::Matrix3d& K, const Eigen::Matrix<double, 1, 5>& dist, const Eigen::Vector3d& rvec,
+                                                   const Eigen::Vector3d& tvec)
     : K_(K), dist_(dist), v_rot_(rvec), v_trans_(tvec) {
     lineCalib_ = new TelecentricLineCalibrator();
 }
@@ -29,10 +29,8 @@ std::vector<Eigen::Vector2d> TelecentricPlatformCalib::convertToWorld(const std:
     return matToVec(world);
 }
 // ======================== 仿射最小二乘求解 ========================
-void TelecentricPlatformCalib::solveAffineFromRelativeMotion(const std::vector<Eigen::Vector2d>& w1,
-                                                             const std::vector<Eigen::Vector2d>& w2,
-                                                             const std::vector<Eigen::Vector2d>& w3, Eigen::Matrix2d& A_ls,
-                                                             int method) {
+void TelecentricPlatformCalib::solveAffineFromRelativeMotion(const std::vector<Eigen::Vector2d>& w1, const std::vector<Eigen::Vector2d>& w2,
+                                                             const std::vector<Eigen::Vector2d>& w3, Eigen::Matrix2d& A_ls, int method) {
     const int N = static_cast<int>(w1.size());
     if (w2.size() != N || w3.size() != N || N < 3) {
         throw std::runtime_error("点数不一致或过少");
@@ -95,8 +93,7 @@ void TelecentricPlatformCalib::solveAffineFromRelativeMotion(const std::vector<E
     }
 }
 
-Eigen::Vector3d TelecentricPlatformCalib::computeDirectionLS(const std::vector<Eigen::Vector2d>& ptsA,
-                                                             const std::vector<Eigen::Vector2d>& ptsB) {
+Eigen::Vector3d TelecentricPlatformCalib::computeDirectionLS(const std::vector<Eigen::Vector2d>& ptsA, const std::vector<Eigen::Vector2d>& ptsB) {
     if (ptsA.size() != ptsB.size() || ptsA.empty()) {
         PLOGE << "方向拟合尺寸点数不匹配 ";
         return Eigen::Vector3d::Zero();
@@ -158,16 +155,32 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterSequential(const 
             R = V * svd.matrixU().transpose();
         }
 
+        double ang = std::atan2(R(1, 0), R(0, 0)) * 180.0 / M_PI;
+
+        // 跳过旋转角太小的 pair（I-R 接近奇异，求逆会产生 inf/NaN）
+        if (std::abs(ang) < 0.005) {
+            std::cout << "第 " << k << " 组旋转角 = " << ang << "° 过小，跳过\n";
+            continue;
+        }
+
         Eigen::Matrix2d I = Eigen::Matrix2d::Identity();
         Eigen::Vector2d C = (I - R).inverse() * (meanQ - R * meanP);
 
+        // 防 NaN
+        if (!std::isfinite(C.x()) || !std::isfinite(C.y())) {
+            std::cout << "第 " << k << " 组旋转中心 NaN，跳过\n";
+            continue;
+        }
+
         sumC += C;
         count++;
-
-        double ang = std::atan2(R(1, 0), R(0, 0)) * 180.0 / M_PI;
         std::cout << "第 " << k << " 组旋转中心 = " << C.transpose() << " 角度 = " << ang << "°\n";
     }
 
+    if (count == 0) {
+        std::cout << "警告: 没有有效的旋转对，返回零旋转中心\n";
+        return Eigen::Vector2d::Zero();
+    }
     return sumC / count;
 }
 // -------- Taubin圆拟合单组点 --------
@@ -250,8 +263,7 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterCircleFit(const s
 void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>> pts) {
     K_ << 47.283237490301396, -0.657929607742621, 15551.964431991371, 0.0, 47.05230788272559, 8043.186819107249, 0.0, 0.0, 1.0;
 
-    dist_ << -5.363602460785097e-10, -6.586873205793823e-07, -3.9297031624526706e-07, 2.075287196873092e-06,
-        -2.0074419972225162e-06;
+    dist_ << -5.363602460785097e-10, -6.586873205793823e-07, -3.9297031624526706e-07, 2.075287196873092e-06, -2.0074419972225162e-06;
     v_rot_ = {2.074776703520814, 2.0584407379860554, -0.21906585124567024};
     v_trans_ = {-249.01625128531074, -134.99191717289557, 0.0};
     // ===========================================================
@@ -359,8 +371,7 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     Eigen::Vector2d C_in_temp_platform = computeRotationCenterSequential({p3_tempPlat, p4_tempPlat, p5_tempPlat});
 
     std::cout << "旋转中心 = " << C_in_temp_platform.transpose() << std::endl;
-    auto checkAffineDirection = [](const std::string& name, const Eigen::Matrix2d& A, const Eigen::Vector3d& xdir,
-                                   const Eigen::Vector3d& ydir) {
+    auto checkAffineDirection = [](const std::string& name, const Eigen::Matrix2d& A, const Eigen::Vector3d& xdir, const Eigen::Vector3d& ydir) {
         Eigen::Vector2d ax = A.col(0).normalized();
         Eigen::Vector2d ay = A.col(1).normalized();
 
@@ -402,10 +413,10 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
 
             // 调试打印前几个点（避免刷屏）
             if (i < 3 || i == N - 1) {
-                std::cout << "[点 " << i << "] " << "d12=" << d12.transpose() << " → p12=" << p12.transpose()
-                          << " (res_x=" << residual_x.transpose() << ", |res|=" << std::sqrt(sq_err_x) << ")" << std::endl;
-                std::cout << "         " << "d23=" << d23.transpose() << " → p23=" << p23.transpose()
-                          << " (res_y=" << residual_y.transpose() << ", |res|=" << std::sqrt(sq_err_y) << ")" << std::endl;
+                std::cout << "[点 " << i << "] " << "d12=" << d12.transpose() << " → p12=" << p12.transpose() << " (res_x=" << residual_x.transpose()
+                          << ", |res|=" << std::sqrt(sq_err_x) << ")" << std::endl;
+                std::cout << "         " << "d23=" << d23.transpose() << " → p23=" << p23.transpose() << " (res_y=" << residual_y.transpose()
+                          << ", |res|=" << std::sqrt(sq_err_y) << ")" << std::endl;
             }
             if (i == 2 && N > 4) {
                 std::cout << "      ... (省略中间点) ..." << std::endl;
@@ -776,89 +787,109 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     std::cout << "\nRecovered rotation vector (platform -> camera): " << rvec_opt.transpose() << " [rad]" << std::endl;
     std::cout << "\nTrans vector (platform -> camera): " << tvec_opt.transpose() << std::endl;
 }
-bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(
-    const std::vector<std::vector<std::vector<cv::Point2d>>>& onePlatformBoards, Eigen::Vector3d& vRotPlat,
-    Eigen::Vector3d& vTransPlat) {
-    if (onePlatformBoards.size() < 5) {
-        PLOGE << "输入的图像数量不足 5 组！";
+
+bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<Eigen::Vector2d>& originWorld,
+                                                              const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
+                                                              const std::vector<std::vector<Eigen::Vector2d>>& yWorlds,
+                                                              const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds, Eigen::Vector3d& vRotPlat,
+                                                              Eigen::Vector3d& vTransPlat) {
+    auto& ow = originWorld;  // 简称
+    if (ow.empty() || xWorlds.empty() || yWorlds.empty() || rotWorlds.size() < 2) return false;
+
+    // === 1. xdir: 所有相邻 X 组的平均位移 ===
+    Eigen::Vector2d xdir2d = Eigen::Vector2d::Zero();
+    int xCnt = 0;
+    {
+        double sum_dx = 0, sum_dy = 0;
+        int n = std::min(ow.size(), xWorlds[0].size());
+        for (int i = 0; i < n; ++i) {
+            sum_dx += xWorlds[0][i].x() - ow[i].x();
+            sum_dy += xWorlds[0][i].y() - ow[i].y();
+        }
+        xdir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
+        ++xCnt;
+    }
+    for (size_t k = 1; k < xWorlds.size(); ++k) {
+        double sum_dx = 0, sum_dy = 0;
+        int n = std::min(xWorlds[k - 1].size(), xWorlds[k].size());
+        for (int i = 0; i < n; ++i) {
+            sum_dx += xWorlds[k][i].x() - xWorlds[k - 1][i].x();
+            sum_dy += xWorlds[k][i].y() - xWorlds[k - 1][i].y();
+        }
+        xdir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
+        ++xCnt;
+    }
+    xdir2d /= xCnt;
+
+    // === 2. ydir: 所有相邻 Y 组的平均位移 ===
+    Eigen::Vector2d ydir2d = Eigen::Vector2d::Zero();
+    int yCnt = 0;
+    {
+        double sum_dx = 0, sum_dy = 0;
+        int n = std::min(ow.size(), yWorlds[0].size());
+        for (int i = 0; i < n; ++i) {
+            sum_dx += yWorlds[0][i].x() - ow[i].x();
+            sum_dy += yWorlds[0][i].y() - ow[i].y();
+        }
+        ydir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
+        ++yCnt;
+    }
+    for (size_t k = 1; k < yWorlds.size(); ++k) {
+        double sum_dx = 0, sum_dy = 0;
+        int n = std::min(yWorlds[k - 1].size(), yWorlds[k].size());
+        for (int i = 0; i < n; ++i) {
+            sum_dx += yWorlds[k][i].x() - yWorlds[k - 1][i].x();
+            sum_dy += yWorlds[k][i].y() - yWorlds[k - 1][i].y();
+        }
+        ydir2d += Eigen::Vector2d(sum_dx / n, sum_dy / n);
+        ++yCnt;
+    }
+    ydir2d /= yCnt;
+
+    Eigen::Vector3d xdir(xdir2d.x(), xdir2d.y(), 0.0);
+    Eigen::Vector3d ydir(ydir2d.x(), ydir2d.y(), 0.0);
+    std::cout << "X方向(累计): " << xdir2d.norm() << "mm, dir=" << xdir.head<2>().normalized().transpose() << std::endl;
+    std::cout << "Y方向(累计): " << ydir2d.norm() << "mm, dir=" << ydir.head<2>().normalized().transpose() << std::endl;
+
+    if (xdir2d.norm() < 1e-6 || ydir2d.norm() < 1e-6) {
+        std::cerr << "X 或 Y 方向位移为零，无法确定平台姿态" << std::endl;
         return false;
     }
 
-    // -------------------- 1. 取每组的第一个标定板 --------------------
-    auto extractBoard = [&](int idx) {
-        std::vector<Eigen::Vector2d> pts;
-        const auto& cvpts = onePlatformBoards[idx][0];
+    // === 3. C₀: 原点处直接转, 求出的就是零位旋转中心 ===
+    std::vector<std::vector<Eigen::Vector2d>> rotSeq;
+    rotSeq.push_back(ow);
+    for (auto& rw : rotWorlds) rotSeq.push_back(rw);
+    Eigen::Vector2d C0 = computeRotationCenterSequential(rotSeq);
+    std::cout << "旋转中心 C₀ = " << C0.transpose() << std::endl;
 
-        pts.reserve(cvpts.size());
-        for (const auto& p : cvpts) pts.emplace_back(p.x, p.y);
-        return pts;
-    };
-
-    auto p1 = extractBoard(0);
-    auto p2 = extractBoard(1);
-    auto p3 = extractBoard(2);
-    auto p4 = extractBoard(3);
-    auto p5 = extractBoard(4);
-
-    // -------------------- 2. 像素 -> 世界 --------------------
-    auto w1 = convertToWorld(p1);
-    auto w2 = convertToWorld(p2);
-    auto w3 = convertToWorld(p3);
-    auto w4 = convertToWorld(p4);
-    auto w5 = convertToWorld(p5);
-
-    // -------------------- 3. 平台方向向量 --------------------
-    Eigen::Vector3d xdir = computeDirectionLS(w3, w4);
-    Eigen::Vector3d ydir = computeDirectionLS(w4, w5);
-    std::cout << "X方向 = " << xdir.transpose() << std::endl;
-    std::cout << "Y方向 = " << ydir.transpose() << std::endl;
-
-    // -------------------- 4. 旋转中心 --------------------
-    Eigen::Vector2d C = computeRotationCenterSequential({w1, w2, w3});
-
-    std::cout << "旋转中心 = " << C.transpose() << std::endl;
-
-    // std::vector<Eigen::Vector2d> pix_pts;
-    // pix_pts.push_back(C);
-    // auto a = convertToWorld(pix_pts);
-    // std::cout << "转化后的旋转中心 = " << a[0].transpose() << std::endl;
-    // -------------------- 5. 平台 -> 世界
+    // === 4. 平台 → 世界 ===
     Eigen::Vector3d zdir = xdir.cross(ydir).normalized();
-
     Eigen::Matrix3d R_plat_world;
     R_plat_world.col(0) = xdir.normalized();
     R_plat_world.col(1) = ydir.normalized();
     R_plat_world.col(2) = zdir;
+    Eigen::Vector3d t_plat_world(C0.x(), C0.y(), 0.0);
 
-    Eigen::Vector3d t_plat_world(C.x(), C.y(), 0);
-
-    // -------------------- 6. 世界 -> 相机
+    // === 5. 世界 → 相机 ===
     Eigen::Matrix3d R_world_cam;
     cv::Mat rvec_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
-    for (int i = 0; i < 3; i++) rvec_cv.at<double>(i, 0) = v_rot_(i);
+    for (int i = 0; i < 3; ++i) rvec_cv.at<double>(i, 0) = v_rot_(i);
     cv::Rodrigues(rvec_cv, R_cv);
     cv::cv2eigen(R_cv, R_world_cam);
-
     Eigen::Vector3d t_world_cam = v_trans_;
 
-    // -------------------- 7. 平台 -> 相机
-    // Eigen::Matrix3d R_plat_cam = R_plat_world;
-    // Eigen::Vector3d t_plat_cam = t_plat_world;
+    // === 6. 平台 → 相机 ===
     Eigen::Matrix3d R_plat_cam = R_world_cam * R_plat_world;
     Eigen::Vector3d t_plat_cam;
     t_plat_cam.setZero();
     t_plat_cam.head<2>() = R_world_cam.topLeftCorner<2, 2>() * t_plat_world.head<2>() + t_world_cam.head<2>();
-    std::cout << "R_world_cam =\n" << R_world_cam << std::endl;
-    std::cout << "R_plat_cam =\n" << R_plat_cam << std::endl;
-    std::cout << "t_plat_cam = " << t_plat_cam.transpose() << std::endl;
 
-    // -------------------- 8. 转换为旋转向量
+    // === 7. 转 Rodrigues 输出 ===
     cv::Mat R_plat_cv, rvec_plat_cv;
     cv::eigen2cv(R_plat_cam, R_plat_cv);
     cv::Rodrigues(R_plat_cv, rvec_plat_cv);
-
     for (int i = 0; i < 3; ++i) vRotPlat(i) = rvec_plat_cv.at<double>(i, 0);
-
     vTransPlat = t_plat_cam;
 
     return true;

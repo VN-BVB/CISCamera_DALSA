@@ -78,7 +78,7 @@ private:
     //---棋盘格图像参数---
     std::vector<Eigen::Vector2d> worldPts;
     const int W_ = 8, H_ = 11;
-    const double spacingMM_ = 10.0;
+    const double spacingMM_ = 3.0;
     const double dx_ = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
     const double dy_ = 20.0 / 945.0;   // 正方像素 （2（D + 1 ） / M）
     const int width_ = 30688, height_ = 35000;
@@ -97,8 +97,15 @@ private:
     std::shared_ptr<TelecentricPlatformCalib> telecentricPlatCalibrator{nullptr};
     //-----对位平台标定------
     bool loadMode_ = true;
-    int maxPlatformCount_ = 9;
+    int maxPlatformCount_ = 20;
     QString readPlatfromImg_ = "./data/PaltfromCalibrate/";
+    struct PlatformImageGroups {
+        std::vector<std::string> origin;  // 原点, 1张 (文件路径)
+        std::vector<std::string> x;       // X平移, 多张 (文件路径)
+        std::vector<std::string> y;       // Y平移, 多张 (文件路径)
+        std::vector<std::string> rot;     // 纯旋转, 多张 (文件路径)
+    };
+    std::vector<PlatformImageGroups> platformGroups_;
     std::vector<std::vector<cv::Mat>> all_platfromCalibImg_;
     std::vector<Eigen::Vector3d> allRotVecs_;    // 所有平台的旋转向量
     std::vector<Eigen::Vector3d> allTransVecs_;  // 所有平台的平移向量
