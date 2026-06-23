@@ -1,4 +1,4 @@
-﻿#include "cameraImage_processor.h"
+#include "cameraImage_processor.h"
 
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
@@ -27,10 +27,11 @@ void CameraImageProcessor::initCameraCalibrator() {
 void CameraImageProcessor::lodaCameraCalibrateParams() {
     v_rot_s.clear();
     v_trans_s.clear();
-    CalibrationData calibParam;
-    if (!calibParam.load("./data/calibration_config/optimized_calib_data.json")) {
-        throw std::runtime_error("无法加载标定文件");
-    }
+
+    // 使用统一配置加载方式，这样可以避免每次初始化这个类都打开配置文件
+    auto appConfig = ConfigManager::getInstance().getConfig();
+    const auto& calibParam = appConfig.camera_calibration;
+
     m_ = calibParam.m;
     K_ = calibParam.K;
     coff_dis_ = calibParam.coff_dis;

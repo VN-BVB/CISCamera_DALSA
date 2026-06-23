@@ -1,4 +1,4 @@
-﻿#include "lib_cb_detecor.h"
+#include "lib_cb_detecor.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -167,7 +167,6 @@ void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path
         std::string txtFile = parent_path_ + "/txt/" + p.stem().string() + ".txt";
 
         std::vector<std::vector<cv::Point2d>> boardsPtsXY;
-
         // ==========================
         //  1. 如果 txt 已存在 → 直接读取（Eigen -> cv 转换）
         // ==========================

@@ -1,4 +1,4 @@
-QT       += core gui widgets network charts
+QT       += core gui widgets network charts printsupport concurrent
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -20,7 +20,7 @@ SOURCES += \
 
 
 include(./src/src.pri)
-include(./3rdParty/3rdPartyLi.pri)
+include(./3rdParty/3rdParty.pri)
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

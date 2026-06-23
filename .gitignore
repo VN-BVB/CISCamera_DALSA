@@ -11,6 +11,9 @@ Makefile.Debug
 data/CISCamera_Image/
 data/debug/
 data/CISCamera_Image/
+data/log/
+data/images/
+data/seamEndpointInfos/
 *.pro.user.*
 src/rail/PLCCode/Temp/
 *.bmp
@@ -19,3 +22,5 @@ src/rail/PLCCode/Temp/
 *.pyc
 *.idea/
 *.asv
+CLAUDE.md
+src/CLAUDE/

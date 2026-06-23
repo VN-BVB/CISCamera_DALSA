@@ -1,0 +1,41 @@
+-ID:/apps/QT/5.15.2/msvc2015_64/mkspecs/win32-msvc
+-ID:/Qt_Project/CISCamera_DALSA
+-IC:/Program Files/Teledyne DALSA/Sapera/Include
+-IC:/Program Files/Teledyne DALSA/Sapera/Classes
+-IC:/Program Files/Teledyne DALSA/Sapera/Classes/Basic
+-ID:/ProgramData/opencv/build/include
+-ID:/ProgramData/opencv/build/include/opencv2
+-ID:/Qt_Project/CISCamera_DALSA/3rdParty/plog/include
+-ID:/Qt_Project/CISCamera_DALSA/3rdparty/libmodbus/include
+-ID:/Qt_Project/CISCamera_DALSA/3rdparty/eigen-git-mirror-master
+-ID:/Qt_Project/CISCamera_DALSA/3rdparty/cereal/include
+-IE:/apps/Anaconda/envs/Telecentric-Calibration/include
+-ID:/Qt_Project/CISCamera_DALSA/3rdparty/extern/pybind11/include
+-ID:/Qt_Project/CISCamera_DALSA/3rdParty/tinyspline/release/include
+-ID:/Qt_Project/qcad/src/core
+-ID:/Qt_Project/qcad/src/core/math
+-ID:/Qt_Project/qcad/src/gui
+-ID:/Qt_Project/qcad/src/spatialindex
+-ID:/Qt_Project/qcad/src/io/dxf
+-ID:/Qt_Project/qcad/src/3rdparty/legacy/spatialindexnavel
+-ID:/Qt_Project/qcad/src/io/dxf
+-ID:/Qt_Project/qcad/src/3rdparty
+-ID:/Qt_Project/qcad/src/entity
+-IE:/download/ChromeDownload/dxflib-3.26.4-src/src
+-ID:/ThirdPart/libdxfrw/src
+-ID:/ThirdPart/libdxfrw/dwg2dxf
+-ID:/apps/QT/5.15.2/msvc2015_64/include
+-ID:/apps/QT/5.15.2/msvc2015_64/include/QtCharts
+-ID:/apps/QT/5.15.2/msvc2015_64/include/QtPrintSupport
+-ID:/apps/QT/5.15.2/msvc2015_64/include/QtWidgets
+-ID:/apps/QT/5.15.2/msvc2015_64/include/QtGui
+-ID:/apps/QT/5.15.2/msvc2015_64/include/QtANGLE
+-ID:/apps/QT/5.15.2/msvc2015_64/include/QtNetwork
+-ID:/apps/QT/5.15.2/msvc2015_64/include/QtCore
+-ID:\ProgramData\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.16.27023\ATLMFC\include
+-ID:\ProgramData\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.16.27023\include
+-IC:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\ucrt
+-IC:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\shared
+-IC:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\um
+-IC:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\winrt
+-IC:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\cppwinrt

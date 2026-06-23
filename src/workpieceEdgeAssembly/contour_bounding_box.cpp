@@ -1,9 +1,10 @@
 #include "contour_bounding_box.h"
 
-ContourBoundingBox::ContourBoundingBox() {}
+ContourBoundingBox::ContourBoundingBox() : m_openingDirection(OpeningDirection::UNKNOWN)
+{}
 
-void ContourBoundingBox::initContourData(int id, const ContourData& contourData) {
-    if (!contourData.isValid()) return;
+void ContourBoundingBox::initContourData(int id, const ContourData& contourData)
+{
     m_id = id;
     m_contourData = contourData;
     // 生成包围框信息
@@ -17,7 +18,10 @@ void ContourBoundingBox::initContourData(int id, const ContourData& contourData)
     m_bottomLeft = vertices[3];
     m_centerPoint = m_boundingRect.center;
     // 设置相背轮廓id
-    m_oppositeId =  setOppositeTo(m_id);
+    m_oppositeId = setOppositeTo(m_id);
+
+    // 直接从ContourData中获取开口方向
+    m_openingDirection = contourData.getOpeningDirection();
 }
 
 cv::RotatedRect ContourBoundingBox::generateBoundingBox(const ContourData& contourData) {

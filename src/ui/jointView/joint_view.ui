@@ -41,6 +41,13 @@
      </widget>
     </item>
     <item>
+     <widget class="QPushButton" name="pb_openSharedMemoryImages">
+      <property name="text">
+       <string>打开共享内存的图像</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QCheckBox" name="ckb_pixelContoursSquare">
       <property name="text">
        <string>像素级轮廓（方块）</string>

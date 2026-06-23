@@ -1,4 +1,4 @@
-﻿#include "display_view.h"
+#include "display_view.h"
 
 #include <QGraphicsItem>
 #include <QKeyEvent>
@@ -49,13 +49,14 @@ public:
 // 在构造函数中修改初始鼠标样式
 DisplayView::DisplayView(QWidget *parent)
     : QGraphicsView(parent),
-      m_translateButton(Qt::LeftButton),
-      m_zoomDelta(0.1),
-      m_translateSpeed(0.5),
-      m_bMouseTranslate(false),
-      m_currentMousePos(-1, -1),  // 初始化为无效位置
-      d_ptr(new DisplayViewPrivate(this)),
-      m_scene(new DisplayScene(this)) {
+    m_translateButton(Qt::LeftButton),
+    m_zoomDelta(0.1),
+    m_translateSpeed(0.5),
+    m_bMouseTranslate(false),
+    m_currentMousePos(-1, -1),  // 初始化为无效位置
+    d_ptr(new DisplayViewPrivate(this)),
+    m_scene(new DisplayScene(this))
+{
     // 去掉滚动条
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -71,9 +72,7 @@ DisplayView::DisplayView(QWidget *parent)
     setDragMode(QGraphicsView::RubberBandDrag);                                // 设置拖拽模式为橡皮筋选择模式
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);  // 设置渲染提示的组合
     setMouseTracking(true);                                                    // 启用鼠标跟踪
-    setCacheMode(
-        QGraphicsView::
-            CacheBackground);  // 设置缓存模式为背景缓存，缓存视图的背景，提高重绘性能（在设置视图背景时有效，此项目没有设置黑白格等背景）
+    setCacheMode(QGraphicsView::CacheBackground);  // 设置缓存模式为背景缓存，缓存视图的背景，提高重绘性能（在设置视图背景时有效，此项目没有设置黑白格等背景）
 }
 
 // 缩放的增量
@@ -116,33 +115,33 @@ qreal DisplayView::translateSpeed() const { return m_translateSpeed; }
 // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
 void DisplayView::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
-        case Qt::Key_Up:
-            translate(QPointF(0, -2));  // 上移
-            break;
-        case Qt::Key_Down:
-            translate(QPointF(0, 2));  // 下移
-            break;
-        case Qt::Key_Left:
-            translate(QPointF(-2, 0));  // 左移
-            break;
-        case Qt::Key_Right:
-            translate(QPointF(2, 0));  // 右移
-            break;
-        case Qt::Key_Plus:  // 放大
-            zoomUp();
-            break;
-        case Qt::Key_Minus:  // 缩小
-            zoomDown();
-            break;
-        case Qt::Key_Space:  // 逆时针旋转
-            rotate(-5);
-            break;
-        case Qt::Key_Enter:  // 顺时针旋转
-        case Qt::Key_Return:
-            rotate(5);
-            break;
-        default:
-            QGraphicsView::keyPressEvent(event);
+    case Qt::Key_Up:
+        translate(QPointF(0, -2));  // 上移
+        break;
+    case Qt::Key_Down:
+        translate(QPointF(0, 2));  // 下移
+        break;
+    case Qt::Key_Left:
+        translate(QPointF(-2, 0));  // 左移
+        break;
+    case Qt::Key_Right:
+        translate(QPointF(2, 0));  // 右移
+        break;
+    case Qt::Key_Plus:  // 放大
+        zoomUp();
+        break;
+    case Qt::Key_Minus:  // 缩小
+        zoomDown();
+        break;
+    case Qt::Key_Space:  // 逆时针旋转
+        rotate(-5);
+        break;
+    case Qt::Key_Enter:  // 顺时针旋转
+    case Qt::Key_Return:
+        rotate(5);
+        break;
+    default:
+        QGraphicsView::keyPressEvent(event);
     }
 }
 
@@ -261,8 +260,8 @@ void DisplayView::zoomDown() {
 // 平移
 void DisplayView::translate(QPointF delta) {
     // 根据当前 zoom 缩放平移数
-    delta *= m_rZoomValue;
-    delta *= m_translateSpeed;
+    // delta *= m_rZoomValue;
+    // delta *= m_translateSpeed;
 
     // 获取当前场景中的所有items的边界矩形
     QRectF scene_bounds;
@@ -287,7 +286,7 @@ void DisplayView::translate(QPointF delta) {
     // 计算平移后的视窗位置
     QRectF newViewRect = viewRect.translated(-delta);
 
-    bool canTranslate = true;  //  可以增加检查是否有图元到达边界，到达边界后不允许再移动
+    bool canTranslate = true;  //  可以增加检查是否有图元到达边界，到达边界后不允许再移动,现在这里没用这个
 
     if (canTranslate) {
         // view 根据鼠标下的点作为锚点来定位 scene
@@ -301,34 +300,33 @@ void DisplayView::translate(QPointF delta) {
 }
 
 void DisplayView::whenUpdateDisplayFit() {
-    int imageWidth = m_scene->getDisplayImageSize().width();
-    int imageHeight = m_scene->getDisplayImageSize().height();
-    if (this->width() < 1 || imageWidth < 1) {
+    // 获取场景中所有图元的外接矩形
+    QRectF sceneBoundingRect = m_scene->itemsBoundingRect();
+
+    if (sceneBoundingRect.isEmpty() || this->width() < 1) {
         return;
     }
-    // 图像自适应方法
-    double winWidth = this->width();
-    double winHeight = this->height();
-    double scaleWidth = (imageWidth + 1) / winWidth;  // 加1确保后续流程正确，防止除零错误、比较错误等
-    double scaleHeight = (imageHeight + 1) / winHeight;
-    double row1, column1;
-    double s = 0;
-    if (scaleWidth >= scaleHeight) {
-        row1 = -(1) * ((winHeight * scaleWidth) - imageHeight) / 2;
-        // row1 = 0;
-        column1 = 0;
-        s = 1 / scaleWidth;
-    } else {
-        row1 = 0;
-        column1 = -(1.0) * ((winWidth * scaleHeight) - imageWidth) / 2;
-        // column1 = 0;
-        s = 1 / scaleHeight;
-    }
 
-    if (m_rZoomFit != s || m_rFitPixX != column1 * s) {
+    // 计算缩放比例，确保所有图元都能显示在视图中
+    double winWidth = this->width() - 20;  // 减去边距
+    double winHeight = this->height() - 20;
+
+    double scaleWidth = sceneBoundingRect.width() / winWidth;
+    double scaleHeight = sceneBoundingRect.height() / winHeight;
+
+    // 取较大的缩放比例，确保所有内容都能显示
+    double scale = std::max(scaleWidth, scaleHeight);
+    double s = (scale > 0) ? 1 / scale : 1.0;
+
+    // 计算中心点位置
+    double centerX = sceneBoundingRect.center().x();
+    double centerY = sceneBoundingRect.center().y();
+
+    // 更新缩放和位置信息
+    if (m_rZoomFit != s || m_rFitPixX != centerX * s || m_rFitPixY != centerY * s) {
         m_rZoomFit = s;
-        m_rFitPixX = column1 * s;
-        m_rFitPixY = row1 * s;
+        m_rFitPixX = centerX * s;
+        m_rFitPixY = centerY * s;
         whenZoomToDisplayFit();
     }
 }
@@ -337,12 +335,17 @@ void DisplayView::whenUpdateDisplayFit() {
  将图像缩放到合适视图的大小，并调整显示位置
 */
 void DisplayView::whenZoomToDisplayFit() {
-    zoomByValue(m_rZoomFit);
-    QScrollBar *pHbar = this->horizontalScrollBar();
-    pHbar->setSliderPosition(m_rFitPixX);
-    QScrollBar *pVbar = this->verticalScrollBar();
-    pVbar->setSliderPosition(m_rFitPixY);
-    // centerOn(m_scene->getDisplayImageItem()->getDisplayImageCenter());
+    // 先重置缩放
+    this->resetTransform();
+
+    // 应用新的缩放比例
+    this->scale(m_rZoomFit, m_rZoomFit);
+
+    // 滚动到中心位置
+    this->centerOn(m_rFitPixX / m_rZoomFit, m_rFitPixY / m_rZoomFit);
+
+    // 确保所有内容都在视图内
+    this->ensureVisible(m_scene->itemsBoundingRect());
 }
 
 void DisplayView::zoomByValue(const double &val) {

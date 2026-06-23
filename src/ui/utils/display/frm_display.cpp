@@ -3,7 +3,7 @@
 #include "display_view.h"
 #include "display_scene.h"
 #include <QVBoxLayout>
-#include <QDebug>
+#include <plog/Log.h>
 
 FrmVisionDisplay::FrmVisionDisplay(QWidget *parent):BaseWidget(parent)
 {
@@ -20,7 +20,6 @@ void FrmVisionDisplay::initFrm()
     vLayoutDisplay->setContentsMargins(0, 0, 0, 0);
     vLayoutDisplay->setSpacing(0);
 
-    // InteractiveDisplayManager* displayMgr = new InteractiveDisplayManager();
     m_displayMgr = new DisplayManager();
     if (m_displayMgr)
     {
@@ -38,44 +37,10 @@ DisplayManager* FrmVisionDisplay::getDisplayManager()
     return m_displayMgr;
 }
 
-void FrmVisionDisplay::displayImage(const QImage &image, bool autoFit)
-{
-    if (!m_displayMgr) return;
-    DisplayScene* scene = m_displayMgr->displayScene();
-    if (scene)
-    {
-        scene->whenDisplayImage(image, autoFit);
-    }
-}
-
-
-void FrmVisionDisplay::displayImage(const cv::Mat &image, bool autoFit)
-{
-    QImage qimg;
-    if (image.type() == CV_8UC1)
-    {
-        qimg = QImage(image.data, image.cols, image.rows,
-                      static_cast<int>(image.step), QImage::Format_Grayscale8);
-    }
-    else
-    {
-        cv::Mat img_rgb;
-        cv::cvtColor(image, img_rgb, cv::COLOR_BGR2RGB);
-        qimg = QImage(img_rgb.data, img_rgb.cols, img_rgb.rows,
-                      static_cast<int>(img_rgb.step), QImage::Format_RGB888);
-    }
-    if (!m_displayMgr) return;
-    DisplayScene* scene = m_displayMgr->displayScene();
-    if (scene)
-    {
-        scene->whenDisplayImage(qimg, autoFit);
-    }
-}
-
 void FrmVisionDisplay::displayImage(std::shared_ptr<cv::Mat> image, bool autoFit)
 {
     if (!image || image->empty()) {
-        qDebug() << "智能指针图像为空";
+        PLOG_WARNING << "显示时传入的图像为空";
         return;
     }
 
@@ -97,11 +62,39 @@ void FrmVisionDisplay::displayImage(std::shared_ptr<cv::Mat> image, bool autoFit
     DisplayScene* scene = m_displayMgr->displayScene();
     if (scene)
     {
-        scene->whenDisplayImage(qimg, autoFit);
+        scene->whenAddDisplayImage(qimg, QPointF(0, 0));
     }
 }
 
+void FrmVisionDisplay::addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (!m_displayMgr) return;
+    DisplayScene* scene = m_displayMgr->displayScene();
+    if (scene)
+    {
+        scene->whenAddGraphicComponent(component);
+    }
+}
 
+void FrmVisionDisplay::removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (!m_displayMgr) return;
+    DisplayScene* scene = m_displayMgr->displayScene();
+    if (scene)
+    {
+        scene->whenRemoveGraphicComponent(component);
+    }
+}
+
+void FrmVisionDisplay::clearAllGraphicComponents()
+{
+    if (!m_displayMgr) return;
+    DisplayScene* scene = m_displayMgr->displayScene();
+    if (scene)
+    {
+        scene->whenClearAllGraphicComponents();
+    }
+}
 
 
 

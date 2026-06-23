@@ -219,28 +219,35 @@ ContourData TestEdgeAssembly::setContourData(cv::Point2f offset, int direction, 
     {
         std::vector<cv::Point2f> contourPoint = contourLeft(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
+        cd.setOpeningDirection(OpeningDirection::LEFT);
         break;
     }
     case 1:
     {
         std::vector<cv::Point2f> contourPoint = contourRight(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
+        cd.setOpeningDirection(OpeningDirection::RIGHT);
         break;
     }
     case 2:
     {
         std::vector<cv::Point2f> contourPoint = contourUp(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
+        cd.setOpeningDirection(OpeningDirection::UP);
         break;
     }
     case 3:
     {
         std::vector<cv::Point2f> contourPoint = contourDown(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
+        cd.setOpeningDirection(OpeningDirection::DOWN);
         break;
     }
     default:
+    {
+        cd.setOpeningDirection(OpeningDirection::UNKNOWN);
         break;
+    }
     }
     return cd;
 }
@@ -494,8 +501,8 @@ void TestEdgeAssembly::generateTiltedFiveSeams()
 void TestEdgeAssembly::run()
 {
     // generateNineSeams();
-    generateTiltedNineSeams();
-    // generateTiltedFiveSeams();
+    // generateTiltedNineSeams();
+    generateTiltedFiveSeams();
     // generateFiveSeams();
     std::vector<std::shared_ptr<ContourBoundingBox>> cbbs;
     
@@ -509,15 +516,11 @@ void TestEdgeAssembly::run()
 
 
     EdgeAssembly edgeAssembly = EdgeAssembly{cbbs};
-    edgeAssembly.run(9);
-    // for (auto& workpiece : edgeAssembly.getpossibleWorkpieces())
-    // {
-    //     m_workpieceRotateRect.push_back(workpiece.getouterBoundingBox());
-    // }
+    edgeAssembly.run(5);
     auto combinations = edgeAssembly.getValidCombinations();
     auto combination = combinations[0];
     combination = edgeAssembly.getMostLikelyCombination();
-    auto workpieces = edgeAssembly.getpossibleWorkpieces();
+    auto workpieces = edgeAssembly.getPossibleWorkpieces();
     for (auto& workpiecID :  combination)
     {
         m_workpieceRotateRect.push_back((workpieces[workpiecID].getouterBoundingBox()));

@@ -11,7 +11,7 @@ class WorkpieceBoundingBox
 public:
     WorkpieceBoundingBox();
 
-    void addContourBoundingBox(std::shared_ptr<ContourBoundingBox> cbb);
+    bool addContourBoundingBox(std::shared_ptr<ContourBoundingBox> cbb);
     void updateOuterBoundingBox();
     bool isLegal(std::shared_ptr<ContourBoundingBox> candidateCbb) const;
     std::vector<int> getContourIds() const;

@@ -1,9 +1,12 @@
 #ifndef FRM_DISPLAY_H
 #define FRM_DISPLAY_H
 
-#include "base_widget.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
+
+#include "base_widget.h"
+#include "graphicItems/graphic_item_Component.h"
+#include "graphicItems/graphic_item_composite.h"
 
 class DisplayManager;
 
@@ -19,9 +22,12 @@ public:
     DisplayManager* getDisplayManager();
 
 public slots:
-    void displayImage(const QImage &image, bool autoFit = true);
-    void displayImage(const cv::Mat &image, bool autoFit = true);
     void displayImage(std::shared_ptr<cv::Mat> image, bool autoFit = true);
+
+    // 图形图元操作接口
+    void addGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
+    void removeGraphicComponent(std::shared_ptr<GraphicsItemComponent> component);
+    void clearAllGraphicComponents();
 
 
 protected:

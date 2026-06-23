@@ -1,4 +1,4 @@
-﻿#ifndef JOINT_VIEW_H
+#ifndef JOINT_VIEW_H
 #define JOINT_VIEW_H
 
 #include <QGraphicsView>
@@ -8,12 +8,14 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "src/jointDetection/contourProcess/curve_seg.h"
-#include "src/jointDetection/contourProcess/joint_seam.h"
-#include "src/jointDetection/edgeDetection/canny_devernay.h"
-#include "src/jointDetection/image_process_worker.h"
 #include "src/jointDetection/image_read_worker.h"
+#include "src/jointDetection/image_process_worker.h"
+#include "src/jointDetection/edgeDetection/canny_devernay.h"
 #include "src/ui/utils/display/frm_display.h"
+#include "src/jointDetection/contourProcess/methods/curve_seg.h"
+#include "src/jointDetection/joint_seam.h"
+#include "src/workpieceEdgeAssembly/edge_assembly.h"
+#include "src/resultProcessing/result_processor.h"
 
 namespace Ui {
 class JointView;
@@ -28,18 +30,16 @@ public:
 
 signals:
     void startImageRead(const QString &path);
+    void startImageReadFromSharedMemory(int processId, int timeoutMs = 30000);
     void startImageProcess(std::shared_ptr<cv::Mat> image);
 
 private slots:
     void on_pb_open_clicked();
     void handleImageRead(std::shared_ptr<cv::Mat> image);
-    // [[deprecated("这个槽函数接收的都是jointSeam的属性，请直接使用传递jointSeam的版本，以获得更多操作")]]
-    void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
-                              std::vector<std::vector<cv::Point>> pixelContour, std::vector<cv::Vec4f> lines,
-                              std::vector<CurveSeg> curves);
     void handleImageProcessed(std::shared_ptr<cv::Mat> processedImage, std::shared_ptr<JointSeam> jointSeam);
     void handleImageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void handleError(const QString &error);
+    void whenALLImagesProcessed(const std::map<int, ProcessedROIInfo>& processedRoiInfos);
 
     void updateDisplay();
     // Checkbox槽函数
@@ -50,15 +50,19 @@ private slots:
     void on_ckb_endPoints_toggled(bool checked);
     void on_ckb_fitCurves_toggled(bool checked);
 
+    void on_pb_openSharedMemoryImages_clicked();
+
 private:
+    void clearAllResultItems();
+    void initRegisterMetaTypes();
+
     Ui::JointView *ui;
     QThread readThread;
     QThread processThread;
     ImageReadWorker *readWorker;
     ImageProcessWorker *processWorker;
-
-    // @TODO:使用日志记录每个步骤处理时间
-    std::chrono::high_resolution_clock::time_point startTime;  // 图像处理开始时间
+    std::shared_ptr<EdgeAssembly> m_edgeAssembier;
+    std::shared_ptr<ResultProcessor> m_resultProcessor;
 
     // 存储当前显示的数据
     std::shared_ptr<cv::Mat> m_currentImage;

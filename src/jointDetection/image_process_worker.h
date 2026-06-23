@@ -1,35 +1,59 @@
-﻿#ifndef IMAGE_PROCESS_WORKER_H
+#ifndef IMAGE_PROCESS_WORKER_H
 #define IMAGE_PROCESS_WORKER_H
 
 #include <QObject>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
 
-#include "contourProcess/curve_seg.h"
-#include "contourProcess/joint_seam.h"
 #include "edgeDetection/canny_devernay.h"
+#include "contourProcess/methods/curve_seg.h"
+#include "joint_seam.h"
+#include "image_read_worker.h"
+
+// 每个ROI结果结构体
+struct ProcessedROIInfo
+{
+    int index;                                                  // ROI编号
+    std::shared_ptr<cv::Mat> image;                             // ROI图像
+    cv::Point leftCornerPoint;                                  // ROI左上角
+    std::vector<ContourData> contourDatas;                      // 缝隙轮廓数据
+    std::vector<std::vector<cv::Point>> pixelContours;          // 缝隙两条像素轮廓坐标
+    std::vector<std::vector<cv::Point2f>> subpixelContours;     // 缝隙两条亚像素轮廓坐标
+    std::vector<cv::Vec4f> lines;                               // 缝隙所有拟合直线
+    std::vector<cv::Vec4f> seamLines;                           // 缝隙两侧两条直线
+    std::vector<SeamEndpoint> endPoints;                        // 缝隙的四个端点
+    std::vector<tinyspline::BSpline> splines;                   // 缝隙所有拟合样条曲线
+};
 
 class ImageProcessWorker : public QObject {
     Q_OBJECT
 public:
     explicit ImageProcessWorker(QObject *parent = nullptr);
+    ~ImageProcessWorker();
+
+    std::map<int, ProcessedROIInfo> getAllProcessedResults();
+    void clearProcessedResults();
 
 public slots:
-    void processImage(std::shared_ptr<cv::Mat> image);
+    void whenProcessImage(std::shared_ptr<cv::Mat> image);
+    void whenProcessMultiImages(std::shared_ptr<std::vector<ROIWithCoords>> rois);
 
 signals:
-    // [[deprecated("这个信号发送的都是jointSeam的属性，请直接使用传递jointSeam的版本，以获得更多操作")]]
-    void imageProcessed(std::shared_ptr<cv::Mat> processedImage, std::vector<std::vector<cv::Point2f>> subpixelContours,
-                        std::vector<std::vector<cv::Point>> pixelContour, std::vector<cv::Vec4f> lines,
-                        std::vector<CurveSeg> curves);
     void imageProcessed(std::shared_ptr<cv::Mat> processedImage, std::shared_ptr<JointSeam> jointSeam);
     void imageProcessedCannyDevenay(std::shared_ptr<cv::Mat> processedImage, std::vector<Point2fCurve> edgeCurves);
     void errorOccurred(const QString &error);
+    void sendAllImagesProcessed(std::map<int, ProcessedROIInfo> processedRoiInfos);
+    void singleROIProcessed(const ProcessedROIInfo &result);
 
 private:
-    // 去除轮廓两端的一部分
-    std::vector<cv::Point2f> trimContourEnds(const std::vector<cv::Point2f> &contour, float trimRatio);
+    // 处理单个ROI图像的方法
+    void processSingleROI(const ROIWithCoords &roi);
+
+    ThreadPool *m_threadPool;
+    std::atomic<int> m_processedCount;
+    int m_totalROICount;
+    std::mutex m_mutex;
+    std::map<int, ProcessedROIInfo> m_processedRoiInfos;
 };
 
 #endif  // IMAGE_PROCESS_WORKER_H

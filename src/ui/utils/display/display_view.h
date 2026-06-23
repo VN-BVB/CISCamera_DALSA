@@ -1,4 +1,4 @@
-﻿#ifndef DISPLAY_VIEW_H
+#ifndef DISPLAY_VIEW_H
 #define DISPLAY_VIEW_H
 
 #include <QGraphicsView>
@@ -50,6 +50,8 @@ protected:  // 视窗事件
     void mouseReleaseEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
     void mouseDoubleClickEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
     void wheelEvent(QWheelEvent *event) Q_DECL_OVERRIDE;
+    // 重写paintEvent绘制十字线
+    void paintEvent(QPaintEvent *event) override;
 
 public slots:
     void zoomUp();                  // 放大
@@ -74,8 +76,6 @@ private:
 protected:
     // 进行缩放
     void zoomByValue(const double &val);
-    // 重写paintEvent绘制十字线
-    void paintEvent(QPaintEvent *event) override;
 
 protected:  // view控件状态
     // 当前缩放值

@@ -1,4 +1,10 @@
+
+#include <iostream>
+#include <plog/Log.h>
 #include "geometry_utils.h"
+#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
+#include "src/ui/CISCamera_imageGrab/cameraImage_processor.h"
+#include "src/config/calibration_data_io.h"
 
 namespace GeometryUtils {
 
@@ -77,6 +83,158 @@ bool isPointInRotatedRect(const cv::Point2f& point, const cv::RotatedRect& rotat
     }
 
     return true;
+}
+
+/**
+ * @brief ImageProcessing_lineDetection     直线拟合Ransac
+ * @param points                            输入亚像素点集
+ * @param line                              输出直线参数(vx, vy, x0, y0), (vx, vy) 为方向向量, (x0, y0) 为直线上的一个点
+ * @param inlierPoints                      输出直线内点
+ * @param threshold                         阈值
+ * @param iterations                        最大迭代次数
+ */
+void lineRansac(const std::vector<cv::Point2f> &points,
+                                  cv::Vec4f &line,
+                                  std::vector<cv::Point2f> &inlierPoints,
+                                  const double &threshold,
+                                  const int &iterations)
+{
+    if(points.size() < 2){
+        std::cout<<"Input points is empty!"<<std::endl;
+        return;
+    }
+
+    cv::RNG rng;// 创建随机数生成器
+    double bestScore = -1.;
+    auto n = points.size();  // 获取点集大小
+    for(int iter = 0; iter < iterations; iter++){
+        // 随机选择两个不同的点
+        auto i1 = rng.uniform(0, static_cast<int>(n-1));
+        auto i2 = rng.uniform(0, static_cast<int>(n-1));
+        if (i1 == i2)
+            continue;
+
+        // 直线的方向向量
+        const cv::Point2f& p1 = points[i1];
+        const cv::Point2f& p2 = points[i2];
+        cv::Point2f dp = p2-p1;
+        dp *= 1.0/cv::norm(dp);
+
+        // 计算内点
+        double score = 0;
+        std::vector<cv::Point2f> inliers;
+        for(int i = 0; i< n; i++){
+            cv::Point2f v = points[i] - p1;
+            double d = v.y * dp.x - v.x * dp.y;//向量a与b叉乘/向量b的摸.||b||=1./norm(dp)
+            // 判断点到直线的距离是否小于阈值
+            if( std::fabs(d) < threshold){
+                score += 1;
+                inliers.push_back(points[i]);  // 存储内点
+            }
+        }
+
+        // 如果当前拟合得分更高，则更新最优结果
+        if(score > bestScore) {
+            line = cv::Vec4f(static_cast<float>(dp.x), static_cast<float>(dp.y),
+                             static_cast<float>(p1.x), static_cast<float>(p1.y));
+            bestScore = score;
+            inlierPoints = inliers;//更新内点
+        }
+    }
+}
+
+cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& line2) {
+    float vx1 = line1[0], vy1 = line1[1], x01 = line1[2], y01 = line1[3];
+    float vx2 = line2[0], vy2 = line2[1], x02 = line2[2], y02 = line2[3];
+
+    // 计算交点
+    float denominator = vx1 * vy2 - vy1 * vx2;
+    if (std::abs(denominator) < 1e-10) {
+        return cv::Point2f(-1, -1); // 平行线
+    }
+
+    float t = ((x02 - x01) * vy2 - (y02 - y01) * vx2) / denominator;
+    float x = x01 + t * vx1;
+    float y = y01 + t * vy1;
+
+    return cv::Point2f(x, y);
+}
+
+bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, const cv::Point2f& referencePoint) {
+    // 将参考点作为原点，计算相对坐标
+    cv::Point2f relA = pointA - referencePoint;
+    cv::Point2f relB = pointB - referencePoint;
+
+    // 计算叉积 det = (ax * by - ay * bx)
+    float det = relA.x * relB.y - relA.y * relB.x;
+
+    // 如果叉积为正，b在a顺时针方向
+    if (det > 0)
+        return false;
+
+    // 如果叉积为负，a在b顺时针方向
+    if (det < 0)
+        return true;
+
+    // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
+    float d1 = relA.x * relA.x + relA.y * relA.y;
+    float d2 = relB.x * relB.x + relB.y * relB.y;
+    return d1 < d2;
+}
+
+cv::Vec4f fitLine(const std::vector<cv::Point> &points)
+{
+    if (points.empty()) {
+        return cv::Vec4f(0, 0, 0, 0);
+    }
+
+    cv::Vec4f lineParams;
+    cv::fitLine(points, lineParams, cv::DIST_L2, 0, 0.01, 0.01);
+
+    // lineParams格式: [vx, vy, x0, y0]
+    // 其中(vx, vy)是单位方向向量，(x0, y0)是直线上的一个点
+    return lineParams;
+}
+
+cv::Vec4f fitLine(const std::vector<cv::Point2f> &points)
+{
+    if (points.empty()) {
+        return cv::Vec4f(0, 0, 0, 0);
+    }
+
+    cv::Vec4f lineParams;
+    // 使用 M-估计算法拟合点集到直线，通过最小化点到直线的距离代价函数实现。
+    // 多种距离类型：DIST_L2（标准最小二乘法，速度快但对异常值敏感）；
+    // DIST_L1（最小绝对值误差，对异常值更具鲁棒性）；
+    // DIST_HUBER、DIST_FAIR和 DIST_WELSCH（使用权重函数降低异常值影响，鲁棒性递增）；
+    // DIST_L12（L1-L2混合度量）。
+    // 拟合结果返回一个 Vec4f向量，格式为 (vx, vy, x0, y0)，其中 (vx, vy)是单位方向向量，(x0, y0)是直线上一点
+    cv::fitLine(points, lineParams, cv::DIST_HUBER, 0, 0.01, 0.01);
+    return lineParams;
+}
+
+
+// 将像素坐标转成世界坐标
+std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts)
+{
+    // 将cv::Point2f格式转换为Eigen::Vector2d格式
+    std::vector<Eigen::Vector2d> eigen_pix_pts;
+    eigen_pix_pts.reserve(pix_pts.size());
+    for (const auto& pt : pix_pts) {
+        eigen_pix_pts.push_back(Eigen::Vector2d(pt.x, pt.y));
+    }
+
+    std::shared_ptr<CameraImageProcessor> imageProcessor;
+    imageProcessor = std::make_shared<CameraImageProcessor>();
+    imageProcessor->initCameraCalibrator();
+    std::vector<Eigen::Vector2d> worldPoints = imageProcessor->convertToWorld(eigen_pix_pts);
+    // 交换所有点的 x 和 y 坐标
+    for (auto &pt : worldPoints)
+    {
+        std::swap(pt.x(), pt.y());
+    }
+    PLOG_INFO << "convert done";
+    return worldPoints;
 }
 
 } // namespace GeometryUtils
