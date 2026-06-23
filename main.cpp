@@ -6,15 +6,9 @@
 #include "src/crashHandler/CrashHandler.h"
 #include "src/utils/plog_utils.h"
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
-#include "src/test/test_tiny_spline.h"
-#include "src/ui/jointView/joint_view.h"
-#include "src/test/test_frmVisionDisplay.h"
-#include "src/test/test_multiRoi.h"
-#include "src/test/test_cad_view.h"'
-#include "src/test/test_dxf_writer.h"
-#include "src/test/test_convert_coordinate.h"
+#include "src/ui/mainwindow/main_window.h"
 #include "src/config/config_manager.h"
-#include "src/test/test_pixel2world.h"
+#include "src/ui/jointView/joint_view.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -26,17 +20,10 @@ int main(int argc, char *argv[]) {
         PLOG_ERROR << "Failed to load configuration files";
     }
 
-    // CISWidget w;
+    // MainWindow w;
     // w.show();
-
-    // TestConvertCoordinate t;
-    // t.pixel2World();
-
-    // JointView w;
-    // w.show();
-
-    TestPixel2World test;
-    test.testPixel2World();
+    JointView w;
+    w.show();
 
     return a.exec();
 }
