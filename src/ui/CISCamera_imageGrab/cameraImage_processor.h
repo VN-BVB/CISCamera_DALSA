@@ -30,6 +30,7 @@ public:
     void lodaCameraCalibrateParams();
     void lodaCam2PlatCalibrateParams();
     std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
+    std::vector<Eigen::Vector2d> convertToPix(const std::vector<Eigen::Vector2d>& world_pts);
 signals:
     void text(const QString& msg);
     void error(const QString& msg);
@@ -97,12 +98,12 @@ private:
     std::shared_ptr<TelecentricPlatformCalib> telecentricPlatCalibrator{nullptr};
     //-----对位平台标定------
     bool loadMode_ = true;
-    int maxPlatformCount_ = 20;
+    int maxPlatformCount_ = 9;
     QString readPlatfromImg_ = "./data/PaltfromCalibrate/";
     struct PlatformImageGroups {
-        std::vector<std::string> x;       // X平移, 多张 (文件路径)
-        std::vector<std::string> y;       // Y平移, 多张 (文件路径)
-        std::vector<std::string> rot;     // 纯旋转, 多张 (文件路径)
+        std::vector<std::string> x;    // X平移, 多张 (文件路径)
+        std::vector<std::string> y;    // Y平移, 多张 (文件路径)
+        std::vector<std::string> rot;  // 纯旋转, 多张 (文件路径)
     };
     std::vector<PlatformImageGroups> platformGroups_;
     std::vector<std::vector<cv::Mat>> all_platfromCalibImg_;

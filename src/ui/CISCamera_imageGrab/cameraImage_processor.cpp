@@ -1,5 +1,6 @@
 #include "cameraImage_processor.h"
 
+#include "src/config/config_manager.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 #include "src/telecentricLineCalibrator/telecentricplatform_calib.h"
@@ -510,14 +511,6 @@ void CameraImageProcessor::whenCalibrateCP() {
     std::vector<Eigen::Vector2d> imgPts;
     for (auto& p : calcOriCoordinateSystem[0][0]) imgPts.emplace_back(p.x, p.y);
 
-    // ---- 可视化: orignCor 原始检测序号 ----
-    {
-        cv::Mat orignImg = readLargeBMP("./data/PaltfromCalibrate/orignCor/img/1.bmp");
-        if (!orignImg.empty()) {
-            libcbDetector->visualizeCorners(orignImg, calcOriCoordinateSystem[0][0], "./data/PaltfromCalibrate/viz_orignCor.png");
-        }
-    }
-
     // libcbdetect 输出是列优先、上→下，生成匹配的 worldPts
     std::vector<Eigen::Vector2d> worldPtsMatch;
     worldPtsMatch.reserve(W_ * H_);
@@ -601,8 +594,7 @@ void CameraImageProcessor::whenCalibrateCP() {
         emit text(QString(u8"平台 %1 姿态求解成功！").arg(p));
     }
 
-    poseData.saveCompact("./data/calibration_config/platform_pose.json",
-                         poseData.allRotVecs.back(), poseData.allTransVecs.back());
+    poseData.saveCompact("./data/calibration_config/platform_pose.json", poseData.allRotVecs.back(), poseData.allTransVecs.back());
     allRotVecs_ = poseData.allRotVecs;
     allTransVecs_ = poseData.allTransVecs;
 
@@ -620,4 +612,39 @@ std::vector<Eigen::Vector2d> CameraImageProcessor::convertToWorld(const std::vec
     // camera → world（逆平面变换）
     Eigen::MatrixXd world = telecentricLineCalibrator->cameraToWorldCoordinates(cam_norm, allRotVecs_.back(), allTransVecs_.back());
     return matToVec(world);
+}
+
+std::vector<Eigen::Vector2d> CameraImageProcessor::convertToPix(const std::vector<Eigen::Vector2d>& world_pts) {
+    if (world_pts.empty()) return {};
+
+    // 世界→相机外参 (.back() = orignCor)
+    Eigen::Vector3d rvec = allRotVecs_.back();
+    Eigen::Vector3d tvec = allTransVecs_.back();
+    cv::Mat r_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
+    for (int i = 0; i < 3; ++i) r_cv.at<double>(i) = rvec(i);
+    cv::Rodrigues(r_cv, R_cv);
+    Eigen::Matrix3d R_wc;
+    cv::cv2eigen(R_cv, R_wc);
+    Eigen::Matrix2d R2 = R_wc.block<2, 2>(0, 0);
+    Eigen::Vector2d t2 = tvec.head<2>();
+
+    std::vector<Eigen::Vector2d> pix_pts;
+    pix_pts.reserve(world_pts.size());
+
+    for (size_t i = 0; i < world_pts.size(); ++i) {
+        // ----------- Step 1: 仿射到相机归一化平面 -----------
+        Eigen::Vector2d cam_xy = R2 * world_pts[i] + t2;
+
+        // ----------- Step 2: 畸变 -----------
+        Eigen::MatrixXd camPt(1, 2);
+        camPt.row(0) = cam_xy.transpose();
+        Eigen::MatrixXd distortedH = telecentricLineCalibrator->distort(coff_dis_, camPt);
+
+        // ----------- Step 3: 相机内参 -----------
+        Eigen::Vector3d uvw = K_ * distortedH.row(0).transpose();
+
+        // ----------- Step 4: 归一化到像素坐标 -----------
+        pix_pts.emplace_back(uvw(0) / uvw(2), uvw(1) / uvw(2));
+    }
+    return pix_pts;
 }
