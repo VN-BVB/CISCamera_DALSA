@@ -393,7 +393,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& image) {
             done = true;
         }
     }
-    cv::imwrite("E:/work/车门门环拼接/image/test/1114/eroded.bmp", skel);
+    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260622/eroded.bmp", skel);
 
     // 3. 提取中心线坐标点
     std::vector<cv::Point2f> centerLinePoints;
@@ -644,32 +644,52 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
     double TL = TH * 0.5;
     cv::Mat edge;
     cv::Canny(grayImage, edge, TL, TH);
-    cv::imwrite("E:/work/车门门环拼接/image/test/1114/edge.bmp", edge);
+    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260622/edge.bmp", edge);
     // 形态学处理，去除无关区域的边缘
     cv::Mat connectedEdge = removeIrrelevantEdgeRegions(edge, grayImage);
-    cv::imwrite("E:/work/车门门环拼接/image/test/1114/connectedEdge.bmp", connectedEdge);
+    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260622/connectedEdge.bmp", connectedEdge);
     // 计算中间缝隙中心线
     cv::Vec4f centerLine = calculateCenterLine(inputImage);
-    imageTools.drawLineAndSave(grayImage, centerLine, "E:/work/车门门环拼接/image/test/1114/centerLine.bmp");
+    imageTools.drawLineAndSave(grayImage, centerLine, "E:/work/Car_door_ring_splicing/image/背面打光/260622/centerLine.bmp");
     // 提取并筛选轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(connectedEdge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
     imageTools.drawColorfulContoursAndSave(grayImage, contours,
-                                           "E:/work/车门门环拼接/image/test/1114/allContours.bmp");
+                                           "E:/work/Car_door_ring_splicing/image/背面打光/260622/allContours.bmp");
     std::vector<std::vector<cv::Point>> filteredContours = imageTools.filterContours(contours);
     imageTools.drawColorfulContoursAndSave(grayImage, filteredContours,
-                                           "E:/work/车门门环拼接/image/test/1114/filterContours.bmp");
+                                           "E:/work/Car_door_ring_splicing/image/背面打光/260622/filterContours.bmp");
     // 根据中心线分类轮廓
     auto contoursLeftAndRight = classifyContourPointsByCenterLine(filteredContours, centerLine);
-    imageTools.drawColorfulContoursAndSave(grayImage, contoursLeftAndRight,
-                                           "E:/work/车门门环拼接/image/test/1114/left_contours.bmp");
+    std::vector<std::vector<cv::Point>> rightOnly = {contoursLeftAndRight[0]};
+    imageTools.drawColorfulContoursAndSave(grayImage, rightOnly,
+                                           "E:/work/Car_door_ring_splicing/image/背面打光/260622/right_contours.bmp");
+    std::vector<std::vector<cv::Point>>  leftOnly= {contoursLeftAndRight[1]};
+    imageTools.drawColorfulContoursAndSave(grayImage, leftOnly,
+                                           "E:/work/Car_door_ring_splicing/image/背面打光/260622/left_contours.bmp");
     // 亚像素轮廓提取
     std::vector<std::vector<cv::Point2f>> subpixelConturs;
     for (const auto& contour : contoursLeftAndRight) {
         std::vector<cv::Point2f> c = getSubpixelContourZernike(inputImage, contour);
         subpixelConturs.push_back(c);
     }
-
+    // 亚像素轮廓可视化
+    std::vector<std::vector<cv::Point>> subpixelContursInt;
+    subpixelContursInt.reserve(subpixelConturs.size());
+    for (const auto& contour : subpixelConturs) {
+        std::vector<cv::Point> intContour;
+        intContour.reserve(contour.size());
+        for (const auto& p : contour) {
+            intContour.emplace_back(cvRound(p.x), cvRound(p.y));
+        }
+        subpixelContursInt.push_back(std::move(intContour));
+    }
+    std::vector<std::vector<cv::Point>> subrightOnly = {subpixelContursInt[0]};
+    imageTools.drawColorfulContoursAndSave(grayImage, subrightOnly,
+                                           "E:/work/Car_door_ring_splicing/image/背面打光/260622/subpixel_contours_right.bmp");
+    std::vector<std::vector<cv::Point>> subleftOnly = {subpixelContursInt[1]};
+    imageTools.drawColorfulContoursAndSave(grayImage, subleftOnly,
+                                           "E:/work/Car_door_ring_splicing/image/背面打光/260622/subpixel_contours_left.bmp");
 
     return subpixelConturs;
 }

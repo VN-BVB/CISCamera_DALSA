@@ -16,6 +16,8 @@ public:
     // =============计算起始点=============
     static cv::Point2f calculateStartPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour);
     static cv::Point2f calculateEndPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour);
+    // 角度法计算起点和终点（C型轮廓开口两侧），返回 {start, end}
+    static std::pair<cv::Point2f, cv::Point2f> calculateStartAndEndPoint(const std::vector<cv::Point2f>& contour);
 
     // =============排序轮廓=============
     static std::vector<cv::Point2f> sortContour(const std::vector<cv::Point2f>& contour, int startIndex);
@@ -44,6 +46,8 @@ private:
     // =============检测角点辅助函数=============
     static std::vector<cv::Point2f> detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour, double epsilon = 10.0);
     static std::vector<cv::Point2f> detectCornerPointsByRansac(const std::vector<cv::Point2f>& contour);
+    // 角度法核心实现：返回开口两端点 {start, end}，size<2 时返回 {(-1,-1),(-1,-1)}
+    static std::pair<cv::Point2f, cv::Point2f> findOpeningEndsByAngle(const std::vector<cv::Point2f>& contour);
 };
 
 #endif // CONTOUR_FEATURE_CALCULATOR_H

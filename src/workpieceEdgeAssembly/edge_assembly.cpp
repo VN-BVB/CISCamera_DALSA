@@ -62,7 +62,7 @@ void EdgeAssembly::whenAllImagesProcessed(const std::map<int, ProcessedROIInfo>&
 
     // 3、组合工件成门环
     m_workpieceCombiner = std::make_unique<DoorBellCombiner>(m_workpieceGenerator->getPossibleWorkpieces());
-    m_workpieceCombiner->generateValidCombinations(9, m_cbbs);
+    m_workpieceCombiner->generateValidCombinations(7, m_cbbs);
     m_workpieceCombiner->calculateMostLikelyCombination();
     std::map<int, std::vector<int>> combinationResult = m_workpieceCombiner->outputResult();
 

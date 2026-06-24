@@ -240,6 +240,72 @@ cv::Point2f ContourFeatureCalculator::calculateEndPoint(OpeningDirection directi
 }
 
 /**
+ * @brief 角度法定位C型轮廓开口的起终点
+ * @param contour 输入轮廓点集
+ * @return {起点, 终点}。size<2 返回 {(-1,-1),(-1,-1)}；退化（全部点重合）返回 {首点, 首点}
+ *
+ * @details 算法步骤：
+ *   1. 以包围盒中心（ContourUtils::calculateCentralPoint）为极点，对C型轮廓开口侧稀疏点不敏感
+ *   2. 每个点计算极角 atan2(dy, dx) 并归一化到 [0, 2π)
+ *   3. 按角度升序排列
+ *   4. 相邻角度差（含首尾环绕差）最大的位置即为开口
+ *   5. 起终点赋值：sortContourByNearestNeighbor 按逆时针（角度递增）遍历并在终点停止，
+ *      故 gap 之后的小角度端点为起点，gap 之前的大角度端点为终点
+ */
+std::pair<cv::Point2f, cv::Point2f> ContourFeatureCalculator::findOpeningEndsByAngle(const std::vector<cv::Point2f>& contour) {
+    if (contour.size() < 2) {
+        return {cv::Point2f(-1, -1), cv::Point2f(-1, -1)};
+    }
+
+    // 以包围盒中心作为极点
+    cv::Point2f center = ContourUtils::calculateCentralPoint(contour);
+
+    // 计算极角并归一化到 [0, 2π)
+    const float kTwoPi = 2.0f * static_cast<float>(M_PI);
+    std::vector<std::pair<float, cv::Point2f>> anglePoint;
+    anglePoint.reserve(contour.size());
+    for (const auto& p : contour) {
+        float raw = std::atan2(p.y - center.y, p.x - center.x);
+        float theta = (raw < 0.0f) ? raw + kTwoPi : raw;
+        anglePoint.emplace_back(theta, p);
+    }
+
+    // 按角度升序排列
+    std::sort(anglePoint.begin(), anglePoint.end(),
+              [](const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
+                  return a.first < b.first;
+              });
+
+    // 找相邻角度差最大的位置（含首尾环绕差）
+    int n = static_cast<int>(anglePoint.size());
+    int maxGapIdx = 0;
+    float maxGap = -1.0f;
+    for (int i = 0; i < n; ++i) {
+        float gap = (i + 1 < n)
+                        ? (anglePoint[i + 1].first - anglePoint[i].first)
+                        : (anglePoint[0].first + kTwoPi - anglePoint[i].first);
+        if (gap > maxGap) {
+            maxGap = gap;
+            maxGapIdx = i;
+        }
+    }
+
+    // 退化：全部点重合于极点（最大角度差为0），返回首点
+    if (maxGap <= 0.0f) {
+        return {contour.front(), contour.front()};
+    }
+
+    // gap 之前的大角度端点为终点，gap 之后的小角度端点为起点
+    cv::Point2f endPoint = anglePoint[maxGapIdx].second;
+    cv::Point2f startPoint = anglePoint[(maxGapIdx + 1) % n].second;
+    return {startPoint, endPoint};
+}
+
+std::pair<cv::Point2f, cv::Point2f> ContourFeatureCalculator::calculateStartAndEndPoint(const std::vector<cv::Point2f>& contour) {
+    return findOpeningEndsByAngle(contour);
+}
+
+/**
  * @brief 使用最近邻算法对轮廓点进行排序
  * @param contour 输入轮廓点集
  * @param firstPointIdx 起始点的索引
