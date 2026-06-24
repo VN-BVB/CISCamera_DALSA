@@ -19,3 +19,5 @@ FORMS += \
     $$PWD/jointView/joint_view.ui
 
 include(./utils/utils.pri)
+include(./mainwindow/mainwindow.pri)
+include(./measurementMonitor/measurementmonitor.pri)
