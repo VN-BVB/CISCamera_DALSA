@@ -790,7 +790,8 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
 
 bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
                                                               const std::vector<std::vector<Eigen::Vector2d>>& yWorlds,
-                                                              const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds, Eigen::Vector3d& vRotPlat,
+                                                              const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds,
+                                                              bool inputIsCamCoords, Eigen::Vector3d& vRotPlat,
                                                               Eigen::Vector3d& vTransPlat) {
     if (xWorlds.size() < 1 || yWorlds.size() < 1 || rotWorlds.size() < 2) return false;
 
@@ -855,29 +856,36 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
     }
     std::cout << "旋转中心 C₀ = " << C0.transpose() << std::endl;
 
-    // === 4. 平台 → 世界 ===
+    // === 4. 构建平台→相机位姿 ===
     Eigen::Vector3d zdir = xdir.cross(ydir).normalized();
-    Eigen::Matrix3d R_plat_world;
-    R_plat_world.col(0) = xdir.normalized();
-    R_plat_world.col(1) = ydir.normalized();
-    R_plat_world.col(2) = zdir;
-    Eigen::Vector3d t_plat_world(C0.x(), C0.y(), 0.0);
+    Eigen::Matrix3d R_plat_local;
+    R_plat_local.col(0) = xdir.normalized();
+    R_plat_local.col(1) = ydir.normalized();
+    R_plat_local.col(2) = zdir;
+    Eigen::Vector3d t_plat_local(C0.x(), C0.y(), 0.0);
 
-    // === 5. 世界 → 相机 ===
-    Eigen::Matrix3d R_world_cam;
-    cv::Mat rvec_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
-    for (int i = 0; i < 3; ++i) rvec_cv.at<double>(i, 0) = v_rot_(i);
-    cv::Rodrigues(rvec_cv, R_cv);
-    cv::cv2eigen(R_cv, R_world_cam);
-    Eigen::Vector3d t_world_cam = v_trans_;
-
-    // === 6. 平台 → 相机 ===
-    Eigen::Matrix3d R_plat_cam = R_world_cam * R_plat_world;
+    Eigen::Matrix3d R_plat_cam;
     Eigen::Vector3d t_plat_cam;
-    t_plat_cam.setZero();
-    t_plat_cam.head<2>() = R_world_cam.topLeftCorner<2, 2>() * t_plat_world.head<2>() + t_world_cam.head<2>();
 
-    // === 7. 转 Rodrigues 输出 ===
+    if (inputIsCamCoords) {
+        // 输入已是相机坐标，直接输出
+        R_plat_cam = R_plat_local;
+        t_plat_cam = t_plat_local;
+    } else {
+        // 输入是世界坐标，转到相机坐标
+        Eigen::Matrix3d R_world_cam;
+        cv::Mat rvec_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
+        for (int i = 0; i < 3; ++i) rvec_cv.at<double>(i, 0) = v_rot_(i);
+        cv::Rodrigues(rvec_cv, R_cv);
+        cv::cv2eigen(R_cv, R_world_cam);
+        Eigen::Vector3d t_world_cam = v_trans_;
+
+        R_plat_cam = R_world_cam * R_plat_local;
+        t_plat_cam.setZero();
+        t_plat_cam.head<2>() = R_world_cam.topLeftCorner<2, 2>() * t_plat_local.head<2>() + t_world_cam.head<2>();
+    }
+
+    // === 5. 转 Rodrigues 输出 ===
     cv::Mat R_plat_cv, rvec_plat_cv;
     cv::eigen2cv(R_plat_cam, R_plat_cv);
     cv::Rodrigues(R_plat_cv, rvec_plat_cv);

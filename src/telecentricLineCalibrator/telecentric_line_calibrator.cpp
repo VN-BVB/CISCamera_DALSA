@@ -957,6 +957,7 @@ Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K
     std::cout << "[5] 正在调用 Python 非线性外参优化..." << std::endl;
 
     Eigen::Vector3d opt_r = rotMatToVec(pose.R);
+    Eigen::Vector3d opt_r_init = opt_r;
     Eigen::Vector3d opt_t = pose.t;
     double opt_err = 0.0;
     TelecentricPYOptimizer opt;
@@ -965,6 +966,8 @@ Pose TelecentricLineCalibrator::estimateTelecentricPose(const Eigen::Matrix3d& K
     if (!ok) {
         std::cout << " [5] 优化失败，返回初始值。" << std::endl;
     } else {
+        // 防止符号翻转（rvec → -rvec 数学等价但数值不同）
+        if (opt_r.dot(opt_r_init) < 0) opt_r = -opt_r;
         std::cout << " [5] 优化成功！" << std::endl;
         std::cout << "   优化后 rvec = " << opt_r.transpose() << std::endl;
         std::cout << "   优化后 tvec = " << opt_t.transpose() << std::endl;

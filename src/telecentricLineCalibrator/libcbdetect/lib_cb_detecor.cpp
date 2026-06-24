@@ -270,6 +270,7 @@ void LibCBDetector::saveBoardPoints(const std::vector<cv::Point2d>& points) {
 
     std::ofstream ofs(txtFile);
     if (ofs.is_open()) {
+        ofs << std::setprecision(15);
         ofs << "# Index\tX\tY\n";
         for (size_t i = 0; i < points.size(); ++i) {
             ofs << i << "\t" << points[i].x << "\t" << points[i].y << "\n";
@@ -288,6 +289,7 @@ void LibCBDetector::saveBoardPointsFile(const std::vector<cv::Point2d>& points, 
 
     std::ofstream ofs(txtFile);
     if (ofs.is_open()) {
+        ofs << std::setprecision(15);
         ofs << "# Index\tX\tY\n";
         for (size_t i = 0; i < points.size(); ++i) {
             ofs << i << "\t" << points[i].x << "\t" << points[i].y << "\n";

@@ -412,7 +412,7 @@ void CISWidget::on_btnClearCPDetectResult_clicked() {
 void CISWidget::whenDrawPlatformAxes() {
     if (!imageProcessor) return;
 
-    // 1. 解析 JSON，拿世界坐标
+    // 1. 解析 JSON 世界坐标
     std::ifstream is("./data/calibration_config/platform_pose.json");
     std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
 
@@ -434,7 +434,7 @@ void CISWidget::whenDrawPlatformAxes() {
     auto savedT = imageProcessor->getWorldTvec();
     imageProcessor->setWorldPose(wRvec, wTvec);
 
-    // 2. 先收集所有平台的像素坐标
+    // 2. 收集像素坐标
     struct PlatAxes { int id; double cx, cy, xx, xy, yx, yy; };
     std::vector<PlatAxes> axes;
     const double axisLen = 67.0;
@@ -463,12 +463,10 @@ void CISWidget::whenDrawPlatformAxes() {
 
         auto px = imageProcessor->convertToPix(pts);
         axes.push_back({pid, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
-
         std::cout << "平台 " << pid << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
 
         pos = end + 1;
     }
-
     imageProcessor->setWorldPose(savedR, savedT);
 
     // 3. 加载原图，画轴，保存（全精度，无转换损失）
@@ -489,8 +487,7 @@ void CISWidget::whenDrawPlatformAxes() {
 
         cv::arrowedLine(gray, center, xTip, cv::Scalar(0), 1, cv::LINE_AA);       // X轴(黑,1px)
         cv::arrowedLine(gray, center, yTip, cv::Scalar(0), 1, cv::LINE_AA);       // Y轴(黑,1px)
-        cv::line(gray, cv::Point(center.x-20, center.y), cv::Point(center.x+20, center.y), cv::Scalar(0), 1, cv::LINE_AA);
-        cv::line(gray, cv::Point(center.x, center.y-20), cv::Point(center.x, center.y+20), cv::Scalar(0), 1, cv::LINE_AA);
+        cv::circle(gray, center, 1, cv::Scalar(0), -1, cv::LINE_AA);
         cv::putText(gray, std::to_string(a.id), cv::Point(center.x+25, center.y-20),
                     cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0), 1, cv::LINE_AA);
     }

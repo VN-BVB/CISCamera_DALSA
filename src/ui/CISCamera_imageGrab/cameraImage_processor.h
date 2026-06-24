@@ -31,9 +31,13 @@ public:
     void lodaCam2PlatCalibrateParams();
     std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
     std::vector<Eigen::Vector2d> convertToPix(const std::vector<Eigen::Vector2d>& world_pts);
-    void setWorldPose(const Eigen::Vector3d& r, const Eigen::Vector3d& t) { allRotVecs_.back() = r; allTransVecs_.back() = t; }
+    void setWorldPose(const Eigen::Vector3d& r, const Eigen::Vector3d& t) {
+        allRotVecs_.back() = r;
+        allTransVecs_.back() = t;
+    }
     Eigen::Vector3d getWorldRvec() const { return allRotVecs_.back(); }
     Eigen::Vector3d getWorldTvec() const { return allTransVecs_.back(); }
+    Eigen::Matrix3d getK() const { return K_; }
 signals:
     void text(const QString& msg);
     void error(const QString& msg);
@@ -102,6 +106,7 @@ private:
     std::shared_ptr<TelecentricPlatformCalib> telecentricPlatCalibrator{nullptr};
     //-----对位平台标定------
     bool loadMode_ = true;
+    bool useCamCoordsForPlat_ = false;  // false=世界坐标, true=相机坐标
     int maxPlatformCount_ = 9;
     QString readPlatfromImg_ = "./data/PaltfromCalibrate/";
     struct PlatformImageGroups {

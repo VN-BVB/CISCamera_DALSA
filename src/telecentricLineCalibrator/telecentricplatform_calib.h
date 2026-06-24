@@ -21,7 +21,8 @@ public:
     void runDemo(std::vector<std::vector<Eigen::Vector2d>> pts = {});
     bool estimatePlatformPoseFromBoards(const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
                                         const std::vector<std::vector<Eigen::Vector2d>>& yWorlds,
-                                        const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds, Eigen::Vector3d& vRotPlat,
+                                        const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds,
+                                        bool inputIsCamCoords, Eigen::Vector3d& vRotPlat,
                                         Eigen::Vector3d& vTransPlat);
 
 private:
