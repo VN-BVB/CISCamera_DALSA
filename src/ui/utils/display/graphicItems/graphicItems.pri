@@ -1,4 +1,5 @@
 HEADERS += \
+    $$PWD/axes_item.h \
     $$PWD/bspline_item.h \
     $$PWD/contour_item.h \
     $$PWD/graphic_item_component.h \
@@ -8,6 +9,7 @@ HEADERS += \
     $$PWD/rotated_rect_item.h
 
 SOURCES += \
+    $$PWD/axes_item.cpp \
     $$PWD/bspline_item.cpp \
     $$PWD/contour_item.cpp \
     $$PWD/graphic_item_component.cpp \

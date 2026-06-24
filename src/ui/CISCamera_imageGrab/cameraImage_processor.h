@@ -31,10 +31,14 @@ public:
     void lodaCam2PlatCalibrateParams();
     std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
     std::vector<Eigen::Vector2d> convertToPix(const std::vector<Eigen::Vector2d>& world_pts);
+    void setWorldPose(const Eigen::Vector3d& r, const Eigen::Vector3d& t) { allRotVecs_.back() = r; allTransVecs_.back() = t; }
+    Eigen::Vector3d getWorldRvec() const { return allRotVecs_.back(); }
+    Eigen::Vector3d getWorldTvec() const { return allTransVecs_.back(); }
 signals:
     void text(const QString& msg);
     void error(const QString& msg);
     void imageReady(std::shared_ptr<cv::Mat> result);
+    void platformCalibDone();
     void sendSignalToCalibrate(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts, const std::vector<Eigen::Vector2d>& worldPts, int width,
                                int height, double dx, double dy, Eigen::Matrix3d K_out, double rmse_out, std::vector<Pose> poses_out);
 

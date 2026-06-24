@@ -6,6 +6,7 @@ CONFIG += release debug_info
 
 QMAKE_CXXFLAGS += /MP
 QMAKE_CXXFLAGS += /bigobj
+QMAKE_CXXFLAGS += /utf-8
 QMAKE_CXXFLAGS_RELEASE = -ZI -MD
 QMAKE_LFLAGS_RELEASE = /DEBUG
 # You can make your code fail to compile if it uses deprecated APIs.

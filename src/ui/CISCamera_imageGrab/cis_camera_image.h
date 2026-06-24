@@ -88,6 +88,7 @@ private slots:
     void on_btnReadLocalImg_clicked();
     void on_btnClearCPImg_clicked();
     void on_btnClearCPDetectResult_clicked();
+    void whenDrawPlatformAxes();
 };
 #endif  // CIS_CAMERA_IMAGE_H
 

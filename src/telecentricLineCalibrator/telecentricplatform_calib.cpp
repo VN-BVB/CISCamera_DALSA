@@ -174,11 +174,11 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterSequential(const 
 
         sumC += C;
         count++;
-        std::cout << "第 " << k << " 组旋转中心 = " << C.transpose() << " 角度 = " << ang << "°\n";
+        std::cout << u8"第 " << k << u8" 组旋转中心 = " << C.transpose() << u8" 角度 = " << ang << "°\n";
     }
 
     if (count == 0) {
-        std::cout << "警告: 没有有效的旋转对，返回零旋转中心\n";
+        std::cout << u8"警告: 没有有效的旋转对，返回零旋转中心\n";
         return Eigen::Vector2d::Zero();
     }
     return sumC / count;
@@ -842,8 +842,17 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         return false;
     }
 
-    // === 3. C₀: rot 序列直接求旋转中心（不需要 origin） ===
-    Eigen::Vector2d C0 = computeRotationCenterSequential(rotWorlds);
+    // === 3. C₀: 星型 — 全部对 rot0 求旋转中心 ===
+    Eigen::Vector2d C0 = Eigen::Vector2d::Zero();
+    {
+        int count = 0;
+        for (size_t k = 1; k < rotWorlds.size(); ++k) {
+            std::vector<std::vector<Eigen::Vector2d>> pair = {rotWorlds[0], rotWorlds[k]};
+            Eigen::Vector2d Ck = computeRotationCenterSequential(pair);
+            if (Ck.norm() < 1e6) { C0 += Ck; ++count; }
+        }
+        if (count > 0) C0 /= count;
+    }
     std::cout << "旋转中心 C₀ = " << C0.transpose() << std::endl;
 
     // === 4. 平台 → 世界 ===

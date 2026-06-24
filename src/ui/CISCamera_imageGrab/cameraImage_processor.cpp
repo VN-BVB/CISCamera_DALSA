@@ -542,11 +542,11 @@ void CameraImageProcessor::whenCalibrateCP() {
 
         if (boards.empty() || boards[0].empty()) return {};
 
-        // ---- 可视化 ----
-        {
-            std::string vizPath = filePath.substr(0, filePath.find_last_of('.')) + "_viz.png";
-            libcbDetector->visualizeCorners(img, boards[0][0], vizPath);
-        }
+        // // ---- 可视化 ----
+        // {
+        //     std::string vizPath = filePath.substr(0, filePath.find_last_of('.')) + "_viz.png";
+        //     libcbDetector->visualizeCorners(img, boards[0][0], vizPath);
+        // }
 
         std::vector<Eigen::Vector2d> pix;
         for (auto& pt : boards[0][0]) pix.emplace_back(pt.x, pt.y);
@@ -560,7 +560,7 @@ void CameraImageProcessor::whenCalibrateCP() {
     for (size_t p = 0; p < platformGroups_.size(); ++p) {
         auto& g = platformGroups_[p];
         if (g.x.size() < 2 || g.y.size() < 2 || g.rot.size() < 2) {
-            emit text(QString(u8"平台 %1 数据不全（x/y/rot各需≥2张），跳过").arg(p));
+            emit text(QString(u8"平台 %1 数据不全").arg(p));
             continue;
         }
 
@@ -599,6 +599,7 @@ void CameraImageProcessor::whenCalibrateCP() {
     allTransVecs_ = poseData.allTransVecs;
 
     emit text(QString(u8"所有平台的姿态求解完成！"));
+    emit platformCalibDone();
 }
 
 std::vector<Eigen::Vector2d> CameraImageProcessor::convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts) {

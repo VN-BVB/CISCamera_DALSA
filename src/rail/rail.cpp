@@ -2,7 +2,7 @@
 
 #include "./src/ui/utils/stateLight/StateLight.h"
 
-#pragma execution_character_set("utf-8")
+// #pragma execution_character_set("utf-8")
 
 Rail::Rail(QObject *parent) : QObject(parent) {
     mobusDisconnect = 1;

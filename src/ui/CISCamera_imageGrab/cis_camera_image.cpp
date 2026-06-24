@@ -8,6 +8,16 @@
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 #include "src/utils/image_utils.cpp"
 #include "ui_cis_camera_image.h"
+#include <fstream>
+#include <sstream>
+#include "src/config/calibration_data_io.h"
+#include "src/ui/utils/display/graphicItems/axes_item.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
+#include <QGraphicsLineItem>
+#include <QGraphicsScene>
+#include "src/config/calibration_data_io.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_component.h"
 #define ENABLE_SLAVE_CAMERA
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     ui->setupUi(this);
@@ -24,7 +34,7 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     if (img.empty()) {
         img = cv::imread(filePath, cv::IMREAD_GRAYSCALE);  // 回退（小图或非BMP）
     }
-    ui->imgSplice->displayImage(img, true);
+    ui->imgSplice->displayImage(std::make_shared<cv::Mat>(img), true);
 }
 
 CISWidget::~CISWidget() {
@@ -148,6 +158,7 @@ void CISWidget::initCameraImageProcessor() {
         Qt::QueuedConnection);
     connect(imageProcessor.get(), &CameraImageProcessor::text, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
     connect(imageProcessor.get(), &CameraImageProcessor::error, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
+    connect(imageProcessor.get(), &CameraImageProcessor::platformCalibDone, this, &CISWidget::whenDrawPlatformAxes, Qt::QueuedConnection);
     QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->initCameraCalibrator(); }, Qt::QueuedConnection);
 }
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
@@ -397,6 +408,139 @@ void CISWidget::on_btnClearCPImg_clicked() {
 void CISWidget::on_btnClearCPDetectResult_clicked() {
     QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->whenClearPlatFromFile("txt"); }, Qt::QueuedConnection);
 }
+
+void CISWidget::whenDrawPlatformAxes() {
+    if (!imageProcessor) return;
+
+    // 1. 解析 JSON，拿世界坐标
+    std::ifstream is("./data/calibration_config/platform_pose.json");
+    std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+
+    auto extractVec = [&](const std::string& key, size_t from) -> Eigen::Vector3d {
+        size_t p = json.find("\"" + key + "\":[", from);
+        if (p == std::string::npos) return Eigen::Vector3d::Zero();
+        p = json.find('[', p) + 1;
+        size_t q = json.find(']', p);
+        Eigen::Vector3d v;
+        sscanf(json.substr(p, q - p).c_str(), "%lf,%lf,%lf", &v(0), &v(1), &v(2));
+        return v;
+    };
+
+    size_t wp = json.find("\"worldPose\":{");
+    Eigen::Vector3d wRvec = extractVec("R", wp);
+    Eigen::Vector3d wTvec = extractVec("T", wp);
+
+    auto savedR = imageProcessor->getWorldRvec();
+    auto savedT = imageProcessor->getWorldTvec();
+    imageProcessor->setWorldPose(wRvec, wTvec);
+
+    // 2. 先收集所有平台的像素坐标
+    struct PlatAxes { int id; double cx, cy, xx, xy, yx, yy; };
+    std::vector<PlatAxes> axes;
+    const double axisLen = 67.0;
+
+    size_t pos = json.find("\"platforms\":[");
+    pos = json.find('[', pos) + 1;
+    while (true) {
+        size_t start = json.find('{', pos);
+        if (start == std::string::npos || start >= json.find(']', pos)) break;
+        size_t end = json.find('}', start) + 1;
+
+        int pid = atoi(&json[json.find("\"id\":", start) + 5]);
+        Eigen::Vector3d rv = extractVec("R", start);
+        Eigen::Vector3d tv = extractVec("T", start);
+
+        cv::Mat r_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
+        for (int j = 0; j < 3; ++j) r_cv.at<double>(j) = rv(j);
+        cv::Rodrigues(r_cv, R_cv);
+        Eigen::Matrix3d R_pw;
+        cv::cv2eigen(R_cv, R_pw);
+
+        std::vector<Eigen::Vector2d> pts;
+        pts.push_back(tv.head<2>());
+        pts.push_back((tv + axisLen * R_pw.col(0)).head<2>());
+        pts.push_back((tv + axisLen * R_pw.col(1)).head<2>());
+
+        auto px = imageProcessor->convertToPix(pts);
+        axes.push_back({pid, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
+
+        std::cout << "平台 " << pid << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
+
+        pos = end + 1;
+    }
+
+    imageProcessor->setWorldPose(savedR, savedT);
+
+    // 3. 加载原图，画轴，保存（全精度，无转换损失）
+    if (axes.empty()) return;
+
+    cv::Mat img = readLargeBMP("./data/PaltfromCalibrate/vis/vis.bmp");
+    if (img.empty()) img = cv::imread("./data/PaltfromCalibrate/vis/vis.bmp", cv::IMREAD_UNCHANGED);
+    if (img.empty()) return;
+
+    // 直接在灰度原图上画（不转BGR，保持1GB）
+    cv::Mat gray = img.clone();  // 独立副本，不破坏 vis.bmp
+    if (gray.channels() == 3) cv::cvtColor(gray, gray, cv::COLOR_BGR2GRAY);
+
+    for (auto& a : axes) {
+        cv::Point center(cvRound(a.cx), cvRound(a.cy));
+        cv::Point xTip(cvRound(a.xx), cvRound(a.xy));
+        cv::Point yTip(cvRound(a.yx), cvRound(a.yy));
+
+        cv::arrowedLine(gray, center, xTip, cv::Scalar(0), 1, cv::LINE_AA);       // X轴(黑,1px)
+        cv::arrowedLine(gray, center, yTip, cv::Scalar(0), 1, cv::LINE_AA);       // Y轴(黑,1px)
+        cv::line(gray, cv::Point(center.x-20, center.y), cv::Point(center.x+20, center.y), cv::Scalar(0), 1, cv::LINE_AA);
+        cv::line(gray, cv::Point(center.x, center.y-20), cv::Point(center.x, center.y+20), cv::Scalar(0), 1, cv::LINE_AA);
+        cv::putText(gray, std::to_string(a.id), cv::Point(center.x+25, center.y-20),
+                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0), 1, cv::LINE_AA);
+    }
+
+    // 手动写 8-bit 灰度 BMP，绕过 OpenCV 像素限制
+    {
+        std::ofstream f("./data/PaltfromCalibrate/vis/result_axes.bmp", std::ios::binary);
+        int w = gray.cols, h = gray.rows;
+        int stride = ((w + 3) / 4) * 4;
+        uint32_t fileSize = 14 + 40 + 1024 + stride * h;  // 1024 = 256×4 调色板
+        // BITMAPFILEHEADER
+        f.put('B').put('M');
+        f.write(reinterpret_cast<const char*>(&fileSize), 4);
+        uint32_t reserved = 0; f.write(reinterpret_cast<const char*>(&reserved), 4);
+        uint32_t offBits = 14 + 40 + 1024; f.write(reinterpret_cast<const char*>(&offBits), 4);
+        // BITMAPINFOHEADER
+        uint32_t biSize = 40; int32_t biWidth = w, biHeight = h;
+        uint16_t biPlanes = 1, biBitCount = 8;
+        uint32_t biCompression = 0, biSizeImage = stride * h;
+        int32_t biXPels = 2835, biYPels = 2835;
+        uint32_t biClrUsed = 256, biClrImportant = 0;
+        f.write(reinterpret_cast<const char*>(&biSize), 4);
+        f.write(reinterpret_cast<const char*>(&biWidth), 4);
+        f.write(reinterpret_cast<const char*>(&biHeight), 4);
+        f.write(reinterpret_cast<const char*>(&biPlanes), 2);
+        f.write(reinterpret_cast<const char*>(&biBitCount), 2);
+        f.write(reinterpret_cast<const char*>(&biCompression), 4);
+        f.write(reinterpret_cast<const char*>(&biSizeImage), 4);
+        f.write(reinterpret_cast<const char*>(&biXPels), 4);
+        f.write(reinterpret_cast<const char*>(&biYPels), 4);
+        f.write(reinterpret_cast<const char*>(&biClrUsed), 4);
+        f.write(reinterpret_cast<const char*>(&biClrImportant), 4);
+        // 调色板 (256 灰度)
+        for (int i = 0; i < 256; ++i) {
+            uint8_t c = static_cast<uint8_t>(i);
+            f.write(reinterpret_cast<const char*>(&c), 1);  // B
+            f.write(reinterpret_cast<const char*>(&c), 1);  // G
+            f.write(reinterpret_cast<const char*>(&c), 1);  // R
+            uint8_t zero = 0; f.write(reinterpret_cast<const char*>(&zero), 1);
+        }
+        // 像素数据 (bottom-up)
+        std::vector<uint8_t> row(stride, 0);
+        for (int r = h - 1; r >= 0; --r) {
+            memcpy(row.data(), gray.ptr(r), w);
+            f.write(reinterpret_cast<const char*>(row.data()), stride);
+        }
+    }
+    std::cout << "已保存: result_axes.bmp" << std::endl;
+}
+
 std::vector<Eigen::Vector2d> CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {
     std::vector<Eigen::Vector2d> world;
     QMetaObject::invokeMethod(imageProcessor.get(), [&]() { world = imageProcessor->convertToWorld(pix_pts); }, Qt::BlockingQueuedConnection);
