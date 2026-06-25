@@ -461,46 +461,31 @@ int ContourFeatureCalculator::selectNextCandidate(const std::vector<cv::Point2f>
 }
 
 /**
- * @brief 在轮廓点集中查找下一个合适的点（优先选择逆时针方向的最近点）
+ * @brief 在轮廓点集中查找下一个合适的点（直接取最近点）
  * @param contour 输入轮廓点集，包含所有待处理的点
  * @param currentIndex 当前处理点的索引
  * @param visited 访问标记数组，标记哪些点已经被处理过
- * @param centroid 轮廓的质心点，用于判断点的方向
+ * @param centroid 轮廓的质心点（保留接口，未使用）
  * @return int 找到的下一个点的索引，如果没有找到则返回-1
- * @details 1. 计算当前点到所有未访问点的距离
- *          2. 检查每个未访问点相对于当前点和质心的方向（顺时针/逆时针）
- *          3. 优先选择位于当前点逆时针方向的最近点
- *          4. 如果没有逆时针方向的点，则选择最近的点
+ * @details 遍历所有未访问点，返回距离当前点最近的点索引。
+ *          方向修正由 SortingStrategy 中的叉积判定统一处理。
  */
 int ContourFeatureCalculator::findNextPoint(const std::vector<cv::Point2f>& contour,
                                             int currentIndex,
                                             const std::vector<bool>& visited,
                                             const cv::Point2f& centroid) {
+    (void)centroid;  // 保留接口，不再使用
 
     cv::Point2f currentPoint = contour[currentIndex];
     int bestIndex = -1;
     double bestDistance = std::numeric_limits<double>::max();
-    bool foundCounterclockwise = false;
 
     for (int i = 0; i < contour.size(); ++i) {
-        if (!visited[i]) {
-            double distance = cv::norm(currentPoint - contour[i]);
-            cv::Point2f candidatePoint = contour[i];
-
-            // 检查是否是逆时针方向
-            bool isCounterclockwise = !GeometryUtils::isPointClockwiseTo(candidatePoint, currentPoint, centroid);
-
-            if (isCounterclockwise) {
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    bestIndex = i;
-                    foundCounterclockwise = true;
-                }
-            } else if (!foundCounterclockwise && distance < bestDistance) {
-                // 如果还没找到逆时针方向的点，记录最近的点
-                bestDistance = distance;
-                bestIndex = i;
-            }
+        if (visited[i]) continue;
+        double distance = cv::norm(currentPoint - contour[i]);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = i;
         }
     }
 
