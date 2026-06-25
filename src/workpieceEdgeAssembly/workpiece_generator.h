@@ -4,6 +4,13 @@
 #include "workpiece_bounding_box.h"
 #include <cstdint>
 #include <functional>
+#include <map>
+#include <utility>
+
+// 未配对轮廓映射类型定义（放在类外部）
+typedef std::map<int, std::shared_ptr<ContourBoundingBox>> UnpairedContoursMap;
+typedef std::map<std::pair<int, int>, float> DistanceMatrix;
+typedef std::map<int, std::vector<int>> NearestIndicesMap;
 
 class WorkpieceGenerator
 {
@@ -19,20 +26,20 @@ private:
 
     // 辅助方法
     bool isLegalCombination(const WorkpieceBoundingBox& workpiece);
-    std::vector<std::vector<float>> calculateDistanceMatrix(const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours);
-    std::vector<std::vector<int>> createNearestIndices( const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
-                                                       const std::vector<std::vector<float>>& distanceMatrix);
-    std::pair<std::vector<int>, std::vector<int>> partitionCandidatesByDirection(int currentIndex, OpeningDirection currentDirection, const cv::Point2f& currentCenter,
-                                                                                 const std::vector<int>& candidateIndices,
-                                                                                 const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours);
-    bool tryGenerateTwoContourCombination(int currentIndex, const std::vector<int>& candidateIndices,
-                                          const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
+    DistanceMatrix calculateDistanceMatrix(const UnpairedContoursMap& unpairedContours);
+    NearestIndicesMap createNearestIndices(const UnpairedContoursMap& unpairedContours,
+                                          const DistanceMatrix& distanceMatrix);
+    std::pair<std::vector<int>, std::vector<int>> partitionCandidatesByDirection(int currentId, OpeningDirection currentDirection, const cv::Point2f& currentCenter,
+                                                                                 const std::vector<int>& candidateIds,
+                                                                                 const UnpairedContoursMap& unpairedContours);
+    bool tryGenerateTwoContourCombination(int currentId, const std::vector<int>& candidateIds,
+                                          const UnpairedContoursMap& unpairedContours,
                                           std::set<std::set<int>>& generatedCombinations);
-    bool tryGenerateThreeContourCombination(int currentIndex, int secondIndex, const std::vector<int>& candidateIndices,
-                                            const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
+    bool tryGenerateThreeContourCombination(int currentId, int secondId, const std::vector<int>& candidateIds,
+                                            const UnpairedContoursMap& unpairedContours,
                                             std::set<std::set<int>>& generatedCombinations);
-    void searchAndGenerateCombinations(int currentIndex, const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
-                                       const std::vector<std::vector<int>>& nearestIndices,
+    void searchAndGenerateCombinations(int currentId, const UnpairedContoursMap& unpairedContours,
+                                       const NearestIndicesMap& nearestIndices,
                                        std::set<std::set<int>>& generatedCombinations);
     void outputPossibleWorkpieces();
 

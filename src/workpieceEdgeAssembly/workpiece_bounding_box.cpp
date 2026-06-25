@@ -239,12 +239,14 @@ bool WorkpieceBoundingBox::isLegal(std::shared_ptr<ContourBoundingBox> candidate
         candidateEdges.push_back(std::make_pair(vertices[i], vertices[(i + 1) % 4]));
     }
 
-    // 3、检查候选轮廓边界框的任意边是否与工件的任意中心线段相交
+    // 3、检查候选轮廓边界框的任意边是否与工件外接矩形中心→CBB中心的连线相交
+    cv::Point2f outerCenter = m_outerBoundingBox.center;
     for (const auto& candidateEdge : candidateEdges) {
-        for (const auto& centerSegment : m_centerPointConnections) {
+        for (const auto& cbb : m_cbbs) {
+            cv::Point2f cbbCenter = cbb->getCenterPoint();
             if (GeometryUtils::doSegmentsIntersect(
                     candidateEdge.first, candidateEdge.second,
-                    centerSegment.first, centerSegment.second)) {
+                    outerCenter, cbbCenter)) {
                 return false;
             }
         }
