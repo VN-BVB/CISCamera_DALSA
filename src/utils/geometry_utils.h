@@ -18,6 +18,9 @@ bool isPointOnSegment(const cv::Point2f& p, const cv::Point2f& a, const cv::Poin
 bool doSegmentsIntersect(const cv::Point2f& p1, const cv::Point2f& p2,
                          const cv::Point2f& q1, const cv::Point2f& q2);
 
+// 判断闭合多边形是否自交（假定顶点数 >= 3）
+bool isPolygonSelfIntersecting(const std::vector<cv::Point2f>& polygon);
+
 // 判断点是否在旋转矩形内
 bool isPointInRotatedRect(const cv::Point2f& point, const cv::RotatedRect& rotatedRect);
 

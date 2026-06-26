@@ -19,6 +19,7 @@ public:
     cv::RotatedRect getBoundingRect() const {return m_boundingRect;}
     cv::Point2f getCenterPoint() const {return m_centerPoint;}
     OpeningDirection getOpeningDirection() const {return m_openingDirection;}
+    std::vector<cv::Point2f> getContourEndpoints() const;
 
 private:
     cv::RotatedRect generateBoundingBox(const ContourData& contourData);

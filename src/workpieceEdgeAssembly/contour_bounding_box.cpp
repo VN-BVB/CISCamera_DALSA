@@ -42,3 +42,11 @@ int ContourBoundingBox::setOppositeTo(int id) {
         return id - 1;
     }
 }
+
+std::vector<cv::Point2f> ContourBoundingBox::getContourEndpoints() const {
+    std::vector<cv::Point2f> sorted = m_contourData.getSortedContour();
+    if (sorted.size() < 2) {
+        return {};
+    }
+    return { sorted.front(), sorted.back() };
+}
