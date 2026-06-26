@@ -122,5 +122,5 @@
         "specialfunctions": "cpp",
         "splines": "cpp"
     },
-    "cmake.sourceDirectory": "D:/Code/CISCamera_DALSA/3rdParty/plog"
+    "cmake.sourceDirectory": "D:/Qt_Project/CISCamera_DALSA/3rdParty/extern/pybind11"
 }
