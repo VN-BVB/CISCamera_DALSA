@@ -1,0 +1,218 @@
+{
+    "PlatformPoseData": {
+        "allRotVecs": [
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.001285649806786716,
+                "value1": -0.13732719463546398,
+                "value2": -0.23362152332157619
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": -2.1179533095987277,
+                "value1": 2.194175449828765,
+                "value2": -0.16066178698719883
+            }
+        ],
+        "allTransVecs": [
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": -176.27810360952067,
+                "value1": -148.95495913364923,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": 0.0,
+                "value1": 0.0,
+                "value2": 0.0
+            },
+            {
+                "value0": -126.77027002641532,
+                "value1": -139.3564070357576,
+                "value2": 0.0
+            }
+        ]
+    }
+}

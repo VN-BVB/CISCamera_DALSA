@@ -11,6 +11,7 @@ DalsaCamera::DalsaCamera(QObject* parent)
       m_View(nullptr),
       m_pData(nullptr),
       m_running(false),
+      m_freeze(false),
       m_trigger(false),
       m_saveEnabled(false),
       m_maxFrames(0),
@@ -276,8 +277,9 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
         if (cam->m_maxFrames > 0 && cam->m_frameCount >= cam->m_maxFrames) {
             cam->m_saveEnabled = false;
         }
+    } else {
+        cam->m_frameCount++;
     }
-    cam->m_frameCount++;
 }
 
 // =================== 信号 ===================

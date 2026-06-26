@@ -7,4 +7,5 @@ HEADERS += \
 
 SOURCES += \
     $$PWD/geometry_utils.cpp \
-    $$PWD/image_tools.cpp
+    $$PWD/image_tools.cpp \
+    $$PWD/image_utils.cpp

@@ -19,8 +19,11 @@ public:
 
     // 主流程
     void runDemo(std::vector<std::vector<Eigen::Vector2d>> pts = {});
-    bool estimatePlatformPoseFromBoards(const std::vector<std::vector<std::vector<cv::Point2d>>>& onePlatformBoards,
-                                        Eigen::Vector3d& rvec_plat, Eigen::Vector3d& t_plat_cam);
+    bool estimatePlatformPoseFromBoards(const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
+                                        const std::vector<std::vector<Eigen::Vector2d>>& yWorlds,
+                                        const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds,
+                                        bool inputIsCamCoords, Eigen::Vector3d& vRotPlat,
+                                        Eigen::Vector3d& vTransPlat);
 
 private:
     // pixel → camera → world
@@ -33,6 +36,8 @@ private:
     Eigen::Vector2d computeRotationCenterSequential(const std::vector<std::vector<Eigen::Vector2d>>& pts);
     Eigen::Vector2d fitCircleTaubin(const std::vector<Eigen::Vector2d>& pts);
     Eigen::Vector2d computeRotationCenterCircleFit(const std::vector<std::vector<Eigen::Vector2d>>& pts);
+    void solveAffineFromRelativeMotion(const std::vector<Eigen::Vector2d>& w1, const std::vector<Eigen::Vector2d>& w2,
+                                       const std::vector<Eigen::Vector2d>& w3, Eigen::Matrix2d& A_ls, int method);
 
 private:
     // 相机参数

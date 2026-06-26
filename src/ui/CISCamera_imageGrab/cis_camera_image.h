@@ -1,10 +1,11 @@
 ﻿#ifndef CIS_CAMERA_IMAGE_H
 #define CIS_CAMERA_IMAGE_H
-
+// #define Internal1
 #include <QDateTime>
 #include <QImage>
 #include <QPainter>
 #include <QThread>
+#include <QTimer>
 #include <QWidget>
 #include <memory>
 // clang-format off
@@ -12,12 +13,6 @@
 #include <windows.h>
 // clang-format on
 #include "cameraImage_processor.h"
-#include "src/cameraFactory/abstract_camera.h"
-#include "src/cameraFactory/abstract_camera_factory.h"
-#include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
-#include "src/rail/rail_widget.h"
-#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
-#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 class RailWidget;
 class AbstractCamera;
 class ExternalExeRunner;
@@ -56,12 +51,22 @@ private:
     std::shared_ptr<AbstractCamera> slaveCISCamera{nullptr};
     std::shared_ptr<ExternalExeRunner> configCISCamera{nullptr};
     std::shared_ptr<cv::Mat> masterImg, slaveImg;
+#ifdef Internal1
+    QString masterCameraCCF_ = "./data/CISConfig/MasterInternalFrameInternal.ccf ";
+    QString slaveCameraCCF_ = "./data/CISConfig/SlaveInternalFrameInternal.ccf";
+#else
+    QString masterCameraCCF_ = "./data/CISConfig/MasterEncoderDriver.ccf";
+    QString slaveCameraCCF_ = "./data/CISConfig/SlaveEncoderDriver.ccf";
+#endif
     bool masterReady = false;
     bool slaveReady = false;
     bool triggerRunning = false;
-    double startPos;
-    double endPos;
-    double speed;
+    double leadInTimer = 1000.0;
+    double startPos = 0.0;
+    double endPos = 0.0;
+    double speed = 0.0;
+    double scanStartPosReal = 0.0, scanEndPosReal = 0.0;
+    QMetaObject::Connection endMoveConnection_;
 public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();
@@ -83,5 +88,7 @@ private slots:
     void on_btnReadLocalImg_clicked();
     void on_btnClearCPImg_clicked();
     void on_btnClearCPDetectResult_clicked();
+    void whenDrawPlatformAxes();
 };
 #endif  // CIS_CAMERA_IMAGE_H
+

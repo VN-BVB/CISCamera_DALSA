@@ -30,10 +30,10 @@ INCLUDEPATH += ./3rdparty/cereal/include
 # ------------------Pybind11C++与Python双向绑定库------------------
 # ---------- Python 环境 ----------
 PYTHON_VER = 39
-PYTHON_ROOT = E:/apps/Anaconda/envs/Telecentric-Calibration
+PYTHON_ROOT = D:/anaconda/envs/Telecentric-Calibration #同样要设置环境变量
 INCLUDEPATH += $$PYTHON_ROOT/include
 LIBS += -L$$PYTHON_ROOT/libs -lpython$$PYTHON_VER
-INCLUDEPATH += ./3rdparty/extern/pybind11/include
+INCLUDEPATH += D:/ProgramData/extern/pybind11/include
 # ------------------tinyspline库------------------
 CONFIG(debug, debug|release) {
     INCLUDEPATH += $$PWD/tinyspline/debug/include

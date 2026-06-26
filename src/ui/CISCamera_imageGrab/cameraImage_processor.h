@@ -13,9 +13,10 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
-#include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
-#include "src/telecentricLineCalibrator/telecentricplatform_calib.h"
+#include "src/config/calibration_data_io.h"
+class LibCBDetector;
+class TelecentricLineCalibrator;
+class TelecentricPlatformCalib;
 class CameraImageProcessor : public QObject {
     Q_OBJECT
 public:
@@ -28,14 +29,22 @@ public:
     void initCameraCalibrator();
     void lodaCameraCalibrateParams();
     void lodaCam2PlatCalibrateParams();
-    std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d> &pix_pts);
+    std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
+    std::vector<Eigen::Vector2d> convertToPix(const std::vector<Eigen::Vector2d>& world_pts);
+    void setWorldPose(const Eigen::Vector3d& r, const Eigen::Vector3d& t) {
+        allRotVecs_.back() = r;
+        allTransVecs_.back() = t;
+    }
+    Eigen::Vector3d getWorldRvec() const { return allRotVecs_.back(); }
+    Eigen::Vector3d getWorldTvec() const { return allTransVecs_.back(); }
+    Eigen::Matrix3d getK() const { return K_; }
 signals:
     void text(const QString& msg);
     void error(const QString& msg);
     void imageReady(std::shared_ptr<cv::Mat> result);
-    void sendSignalToCalibrate(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts,
-                               const std::vector<Eigen::Vector2d>& worldPts, int width, int height, double dx, double dy,
-                               Eigen::Matrix3d K_out, double rmse_out, std::vector<Pose> poses_out);
+    void platformCalibDone();
+    void sendSignalToCalibrate(const std::vector<std::vector<Eigen::Vector2d>>& all_imgPts, const std::vector<Eigen::Vector2d>& worldPts, int width,
+                               int height, double dx, double dy, Eigen::Matrix3d K_out, double rmse_out, std::vector<Pose> poses_out);
 
 public slots:
     void processPair(std::shared_ptr<cv::Mat> master, std::shared_ptr<cv::Mat> slave, bool spliceEnabled, bool useColumnCheck);
@@ -46,8 +55,7 @@ public slots:
     // 保存最近一次处理结果（或回退到master/slave）
     // dir：目录；prefix：文件前缀；ext：后缀（".png" ".tif" ".exr" …）
     // alsoSaveSingles：是否同时保存 master/slave（若存在）
-    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png",
-                    bool alsoSaveSingles = false);
+    void saveResult(const QString& dir, const QString& prefix = "Splice", const QString& ext = ".png", bool alsoSaveSingles = false);
 
     // 清空内部缓存
     void clear();
@@ -79,12 +87,12 @@ private:
     //---棋盘格图像参数---
     std::vector<Eigen::Vector2d> worldPts;
     const int W_ = 8, H_ = 11;
-    const double spacingMM_ = 10.0;
+    const double spacingMM_ = 3.0;
     const double dx_ = 25.4 / 1200.0;  // mm/pixel (1200 dpi)
-    const double dy_ = 17.0 / 800.0;   // 正方像素 （2（D + 1 ） / M）
-    const int width_ = 31104, height_ = 16100;
+    const double dy_ = 20.0 / 945.0;   // 正方像素 （2（D + 1 ） / M）
+    const int width_ = 30688, height_ = 35000;
     std::string readPointsPath_ = "./data/CISCamera_Image/mattxt";
-    std::string readImgPath_ = "./data/CISCamera_Image/test/rotated_output";
+    std::string readImgPath_ = "./data/CISCamera_Image/cameraCalibrate/img";
     // const int W = 8, H = 11;
     // const double spacingMM = 10.0;
     // const double dx = 25.4 / 1200.0;
@@ -98,8 +106,15 @@ private:
     std::shared_ptr<TelecentricPlatformCalib> telecentricPlatCalibrator{nullptr};
     //-----对位平台标定------
     bool loadMode_ = true;
+    bool useCamCoordsForPlat_ = false;  // false=世界坐标, true=相机坐标
     int maxPlatformCount_ = 9;
     QString readPlatfromImg_ = "./data/PaltfromCalibrate/";
+    struct PlatformImageGroups {
+        std::vector<std::string> x;    // X平移, 多张 (文件路径)
+        std::vector<std::string> y;    // Y平移, 多张 (文件路径)
+        std::vector<std::string> rot;  // 纯旋转, 多张 (文件路径)
+    };
+    std::vector<PlatformImageGroups> platformGroups_;
     std::vector<std::vector<cv::Mat>> all_platfromCalibImg_;
     std::vector<Eigen::Vector3d> allRotVecs_;    // 所有平台的旋转向量
     std::vector<Eigen::Vector3d> allTransVecs_;  // 所有平台的平移向量

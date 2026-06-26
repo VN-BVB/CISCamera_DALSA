@@ -117,29 +117,29 @@ bool ExternalExeRunner::startEmbedded(const QString &exePath, const QStringList 
     targetPid = static_cast<DWORD>(process->processId());
     qInfo() << "[ExternalExeRunner] Exe started (embedded), PID =" << targetPid;
 
-    // 等待窗口出现并嵌入
-    HWND hwnd = nullptr;
-    for (int i = 0; i < 40; ++i) {  // 最长约 8s
-        hwnd = findWindowByPid(targetPid);
-        if (isValidWindow(hwnd)) break;
-        QThread::msleep(200);
-    }
+    // // 等待窗口出现并嵌入
+    // HWND hwnd = nullptr;
+    // for (int i = 0; i < 40; ++i) {  // 最长约 8s
+    //     hwnd = findWindowByPid(targetPid);
+    //     if (isValidWindow(hwnd)) break;
+    //     QThread::msleep(200);
+    // }
 
-    if (isValidWindow(hwnd)) {
-        embedWindowIntoHost(hwnd, reinterpret_cast<HWND>(hostWinId));
-        embeddedHwnd = hwnd;
-        fitEmbeddedToHost();
-    } else {
-        qWarning() << "[ExternalExeRunner] Cannot find window for PID =" << targetPid;
-        // 不立即返回 false：某些程序晚些时候才创建主窗体，交给定时器处理
-    }
+    // if (isValidWindow(hwnd)) {
+    //     embedWindowIntoHost(hwnd, reinterpret_cast<HWND>(hostWinId));
+    //     embeddedHwnd = hwnd;
+    //     fitEmbeddedToHost();
+    // } else {
+    //     qWarning() << "[ExternalExeRunner] Cannot find window for PID =" << targetPid;
+    //     // 不立即返回 false：某些程序晚些时候才创建主窗体，交给定时器处理
+    // }
 
     // 启动定时轮询：监控窗口是否被替换（例如按 OK 后弹新窗口）
-    if (!embedCheckTimer) {
-        embedCheckTimer = new QTimer(this);
-        connect(embedCheckTimer, &QTimer::timeout, this, &ExternalExeRunner::onEmbedCheckTimer);
-    }
-    embedCheckTimer->start(500);
+    // if (!embedCheckTimer) {
+    //     embedCheckTimer = new QTimer(this);
+    //     connect(embedCheckTimer, &QTimer::timeout, this, &ExternalExeRunner::onEmbedCheckTimer);
+    // }
+    // embedCheckTimer->start(500);
 
     return true;
 #endif

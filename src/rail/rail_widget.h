@@ -31,9 +31,9 @@ signals:
     void sendDisconnectToPLC();
     void sendWriteCoils(int address, const QVector<bool> &values);
     void sendWriteRegisters(int address, const QVector<quint16> &values);
-    void sendMove2AbsPosition(float val, float pos);  // 地轨移动到指定位置
-    void sendForward(float vel);                      // 正向点动
-    void sendReverse(float vel);                      // 反向点动
+    void sendMove2AbsPosition(double pos, double v, double acc, double jerk);  // 地轨移动到指定位置
+    void sendForward(double vel);                                              // 正向点动
+    void sendReverse(double vel);                                              // 反向点动
 
 public slots:
     void whenAppendCalibrationLog(const QString message);
@@ -60,12 +60,14 @@ private slots:
 
     void on_btn_discontectRail_clicked();
 
+    // void on_btn_X_JogForward_clicked();
+
 private:
     Ui::RailWidget *ui;
 
     Rail *rail = new Rail;
     QThread *railThread = new QThread;  // 标定线程
-    QString ip = "192.168.100.88";
+    QString ip = "192.168.6.6";
     int port = 502;
 
     friend class CISWidget;

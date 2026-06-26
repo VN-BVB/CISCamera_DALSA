@@ -1,9 +1,8 @@
 ﻿#include "rail.h"
 
 #include "./src/ui/utils/stateLight/StateLight.h"
-#include "plc_variableaddress.h"
 
-#pragma execution_character_set("utf-8")
+// #pragma execution_character_set("utf-8")
 
 Rail::Rail(QObject *parent) : QObject(parent) {
     mobusDisconnect = 1;
@@ -25,7 +24,7 @@ void Rail::connectPLC(const QString ip, int port) {
     if (mobusDisconnect) {
         readStateTimer = new QTimer(this);
         readRealTimer = new QTimer(this);
-        // connect(readStateTimer, &QTimer::timeout, this, &Rail::onStateTimeout);
+        connect(readStateTimer, &QTimer::timeout, this, &Rail::onStateTimeout);
         connect(readRealTimer, &QTimer::timeout, this, &Rail::onRealTimeout);
     }
     if (modbusTcp != nullptr) {
@@ -60,7 +59,7 @@ void Rail::connectPLC(const QString ip, int port) {
         mobusDisconnect = 0;
         emit sendText(QString(u8"Modbus 状态:协议连接成功，等待使能完成。"));
         writeCoils(X_ServoEnable, {true});
-        // readStateTimer->start(111);
+        readStateTimer->start(111);
         readRealTimer->start(100);
     }
     writeCoils(X_Reset, {true});
@@ -79,7 +78,7 @@ void Rail::tryToConnect() {
         emit sendText("Modbus 状态: 重连成功！");
     }
 }
-void Rail::disonnectPLC() {
+void Rail::disConnectPLC() {
     writeCoils(X_ServoEnable, {false});
     // 断开 libmodbus 连接
     if (modbusTcp != nullptr) {
@@ -112,6 +111,28 @@ QVector<quint16> Rail::whenFloat2Quint16(float value) {
     return values;
 }
 
+// 4寄存器16无符号整数转64位浮点数
+double Rail::dataTransUInt16_Double(uint16_t *data) {
+    uint64_t combined = (static_cast<uint64_t>(data[3]) << 48) | (static_cast<uint64_t>(data[2]) << 32) | (static_cast<uint64_t>(data[1]) << 16) |
+                        static_cast<uint64_t>(data[0]);
+
+    double result;
+    std::memcpy(&result, &combined, sizeof(result));
+
+    return result;
+}
+
+// 将double转换成4寄存器16位无符号整数
+void Rail::dataTransDouble_UInt16(double dataIn, uint16_t *dataOut) {
+    uint64_t value;
+    std::memcpy(&value, &dataIn, sizeof(double));  // 将 double 按位复制到 uint64_t
+
+    dataOut[0] = static_cast<uint16_t>(value & 0xFFFF);
+    dataOut[1] = static_cast<uint16_t>((value >> 16) & 0xFFFF);
+    dataOut[2] = static_cast<uint16_t>((value >> 32) & 0xFFFF);
+    dataOut[3] = static_cast<uint16_t>((value >> 48) & 0xFFFF);
+}
+
 // 等待寄存器写入完成
 void Rail::waitForRegisterWriteComplete() {
     QEventLoop loop;
@@ -126,38 +147,85 @@ void Rail::setRailVel(float v, int address) {
     writeRegisters(address, values);
 }
 
-// 运动到绝对位置
-void Rail::whenMove2AbsPosition(float vel, float pos) {
+// 设置绝对位置运动参数（位置，速度，加速度，加加速度，地址）(double类型)
+void Rail::setRailVelPosDouble(double pos, double vel, double acc, double jerk, int address) {
+    // 运动参数
+    uint16_t data[19] = {0};
+    dataTransDouble_UInt16(pos, &data[0]);    // 绝对位置
+    dataTransDouble_UInt16(vel, &data[4]);    // 绝对速度
+    dataTransDouble_UInt16(acc, &data[8]);    // 加速度
+    dataTransDouble_UInt16(acc, &data[12]);   // 减速度
+    dataTransDouble_UInt16(jerk, &data[16]);  // 加加速度
+    writeRegistersRaw(address, 20, data);
+}
+
+// 设置点动运动参数（速度，地址）（double类型）
+void Rail::setRailVelDouble(double vel, int address) {
+    // 运动参数
+    uint16_t data[3] = {0};
+    dataTransDouble_UInt16(vel, &data[0]);  // 绝对速度
+    writeRegistersRaw(address, 4, data);
+}
+
+// // 运动到绝对位置
+// void Rail::whenMove2AbsPosition(float vel, float pos) {
+//     // PLOGD << L"绝对位置运动: 速度" << vel << L" 位置" << pos;
+//     previousCoilStatuses[16] = 0;  // 清零地轨标志位
+//     AbMoveStart = true;
+//     setRailVel(vel, X_AbsSpeed);  // 设置地轨速度
+
+//     QVector<quint16> values;
+//     values.append(whenFloat2Quint16(pos));  // 绝对位置
+//     writeRegisters(X_AbsPosition, values);
+//     if (AbMoveDone) {
+//         QVector<bool> Commands = {true};
+//         writeCoils(X_AbsPositionCommand, Commands);
+//     } else {
+//         QVector<bool> Commands = {false};
+//         writeCoils(X_AbsPositionCommand, Commands);
+//         // QThread::msleep(100);
+//         Commands = {true};
+//         writeCoils(X_AbsPositionCommand, Commands);
+//     }
+//     AbMoveDone = 0;
+// }
+
+// 运动到绝对位置(Double类型)
+void Rail::whenMove2AbsPositionDouble(double pos, double vel, double acc = 100, double jerk = 100) {
     // PLOGD << L"绝对位置运动: 速度" << vel << L" 位置" << pos;
+    targetAbsPos = pos;
+    AbMoveStart = true;
+    AbMoveDone = false;
     previousCoilStatuses[16] = 0;  // 清零地轨标志位
     AbMoveStart = true;
-    setRailVel(vel, X_AbsSpeed);  // 设置地轨速度
+    setRailVelPosDouble(pos, vel, acc, jerk, X_AbsSpeed);  // 设置地轨速度
 
-    QVector<quint16> values;
-    values.append(whenFloat2Quint16(pos));  // 绝对位置
-    writeRegisters(X_AbsPosition, values);
     if (AbMoveDone) {
         QVector<bool> Commands = {true};
         writeCoils(X_AbsPositionCommand, Commands);
+        QThread::msleep(100);
+        writeCoils(X_AbsPositionCommand, {false});
     } else {
         QVector<bool> Commands = {false};
         writeCoils(X_AbsPositionCommand, Commands);
-        QThread::msleep(100);
+        // QThread::msleep(100);
         Commands = {true};
         writeCoils(X_AbsPositionCommand, Commands);
+        QThread::msleep(100);
+        writeCoils(X_AbsPositionCommand, {false});
     }
     AbMoveDone = 0;
 }
 
 // 正向点动
-void Rail::whenForward(float vel) {
-    setRailVel(vel, X_JogSpeed);
+void Rail::whenForward(double vel) {
+    setRailVelDouble(vel, X_JogSpeed);
     writeCoils(X_JogForward, {true});
 }
 
 // 反向点动
-void Rail::whenReverse(float vel) {
-    setRailVel(vel, X_JogSpeed);
+void Rail::whenReverse(double vel) {
+    setRailVelDouble(-vel, X_JogSpeed);
     writeCoils(X_JogReverse, {true});
 }
 
@@ -189,6 +257,11 @@ void Rail::writeCoils(int address, const QVector<bool> &values) {
         // if (readStateTimer) readStateTimer->start();
         // if (readRealTimer) readRealTimer->start();
         return;
+    }
+    emit sendText(QString("Modbus 状态: 写入线圈成功，地址 0x%1，大小 %2").arg(address, 0, 16).arg(size));
+    if (!mobusDisconnect) {
+        emit sendText("Modbus连接PLC");
+        mobusDisconnect = 0;
     }
     emit sendSignalFinishWriteCoils();
 
@@ -238,6 +311,18 @@ void Rail::writeRegisters(int address, const QVector<quint16> &values) {
     // if (readRealTimer) readRealTimer->start();
 }
 
+int Rail::writeRegistersRaw(int addr, int num, uint16_t *data) {
+    num = (num <= 123) ? num : 123;  // Modbus报文最长写入123个寄存器
+
+    int ret = modbus_write_registers(modbusTcp, addr, num, data);
+    if (ret == -1) {
+        modbus_close(modbusTcp);
+        tryToConnect();
+        return -1;
+    }
+    return 0;
+}
+
 /**
  * @brief 读取 Modbus 线圈或寄存器的值
  *
@@ -258,11 +343,43 @@ void Rail::onStateTimeout() {
 }
 
 void Rail::onRealTimeout() {
-    readModbusValue(X_CurrentPosition, 4, false);  // 传入isCoil为true表示读取线圈
-    readModbusValue(X_PosLimitSignal, 32, true);   // 传入isCoil为true表示读取线圈
+    readModbusValueXinjie(X_CurrentPosition, X_CurrentSpeed);
     // qDebug() << "onRealTimeoutonTimeout constructor executed in thread:" << QThread::currentThread();
 }
 
+// Xinjie读速度位置
+void Rail::readModbusValueXinjie(int addresspos, int addresvel) {
+    uint16_t pos[4] = {0};
+
+    int ret1 = modbus_read_registers(modbusTcp, addresspos, 4, pos);
+    if (ret1 == -1) {
+        modbus_close(modbusTcp);
+        tryToConnect();
+        return;
+    }
+
+    double currentpos = dataTransUInt16_Double(pos);
+
+    uint16_t vel[4] = {0};
+
+    int ret2 = modbus_read_registers(modbusTcp, addresvel, 4, vel);
+    if (ret2 == -1) {
+        modbus_close(modbusTcp);
+        tryToConnect();
+        return;
+    }
+
+    double currentvel = dataTransUInt16_Double(vel);
+    if (AbMoveStart && std::abs(currentpos - targetAbsPos) < absFinishTolerance && std::abs(currentvel) < 0.01) {
+        emit sendAbsFinished();
+        AbMoveDone = true;
+        AbMoveStart = false;
+    }
+
+    emit sendPositionAndSpeed(currentpos, currentvel);
+}
+
+// iscoil 为1读取线圈，为0读取寄存器，num为读取线圈或寄存器的个数
 void Rail::readModbusValue(int address, int num, bool isCoil) {
     if (modbusTcp == nullptr || modbus_get_socket(modbusTcp) < 0) {
         if (mobusDisconnect) {
@@ -371,6 +488,7 @@ void Rail::sendRailState(int coilIndex) {
             if (AbMoveStart) {
                 emit sendAbsFinished();
                 AbMoveDone = true;
+                AbMoveStart = false;
             }
 
             break;
