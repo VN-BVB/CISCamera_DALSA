@@ -159,12 +159,15 @@ public:
                 // 平台→相机 → 平台→世界
                 cv::Mat R_pw = R_cw * R_pc;
                 cv::Mat t_pw = R_cw * (t_pc - t_wc);
-                cv::Mat r_pw;
-                cv::Rodrigues(R_pw, r_pw);
+                t_pw.at<double>(2) = 0;  // CIS 无深度，强制 z=0
 
                 if (!first) os << ",\n";
                 first = false;
-                os << "  {\"id\":" << i << ",\"R\":[" << r_pw.at<double>(0) << "," << r_pw.at<double>(1) << "," << r_pw.at<double>(2) << "]";
+                os << "  {\"id\":" << i;
+                // X 方向 (R_pw 第一列)
+                os << ",\"X\":[" << R_pw.at<double>(0,0) << "," << R_pw.at<double>(1,0) << "," << R_pw.at<double>(2,0) << "]";
+                // Y 方向 (R_pw 第二列)
+                os << ",\"Y\":[" << R_pw.at<double>(0,1) << "," << R_pw.at<double>(1,1) << "," << R_pw.at<double>(2,1) << "]";
                 os << ",\"T\":[" << t_pw.at<double>(0) << "," << t_pw.at<double>(1) << "," << t_pw.at<double>(2) << "]}";
             }
             // 写入世界→相机外参（orignCor），加载时用于转回相机坐标
@@ -222,16 +225,23 @@ public:
                     if (p != std::string::npos) pid = atoi(entry.c_str() + p + 5);
                 }
 
-                Eigen::Vector3d r_pw = Eigen::Vector3d::Zero();
+                Eigen::Vector3d X_pw = Eigen::Vector3d::Zero();
+                Eigen::Vector3d Y_pw = Eigen::Vector3d::Zero();
                 Eigen::Vector3d t_pw = Eigen::Vector3d::Zero();
                 {
-                    size_t p = entry.find("\"R\":[");
-                    if (p != std::string::npos) {
-                        p = entry.find('[', p) + 1;
-                        size_t q = entry.find(']', p);
-                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &r_pw(0), &r_pw(1), &r_pw(2));
+                    size_t px = entry.find("\"X\":[");
+                    if (px != std::string::npos) {
+                        px = entry.find('[', px) + 1;
+                        size_t qx = entry.find(']', px);
+                        sscanf(entry.substr(px, qx - px).c_str(), "%lf,%lf,%lf", &X_pw(0), &X_pw(1), &X_pw(2));
                     }
-                    p = entry.find("\"T\":[");
+                    size_t py = entry.find("\"Y\":[");
+                    if (py != std::string::npos) {
+                        py = entry.find('[', py) + 1;
+                        size_t qy = entry.find(']', py);
+                        sscanf(entry.substr(py, qy - py).c_str(), "%lf,%lf,%lf", &Y_pw(0), &Y_pw(1), &Y_pw(2));
+                    }
+                    size_t p = entry.find("\"T\":[");
                     if (p != std::string::npos) {
                         p = entry.find('[', p) + 1;
                         size_t q = entry.find(']', p);
@@ -239,10 +249,15 @@ public:
                     }
                 }
 
-                // 世界→相机
-                cv::Mat r_pw_cv(3, 1, CV_64F), R_pw_cv(3, 3, CV_64F);
-                for (int j = 0; j < 3; ++j) r_pw_cv.at<double>(j) = r_pw(j);
-                cv::Rodrigues(r_pw_cv, R_pw_cv);
+                // 世界→相机: 从 X/Y 拼旋转矩阵
+                Eigen::Vector3d Z_pw = X_pw.cross(Y_pw);
+                if (Z_pw.norm() > 1e-12) Z_pw.normalize();
+                cv::Mat R_pw_cv(3, 3, CV_64F);
+                for (int r = 0; r < 3; ++r) {
+                    R_pw_cv.at<double>(r, 0) = X_pw(r);
+                    R_pw_cv.at<double>(r, 1) = Y_pw(r);
+                    R_pw_cv.at<double>(r, 2) = Z_pw(r);
+                }
                 cv::Mat t_pw_cv(3, 1, CV_64F);
                 for (int j = 0; j < 3; ++j) t_pw_cv.at<double>(j) = t_pw(j);
 

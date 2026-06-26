@@ -437,7 +437,7 @@ void CISWidget::whenDrawPlatformAxes() {
     // 2. 收集像素坐标
     struct PlatAxes { int id; double cx, cy, xx, xy, yx, yy; };
     std::vector<PlatAxes> axes;
-    const double axisLen = 67.0;
+    const double axisLen = 3.2;  // ~150 像素
 
     size_t pos = json.find("\"platforms\":[");
     pos = json.find('[', pos) + 1;
@@ -447,19 +447,14 @@ void CISWidget::whenDrawPlatformAxes() {
         size_t end = json.find('}', start) + 1;
 
         int pid = atoi(&json[json.find("\"id\":", start) + 5]);
-        Eigen::Vector3d rv = extractVec("R", start);
-        Eigen::Vector3d tv = extractVec("T", start);
-
-        cv::Mat r_cv(3, 1, CV_64F), R_cv(3, 3, CV_64F);
-        for (int j = 0; j < 3; ++j) r_cv.at<double>(j) = rv(j);
-        cv::Rodrigues(r_cv, R_cv);
-        Eigen::Matrix3d R_pw;
-        cv::cv2eigen(R_cv, R_pw);
+        Eigen::Vector3d X_w = extractVec("X", start);
+        Eigen::Vector3d Y_w = extractVec("Y", start);
+        Eigen::Vector3d T_w = extractVec("T", start);
 
         std::vector<Eigen::Vector2d> pts;
-        pts.push_back(tv.head<2>());
-        pts.push_back((tv + axisLen * R_pw.col(0)).head<2>());
-        pts.push_back((tv + axisLen * R_pw.col(1)).head<2>());
+        pts.push_back(T_w.head<2>());
+        pts.push_back((T_w + axisLen * X_w).head<2>());
+        pts.push_back((T_w + axisLen * Y_w).head<2>());
 
         auto px = imageProcessor->convertToPix(pts);
         axes.push_back({pid, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
@@ -488,8 +483,13 @@ void CISWidget::whenDrawPlatformAxes() {
         cv::arrowedLine(gray, center, xTip, cv::Scalar(0), 1, cv::LINE_AA);       // X轴(黑,1px)
         cv::arrowedLine(gray, center, yTip, cv::Scalar(0), 1, cv::LINE_AA);       // Y轴(黑,1px)
         cv::circle(gray, center, 1, cv::Scalar(0), -1, cv::LINE_AA);
-        cv::putText(gray, std::to_string(a.id), cv::Point(center.x+25, center.y-20),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0), 1, cv::LINE_AA);
+        // X/Y 标签放在轴中间位置（离中心近，在亮区）
+        cv::Point xMid((center.x + xTip.x) / 2, (center.y + xTip.y) / 2);
+        cv::Point yMid((center.x + yTip.x) / 2, (center.y + yTip.y) / 2);
+        cv::putText(gray, "X", xMid, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
+        cv::putText(gray, "Y", yMid, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
+        cv::putText(gray, std::to_string(a.id), cv::Point(center.x+10, center.y-8),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
     }
 
     // 手动写 8-bit 灰度 BMP，绕过 OpenCV 像素限制
@@ -536,6 +536,7 @@ void CISWidget::whenDrawPlatformAxes() {
         }
     }
     std::cout << "已保存: result_axes.bmp" << std::endl;
+    ui->imgSplice->displayImage(std::make_shared<cv::Mat>(gray), true);
 }
 
 std::vector<Eigen::Vector2d> CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {

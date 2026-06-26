@@ -335,6 +335,13 @@ Pose TelecentricLineCalibrator::extractPoseFromHomography(const Eigen::Matrix3d&
     else
         pose = poseB;
 
+    // 固定 Rodrigues 方向：确保 x 分量为正（复现旧结果）
+    {
+        Eigen::Vector3d rv = rotMatToVec(pose.R);
+        if (rv.x() < 0) rv = -rv;
+        pose.R = vecToRotMat(rv);
+    }
+
     return pose;
 }
 // =========================================================

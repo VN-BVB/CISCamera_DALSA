@@ -881,8 +881,9 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         Eigen::Vector3d t_world_cam = v_trans_;
 
         R_plat_cam = R_world_cam * R_plat_local;
-        t_plat_cam.setZero();
-        t_plat_cam.head<2>() = R_world_cam.topLeftCorner<2, 2>() * t_plat_local.head<2>() + t_world_cam.head<2>();
+        // 用完整 3×3 变换，保留 z 分量耦合（避免往返误差）
+        Eigen::Vector3d Xc = R_world_cam * t_plat_local;
+        t_plat_cam = Xc + t_world_cam;
     }
 
     // === 5. 转 Rodrigues 输出 ===

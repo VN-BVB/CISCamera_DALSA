@@ -24,6 +24,8 @@ void CameraImageProcessor::initCameraCalibrator() {
     worldPts.reserve(W_ * H_);
     for (int c = 0; c < W_; ++c)
         for (int r = H_ - 1; r >= 0; --r) worldPts.emplace_back(c * spacingMM_, r * spacingMM_);
+    std::cout << "neican" << K_ << std::endl;
+    std::cout << "jibianxishu" << coff_dis_ << std::endl;
 }
 void CameraImageProcessor::lodaCameraCalibrateParams() {
     v_rot_s.clear();
@@ -45,7 +47,10 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
     PlatformPoseData cam2PlatParam;
     if (!cam2PlatParam.loadCompact("./data/calibration_config/platform_pose.json") &&
         !cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
-        throw std::runtime_error("无法加载标定文件");
+        // 文件不存在时用默认值，避免崩溃
+        allRotVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
+        allTransVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
+        return;
     }
     allRotVecs_ = cam2PlatParam.allRotVecs;
     allTransVecs_ = cam2PlatParam.allTransVecs;
@@ -529,29 +534,58 @@ void CameraImageProcessor::whenCalibrateCP() {
 
     // ====== 2. 辅助: 逐张读取→检测→转换→释放 ======
     auto detectAndConvert = [this](const std::string& filePath) -> std::vector<Eigen::Vector2d> {
-        // 读图
+        // 生成 txt 缓存路径
+        std::string txtPath = filePath.substr(0, filePath.find_last_of('.')) + ".txt";
+
+        // 1. 尝试读缓存
+        std::vector<Eigen::Vector2d> cachedPts;
+        if (readPointsFromTxt(txtPath, cachedPts) && !cachedPts.empty()) {
+            if (useCamCoordsForPlat_) {
+                Eigen::MatrixXd pxMat = vecToMat(cachedPts);
+                Eigen::MatrixXd cam = telecentricLineCalibrator->pixelToCameraCoordinates(pxMat, K_, coff_dis_);
+                return matToVec(cam);
+            } else {
+                return convertToWorld(cachedPts);
+            }
+        }
+
+        // 2. 读图 + 检测
         cv::Mat img = readLargeBMP(filePath);
         if (img.empty()) {
             img = cv::imread(filePath, cv::IMREAD_UNCHANGED);
         }
         if (img.empty()) return {};
 
-        // 检测角点
         std::vector<std::vector<std::vector<cv::Point2d>>> boards;
         libcbDetector->processImagesFromMats({img}, boards);
 
         if (boards.empty() || boards[0].empty()) return {};
 
-        // // ---- 可视化 ----
+        // // ---- 可视化角点序号 ----
         // {
         //     std::string vizPath = filePath.substr(0, filePath.find_last_of('.')) + "_viz.png";
         //     libcbDetector->visualizeCorners(img, boards[0][0], vizPath);
         // }
 
+        // 3. 保存 txt 缓存
+        {
+            std::ofstream ofs(txtPath);
+            if (ofs.is_open()) {
+                ofs << std::setprecision(15);
+                ofs << "# Index\tX\tY\n";
+                for (size_t i = 0; i < boards[0][0].size(); ++i) ofs << i << "\t" << boards[0][0][i].x << "\t" << boards[0][0][i].y << "\n";
+            }
+        }
+
         std::vector<Eigen::Vector2d> pix;
         for (auto& pt : boards[0][0]) pix.emplace_back(pt.x, pt.y);
-        auto world = convertToWorld(pix);
-        return world;
+        if (useCamCoordsForPlat_) {
+            Eigen::MatrixXd pxMat = vecToMat(pix);
+            Eigen::MatrixXd cam = telecentricLineCalibrator->pixelToCameraCoordinates(pxMat, K_, coff_dis_);
+            return matToVec(cam);
+        } else {
+            return convertToWorld(pix);
+        }
     };
 
     // ====== 3. 遍历每个平台 ======
@@ -585,7 +619,7 @@ void CameraImageProcessor::whenCalibrateCP() {
 
         emit text(QString(u8"平台 %1：求解平台姿态...").arg(p));
         Eigen::Vector3d r, t;
-        if (!calibCamera2Plat.estimatePlatformPoseFromBoards(xws, yws, rws, r, t)) {
+        if (!calibCamera2Plat.estimatePlatformPoseFromBoards(xws, yws, rws, useCamCoordsForPlat_, r, t)) {
             emit text(QString(u8"平台 %1 姿态求解失败！").arg(p));
             continue;
         }
