@@ -253,10 +253,10 @@ std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts
     imageProcessor->initCameraCalibrator();
     std::vector<Eigen::Vector2d> worldPoints = imageProcessor->convertToWorld(eigen_pix_pts);
     // 交换所有点的 x 和 y 坐标
-    for (auto &pt : worldPoints)
-    {
-        std::swap(pt.x(), pt.y());
-    }
+    // for (auto &pt : worldPoints)
+    // {
+    //     std::swap(pt.x(), pt.y());
+    // }
     PLOG_INFO << "convert done";
     return worldPoints;
 }

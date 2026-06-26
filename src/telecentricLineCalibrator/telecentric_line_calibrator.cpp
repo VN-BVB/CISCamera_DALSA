@@ -699,11 +699,15 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen:
     for (int i = 0; i < 3; ++i) rvec.at<double>(i, 0) = v_rot(i);
     cv::Rodrigues(rvec, R_cv);
 
+    std::cout << "=====================v_rot" << v_rot << std::endl;
+
     Eigen::Matrix3d R;
     cv::cv2eigen(R_cv, R);
     // -------- 2. 取平面部分 --------
     Eigen::Matrix2d R2 = R.block<2, 2>(0, 0);
     Eigen::Vector2d t2 = v_trans.head<2>();
+    std::cout << "=====================" << R << std::endl;
+    std::cout << "=====================" << v_trans << std::endl;
 
     // -------- 3. 平面逆变换（相机 -> 世界）--------
     Eigen::MatrixXd world_pts(cam_pts.rows(), 2);

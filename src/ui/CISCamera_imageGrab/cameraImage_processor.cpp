@@ -48,12 +48,15 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
     if (!cam2PlatParam.loadCompact("./data/calibration_config/platform_pose.json") &&
         !cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
         // 文件不存在时用默认值，避免崩溃
+        std::cout << "nonononoononononononononon" << std::endl;
         allRotVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
         allTransVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
         return;
     }
     allRotVecs_ = cam2PlatParam.allRotVecs;
     allTransVecs_ = cam2PlatParam.allTransVecs;
+    PLOGD << "111111111111111111111111111111111111111" << allRotVecs_.size() << "----" << allRotVecs_.back();
+
 }
 void CameraImageProcessor::setSpliceEnabled(bool enabled) {
     QMutexLocker locker(&mtx_);

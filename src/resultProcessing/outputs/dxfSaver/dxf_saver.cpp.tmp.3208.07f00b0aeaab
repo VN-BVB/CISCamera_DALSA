@@ -118,7 +118,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         dw->tableEnd();
 
         // 写入图层表
-        dw->tableLayers(7);  // 增加图层数量
+        dw->tableLayers(4);  // 增加图层数量
         // 0层
         dxf.writeLayer(
             *dw,
@@ -142,24 +142,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
             *dw,
             DL_LayerData("Endpoints", 0),
             DL_Attributes("", 1, 0xffff00, 15, "CONTINUOUS")
-            );
-        // 平台 X 轴图层（红色）
-        dxf.writeLayer(
-            *dw,
-            DL_LayerData("PlatformX", 0),
-            DL_Attributes("", 1, 0x00ff0000, 15, "CONTINUOUS")
-            );
-        // 平台 Y 轴图层（绿色）
-        dxf.writeLayer(
-            *dw,
-            DL_LayerData("PlatformY", 0),
-            DL_Attributes("", 1, 0x0000ff00, 15, "CONTINUOUS")
-            );
-        // 平台原点十字图层（黄色）
-        dxf.writeLayer(
-            *dw,
-            DL_LayerData("PlatformOrigin", 0),
-            DL_Attributes("", 1, 0x00ffff00, 15, "CONTINUOUS")
             );
         dw->tableEnd();
 
@@ -208,9 +190,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         DL_Attributes subpixelAttributes("SubpixelContours", 256, -1, -1, "BYLAYER");
         DL_Attributes splineAttributes("Splines", 256, -1, -1, "BYLAYER");
         DL_Attributes endpointAttributes("Endpoints", 256, -1, -1, "BYLAYER");
-        DL_Attributes platformXAttributes("PlatformX", 256, -1, -1, "BYLAYER");
-        DL_Attributes platformYAttributes("PlatformY", 256, -1, -1, "BYLAYER");
-        DL_Attributes platformOriginAttributes("PlatformOrigin", 256, -1, -1, "BYLAYER");
 
         // 遍历所有处理过的ROI
         {
@@ -232,9 +211,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
                 roiIndex++;
             }
         }
-
-        // 绘制所有对位平台坐标系（一次，非每 ROI）
-        drawPlatforms(dxf, dw, platformXAttributes, platformYAttributes, platformOriginAttributes);
         SCOPED_TIMER("保存dxf文件");
         // 结束实体部分
         dw->sectionEnd();
@@ -376,36 +352,5 @@ void DXFSaver::drawEndpoints(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& a
         // 用小圆圈标记端点
         DL_CircleData circleData(wp.x(), wp.y(), 0.0, kEndpointRadius);
         dxf.writeCircle(*dw, circleData, attributes);
-    }
-}
-
-void DXFSaver::drawPlatforms(DL_Dxf& dxf, DL_WriterA* dw,
-                             const DL_Attributes& attrX,
-                             const DL_Attributes& attrY,
-                             const DL_Attributes& attrOrigin)
-{
-    // 轴线长度与原点十字半边长（mm）。T 值大致在 0~500mm 范围，30mm 长足以可见又不会拥挤。
-    constexpr double kAxisLength = 30.0;
-    constexpr double kCrossHalf = 3.0;
-
-    std::vector<PlatformAxis> platforms;
-    if (!parsePlatformPoseJson("./data/calibration_config/platform_pose.json", platforms)) {
-        return;
-    }
-
-    PLOG_INFO << "绘制 " << platforms.size() << " 个对位平台坐标系";
-
-    auto writeLine = [&](const DL_Attributes& attr,
-                         const Eigen::Vector3d& a,
-                         const Eigen::Vector3d& b) {
-        DL_LineData lineData(a.x(), a.y(), 0.0, b.x(), b.y(), 0.0);
-        dxf.writeLine(*dw, lineData, attr);
-    };
-
-    for (const auto& p : platforms) {
-        writeLine(attrX, p.T, p.T + kAxisLength * p.X);
-        writeLine(attrY, p.T, p.T + kAxisLength * p.Y);
-        writeLine(attrOrigin, p.T - kCrossHalf * p.X, p.T + kCrossHalf * p.X);
-        writeLine(attrOrigin, p.T - kCrossHalf * p.Y, p.T + kCrossHalf * p.Y);
     }
 }
