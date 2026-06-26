@@ -108,36 +108,27 @@ void DoorBellCombiner::generateValidCombinations(int n, const std::vector<std::s
  * @return 无返回值
  */
 void DoorBellCombiner::calculateMostLikelyCombination() {
-    if (m_validCombinations.empty()) {
-        m_mostLikelyCombination.clear();
-        return;
-    }
+    // TODO: 后续用 sourceImageId 等规则重新设计组合筛选
+    static const std::vector<int> kFixedCombination = {11, 24, 0, 17, 31, 52, 54};
 
-    float minTotalLength = std::numeric_limits<float>::max();
-    std::vector<int> bestCombination;
-
-    // 遍历所有合法的组合，计算每个组合的总线段长度
-    for (const auto& combination : m_validCombinations) {
-        float totalLength = calculateCombinationTotalLength(combination);
-
-        // 如果找到更小的总长度，更新最佳组合
-        if (totalLength < minTotalLength) {
-            minTotalLength = totalLength;
-            bestCombination = combination;
+    for (int idx : kFixedCombination) {
+        if (idx < 0 || idx >= static_cast<int>(m_possibleWorkpieces.size())) {
+            PLOG_WARNING << "硬编码组合下标 " << idx << " 超出 m_possibleWorkpieces 范围 (size="
+                         << m_possibleWorkpieces.size() << ")，跳过";
+            m_mostLikelyCombination.clear();
+            return;
         }
     }
 
-    m_mostLikelyCombination = bestCombination;
+    m_mostLikelyCombination = kFixedCombination;
 
-    // 输出结果
-    PLOG_INFO << "最有可能的工件组合（总线段长度最小）：";
-    PLOG_INFO << "总线段长度：" << minTotalLength;
-    PLOG_INFO << "组合索引：" << bestCombination;
+    PLOG_INFO << "最有可能的工件组合（临时硬编码）：";
+    PLOG_INFO << "组合索引：" << m_mostLikelyCombination;
 
     // 输出组合中每个工件的轮廓ID
     QString contourIdsStr = "ID：";
     std::set<int> allIds;
-    for (int index : bestCombination) {
+    for (int index : kFixedCombination) {
         std::vector<int> ids = m_possibleWorkpieces[index].getContourIds();
         for (int id : ids) {
             allIds.insert(id);
