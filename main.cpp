@@ -28,14 +28,14 @@ int main(int argc, char *argv[]) {
         PLOG_ERROR << "Failed to load configuration files";
     }
 
-    CISWidget w;
-    w.show();
+    // CISWidget w;
+    // w.show();
 
     // TestConvertCoordinate t;
     // t.pixel2World();
 
-    // JointView w;
-    // w.show();
+    JointView w;
+    w.show();
 
     // TestPixel2World test;
     // test.testPixel2World();
