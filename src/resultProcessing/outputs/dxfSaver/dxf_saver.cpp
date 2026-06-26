@@ -38,7 +38,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         dw->tableEnd();
 
         // 写入图层表
-        dw->tableLayers(3);  // 增加图层数量
+        dw->tableLayers(4);  // 增加图层数量
         // 0层
         dxf.writeLayer(
             *dw,
@@ -56,6 +56,12 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
             *dw,
             DL_LayerData("Splines", 0),
             DL_Attributes("", 1, 0xff0000, 15, "CONTINUOUS")
+            );
+        // 端点图层（黄色）
+        dxf.writeLayer(
+            *dw,
+            DL_LayerData("Endpoints", 0),
+            DL_Attributes("", 1, 0xffff00, 15, "CONTINUOUS")
             );
         dw->tableEnd();
 
@@ -103,6 +109,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         // 创建不同图层的属性
         DL_Attributes subpixelAttributes("SubpixelContours", 256, -1, -1, "BYLAYER");
         DL_Attributes splineAttributes("Splines", 256, -1, -1, "BYLAYER");
+        DL_Attributes endpointAttributes("Endpoints", 256, -1, -1, "BYLAYER");
 
         // 遍历所有处理过的ROI
         {
@@ -113,10 +120,13 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
                 const ProcessedROIInfo& roiInfo = roiPair.second;
 
                 // 绘制亚像素轮廓（使用蓝色图层）
-                drawSubpixelContours(dxf, dw, subpixelAttributes, roiInfo);
+                // drawSubpixelContours(dxf, dw, subpixelAttributes, roiInfo);
 
                 // 绘制样条曲线（使用红色图层）
-                drawSplines(dxf, dw, splineAttributes, roiInfo);
+                // drawSplines(dxf, dw, splineAttributes, roiInfo);
+
+                // 绘制端点（使用黄色图层）
+                drawEndpoints(dxf, dw, endpointAttributes, roiInfo);
 
                 roiIndex++;
             }
@@ -231,5 +241,36 @@ void DXFSaver::drawSplines(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& att
             DL_KnotData knotData(knot);
             dxf.writeKnot(*dw, knotData);
         }
+    }
+}
+
+void DXFSaver::drawEndpoints(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                             const ProcessedROIInfo& roiInfo)
+{
+    // 检查是否有端点数据
+    if (roiInfo.endPoints.empty()) {
+        PLOG_INFO << "ROI索引 " << roiInfo.index << " 没有端点数据";
+        return;
+    }
+
+    PLOG_INFO << "处理ROI索引 " << roiInfo.index << "，端点数量: " << roiInfo.endPoints.size();
+
+    // 端点的小圆标记半径（mm），太小在 CAD 里看不清
+    constexpr double kEndpointRadius = 0.5;
+
+    // 遍历每个端点
+    for (size_t i = 0; i < roiInfo.endPoints.size(); ++i) {
+        const SeamEndpoint& ep = roiInfo.endPoints[i];
+
+        // 像素坐标 → 世界坐标
+        std::vector<cv::Point2f> pix = { ep.coordinates };
+        std::vector<Eigen::Vector2d> worldPoints = GeometryUtils::pixel2World(pix);
+        if (worldPoints.empty()) continue;
+
+        const Eigen::Vector2d& wp = worldPoints[0];
+
+        // 用小圆圈标记端点
+        DL_CircleData circleData(wp.x(), wp.y(), 0.0, kEndpointRadius);
+        dxf.writeCircle(*dw, circleData, attributes);
     }
 }

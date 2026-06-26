@@ -25,6 +25,10 @@ private:
     // 绘制样条曲线
     void drawSplines(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
                      const ProcessedROIInfo& roiInfo);
+
+    // 绘制缝隙端点
+    void drawEndpoints(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                       const ProcessedROIInfo& roiInfo);
 };
 
 #endif // DXF_SAVER_H
