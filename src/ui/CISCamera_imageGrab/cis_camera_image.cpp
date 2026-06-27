@@ -459,6 +459,14 @@ void CISWidget::whenDrawPlatformAxes() {
         auto px = imageProcessor->convertToPix(pts);
         axes.push_back({pid, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
         std::cout << "平台 " << pid << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
+        // 往返验证: 像素→世界，对比 JSON 里的 T
+        {
+            auto worldBack = imageProcessor->convertToWorld({{px[0].x(), px[0].y()}});
+            if (!worldBack.empty())
+                std::cout << "  往返世界(" << worldBack[0].x() << "," << worldBack[0].y()
+                          << ")  JSON T(" << T_w(0) << "," << T_w(1) << ")"
+                          << " 偏差(" << worldBack[0].x()-T_w(0) << "," << worldBack[0].y()-T_w(1) << ")" << std::endl;
+        }
 
         pos = end + 1;
     }

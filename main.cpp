@@ -3,6 +3,8 @@
 #include <winsock2.h>
 #include <windows.h>
 // clang-format on
+#include <windows.h>
+
 #include <fstream>
 
 #include "src/config/config_manager.h"
@@ -19,6 +21,7 @@
 #include "src/utils/plog_utils.h"
 
 int main(int argc, char *argv[]) {
+    SetConsoleOutputCP(CP_UTF8);
     QApplication a(argc, argv);
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     PlogUtils::initPlog();              // 初始化日志类

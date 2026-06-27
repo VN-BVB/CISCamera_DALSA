@@ -650,6 +650,7 @@ Eigen::MatrixXd TelecentricLineCalibrator::undistortPointsIter(const Eigen::Matr
         int iter = 0;
 
         while (iter < max_iter && error > tol) {
+            // 计算畸变量
             double r = x * x + y * y;
             double deltaX = k1 * x * r + h1 * (3 * x * x + y * y) + 2 * h2 * x * y + s1 * r;
             double deltaY = k1 * y * r + 2 * h1 * x * y + h2 * (x * x + 3 * y * y) + s2 * r;
@@ -657,10 +658,12 @@ Eigen::MatrixXd TelecentricLineCalibrator::undistortPointsIter(const Eigen::Matr
             x = x0 - deltaX;
             y = y0 - deltaY;
 
+            // 算畸变后的坐标
             r = x * x + y * y;
             double xd = x + k1 * x * r + h1 * (3 * x * x + y * y) + 2 * h2 * x * y + s1 * r;
             double yd = y + k1 * y * r + 2 * h1 * x * y + h2 * (x * x + 3 * y * y) + s2 * r;
 
+            // 算出来的畸变坐标和原始u，v的欧式距离，迭代的目的就是让欧式距离最小，得到精确的畸变系数
             error = std::sqrt(std::pow(xd * fx + cx - u, 2) + std::pow(yd * fy + cy - v, 2));
             iter++;
         }

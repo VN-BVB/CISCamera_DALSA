@@ -790,9 +790,8 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
 
 bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
                                                               const std::vector<std::vector<Eigen::Vector2d>>& yWorlds,
-                                                              const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds,
-                                                              bool inputIsCamCoords, Eigen::Vector3d& vRotPlat,
-                                                              Eigen::Vector3d& vTransPlat) {
+                                                              const std::vector<std::vector<Eigen::Vector2d>>& rotWorlds, bool inputIsCamCoords,
+                                                              Eigen::Vector3d& vRotPlat, Eigen::Vector3d& vTransPlat) {
     if (xWorlds.size() < 1 || yWorlds.size() < 1 || rotWorlds.size() < 2) return false;
 
     // === 1. xdir: 相邻 X 组的平均位移 ===
@@ -850,7 +849,10 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         for (size_t k = 1; k < rotWorlds.size(); ++k) {
             std::vector<std::vector<Eigen::Vector2d>> pair = {rotWorlds[0], rotWorlds[k]};
             Eigen::Vector2d Ck = computeRotationCenterSequential(pair);
-            if (Ck.norm() < 1e6) { C0 += Ck; ++count; }
+            if (Ck.norm() < 1e6) {
+                C0 += Ck;
+                ++count;
+            }
         }
         if (count > 0) C0 /= count;
     }
@@ -880,10 +882,12 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         cv::cv2eigen(R_cv, R_world_cam);
         Eigen::Vector3d t_world_cam = v_trans_;
 
-        R_plat_cam = R_world_cam * R_plat_local;
-        // 用完整 3×3 变换，保留 z 分量耦合（避免往返误差）
-        Eigen::Vector3d Xc = R_world_cam * t_plat_local;
-        t_plat_cam = Xc + t_world_cam;
+        // DEBUG: 完全屏蔽世界→相机转换，直接输出世界坐标
+        R_plat_cam = R_plat_local;
+        t_plat_cam = t_plat_local;
+        // R_plat_cam = R_world_cam * R_plat_local;
+        // Eigen::Vector3d Xc = R_world_cam * t_plat_local;
+        // t_plat_cam = Xc + t_world_cam;
     }
 
     // === 5. 转 Rodrigues 输出 ===
