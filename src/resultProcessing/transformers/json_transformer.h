@@ -16,15 +16,18 @@ public:
     explicit JsonTransformer(const std::map<int, ProcessedROIInfo>& processedRoiInfos);
 
     BatchResultData transformToBatchResultData(const std::map<int, std::vector<int>>& combinationResult,
+                                               const std::map<int, int>& workpieceToPlatform,
                                                int batchNumber = 0);
     std::string serializeToJson(const BatchResultData& batchData);
     std::string generateJson(const std::map<int, std::vector<int>>& combinationResult,
+                             const std::map<int, int>& workpieceToPlatform,
                              int batchNumber = 0);
 
 private:
     void extractAllEndpoints();
     void buildContourToWorkpieceMapping(const std::map<int, std::vector<int>>& combinationResult);
-    WorkpieceInfo createWorkpieceInfo(int workpieceId, const std::vector<int>& contourIds);
+    WorkpieceInfo createWorkpieceInfo(int workpieceId, const std::vector<int>& contourIds,
+                                      const std::map<int, int>& workpieceToPlatform);
     EdgeInfo createEdgeInfo(const ContourData& contourData);
     EndpointInfo createEndpointInfo(const SeamEndpoint& endpoint);
 

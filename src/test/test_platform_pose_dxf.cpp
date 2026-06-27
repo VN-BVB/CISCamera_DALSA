@@ -200,15 +200,15 @@ TestPlatformPoseDxf::TestPlatformPoseDxf() {}
 
 void TestPlatformPoseDxf::run() {
     try {
-        // 走 PlatformPoseData::loadCompact：JSON 里的世界坐标系 X/Y/T 会被转成
+        // 走 PlatformPoseData::load：JSON 里的世界坐标系 X/Y/T 会被转成
         // 相机坐标系下的旋转向量 + 平移向量。
         PlatformPoseData poseData;
-        if (!poseData.loadCompact("./data/calibration_config/platform_pose.json")) {
-            PLOG_ERROR << "PlatformPoseData::loadCompact failed for platform_pose.json";
+        if (!poseData.load("./data/calibration_config/platform_pose.json")) {
+            PLOG_ERROR << "PlatformPoseData::load failed for platform_pose.json";
             return;
         }
 
-        PLOG_INFO << "[loadCompact] raw entries: allRotVecs=" << poseData.allRotVecs.size()
+        PLOG_INFO << "[load] raw entries: allRotVecs=" << poseData.allRotVecs.size()
                   << ", allTransVecs=" << poseData.allTransVecs.size();
         for (size_t i = 0; i < poseData.allRotVecs.size(); ++i) {
             const auto& rv = poseData.allRotVecs[i];
@@ -237,7 +237,7 @@ void TestPlatformPoseDxf::run() {
             platforms.push_back(pa);
         }
 
-        PLOG_INFO << "[loadCompact] " << platforms.size() << " platforms (camera frame)";
+        PLOG_INFO << "[load] " << platforms.size() << " platforms (camera frame)";
         for (const auto& p : platforms) {
             PLOG_INFO << "  platform[" << p.id << "]  X=(" << p.X.x() << ", " << p.X.y() << ", " << p.X.z()
                       << ")  Y=(" << p.Y.x() << ", " << p.Y.y() << ", " << p.Y.z()

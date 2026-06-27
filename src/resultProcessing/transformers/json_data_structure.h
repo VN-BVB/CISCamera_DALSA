@@ -50,10 +50,12 @@ struct EdgeInfo {
  * 对应JSON中的工件对象
  */
 struct WorkpieceInfo {
-    std::map<std::string, EdgeInfo> edges;    // 边信息 "边0", "边1", "边2"...
+    int platformId = -1;                                   // 对位平台序号（-1 表示未关联）
+    std::map<std::string, EdgeInfo> edges;                 // 边信息 "边0", "边1", "边2"...
 
     template<class Archive>
     void serialize(Archive& ar) {
+        ar(cereal::make_nvp("对位平台序号", platformId));
         for (const auto& [edgeKey, edgeInfo] : edges) {
             ar(cereal::make_nvp(edgeKey, edgeInfo));
         }
