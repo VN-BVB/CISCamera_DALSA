@@ -35,12 +35,12 @@ int main(int argc, char *argv[]) {
     // TestConvertCoordinate t;
     // t.pixel2World();
 
-    // JointView w;
-    // w.show();
+    JointView w;
+    w.show();
 
-    std::shared_ptr<CameraImageProcessor> imageProcessor;
-    imageProcessor = std::make_shared<CameraImageProcessor>();
-    imageProcessor->initCameraCalibrator();
+    // std::shared_ptr<CameraImageProcessor> imageProcessor;
+    // imageProcessor = std::make_shared<CameraImageProcessor>();
+    // imageProcessor->initCameraCalibrator();
 
     // TestPixel2World test;
     // test.testPixel2World();

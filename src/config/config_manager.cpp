@@ -32,7 +32,7 @@ bool ConfigManager::loadAllConfigs()
     // 加载相机标定配置
     if (!m_config.camera_calibration.load(m_config.paths.camera_calibration_file)) loadStatus = false;
     // 加载平台标定配置
-    if (!m_config.platform_calibration.loadCompact(m_config.paths.platform_calibration_file)) loadStatus = false;
+    if (!m_config.platform_calibration.load(m_config.paths.platform_calibration_file)) loadStatus = false;
 
     if(loadStatus) {
         PLOG_INFO << "Load all configs done";
