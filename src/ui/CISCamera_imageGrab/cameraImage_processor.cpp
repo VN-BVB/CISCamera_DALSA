@@ -45,8 +45,7 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
     allRotVecs_.clear();
     allTransVecs_.clear();
     PlatformPoseData cam2PlatParam;
-    if (!cam2PlatParam.loadCompact("./data/calibration_config/platform_pose.json") &&
-        !cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
+    if (!cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
         // 文件不存在时用默认值，避免崩溃
         std::cout << "nonononoononononononononon" << std::endl;
         allRotVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
@@ -55,8 +54,24 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
     }
     allRotVecs_ = cam2PlatParam.allRotVecs;
     allTransVecs_ = cam2PlatParam.allTransVecs;
-    PLOGD << "111111111111111111111111111111111111111" << allRotVecs_.size() << "----" << allRotVecs_.back();
 
+    // load 存的是世界坐标 → 转为相机坐标
+    if (!allRotVecs_.empty() && allTransVecs_.size() > 1 && allTransVecs_.back().norm() > 1e-6) {
+        Eigen::Vector3d wR = allRotVecs_.back(), wT = allTransVecs_.back();
+        cv::Mat r_wc(3,1,CV_64F), R_wc(3,3,CV_64F), t_wc(3,1,CV_64F);
+        for(int j=0;j<3;++j){r_wc.at<double>(j)=wR(j);t_wc.at<double>(j)=wT(j);}
+        cv::Rodrigues(r_wc, R_wc);
+        for(size_t i=0;i+1<allRotVecs_.size();++i){
+            if(allTransVecs_[i].norm()<1e-6) continue;
+            cv::Mat r_pw(3,1,CV_64F),R_pw(3,3,CV_64F),t_pw(3,1,CV_64F);
+            for(int j=0;j<3;++j){r_pw.at<double>(j)=allRotVecs_[i](j);t_pw.at<double>(j)=allTransVecs_[i](j);}
+            cv::Rodrigues(r_pw,R_pw);
+            cv::Mat R_pc=R_wc*R_pw, t_pc=R_wc*t_pw+t_wc, r_pc;
+            cv::Rodrigues(R_pc,r_pc);
+            allRotVecs_[i]=Eigen::Vector3d(r_pc.at<double>(0),r_pc.at<double>(1),r_pc.at<double>(2));
+            allTransVecs_[i]=Eigen::Vector3d(t_pc.at<double>(0),t_pc.at<double>(1),t_pc.at<double>(2));
+        }
+    }
 }
 void CameraImageProcessor::setSpliceEnabled(bool enabled) {
     QMutexLocker locker(&mtx_);
@@ -631,7 +646,24 @@ void CameraImageProcessor::whenCalibrateCP() {
         emit text(QString(u8"平台 %1 姿态求解成功！").arg(p));
     }
 
-    poseData.saveCompact("./data/calibration_config/platform_pose.json", poseData.allRotVecs.back(), poseData.allTransVecs.back());
+    // 相机坐标 → 世界坐标（save/load纯IO，转换放这里）
+    {
+        Eigen::Vector3d wR = poseData.allRotVecs.back(), wT = poseData.allTransVecs.back();
+        cv::Mat r_wc(3,1,CV_64F), R_wc(3,3,CV_64F), t_wc(3,1,CV_64F);
+        for(int j=0;j<3;++j){r_wc.at<double>(j)=wR(j);t_wc.at<double>(j)=wT(j);}
+        cv::Rodrigues(r_wc,R_wc); cv::Mat R_cw=R_wc.t();
+        for(size_t i=0;i+1<poseData.allRotVecs.size();++i){
+            if(poseData.allTransVecs[i].norm()<1e-6)continue;
+            cv::Mat r_pc(3,1,CV_64F),R_pc(3,3,CV_64F),t_pc(3,1,CV_64F);
+            for(int j=0;j<3;++j){r_pc.at<double>(j)=poseData.allRotVecs[i](j);t_pc.at<double>(j)=poseData.allTransVecs[i](j);}
+            cv::Rodrigues(r_pc,R_pc);
+            cv::Mat R_pw=R_cw*R_pc, t_pw=R_cw*(t_pc-t_wc), r_pw; t_pw.at<double>(2)=0;
+            cv::Rodrigues(R_pw,r_pw);
+            poseData.allRotVecs[i]=Eigen::Vector3d(r_pw.at<double>(0),r_pw.at<double>(1),r_pw.at<double>(2));
+            poseData.allTransVecs[i]=Eigen::Vector3d(t_pw.at<double>(0),t_pw.at<double>(1),t_pw.at<double>(2));
+        }
+    }
+    poseData.save("./data/calibration_config/platform_pose.json", poseData.allRotVecs.back(), poseData.allTransVecs.back());
     allRotVecs_ = poseData.allRotVecs;
     allTransVecs_ = poseData.allTransVecs;
 
