@@ -96,9 +96,9 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
 
         // 获取端点附近区域的平均直线
         // 根据曲线长度决定区域大小：长度小于50用99%区域，大于50用50%区域
-        float regionSize1 = (curve1.getCurveLength() < 100.0f) ? 0.99f : 0.50f;
+        float regionSize1 = (curve1.getCurveLength() < 100.0f) ? 0.99f : 0.20f;
         float regionSize2_cw = (curve2.getCurveLength() < 100.0f) ? 0.99f : 0.1f;
-        float regionSize3 = (curve3.getCurveLength() < 100.0f) ? 0.99f : 0.50f;
+        float regionSize3 = (curve3.getCurveLength() < 100.0f) ? 0.99f : 0.20f;
         float regionSize2_ccw = (curve2.getCurveLength() < 100.0f) ? 0.99f : 0.1f;
         cv::Vec4f avgLine1 = curve1.getAverageLineNearEndpoint(endpoint1_ccw.u, regionSize1, 150);
         cv::Vec4f avgLine2_cw = curve2.getAverageLineNearEndpoint(endpoint2_cw.u, regionSize2_cw, 150);

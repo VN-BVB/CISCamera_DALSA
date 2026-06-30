@@ -8,6 +8,7 @@ DeduplicationStrategy::DeduplicationStrategy() {}
 bool DeduplicationStrategy::process(ContourData &context) {
     auto contour = context.getSubpixelContour();
     auto deduplicated = ContourFeatureCalculator::removeDuplicatePoints(contour);
+    // auto downsampled = ContourFeatureCalculator::downsampleByTwo(deduplicated);
     context.setSubpixelContour(deduplicated);
 
     // 调试可视化：读入底图，把去重前后的轮廓画在同一张图上对比

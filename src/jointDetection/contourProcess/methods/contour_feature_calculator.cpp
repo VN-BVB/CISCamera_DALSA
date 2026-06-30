@@ -66,6 +66,23 @@ std::vector<cv::Point2f> ContourFeatureCalculator::removeDuplicatePoints(const s
 }
 
 /**
+ * @brief 对轮廓降采样一倍，每两个点保留一个
+ * @param contour 输入轮廓（去重后的有序点集）
+ * @return 降采样后的轮廓，包含原序列下标为 0,2,4,... 的点
+ * @details 不依赖空间顺序，仅按 vector 下标隔点取样。
+ *          空输入返回空；单点输入原样返回。
+ *          reserve 容量为 (N+1)/2，对应奇数点数时取 ceil(N/2)。
+ */
+std::vector<cv::Point2f> ContourFeatureCalculator::downsampleByTwo(const std::vector<cv::Point2f>& contour) {
+    std::vector<cv::Point2f> result;
+    result.reserve((contour.size() + 1) / 2);
+    for (size_t i = 0; i < contour.size(); i += 2) {
+        result.push_back(contour[i]);
+    }
+    return result;
+}
+
+/**
  * @brief 根据开口方向计算轮廓的起始点
  * @param direction 开口方向
  * @param contour 输入轮廓点集
@@ -539,7 +556,9 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPoints(const std:
     // 使用DouglasPeucker多边形拟合算法
     // return detectCornerPointsByDouglasPeucker(contour);
     // 使用RANSAC方法检测角点
-    return detectCornerPointsByRansac(contour);
+    // return detectCornerPointsByRansac(contour);
+    // 使用RANSAC方法检测角点,只进行一次RANSAC，取内点首尾作为角点
+    return detectCornerPointsByRansacEndpoints(contour);
 }
 
 /**
@@ -559,7 +578,7 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(co
     // 使用ContourSegmenter中的RANSAC方法拟合三条直线
     std::vector<std::vector<cv::Point2f>> segments;
     std::vector<cv::Vec4f> lines;
-    double threshold = 8.0;
+    double threshold = 50.0;
     int maxIterations = 100;
 
     // 调用ContourSegmenter的RANSAC方法
@@ -585,6 +604,33 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(co
     }
 
     return cornerPoints;
+}
+
+/**
+ * @brief 单次 RANSAC 直线拟合，取内点首末点作为角点
+ * @param contour 输入轮廓点集（须已按轮廓顺序排序）
+ * @return 检测到的角点集合（2 个点：内点序列的首末）；点数不足或拟合失败时返回空
+ * @details 对整段轮廓只做一次 RANSAC 直线拟合，把参与该直线的内点中
+ *          按轮廓顺序的第一个和最后一个点作为角点。
+ *          因为 GeometryUtils::lineRansac 的内点保持输入点集顺序，
+ *          所以 inliers.front() / inliers.back() 即首末轮廓点。
+ *          适合"一段长边 + 两端转角"的工件形状。
+ */
+std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansacEndpoints(
+    const std::vector<cv::Point2f>& contour)
+{
+    if (contour.size() < 2) return {};
+
+    constexpr double kThreshold = 8.0;       // 与 detectCornerPointsByRansac 保持一致
+    constexpr int kMaxIterations = 100;
+
+    cv::Vec4f line;
+    std::vector<cv::Point2f> inliers;
+    GeometryUtils::lineRansac(contour, line, inliers, kThreshold, kMaxIterations);
+
+    if (inliers.size() < 2) return {};
+
+    return { inliers.front(), inliers.back() };
 }
 
 /**

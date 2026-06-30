@@ -331,7 +331,7 @@ void JointView::updateDisplay() {
         if (!m_endPointsByTangentLines.empty()) {
             auto pointComponent = std::make_shared<PointItem>(m_endPointsByTangentLines,
                                                               Qt::blue,
-                                                              0.5,
+                                                              5,
                                                               15.0);
             ui->gv_image->addGraphicComponent(pointComponent);
         }
