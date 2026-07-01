@@ -678,6 +678,7 @@ Eigen::MatrixXd TelecentricLineCalibrator::undistortPointsIter(const Eigen::Matr
 Eigen::MatrixXd TelecentricLineCalibrator::pixelToCameraCoordinates(const Eigen::MatrixXd& points_px, const Eigen::Matrix3d& K,
                                                                     const Eigen::Matrix<double, 1, 5>& coff_dis) {
     Eigen::MatrixXd processed_px = points_px;
+    std::cout << "内参1" << K << std::endl << "畸变系数1" << coff_dis << std::endl;
 
     // 如果畸变系数存在有效值则去畸变
     if (coff_dis.norm() > 1e-15) {
@@ -697,6 +698,7 @@ Eigen::MatrixXd TelecentricLineCalibrator::pixelToCameraCoordinates(const Eigen:
 Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen::MatrixXd& cam_pts, const Eigen::Vector3d& v_rot,
                                                                     const Eigen::Vector3d& v_trans) {
     // -------- 1. Rodrigues旋转向量转旋转矩阵 --------
+    std::cout << "世界旋转" << v_rot << "世界平移" << v_trans << std::endl;
     cv::Mat rvec(3, 1, CV_64F);
     cv::Mat R_cv(3, 3, CV_64F);
     for (int i = 0; i < 3; ++i) rvec.at<double>(i, 0) = v_rot(i);

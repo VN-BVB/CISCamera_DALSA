@@ -834,8 +834,44 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
 
     Eigen::Vector3d xdir(xdir2d.x(), xdir2d.y(), 0.0);
     Eigen::Vector3d ydir(ydir2d.x(), ydir2d.y(), 0.0);
+    const Eigen::Vector2d xdir_unit2d = xdir2d.normalized();
     std::cout << "X方向(累计): " << xdir2d.norm() << "mm, dir=" << xdir.head<2>().normalized().transpose() << std::endl;
     std::cout << "Y方向(累计): " << ydir2d.norm() << "mm, dir=" << ydir.head<2>().normalized().transpose() << std::endl;
+
+    if (!xWorlds.empty() && !xWorlds.front().empty()) {
+        const Eigen::Vector2d refPt(17212, 2641);
+        const Eigen::Vector2d refPt2(17205, 2786);
+
+        std::vector<std::vector<Eigen::Vector2d>> xWorldsForDebug = xWorlds;
+        std::vector<Eigen::Vector2d> worldRef1 = convertToWorld({refPt});
+        std::vector<Eigen::Vector2d> worldRef2 = convertToWorld({refPt2});
+
+        if (!worldRef1.empty()) {
+            xWorldsForDebug.front()[0] = worldRef1.front();
+        }
+        if (!worldRef2.empty() && xWorldsForDebug.size() > 1 && !xWorldsForDebug[1].empty()) {
+            xWorldsForDebug[1][0] = worldRef2.front();
+        }
+
+        const Eigen::Vector2d refWorldPt = xWorldsForDebug.front()[0];
+        const double refProj = refWorldPt.dot(xdir_unit2d);
+        std::cout << "dddddd" << xdir_unit2d << std::endl;
+        const Eigen::Vector2d refProjPt = refProj * xdir_unit2d;
+        std::cout << "XAAAA: " << "第一个标定板第一个点投影到 x 方向上的参考点 = " << refProjPt.transpose() << "，投影标量 = " << refProj
+                  << std::endl;
+
+        for (size_t i = 0; i < xWorldsForDebug.size(); ++i) {
+            if (xWorldsForDebug[i].empty()) {
+                continue;
+            }
+            const Eigen::Vector2d p = xWorldsForDebug[i][0];
+            const double rawDist = (p - refWorldPt).norm();
+            const double proj = p.dot(xdir_unit2d);
+            const Eigen::Vector2d projPt = proj * xdir_unit2d;
+            const double dist = (projPt - refProjPt).norm();
+            std::cout << "AAAA: " << " 标定板 " << i << " aaaaa " << rawDist << " mm，" << "BBBB" << dist << " mm" << std::endl;
+        }
+    }
 
     if (xdir2d.norm() < 1e-6 || ydir2d.norm() < 1e-6) {
         std::cerr << "X 或 Y 方向位移为零，无法确定平台姿态" << std::endl;

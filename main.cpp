@@ -31,6 +31,16 @@ int main(int argc, char *argv[]) {
         PLOG_ERROR << "Failed to load configuration files";
     }
 
+    Eigen::Vector2d pix1(225.7406, 555.4853);
+    std::vector<Eigen::Vector2d> pix2{Eigen::Vector2d(17201, 2787)};
+    CameraImageProcessor test;
+    test.initCameraCalibrator();
+    PLOG_INFO << "===========" << test.convertToWorld(pix2)[0];
+    Eigen::Vector2d reb = test.applyWorldOffsetToPixel(test.convertToWorld(pix2)[0]);
+    std::cout << "llllll" << reb << std::endl;
+
+    test.debugProjectionDistancesFromFixedPixels();
+
     CISWidget w;
     w.show();
 

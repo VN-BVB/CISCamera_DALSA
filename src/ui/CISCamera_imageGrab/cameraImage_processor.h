@@ -31,6 +31,8 @@ public:
     void lodaCam2PlatCalibrateParams();
     std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
     std::vector<Eigen::Vector2d> convertToPix(const std::vector<Eigen::Vector2d>& world_pts);
+    void debugProjectionDistancesFromFixedPixels();
+    Eigen::Vector2d applyWorldOffsetToPixel(const Eigen::Vector2d& world_pt);
     void setWorldPose(const Eigen::Vector3d& r, const Eigen::Vector3d& t) {
         allRotVecs_.back() = r;
         allTransVecs_.back() = t;

@@ -733,3 +733,85 @@ std::vector<Eigen::Vector2d> CameraImageProcessor::convertToPix(const std::vecto
     }
     return pix_pts;
 }
+
+void CameraImageProcessor::debugProjectionDistancesFromFixedPixels() {
+    const Eigen::Vector2d refPix1(17201, 2787);
+    const Eigen::Vector2d refPix2(17209, 2646);
+
+    // 参考的世界坐标系方向，按你的要求使用这组向量
+    const Eigen::Vector2d dirX(0.0397084390641, 0.999211308917);
+    const Eigen::Vector2d dirY(0.999211308917, -0.0397084390641);
+    const Eigen::Vector2d centerT(117.400973009, 516.666617276);
+
+    const std::vector<Eigen::Vector2d> worldRef1 = convertToWorld({refPix1});
+    const std::vector<Eigen::Vector2d> worldRef2 = convertToWorld({refPix2});
+
+    if (worldRef1.empty()) {
+        std::cout << "debugProjectionDistancesFromFixedPixels: worldRef1 转换到世界坐标失败" << std::endl;
+        return;
+    }
+
+    const Eigen::Vector2d xdir_unit2d = dirX.normalized();
+    const Eigen::Vector2d refWorldPt = worldRef1.front();
+    const double refProj = refWorldPt.dot(xdir_unit2d);
+    const Eigen::Vector2d refProjPt = refProj * xdir_unit2d;
+
+    std::cout << "debugProjectionDistancesFromFixedPixels: dirX = " << dirX.transpose() << ", dirY = " << dirY.transpose()
+              << ", centerT = " << centerT.transpose() << std::endl;
+    std::cout << "debugProjectionDistancesFromFixedPixels: 第一个参考世界点 = " << refWorldPt.transpose() << ", 投影标量 = " << refProj
+              << ", 投影点 = " << refProjPt.transpose() << std::endl;
+
+    const std::vector<Eigen::Vector2d> testWorldPts = {
+        refWorldPt,
+        worldRef2.empty() ? refWorldPt : worldRef2.front(),
+    };
+
+    for (size_t i = 0; i < testWorldPts.size(); ++i) {
+        const Eigen::Vector2d& p = testWorldPts[i];
+        const double rawDist = (p - refWorldPt).norm();
+        const double proj = p.dot(xdir_unit2d);
+        const Eigen::Vector2d projPt = proj * xdir_unit2d;
+        const double dist = (projPt - refProjPt).norm();
+
+        std::cout << "debugProjectionDistancesFromFixedPixels: 点 " << i << " 投影前距离 = " << rawDist << " mm，投影后距离 = " << dist << " mm"
+                  << std::endl;
+    }
+}
+
+Eigen::Vector2d CameraImageProcessor::applyWorldOffsetToPixel(const Eigen::Vector2d& world_pt) {
+    // ====== id=0 对位平台标定数据（硬编码自 platform_pose.json）======
+    // dirX = 方向向量（平台X轴在世界坐标系的方向, 前2分量）
+    // dirY = 方向向量（平台Y轴在世界坐标系的方向, 前2分量）
+    // centerT = 旋转中心在世界坐标系的位置（只取前两个数值, Z=0 舍弃）
+    // -----------------------------------------------------------------
+    const Eigen::Vector2d dirX(0.0397084390641, 0.999211308917);
+    const Eigen::Vector2d dirY(0.999211308917, -0.0397084390641);
+    const Eigen::Vector2d centerT(117.400973009, 516.666617276);
+
+    // ====== 方向向量平移 + 绕旋转中心旋转 ======
+    // ---------- 硬编码参数（按需修改） ----------
+    const double kTranslateX_mm = 3.0;  // 沿 dirX 方向向量的平移量 (mm)
+    const double kTranslateY_mm = 0.0;  // 沿 dirY 方向向量的平移量 (mm)
+    const double kRotate_deg = 0.0;     // 绕旋转中心旋转的角度 (度)
+    // -------------------------------------------
+
+    // 沿 dirX / dirY 方向向量平移
+    Eigen::Vector2d translated = world_pt + dirX * kTranslateX_mm + dirY * kTranslateY_mm;
+
+    // 绕旋转中心 centerT 旋转
+    double rad = kRotate_deg * M_PI / 180.0;
+    double c = std::cos(rad);
+    double s = std::sin(rad);
+    Eigen::Vector2d centered = translated - centerT;
+    Eigen::Vector2d rotated;
+    rotated.x() = c * centered.x() - s * centered.y();
+    rotated.y() = s * centered.x() + c * centered.y();
+    Eigen::Vector2d new_world_pt = rotated + centerT;
+
+    // ====== 世界 → 像素 ======
+    std::vector<Eigen::Vector2d> new_world_vec = {new_world_pt};
+    std::vector<Eigen::Vector2d> new_pix_vec = convertToPix(new_world_vec);
+    if (new_pix_vec.empty()) return Eigen::Vector2d();
+
+    return new_pix_vec[0];
+}
