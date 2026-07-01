@@ -3,6 +3,7 @@
 #include <QPainterPath>
 #include <QInputDialog>
 #include <plog/Log.h>
+#include <random>
 
 #include "joint_view.h"
 #include "src/config/config_manager.h"

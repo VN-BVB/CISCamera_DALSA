@@ -161,6 +161,8 @@ void DisplayView::mouseMoveEvent(QMouseEvent *event) {
     m_lastMousePos = event->pos();
     viewport()->update();  // 触发重绘
 
+    emit sendMouseScenePos(mapToScene(event->pos()));
+
     QGraphicsView::mouseMoveEvent(event);
 }
 
