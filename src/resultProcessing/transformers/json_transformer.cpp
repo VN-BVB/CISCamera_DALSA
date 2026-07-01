@@ -155,9 +155,18 @@ EdgeInfo JsonTransformer::createEdgeInfo(const ContourData& contourData)
  * @details 根据工件ID和轮廓列表，从processedRoiInfos中查找对应的轮廓数据
  *          为每个轮廓创建边信息，构建完整的工件数据结构
  */
-WorkpieceInfo JsonTransformer::createWorkpieceInfo(int workpieceId, const std::vector<int>& contourIds)
+WorkpieceInfo JsonTransformer::createWorkpieceInfo(int workpieceId, const std::vector<int>& contourIds,
+                                                    const std::map<int, int>& workpieceToPlatform)
 {
     WorkpieceInfo workpieceInfo;
+
+    // 对位平台序号：默认 -1（未关联），找到则覆盖
+    auto it = workpieceToPlatform.find(workpieceId);
+    if (it != workpieceToPlatform.end()) {
+        workpieceInfo.platformId = it->second;
+    } else {
+        workpieceInfo.platformId = -1;
+    }
 
     // 为每条轮廓（边）创建信息
     for (size_t i = 0; i < contourIds.size(); ++i) {
@@ -195,6 +204,7 @@ WorkpieceInfo JsonTransformer::createWorkpieceInfo(int workpieceId, const std::v
  *          包含构建轮廓-工件映射、创建工件信息等步骤
  */
 BatchResultData JsonTransformer::transformToBatchResultData(const std::map<int, std::vector<int>>& combinationResult,
+                                                            const std::map<int, int>& workpieceToPlatform,
                                                             int batchNumber)
 {
     BatchResultData batchData;
@@ -206,7 +216,7 @@ BatchResultData JsonTransformer::transformToBatchResultData(const std::map<int, 
     // 2. 为每个工件创建信息
     for (const auto& [workpieceId, contourIds] : combinationResult) {
         std::string workpieceKey = "工件" + std::to_string(workpieceId);
-        WorkpieceInfo workpieceInfo = createWorkpieceInfo(workpieceId, contourIds);
+        WorkpieceInfo workpieceInfo = createWorkpieceInfo(workpieceId, contourIds, workpieceToPlatform);
         batchData.workpieces[workpieceKey] = workpieceInfo;
     }
 
@@ -253,10 +263,11 @@ std::string JsonTransformer::serializeToJson(const BatchResultData& batchData)
  */
 std::string JsonTransformer::generateJson(
     const std::map<int, std::vector<int>>& combinationResult,
+    const std::map<int, int>& workpieceToPlatform,
     int batchNumber)
 {
     // 1. 转换为批次结果数据
-    BatchResultData batchData = transformToBatchResultData(combinationResult, batchNumber);
+    BatchResultData batchData = transformToBatchResultData(combinationResult, workpieceToPlatform, batchNumber);
 
     // 2. 序列化为JSON字符串
     return serializeToJson(batchData);

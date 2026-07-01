@@ -24,8 +24,8 @@ void CameraImageProcessor::initCameraCalibrator() {
     worldPts.reserve(W_ * H_);
     for (int c = 0; c < W_; ++c)
         for (int r = H_ - 1; r >= 0; --r) worldPts.emplace_back(c * spacingMM_, r * spacingMM_);
-    std::cout << "neican" << K_ << std::endl;
-    std::cout << "jibianxishu" << coff_dis_ << std::endl;
+    // std::cout << "neican" << K_ << std::endl;
+    // std::cout << "jibianxishu" << coff_dis_ << std::endl;
 }
 void CameraImageProcessor::lodaCameraCalibrateParams() {
     v_rot_s.clear();
@@ -47,6 +47,7 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
     PlatformPoseData cam2PlatParam;
     if (!cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
         // 文件不存在时用默认值，避免崩溃
+        std::cout << "nonononoononononononononon" << std::endl;
         allRotVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
         allTransVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
         return;

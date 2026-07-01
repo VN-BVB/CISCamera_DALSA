@@ -62,6 +62,10 @@ public slots:
     // 缩放到自适应显示
     void whenZoomToDisplayFit();
 
+signals:
+    // 鼠标移动时发出，携带场景坐标系下的位置
+    void sendMouseScenePos(const QPointF& scenePos);
+
 private:
     // 在类的私有成员变量部分添加
 private:

@@ -61,6 +61,30 @@ bool doSegmentsIntersect(const cv::Point2f& p1, const cv::Point2f& p2,
     return false;
 }
 
+bool isPolygonSelfIntersecting(const std::vector<cv::Point2f>& polygon) {
+    int M = static_cast<int>(polygon.size());
+    if (M < 3) {
+        return false;  // 少于3个点无法构成多边形，视为不自交
+    }
+
+    for (int i = 0; i < M; ++i) {
+        for (int j = i + 1; j < M; ++j) {
+            // 跳过相邻边
+            if (j == i + 1) continue;
+            // 跳过首尾相邻边
+            if (i == 0 && j == M - 1) continue;
+
+            // 边 i: polygon[i] -> polygon[(i + 1) % M]
+            // 边 j: polygon[j] -> polygon[(j + 1) % M]
+            if (doSegmentsIntersect(polygon[i], polygon[(i + 1) % M],
+                                   polygon[j], polygon[(j + 1) % M])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // 判断点是否在旋转矩形内
 bool isPointInRotatedRect(const cv::Point2f& point, const cv::RotatedRect& rotatedRect) {
     // 获取旋转矩形的四个角点
@@ -229,10 +253,10 @@ std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts
     imageProcessor->initCameraCalibrator();
     std::vector<Eigen::Vector2d> worldPoints = imageProcessor->convertToWorld(eigen_pix_pts);
     // 交换所有点的 x 和 y 坐标
-    for (auto &pt : worldPoints)
-    {
-        std::swap(pt.x(), pt.y());
-    }
+    // for (auto &pt : worldPoints)
+    // {
+    //     std::swap(pt.x(), pt.y());
+    // }
     PLOG_INFO << "convert done";
     return worldPoints;
 }

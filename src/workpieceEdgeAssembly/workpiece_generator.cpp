@@ -26,50 +26,50 @@ bool WorkpieceGenerator::isLegalCombination(const WorkpieceBoundingBox& workpiec
 
 /**
  * @brief 计算轮廓之间的距离矩阵
- * @param unpairedContours 未配对的轮廓列表
- * @return 距离矩阵
+ * @param unpairedContours 未配对的轮廓字典（ID → CBB）
+ * @return 距离矩阵（pair<ID1,ID2> → distance）
  */
-std::vector<std::vector<float>> WorkpieceGenerator::calculateDistanceMatrix(
-    const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours) {
-    std::vector<std::vector<float>> distanceMatrix(
-        unpairedContours.size(), std::vector<float>(unpairedContours.size(), 0.0f));
+DistanceMatrix WorkpieceGenerator::calculateDistanceMatrix(
+    const UnpairedContoursMap& unpairedContours) {
+    DistanceMatrix matrix;
 
-    for (int i = 0; i < unpairedContours.size(); ++i) {
-        cv::Point2f center1 = unpairedContours[i]->getCenterPoint();
-        for (int j = i + 1; j < unpairedContours.size(); ++j) {
-            cv::Point2f center2 = unpairedContours[j]->getCenterPoint();
+    for (auto it1 = unpairedContours.begin(); it1 != unpairedContours.end(); ++it1) {
+        cv::Point2f center1 = it1->second->getCenterPoint();
+        for (auto it2 = std::next(it1); it2 != unpairedContours.end(); ++it2) {
+            cv::Point2f center2 = it2->second->getCenterPoint();
             float dx = center2.x - center1.x;
             float dy = center2.y - center1.y;
             float distance = std::sqrt(dx * dx + dy * dy);
-            distanceMatrix[i][j] = distance;
-            distanceMatrix[j][i] = distance;
+            // 存储双向距离
+            matrix[{it1->first, it2->first}] = distance;
+            matrix[{it2->first, it1->first}] = distance;
         }
     }
-    return distanceMatrix;
+    return matrix;
 }
 
 /**
  * @brief 为每个轮廓创建距离排序的索引列表
- * @param unpairedContours 未配对的轮廓列表
+ * @param unpairedContours 未配对的轮廓字典（ID → CBB）
  * @param distanceMatrix 距离矩阵
- * @return 每个轮廓的最近邻索引列表
+ * @return 每个轮廓ID的最近邻ID列表
  */
-std::vector<std::vector<int>> WorkpieceGenerator::createNearestIndices(
-    const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
-    const std::vector<std::vector<float>>& distanceMatrix) {
-    std::vector<std::vector<int>> nearestIndices(unpairedContours.size());
+NearestIndicesMap WorkpieceGenerator::createNearestIndices(
+    const UnpairedContoursMap& unpairedContours,
+    const DistanceMatrix& distanceMatrix) {
+    NearestIndicesMap nearestIndices;
 
-    for (int i = 0; i < unpairedContours.size(); ++i) {
+    for (const auto& [id1, _] : unpairedContours) {
         std::vector<std::pair<float, int>> distances;
-        for (int j = 0; j < unpairedContours.size(); ++j) {
-            if (i != j) {
-                distances.emplace_back(distanceMatrix[i][j], j);
+        for (const auto& [id2, __] : unpairedContours) {
+            if (id1 != id2) {
+                distances.emplace_back(distanceMatrix.at({id1, id2}), id2);
             }
         }
         // 按距离从小到大排序
         std::sort(distances.begin(), distances.end());
-        for (const auto& dist : distances) {
-            nearestIndices[i].push_back(dist.second);
+        for (const auto& [dist, id] : distances) {
+            nearestIndices[id1].push_back(id);
         }
     }
     return nearestIndices;
@@ -77,27 +77,27 @@ std::vector<std::vector<int>> WorkpieceGenerator::createNearestIndices(
 
 /**
  * @brief 根据开口方向对候选轮廓进行分区
- * @param currentIndex 当前轮廓索引
+ * @param currentId 当前轮廓ID
  * @param currentDirection 当前轮廓开口方向
  * @param currentCenter 当前轮廓中心点
- * @param candidateIndices 候选轮廓索引列表
- * @param unpairedContours 未配对的轮廓列表
- * @return 分区后的索引列表（优先区域和其他区域）
+ * @param candidateIds 候选轮廓ID列表
+ * @param unpairedContours 未配对的轮廓字典（ID → CBB）
+ * @return 分区后的ID列表（优先区域和其他区域）
  */
 std::pair<std::vector<int>, std::vector<int>>
-WorkpieceGenerator::partitionCandidatesByDirection(int currentIndex,
+WorkpieceGenerator::partitionCandidatesByDirection(int currentId,
                                                    OpeningDirection currentDirection,
                                                    const cv::Point2f& currentCenter,
-                                                   const std::vector<int>& candidateIndices,
-                                                   const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours) {
+                                                   const std::vector<int>& candidateIds,
+                                                   const UnpairedContoursMap& unpairedContours) {
 
-    std::vector<int> preferredIndices;
-    std::vector<int> otherIndices;
+    std::vector<int> preferredIds;
+    std::vector<int> otherIds;
 
-    for (int j : candidateIndices) {
-        if (currentIndex >= j) continue; // 避免重复组合
+    for (int candidateId : candidateIds) {
+        if (currentId >= candidateId) continue; // 避免重复组合
 
-        cv::Point2f candidateCenter = unpairedContours[j]->getCenterPoint();
+        cv::Point2f candidateCenter = unpairedContours.at(candidateId)->getCenterPoint();
         float dx = candidateCenter.x - currentCenter.x;
         float dy = candidateCenter.y - currentCenter.y;
 
@@ -123,39 +123,39 @@ WorkpieceGenerator::partitionCandidatesByDirection(int currentIndex,
         }
 
         if (isInPreferredArea) {
-            preferredIndices.push_back(j);
+            preferredIds.push_back(candidateId);
         } else {
-            otherIndices.push_back(j);
+            otherIds.push_back(candidateId);
         }
     }
-    return {preferredIndices, otherIndices};
+    return {preferredIds, otherIds};
 }
 
 /**
  * @brief 尝试生成2轮廓组合
- * @param currentIndex 当前轮廓索引
- * @param candidateIndices 候选轮廓索引列表
- * @param unpairedContours 未配对的轮廓列表
+ * @param currentId 当前轮廓ID
+ * @param candidateIds 候选轮廓ID列表
+ * @param unpairedContours 未配对的轮廓字典（ID → CBB）
  * @param generatedCombinations 已生成的组合集合
  * @return 是否成功生成组合
  */
-bool WorkpieceGenerator::tryGenerateTwoContourCombination(int currentIndex,
-                                                          const std::vector<int>& candidateIndices,
-                                                          const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
+bool WorkpieceGenerator::tryGenerateTwoContourCombination(int currentId,
+                                                          const std::vector<int>& candidateIds,
+                                                          const UnpairedContoursMap& unpairedContours,
                                                           std::set<std::set<int>>& generatedCombinations) {
 
     bool foundCombination = false;
 
-    for (int j : candidateIndices) {
+    for (int candidateId : candidateIds) {
         WorkpieceBoundingBox wp2;
         // 检查添加是否成功
-        if (!wp2.addContourBoundingBox(unpairedContours[currentIndex]) ||
-            !wp2.addContourBoundingBox(unpairedContours[j])){
+        if (!wp2.addContourBoundingBox(unpairedContours.at(currentId)) ||
+            !wp2.addContourBoundingBox(unpairedContours.at(candidateId))){
             continue;
         }
 
         if (isLegalCombination(wp2)) {
-            std::set<int> combination = {currentIndex, j};
+            std::set<int> combination = {currentId, candidateId};
             if (generatedCombinations.find(combination) == generatedCombinations.end()) {
                 m_possibleWorkpieces.push_back(wp2);
                 generatedCombinations.insert(combination);
@@ -169,35 +169,35 @@ bool WorkpieceGenerator::tryGenerateTwoContourCombination(int currentIndex,
 
 /**
  * @brief 尝试生成3轮廓组合
- * @param currentIndex 当前轮廓索引
- * @param secondIndex 第二个轮廓索引
- * @param candidateIndices 候选轮廓索引列表
- * @param unpairedContours 未配对的轮廓列表
+ * @param currentId 当前轮廓ID
+ * @param secondId 第二个轮廓ID
+ * @param candidateIds 候选轮廓ID列表
+ * @param unpairedContours 未配对的轮廓字典（ID → CBB）
  * @param generatedCombinations 已生成的组合集合
  * @return 是否成功生成组合
  */
-bool WorkpieceGenerator::tryGenerateThreeContourCombination(int currentIndex,
-                                                            int secondIndex,
-                                                            const std::vector<int>& candidateIndices,
-                                                            const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
+bool WorkpieceGenerator::tryGenerateThreeContourCombination(int currentId,
+                                                            int secondId,
+                                                            const std::vector<int>& candidateIds,
+                                                            const UnpairedContoursMap& unpairedContours,
                                                             std::set<std::set<int>>& generatedCombinations) {
 
     bool foundCombination = false;
 
-    for (int k : candidateIndices) {
-        if (k == currentIndex || k == secondIndex) continue;
-        if (currentIndex >= k || secondIndex >= k) continue; // 确保有序，避免重复
+    for (int k : candidateIds) {
+        if (k == currentId || k == secondId) continue;
+        if (currentId >= k || secondId >= k) continue; // 确保有序，避免重复
 
         WorkpieceBoundingBox wp3;
         // 检查添加是否成功
-        if (!wp3.addContourBoundingBox(unpairedContours[currentIndex]) ||
-            !wp3.addContourBoundingBox(unpairedContours[secondIndex]) ||
-            !wp3.addContourBoundingBox(unpairedContours[k])) {
+        if (!wp3.addContourBoundingBox(unpairedContours.at(currentId)) ||
+            !wp3.addContourBoundingBox(unpairedContours.at(secondId)) ||
+            !wp3.addContourBoundingBox(unpairedContours.at(k))) {
             continue;
         }
 
         if (isLegalCombination(wp3)) {
-            std::set<int> combination = {currentIndex, secondIndex, k};
+            std::set<int> combination = {currentId, secondId, k};
             if (generatedCombinations.find(combination) == generatedCombinations.end()) {
                 m_possibleWorkpieces.push_back(wp3);
                 generatedCombinations.insert(combination);
@@ -211,29 +211,29 @@ bool WorkpieceGenerator::tryGenerateThreeContourCombination(int currentIndex,
 
 /**
  * @brief 搜索并生成工件组合
- * @param currentIndex 当前轮廓索引
- * @param unpairedContours 未配对的轮廓列表
- * @param nearestIndices 最近邻索引列表
+ * @param currentId 当前轮廓ID
+ * @param unpairedContours 未配对的轮廓字典（ID → CBB）
+ * @param nearestIndices 最近邻ID映射（ID → sorted IDs）
  * @param generatedCombinations 已生成的组合集合
  */
-void WorkpieceGenerator::searchAndGenerateCombinations(int currentIndex,
-                                                       const std::vector<std::shared_ptr<ContourBoundingBox>>& unpairedContours,
-                                                       const std::vector<std::vector<int>>& nearestIndices,
+void WorkpieceGenerator::searchAndGenerateCombinations(int currentId,
+                                                       const UnpairedContoursMap& unpairedContours,
+                                                       const NearestIndicesMap& nearestIndices,
                                                        std::set<std::set<int>>& generatedCombinations) {
 
     // 获取当前轮廓信息
-    OpeningDirection currentDirection = unpairedContours[currentIndex]->getOpeningDirection();
-    cv::Point2f currentCenter = unpairedContours[currentIndex]->getCenterPoint();
+    OpeningDirection currentDirection = unpairedContours.at(currentId)->getOpeningDirection();
+    cv::Point2f currentCenter = unpairedContours.at(currentId)->getCenterPoint();
 
     // 根据开口方向分区
-    auto [preferredIndices, otherIndices] = partitionCandidatesByDirection(
-        currentIndex, currentDirection, currentCenter, nearestIndices[currentIndex], unpairedContours);
+    auto [preferredIds, otherIds] = partitionCandidatesByDirection(
+        currentId, currentDirection, currentCenter, nearestIndices.at(currentId), unpairedContours);
 
-    tryGenerateTwoContourCombination(currentIndex, preferredIndices, unpairedContours, generatedCombinations);
+    tryGenerateTwoContourCombination(currentId, preferredIds, unpairedContours, generatedCombinations);
 
     // 尝试3轮廓组合
-    for (int j : preferredIndices) {
-        tryGenerateThreeContourCombination(currentIndex, j, preferredIndices, unpairedContours, generatedCombinations);
+    for (int secondId : preferredIds) {
+        tryGenerateThreeContourCombination(currentId, secondId, preferredIds, unpairedContours, generatedCombinations);
     }
 }
 
@@ -258,11 +258,11 @@ void WorkpieceGenerator::outputPossibleWorkpieces() {
  * @return 无返回值
  */
 void WorkpieceGenerator::generateWorkpieces() {
-    // 获取所有未配对的轮廓
-    std::vector<std::shared_ptr<ContourBoundingBox>> unpairedContours;
+    // 获取所有未配对的轮廓，以ID为键构建字典
+    UnpairedContoursMap unpairedContours;
     for (auto& c : m_cbbs) {
         if (!c->getIsPaired()) {
-            unpairedContours.push_back(c);
+            unpairedContours[c->getId()] = c;
         }
     }
 
@@ -275,12 +275,12 @@ void WorkpieceGenerator::generateWorkpieces() {
     auto distanceMatrix = calculateDistanceMatrix(unpairedContours);
     auto nearestIndices = createNearestIndices(unpairedContours, distanceMatrix);
 
-    // 使用集合来跟踪已经生成的组合，避免重复
+    // 生成的组合
     std::set<std::set<int>> generatedCombinations;
 
-    // 优先搜索最近邻组合
-    for (int i = 0; i < unpairedContours.size(); ++i) {
-        searchAndGenerateCombinations(i, unpairedContours, nearestIndices, generatedCombinations);
+    // 遍历所有未配对轮廓的ID
+    for (const auto& [currentId, _] : unpairedContours) {
+        searchAndGenerateCombinations(currentId, unpairedContours, nearestIndices, generatedCombinations);
     }
 
     // 输出可能的工件组合

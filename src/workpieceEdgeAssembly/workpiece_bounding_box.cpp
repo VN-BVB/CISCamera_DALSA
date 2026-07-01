@@ -180,10 +180,83 @@ void WorkpieceBoundingBox::updateCenterPointConnections() {
     }
 }
 
+void WorkpieceBoundingBox::updateWorkpieceBoundary() {
+    m_workpieceBoundaryEdges.clear();
+    m_workpieceBoundaryValid = false;
+
+    int N = static_cast<int>(m_cbbs.size());
+    if (N < 2) {
+        return;
+    }
+
+    // 1. 收集每个 CBB 的端点对
+    std::vector<std::vector<cv::Point2f>> endPairs(N);
+    for (int i = 0; i < N; ++i) {
+        endPairs[i] = m_cbbs[i]->getContourEndpoints();
+        if (endPairs[i].size() != 2) {
+            // 某个 CBB 的端点数不是 2，无法构造边界
+            return;
+        }
+    }
+
+    // 2. 准备枚举：固定首元素为 0，排列剩余 [1..N-1]
+    std::vector<int> indices;
+    for (int i = 1; i < N; ++i) {
+        indices.push_back(i);
+    }
+
+    // 3. 枚举所有排列和朝向组合，找最小周长的不自交候选
+    float minPerimeter = std::numeric_limits<float>::max();
+    std::vector<cv::Point2f> bestVertices;
+
+    do {
+        // 当前排列：[0] + indices
+        std::vector<int> perm = {0};
+        perm.insert(perm.end(), indices.begin(), indices.end());
+
+        // 枚举所有朝向（2^N 种）
+        for (int orientMask = 0; orientMask < (1 << N); ++orientMask) {
+            std::vector<cv::Point2f> vertices(2 * N);
+            for (int k = 0; k < N; ++k) {
+                int ci = perm[k];
+                bool flip = (orientMask >> ci) & 1;  // 朝向：0 表示 (P0,P1)，1 表示 (P1,P0)
+                vertices[2 * k] = endPairs[ci][flip ? 1 : 0];
+                vertices[2 * k + 1] = endPairs[ci][flip ? 0 : 1];
+            }
+
+            // 检查是否自交
+            if (!GeometryUtils::isPolygonSelfIntersecting(vertices)) {
+                // 计算周长
+                float perimeter = 0.0f;
+                for (int i = 0; i < 2 * N; ++i) {
+                    cv::Point2f diff = vertices[(i + 1) % (2 * N)] - vertices[i];
+                    perimeter += std::sqrt(diff.x * diff.x + diff.y * diff.y);
+                }
+                if (perimeter < minPerimeter) {
+                    minPerimeter = perimeter;
+                    bestVertices = vertices;
+                }
+            }
+        }
+    } while (std::next_permutation(indices.begin(), indices.end()));
+
+    // 4. 若找到合法边界，缓存边集
+    if (!bestVertices.empty()) {
+        int M = static_cast<int>(bestVertices.size());
+        for (int i = 0; i < M; ++i) {
+            m_workpieceBoundaryEdges.push_back(
+                std::make_pair(bestVertices[i], bestVertices[(i + 1) % M]));
+        }
+        m_workpieceBoundaryValid = true;
+    }
+}
+
 void WorkpieceBoundingBox::updateOuterBoundingBox() {
     m_outerBoundingBox = generateOuterBoundingBox(m_cbbs);
     // 同时更新中心点连接线段
     updateCenterPointConnections();
+    // 更新工件边界（依次连接各 CBB 端点构成的不自交闭合多边形）
+    updateWorkpieceBoundary();
 }
 
 bool WorkpieceBoundingBox::addContourBoundingBox(std::shared_ptr<ContourBoundingBox> cbb) {
@@ -239,12 +312,16 @@ bool WorkpieceBoundingBox::isLegal(std::shared_ptr<ContourBoundingBox> candidate
         candidateEdges.push_back(std::make_pair(vertices[i], vertices[(i + 1) % 4]));
     }
 
-    // 3、检查候选轮廓边界框的任意边是否与工件的任意中心线段相交
+    // 3、检查候选轮廓边界框的任意边是否与工件边界（依次连接各 CBB 端点构成的不自交闭合多边形）相交
+    if (!m_workpieceBoundaryValid) {
+        // 工件自身无法构造合法边界（几何扭曲），拒绝任何候选加入
+        return false;
+    }
     for (const auto& candidateEdge : candidateEdges) {
-        for (const auto& centerSegment : m_centerPointConnections) {
+        for (const auto& boundaryEdge : m_workpieceBoundaryEdges) {
             if (GeometryUtils::doSegmentsIntersect(
                     candidateEdge.first, candidateEdge.second,
-                    centerSegment.first, centerSegment.second)) {
+                    boundaryEdge.first, boundaryEdge.second)) {
                 return false;
             }
         }

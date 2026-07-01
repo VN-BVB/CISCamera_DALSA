@@ -66,6 +66,23 @@ std::vector<cv::Point2f> ContourFeatureCalculator::removeDuplicatePoints(const s
 }
 
 /**
+ * @brief 对轮廓降采样一倍，每两个点保留一个
+ * @param contour 输入轮廓（去重后的有序点集）
+ * @return 降采样后的轮廓，包含原序列下标为 0,2,4,... 的点
+ * @details 不依赖空间顺序，仅按 vector 下标隔点取样。
+ *          空输入返回空；单点输入原样返回。
+ *          reserve 容量为 (N+1)/2，对应奇数点数时取 ceil(N/2)。
+ */
+std::vector<cv::Point2f> ContourFeatureCalculator::downsampleByTwo(const std::vector<cv::Point2f>& contour) {
+    std::vector<cv::Point2f> result;
+    result.reserve((contour.size() + 1) / 2);
+    for (size_t i = 0; i < contour.size(); i += 2) {
+        result.push_back(contour[i]);
+    }
+    return result;
+}
+
+/**
  * @brief 根据开口方向计算轮廓的起始点
  * @param direction 开口方向
  * @param contour 输入轮廓点集
@@ -240,6 +257,72 @@ cv::Point2f ContourFeatureCalculator::calculateEndPoint(OpeningDirection directi
 }
 
 /**
+ * @brief 角度法定位C型轮廓开口的起终点
+ * @param contour 输入轮廓点集
+ * @return {起点, 终点}。size<2 返回 {(-1,-1),(-1,-1)}；退化（全部点重合）返回 {首点, 首点}
+ *
+ * @details 算法步骤：
+ *   1. 以包围盒中心（ContourUtils::calculateCentralPoint）为极点，对C型轮廓开口侧稀疏点不敏感
+ *   2. 每个点计算极角 atan2(dy, dx) 并归一化到 [0, 2π)
+ *   3. 按角度升序排列
+ *   4. 相邻角度差（含首尾环绕差）最大的位置即为开口
+ *   5. 起终点赋值：sortContourByNearestNeighbor 按逆时针（角度递增）遍历并在终点停止，
+ *      故 gap 之后的小角度端点为起点，gap 之前的大角度端点为终点
+ */
+std::pair<cv::Point2f, cv::Point2f> ContourFeatureCalculator::findOpeningEndsByAngle(const std::vector<cv::Point2f>& contour) {
+    if (contour.size() < 2) {
+        return {cv::Point2f(-1, -1), cv::Point2f(-1, -1)};
+    }
+
+    // 以包围盒中心作为极点
+    cv::Point2f center = ContourUtils::calculateCentralPoint(contour);
+
+    // 计算极角并归一化到 [0, 2π)
+    const float kTwoPi = 2.0f * static_cast<float>(M_PI);
+    std::vector<std::pair<float, cv::Point2f>> anglePoint;
+    anglePoint.reserve(contour.size());
+    for (const auto& p : contour) {
+        float raw = std::atan2(p.y - center.y, p.x - center.x);
+        float theta = (raw < 0.0f) ? raw + kTwoPi : raw;
+        anglePoint.emplace_back(theta, p);
+    }
+
+    // 按角度升序排列
+    std::sort(anglePoint.begin(), anglePoint.end(),
+              [](const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
+                  return a.first < b.first;
+              });
+
+    // 找相邻角度差最大的位置（含首尾环绕差）
+    int n = static_cast<int>(anglePoint.size());
+    int maxGapIdx = 0;
+    float maxGap = -1.0f;
+    for (int i = 0; i < n; ++i) {
+        float gap = (i + 1 < n)
+                        ? (anglePoint[i + 1].first - anglePoint[i].first)
+                        : (anglePoint[0].first + kTwoPi - anglePoint[i].first);
+        if (gap > maxGap) {
+            maxGap = gap;
+            maxGapIdx = i;
+        }
+    }
+
+    // 退化：全部点重合于极点（最大角度差为0），返回首点
+    if (maxGap <= 0.0f) {
+        return {contour.front(), contour.front()};
+    }
+
+    // gap 之前的大角度端点为终点，gap 之后的小角度端点为起点
+    cv::Point2f endPoint = anglePoint[maxGapIdx].second;
+    cv::Point2f startPoint = anglePoint[(maxGapIdx + 1) % n].second;
+    return {startPoint, endPoint};
+}
+
+std::pair<cv::Point2f, cv::Point2f> ContourFeatureCalculator::calculateStartAndEndPoint(const std::vector<cv::Point2f>& contour) {
+    return findOpeningEndsByAngle(contour);
+}
+
+/**
  * @brief 使用最近邻算法对轮廓点进行排序
  * @param contour 输入轮廓点集
  * @param firstPointIdx 起始点的索引
@@ -395,46 +478,31 @@ int ContourFeatureCalculator::selectNextCandidate(const std::vector<cv::Point2f>
 }
 
 /**
- * @brief 在轮廓点集中查找下一个合适的点（优先选择逆时针方向的最近点）
+ * @brief 在轮廓点集中查找下一个合适的点（直接取最近点）
  * @param contour 输入轮廓点集，包含所有待处理的点
  * @param currentIndex 当前处理点的索引
  * @param visited 访问标记数组，标记哪些点已经被处理过
- * @param centroid 轮廓的质心点，用于判断点的方向
+ * @param centroid 轮廓的质心点（保留接口，未使用）
  * @return int 找到的下一个点的索引，如果没有找到则返回-1
- * @details 1. 计算当前点到所有未访问点的距离
- *          2. 检查每个未访问点相对于当前点和质心的方向（顺时针/逆时针）
- *          3. 优先选择位于当前点逆时针方向的最近点
- *          4. 如果没有逆时针方向的点，则选择最近的点
+ * @details 遍历所有未访问点，返回距离当前点最近的点索引。
+ *          方向修正由 SortingStrategy 中的叉积判定统一处理。
  */
 int ContourFeatureCalculator::findNextPoint(const std::vector<cv::Point2f>& contour,
                                             int currentIndex,
                                             const std::vector<bool>& visited,
                                             const cv::Point2f& centroid) {
+    (void)centroid;  // 保留接口，不再使用
 
     cv::Point2f currentPoint = contour[currentIndex];
     int bestIndex = -1;
     double bestDistance = std::numeric_limits<double>::max();
-    bool foundCounterclockwise = false;
 
     for (int i = 0; i < contour.size(); ++i) {
-        if (!visited[i]) {
-            double distance = cv::norm(currentPoint - contour[i]);
-            cv::Point2f candidatePoint = contour[i];
-
-            // 检查是否是逆时针方向
-            bool isCounterclockwise = !GeometryUtils::isPointClockwiseTo(candidatePoint, currentPoint, centroid);
-
-            if (isCounterclockwise) {
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    bestIndex = i;
-                    foundCounterclockwise = true;
-                }
-            } else if (!foundCounterclockwise && distance < bestDistance) {
-                // 如果还没找到逆时针方向的点，记录最近的点
-                bestDistance = distance;
-                bestIndex = i;
-            }
+        if (visited[i]) continue;
+        double distance = cv::norm(currentPoint - contour[i]);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = i;
         }
     }
 
@@ -488,7 +556,9 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPoints(const std:
     // 使用DouglasPeucker多边形拟合算法
     // return detectCornerPointsByDouglasPeucker(contour);
     // 使用RANSAC方法检测角点
-    return detectCornerPointsByRansac(contour);
+    // return detectCornerPointsByRansac(contour);
+    // 使用RANSAC方法检测角点,只进行一次RANSAC，取内点首尾作为角点
+    return detectCornerPointsByRansacEndpoints(contour);
 }
 
 /**
@@ -508,7 +578,7 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(co
     // 使用ContourSegmenter中的RANSAC方法拟合三条直线
     std::vector<std::vector<cv::Point2f>> segments;
     std::vector<cv::Vec4f> lines;
-    double threshold = 8.0;
+    double threshold = 50.0;
     int maxIterations = 100;
 
     // 调用ContourSegmenter的RANSAC方法
@@ -534,6 +604,33 @@ std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansac(co
     }
 
     return cornerPoints;
+}
+
+/**
+ * @brief 单次 RANSAC 直线拟合，取内点首末点作为角点
+ * @param contour 输入轮廓点集（须已按轮廓顺序排序）
+ * @return 检测到的角点集合（2 个点：内点序列的首末）；点数不足或拟合失败时返回空
+ * @details 对整段轮廓只做一次 RANSAC 直线拟合，把参与该直线的内点中
+ *          按轮廓顺序的第一个和最后一个点作为角点。
+ *          因为 GeometryUtils::lineRansac 的内点保持输入点集顺序，
+ *          所以 inliers.front() / inliers.back() 即首末轮廓点。
+ *          适合"一段长边 + 两端转角"的工件形状。
+ */
+std::vector<cv::Point2f> ContourFeatureCalculator::detectCornerPointsByRansacEndpoints(
+    const std::vector<cv::Point2f>& contour)
+{
+    if (contour.size() < 2) return {};
+
+    constexpr double kThreshold = 8.0;       // 与 detectCornerPointsByRansac 保持一致
+    constexpr int kMaxIterations = 100;
+
+    cv::Vec4f line;
+    std::vector<cv::Point2f> inliers;
+    GeometryUtils::lineRansac(contour, line, inliers, kThreshold, kMaxIterations);
+
+    if (inliers.size() < 2) return {};
+
+    return { inliers.front(), inliers.back() };
 }
 
 /**

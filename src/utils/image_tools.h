@@ -20,7 +20,7 @@ public:
     std::vector<std::vector<cv::Point>> removeDuplicateContourPoints(const std::vector<std::vector<cv::Point>> &contours);
     // 过滤轮廓
     std::vector<std::vector<cv::Point>> filterContours(const std::vector<std::vector<cv::Point>>& contours,
-                                                       double minLength = 20.0,
+                                                       double minLength = 100.0,
                                                        int minHeight = 0,
                                                        int minWidth = 0,
                                                        double maxAspectRatio = 0);

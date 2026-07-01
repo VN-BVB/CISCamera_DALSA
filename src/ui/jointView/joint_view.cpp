@@ -3,9 +3,11 @@
 #include <QPainterPath>
 #include <QInputDialog>
 #include <plog/Log.h>
+#include <random>
 
 #include "joint_view.h"
 #include "src/config/config_manager.h"
+#include "src/utils/image_tools.h"
 #include "ui_joint_view.h"
 #include "src/ui/utils/display/display_scene.h"
 #include "src/ui/utils/display/display_manager.h"
@@ -177,7 +179,7 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
 
     // contour_processor的结果获取方式
     for (auto& cd : jointSeam->getContourDatas()) {
-        m_subpixelContours.push_back(cd.getSortedContour());
+        m_subpixelContours.push_back(cd.getSortedContour());    // 应该显示排序后的亚像素轮廓
 
         for (auto& [index, curveSeg] : cd.getCurveSegments())
             m_fitCurves.push_back(curveSeg);
@@ -190,6 +192,22 @@ void JointView::handleImageProcessed(std::shared_ptr<cv::Mat> processedImage,
 
         for (auto& point : cd.getIntersections())
             m_endPointsByFittedLines.push_back(point.coordinates);
+    }
+    // 亚像素轮廓可视化
+    if (processedImage && !m_subpixelContours.empty()) {
+        std::vector<std::vector<cv::Point>> subpixelContoursInt;
+        subpixelContoursInt.reserve(m_subpixelContours.size());
+        for (const auto& contour : m_subpixelContours) {
+            std::vector<cv::Point> intContour;
+            intContour.reserve(contour.size());
+            for (const auto& p : contour) {
+                intContour.emplace_back(cvRound(p.x), cvRound(p.y));
+            }
+            subpixelContoursInt.push_back(std::move(intContour));
+        }
+        ImageTools imageTools;
+        imageTools.drawColorfulContoursAndSave(*processedImage, subpixelContoursInt,
+                                               "E:/work/Car_door_ring_splicing/image/背面打光/260622/jointseam_subpixel_contours.bmp");
     }
 
     // 更新显示
@@ -314,7 +332,7 @@ void JointView::updateDisplay() {
         if (!m_endPointsByTangentLines.empty()) {
             auto pointComponent = std::make_shared<PointItem>(m_endPointsByTangentLines,
                                                               Qt::blue,
-                                                              0.5,
+                                                              5,
                                                               15.0);
             ui->gv_image->addGraphicComponent(pointComponent);
         }

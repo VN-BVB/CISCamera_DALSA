@@ -11,6 +11,7 @@ HEADERS += \
     $$PWD/test_frmVisionDisplay.h \
     $$PWD/test_multiRoi.h \
     $$PWD/test_pixel2world.h \
+    $$PWD/test_platform_pose_dxf.h \
     $$PWD/test_tiny_spline.h
 
 
@@ -22,6 +23,7 @@ SOURCES += \
     $$PWD/test_edge_assembly.cpp \
     $$PWD/test_frmVisionDisplay.cpp \
     $$PWD/test_multiRoi.cpp \
+    $$PWD/test_platform_pose_dxf.cpp \
     $$PWD/test_tiny_spline.cpp \
     $$PWD/test_write_plc.cpp
 

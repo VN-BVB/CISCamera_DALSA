@@ -26,3 +26,4 @@ CLAUDE.md
 src/CLAUDE/
 .claude/
 data/PaltfromCalibrate
+*.dxf

@@ -8,8 +8,8 @@
 
 ImageProcessWorker::ImageProcessWorker(QObject *parent) : QObject{parent}
 {
-    int threadCount = std::thread::hardware_concurrency();
-    m_threadPool = new ThreadPool(threadCount > 0 ? threadCount : 6);
+    // int threadCount = std::thread::hardware_concurrency();
+    m_threadPool = new ThreadPool(6);
     m_processedCount = 0;
     m_totalROICount = 0;
 }

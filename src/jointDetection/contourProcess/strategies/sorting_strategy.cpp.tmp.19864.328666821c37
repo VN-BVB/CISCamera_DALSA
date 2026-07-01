@@ -60,7 +60,7 @@ bool SortingStrategy::process(ContourData& context) {
         cv::putText(canvas, "E", cv::Point(endPx.x + 8, endPx.y - 8),
                     cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
 
-        std::string outputPath = "E:/work/Car_door_ring_splicing/image/背面打光/260622/sorting_angular_" +
+        std::string outputPath = "E:/work/Car_door_ring_splicing/image/背面打光/260622/cropped/sorting_angular_" +
                                  std::to_string(context.getId()) + ".bmp";
         cv::imwrite(outputPath, canvas);
     }

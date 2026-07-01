@@ -15,6 +15,7 @@
 #include "src/test/test_frmVisionDisplay.h"
 #include "src/test/test_multiRoi.h"
 #include "src/test/test_pixel2world.h"
+#include "src/test/test_platform_pose_dxf.h"
 #include "src/test/test_tiny_spline.h"
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/ui/jointView/joint_view.h"
@@ -47,11 +48,22 @@ int main(int argc, char *argv[]) {
     // TestConvertCoordinate t;
     // t.pixel2World();
 
-    // JointView w;
-    // w.show();
+    JointView w;
+    w.show();
+
+    // std::shared_ptr<CameraImageProcessor> imageProcessor;
+    // imageProcessor = std::make_shared<CameraImageProcessor>();
+    // imageProcessor->initCameraCalibrator();
 
     // TestPixel2World test;
     // test.testPixel2World();
+
+    // TestPlatformPoseDxf tp;
+    // tp.runDirect();
+
+    // TestDxfWriter td;
+    // td.run();
+
 
     return a.exec();
 }

@@ -1,4 +1,5 @@
-#include <algorithm>
+#include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -7,16 +8,86 @@
 #include <plog/Log.h>
 #include "dxf_saver.h"
 #include "src/utils/geometry_utils.h"
-#include "src/utils/platform_pose_io.h"
 #include "src/utils/scoped_timer.h"
+
+namespace {
+
+// 平台坐标系：X/Y 为单位方向向量（世界系），T 为原点（世界系）
+struct PlatformAxis {
+    int id = -1;
+    Eigen::Vector3d X = Eigen::Vector3d::Zero();
+    Eigen::Vector3d Y = Eigen::Vector3d::Zero();
+    Eigen::Vector3d T = Eigen::Vector3d::Zero();
+};
+
+// 自 from 起查找 "key" : [a, b, c] 形式的三维向量。
+// 容忍 key 与 '[' 之间的任意空白（实际 JSON 文件里写作 "X": [\n  0.04, ...\n]）。
+Eigen::Vector3d extractVec(const std::string& json, const std::string& key, size_t from) {
+    size_t keyPos = json.find("\"" + key + "\"", from);
+    if (keyPos == std::string::npos) return Eigen::Vector3d::Zero();
+    size_t lb = json.find('[', keyPos);
+    if (lb == std::string::npos) return Eigen::Vector3d::Zero();
+    size_t rb = json.find(']', lb);
+    if (rb == std::string::npos) return Eigen::Vector3d::Zero();
+    double v0 = 0.0, v1 = 0.0, v2 = 0.0;
+    sscanf(json.substr(lb + 1, rb - lb - 1).c_str(), "%lf,%lf,%lf", &v0, &v1, &v2);
+    return Eigen::Vector3d(v0, v1, v2);
+}
+
+// 直接读取 JSON 中存储的世界坐标 X/Y/T，不做坐标变换。
+bool parsePlatformPoseJson(const std::string& path, std::vector<PlatformAxis>& out) {
+    std::ifstream is(path);
+    if (!is.is_open()) {
+        PLOG_WARNING << "Cannot open platform pose JSON: " << path;
+        return false;
+    }
+    std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+
+    size_t platformsKey = json.find("\"platforms\"");
+    if (platformsKey == std::string::npos) {
+        PLOG_WARNING << "Cannot find \"platforms\" key in " << path;
+        return false;
+    }
+    size_t pos = json.find('[', platformsKey) + 1;
+
+    while (true) {
+        size_t start = json.find('{', pos);
+        if (start == std::string::npos) break;
+        size_t nextClose = json.find(']', pos);
+        if (nextClose == std::string::npos || start >= nextClose) break;
+        size_t end = json.find('}', start);
+        if (end == std::string::npos) break;
+        end += 1;
+
+        PlatformAxis pa;
+        size_t pidPos = json.find("\"id\"", start);
+        if (pidPos != std::string::npos && pidPos < end) {
+            size_t colon = json.find(':', pidPos);
+            if (colon != std::string::npos && colon < end) {
+                pa.id = atoi(json.c_str() + colon + 1);
+            }
+        }
+        pa.X = extractVec(json, "X", start);
+        pa.Y = extractVec(json, "Y", start);
+        pa.T = extractVec(json, "T", start);
+
+        out.push_back(pa);
+        pos = end + 1;
+    }
+
+    if (out.empty()) {
+        PLOG_WARNING << "No platforms parsed from " << path;
+        return false;
+    }
+    return true;
+}
+
+}  // namespace
 
 DXFSaver::DXFSaver() : QObject(nullptr) {}
 
 void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& workpieceToRoiInfos,
-                                      const std::map<int, ProcessedROIInfo>& processedRoiInfos,
-                                      const std::map<int, Eigen::Vector2d>& workpieceCenters,
-                                      const std::map<int, int>& workpieceToPlatform,
-                                      const std::vector<PlatformAxis>& platforms)
+                                      const std::map<int, ProcessedROIInfo>& processedRoiInfos)
 {
     try {
         SCOPED_TIMER("保存dxf文件");
@@ -47,7 +118,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         dw->tableEnd();
 
         // 写入图层表
-        dw->tableLayers(8);  // 增加图层数量
+        dw->tableLayers(7);  // 增加图层数量
         // 0层
         dxf.writeLayer(
             *dw,
@@ -89,12 +160,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
             *dw,
             DL_LayerData("PlatformOrigin", 0),
             DL_Attributes("", 1, 0x00ffff00, 15, "CONTINUOUS")
-            );
-        // 工件中心→关联平台原点连线图层（青色）
-        dxf.writeLayer(
-            *dw,
-            DL_LayerData("WorkpiecePlatformLink", 0),
-            DL_Attributes("", 1, 0x0000ffff, 15, "CONTINUOUS")
             );
         dw->tableEnd();
 
@@ -143,10 +208,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         DL_Attributes subpixelAttributes("SubpixelContours", 256, -1, -1, "BYLAYER");
         DL_Attributes splineAttributes("Splines", 256, -1, -1, "BYLAYER");
         DL_Attributes endpointAttributes("Endpoints", 256, -1, -1, "BYLAYER");
-        DL_Attributes platformXAttributes("PlatformX", 256, -1, -1, "BYLAYER");
-        DL_Attributes platformYAttributes("PlatformY", 256, -1, -1, "BYLAYER");
-        DL_Attributes platformOriginAttributes("PlatformOrigin", 256, -1, -1, "BYLAYER");
-        DL_Attributes workpiecePlatformLinkAttributes("WorkpiecePlatformLink", 256, -1, -1, "BYLAYER");
 
         // 遍历所有处理过的ROI
         {
@@ -167,19 +228,6 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
 
                 roiIndex++;
             }
-        }
-
-        // 平台数据由调用方加载并传入，避免文件二次读取导致与映射数据不一致
-        // 绘制所有对位平台坐标系（一次，非每 ROI）
-        if (!platforms.empty()) {
-            drawPlatforms(dxf, dw, platformXAttributes, platformYAttributes,
-                          platformOriginAttributes, platforms);
-
-            // 绘制工件中心→关联平台原点的连线
-            drawWorkpiecePlatformLinks(dxf, dw, workpiecePlatformLinkAttributes,
-                                       workpieceCenters, workpieceToPlatform, platforms);
-        } else {
-            PLOG_WARNING << "平台数据为空，跳过平台坐标系和工件→平台连线绘制";
         }
         SCOPED_TIMER("保存dxf文件");
         // 结束实体部分
@@ -322,64 +370,5 @@ void DXFSaver::drawEndpoints(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& a
         // 用小圆圈标记端点
         DL_CircleData circleData(wp.x(), wp.y(), 0.0, kEndpointRadius);
         dxf.writeCircle(*dw, circleData, attributes);
-    }
-}
-
-void DXFSaver::drawPlatforms(DL_Dxf& dxf, DL_WriterA* dw,
-                             const DL_Attributes& attrX,
-                             const DL_Attributes& attrY,
-                             const DL_Attributes& attrOrigin,
-                             const std::vector<PlatformAxis>& platforms)
-{
-    // 轴线长度与原点十字半边长（mm）。T 值大致在 0~500mm 范围，30mm 长足以可见又不会拥挤。
-    constexpr double kAxisLength = 30.0;
-    constexpr double kCrossHalf = 3.0;
-
-    PLOG_INFO << "绘制 " << platforms.size() << " 个对位平台坐标系";
-
-    auto writeLine = [&](const DL_Attributes& attr,
-                         const Eigen::Vector3d& a,
-                         const Eigen::Vector3d& b) {
-        DL_LineData lineData(a.x(), a.y(), 0.0, b.x(), b.y(), 0.0);
-        dxf.writeLine(*dw, lineData, attr);
-    };
-
-    for (const auto& p : platforms) {
-        writeLine(attrX, p.T, p.T + kAxisLength * p.X);
-        writeLine(attrY, p.T, p.T + kAxisLength * p.Y);
-        writeLine(attrOrigin, p.T - kCrossHalf * p.X, p.T + kCrossHalf * p.X);
-        writeLine(attrOrigin, p.T - kCrossHalf * p.Y, p.T + kCrossHalf * p.Y);
-    }
-}
-
-void DXFSaver::drawWorkpiecePlatformLinks(DL_Dxf& dxf, DL_WriterA* dw,
-                                          const DL_Attributes& attr,
-                                          const std::map<int, Eigen::Vector2d>& workpieceCenters,
-                                          const std::map<int, int>& workpieceToPlatform,
-                                          const std::vector<PlatformAxis>& platforms)
-{
-    if (workpieceCenters.empty() || workpieceToPlatform.empty()) {
-        PLOG_INFO << "无工件→平台映射，跳过连线绘制";
-        return;
-    }
-
-    PLOG_INFO << "绘制 " << workpieceCenters.size() << " 条工件→平台连线";
-
-    for (const auto& [workpieceId, center] : workpieceCenters) {
-        auto it = workpieceToPlatform.find(workpieceId);
-        if (it == workpieceToPlatform.end()) continue;
-
-        // 按 id 查找平台（id 不保证连续从 0 开始）
-        auto pit = std::find_if(platforms.begin(), platforms.end(),
-                                [&](const PlatformAxis& p) { return p.id == it->second; });
-        if (pit == platforms.end()) {
-            PLOG_WARNING << "工件 " << workpieceId << " 关联的平台 id="
-                         << it->second << " 在平台列表中找不到";
-            continue;
-        }
-
-        DL_LineData lineData(center.x(), center.y(), 0.0,
-                             pit->T.x(), pit->T.y(), 0.0);
-        dxf.writeLine(*dw, lineData, attr);
     }
 }

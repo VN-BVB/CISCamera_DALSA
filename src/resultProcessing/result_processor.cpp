@@ -31,16 +31,32 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
         // 1. 数据准备阶段
         auto workpieceToRoiInfos = WorkpieceRoiMapper::buildWorkpieceRoiMapping(combinationResult, processedRoiInfos);
 
+        // 计算工件外接矩形中心，并建立工件→对位平台映射（最近原则）
+        auto workpieceCenters = WorkpiecePlatformMapper::computeWorkpieceCenters(
+            combinationResult, processedRoiInfos);
+
+        std::vector<PlatformAxis> platforms;
+        loadPlatformAxes("./data/calibration_config/platform_pose.json", platforms);
+
+        auto workpieceToPlatform = WorkpiecePlatformMapper::buildMapping(workpieceCenters, platforms);
+
         m_jsonTransformer = std::make_unique<JsonTransformer>(processedRoiInfos);
-        std::string jsonString = m_jsonTransformer->generateJson(combinationResult, 0);
+        std::string jsonString = m_jsonTransformer->generateJson(combinationResult, workpieceToPlatform, 0);
 
         // 2. 并行输出阶段
         QFutureSynchronizer<void> synchronizer;
         // 并行保存DXF文件
-        QFuture<void> dxfFuture = QtConcurrent::run([this, &workpieceToRoiInfos, &processedRoiInfos]() {
+        QFuture<void> dxfFuture = QtConcurrent::run([this,
+                                                     &workpieceToRoiInfos,
+                                                     &processedRoiInfos,
+                                                     &workpieceCenters,
+                                                     &workpieceToPlatform,
+                                                     &platforms]() {
             try {
                 SCOPED_TIMER("DXF文件保存");
-                m_dxfSaver->whenAllImagesProcessed(workpieceToRoiInfos, processedRoiInfos);
+                m_dxfSaver->whenAllImagesProcessed(workpieceToRoiInfos, processedRoiInfos,
+                                                   workpieceCenters, workpieceToPlatform,
+                                                   platforms);
                 PLOG_INFO << "DXF文件保存完成";
             } catch (const std::exception& e) {
                 PLOG_ERROR << "DXF文件保存失败: " << e.what();

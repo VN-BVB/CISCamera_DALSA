@@ -704,11 +704,15 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen:
     for (int i = 0; i < 3; ++i) rvec.at<double>(i, 0) = v_rot(i);
     cv::Rodrigues(rvec, R_cv);
 
+    // std::cout << "=====================v_rot" << v_rot << std::endl;
+
     Eigen::Matrix3d R;
     cv::cv2eigen(R_cv, R);
     // -------- 2. 取平面部分 --------
     Eigen::Matrix2d R2 = R.block<2, 2>(0, 0);
     Eigen::Vector2d t2 = v_trans.head<2>();
+    // std::cout << "=====================" << R << std::endl;
+    // std::cout << "=====================" << v_trans << std::endl;
 
     // -------- 3. 平面逆变换（相机 -> 世界）--------
     Eigen::MatrixXd world_pts(cam_pts.rows(), 2);
@@ -720,22 +724,22 @@ Eigen::MatrixXd TelecentricLineCalibrator::cameraToWorldCoordinates(const Eigen:
     }
     std::cout << std::fixed << std::setprecision(15);
 
-    std::cout << "v_rot =\n" << v_rot << std::endl;
+    // std::cout << "v_rot =\n" << v_rot << std::endl;
     // -------- 打印 R2 --------
-    std::cout << "R2 =\n" << R2 << std::endl;
+    // std::cout << "R2 =\n" << R2 << std::endl;
 
     // -------- 打印 R2_inv --------
-    std::cout << "R2_inv =\n" << R2_inv << std::endl;
+    // std::cout << "R2_inv =\n" << R2_inv << std::endl;
 
     // -------- 打印 t2 --------
-    std::cout << "t2 = " << t2.transpose() << std::endl;
+    // std::cout << "t2 = " << t2.transpose() << std::endl;
 
     // -------- 打印 Xc / Xw（只打印第一个点）--------
     Eigen::Vector2d Xc = cam_pts.row(0);
     Eigen::Vector2d Xw = R2_inv * (Xc - t2);
 
-    std::cout << "Xc = " << Xc.transpose() << std::endl;
-    std::cout << "Xw = " << Xw.transpose() << std::endl;
+    // std::cout << "Xc = " << Xc.transpose() << std::endl;
+    // std::cout << "Xw = " << Xw.transpose() << std::endl;
     return world_pts;
 }
 // -------------------- 相机坐标 → 世界坐标（SO(2) 修正） --------------------

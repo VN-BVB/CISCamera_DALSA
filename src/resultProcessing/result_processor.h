@@ -9,6 +9,7 @@
 #include "src/resultProcessing/outputs/jsonSaver/json_saver.h"
 #include "src/resultProcessing/outputs/transferResult/async_json_sender.h"
 #include "src/resultProcessing/transformers/workpiece_roi_mapper.h"
+#include "src/resultProcessing/transformers/workpiece_platform_mapper.h"
 #include "src/resultProcessing/transformers/json_transformer.h"
 
 class ResultProcessor : public QObject
