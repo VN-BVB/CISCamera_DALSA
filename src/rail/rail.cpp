@@ -58,7 +58,8 @@ void Rail::connectPLC(const QString ip, int port) {
     } else {
         mobusDisconnect = 0;
         emit sendText(QString(u8"Modbus 状态:协议连接成功，等待使能完成。"));
-        writeCoils(X_ServoEnable, {true});
+        uint16_t val = 1;
+        writeRegistersRaw(17001, 1, &val);
         readStateTimer->start(111);
         readRealTimer->start(100);
     }

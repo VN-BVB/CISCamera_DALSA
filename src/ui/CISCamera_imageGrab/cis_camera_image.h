@@ -89,6 +89,6 @@ private slots:
     void on_btnClearCPImg_clicked();
     void on_btnClearCPDetectResult_clicked();
     void whenDrawPlatformAxes();
+    void whenDrawDetectCircles();
 };
 #endif  // CIS_CAMERA_IMAGE_H
-

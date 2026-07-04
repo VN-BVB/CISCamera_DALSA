@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'cis_camera_image.ui'
 **
-** Created by: Qt User Interface Compiler version 5.15.2
+** Created by: Qt User Interface Compiler version 5.14.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -63,12 +63,7 @@ public:
     RailWidget *railWidget;
     QWidget *tab_4;
     QGridLayout *gridLayout_2;
-    QHBoxLayout *horizontalLayout;
-    FrmVisionDisplay *graphicsView;
-    FrmVisionDisplay *graphicsView_3;
-    FrmVisionDisplay *graphicsView_4;
-    FrmVisionDisplay *graphicsView_2;
-    FrmVisionDisplay *graphicsView_6;
+    FrmVisionDisplay *graphicsView_5;
     QVBoxLayout *verticalLayout_3;
     QHBoxLayout *horizontalLayout_3;
     QVBoxLayout *verticalLayout_2;
@@ -83,7 +78,6 @@ public:
     QHBoxLayout *horizontalLayout_2;
     QLabel *label_4;
     QComboBox *cbxPlatform;
-    FrmVisionDisplay *graphicsView_5;
     QWidget *cisConfigHost;
     QTextEdit *textEdit;
     FrmVisionDisplay *imgSplice;
@@ -269,44 +263,15 @@ public:
         tab_4->setObjectName(QString::fromUtf8("tab_4"));
         gridLayout_2 = new QGridLayout(tab_4);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
-        horizontalLayout = new QHBoxLayout();
-        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
-        graphicsView = new FrmVisionDisplay(tab_4);
-        graphicsView->setObjectName(QString::fromUtf8("graphicsView"));
-        graphicsView->setMaximumSize(QSize(16777215, 1000));
+        graphicsView_5 = new FrmVisionDisplay(tab_4);
+        graphicsView_5->setObjectName(QString::fromUtf8("graphicsView_5"));
+        QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Expanding);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(graphicsView_5->sizePolicy().hasHeightForWidth());
+        graphicsView_5->setSizePolicy(sizePolicy1);
 
-        horizontalLayout->addWidget(graphicsView);
-
-        graphicsView_3 = new FrmVisionDisplay(tab_4);
-        graphicsView_3->setObjectName(QString::fromUtf8("graphicsView_3"));
-        graphicsView_3->setMaximumSize(QSize(16777215, 1000));
-
-        horizontalLayout->addWidget(graphicsView_3);
-
-        graphicsView_4 = new FrmVisionDisplay(tab_4);
-        graphicsView_4->setObjectName(QString::fromUtf8("graphicsView_4"));
-        graphicsView_4->setMaximumSize(QSize(16777215, 1000));
-
-        horizontalLayout->addWidget(graphicsView_4);
-
-        graphicsView_2 = new FrmVisionDisplay(tab_4);
-        graphicsView_2->setObjectName(QString::fromUtf8("graphicsView_2"));
-        graphicsView_2->setMaximumSize(QSize(16777215, 1000));
-
-        horizontalLayout->addWidget(graphicsView_2);
-
-        graphicsView_6 = new FrmVisionDisplay(tab_4);
-        graphicsView_6->setObjectName(QString::fromUtf8("graphicsView_6"));
-
-        horizontalLayout->addWidget(graphicsView_6);
-
-        horizontalLayout->setStretch(0, 1);
-        horizontalLayout->setStretch(1, 1);
-        horizontalLayout->setStretch(2, 1);
-        horizontalLayout->setStretch(3, 1);
-        horizontalLayout->setStretch(4, 1);
-
-        gridLayout_2->addLayout(horizontalLayout, 0, 0, 1, 2);
+        gridLayout_2->addWidget(graphicsView_5, 0, 1, 1, 1);
 
         verticalLayout_3 = new QVBoxLayout();
         verticalLayout_3->setObjectName(QString::fromUtf8("verticalLayout_3"));
@@ -316,11 +281,11 @@ public:
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
         ckbShowPLlatImg = new QCheckBox(tab_4);
         ckbShowPLlatImg->setObjectName(QString::fromUtf8("ckbShowPLlatImg"));
-        QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Expanding);
-        sizePolicy1.setHorizontalStretch(0);
-        sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(ckbShowPLlatImg->sizePolicy().hasHeightForWidth());
-        ckbShowPLlatImg->setSizePolicy(sizePolicy1);
+        QSizePolicy sizePolicy2(QSizePolicy::Minimum, QSizePolicy::Expanding);
+        sizePolicy2.setHorizontalStretch(0);
+        sizePolicy2.setVerticalStretch(0);
+        sizePolicy2.setHeightForWidth(ckbShowPLlatImg->sizePolicy().hasHeightForWidth());
+        ckbShowPLlatImg->setSizePolicy(sizePolicy2);
         QFont font3;
         font3.setPointSize(16);
         ckbShowPLlatImg->setFont(font3);
@@ -361,16 +326,16 @@ public:
         gridLayout_9->setHorizontalSpacing(0);
         btnSaveAligenmentPlatImg = new QPushButton(tab_4);
         btnSaveAligenmentPlatImg->setObjectName(QString::fromUtf8("btnSaveAligenmentPlatImg"));
-        sizePolicy1.setHeightForWidth(btnSaveAligenmentPlatImg->sizePolicy().hasHeightForWidth());
-        btnSaveAligenmentPlatImg->setSizePolicy(sizePolicy1);
+        sizePolicy2.setHeightForWidth(btnSaveAligenmentPlatImg->sizePolicy().hasHeightForWidth());
+        btnSaveAligenmentPlatImg->setSizePolicy(sizePolicy2);
         btnSaveAligenmentPlatImg->setFont(font3);
 
         gridLayout_9->addWidget(btnSaveAligenmentPlatImg, 1, 0, 1, 1);
 
         btnCalibratePlat = new QPushButton(tab_4);
         btnCalibratePlat->setObjectName(QString::fromUtf8("btnCalibratePlat"));
-        sizePolicy1.setHeightForWidth(btnCalibratePlat->sizePolicy().hasHeightForWidth());
-        btnCalibratePlat->setSizePolicy(sizePolicy1);
+        sizePolicy2.setHeightForWidth(btnCalibratePlat->sizePolicy().hasHeightForWidth());
+        btnCalibratePlat->setSizePolicy(sizePolicy2);
         btnCalibratePlat->setFont(font3);
 
         gridLayout_9->addWidget(btnCalibratePlat, 2, 0, 1, 1);
@@ -406,17 +371,7 @@ public:
         verticalLayout_3->addLayout(gridLayout_9);
 
 
-        gridLayout_2->addLayout(verticalLayout_3, 1, 0, 1, 1);
-
-        graphicsView_5 = new FrmVisionDisplay(tab_4);
-        graphicsView_5->setObjectName(QString::fromUtf8("graphicsView_5"));
-        QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Expanding);
-        sizePolicy2.setHorizontalStretch(0);
-        sizePolicy2.setVerticalStretch(0);
-        sizePolicy2.setHeightForWidth(graphicsView_5->sizePolicy().hasHeightForWidth());
-        graphicsView_5->setSizePolicy(sizePolicy2);
-
-        gridLayout_2->addWidget(graphicsView_5, 1, 1, 1, 1);
+        gridLayout_2->addLayout(verticalLayout_3, 0, 0, 1, 1);
 
         tabWidget->addTab(tab_4, QString());
 
@@ -467,7 +422,7 @@ public:
 
         retranslateUi(CISWidget);
 
-        tabWidget->setCurrentIndex(0);
+        tabWidget->setCurrentIndex(2);
 
 
         QMetaObject::connectSlotsByName(CISWidget);
