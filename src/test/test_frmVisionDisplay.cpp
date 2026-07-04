@@ -1,30 +1,30 @@
 
+#include "test_frmVisionDisplay.h"
+
+#include <plog/Log.h>
+
+#include <QElapsedTimer>
 #include <QVBoxLayout>
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
-#include <plog/Log.h>
 
-#include "test_frmVisionDisplay.h"
-#include "ui_test_frmVisionDisplay.h"
+#include "src/ui/utils/display/graphicItems/bspline_item.h"
 #include "src/ui/utils/display/graphicItems/graphic_item_component.h"
 #include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
 #include "src/ui/utils/display/graphicItems/line_item.h"
 #include "src/ui/utils/display/graphicItems/point_item.h"
-#include "src/ui/utils/display/graphicItems/bspline_item.h"
 #include "src/ui/utils/display/graphicItems/rotated_rect_item.h"
+#include "ui_test_frmVisionDisplay.h"
 
 test_FrmVisionDisplay::test_FrmVisionDisplay(QWidget* parent)
-    : QWidget(parent),
-    ui(new Ui::test_FrmVisionDisplay),
-    m_frmDisplay(new FrmVisionDisplay(this))
-{
+    : QWidget(parent), ui(new Ui::test_FrmVisionDisplay), m_frmDisplay(new FrmVisionDisplay(this)) {
     ui->setupUi(this);
     m_btn_begin = new QPushButton("start", this);
-    m_btn_draw_lines = new QPushButton("draw lines",this);
-    m_btn_draw_contours = new QPushButton("draw contours",this);
-    m_btn_draw_points = new QPushButton("draw points",this);
-    m_btn_draw_bspline = new QPushButton("draw bspline",this);
-    m_btn_draw_rotated_rect = new QPushButton("draw rotated rect",this);
+    m_btn_draw_lines = new QPushButton("draw lines", this);
+    m_btn_draw_contours = new QPushButton("draw contours", this);
+    m_btn_draw_points = new QPushButton("draw points", this);
+    m_btn_draw_bspline = new QPushButton("draw bspline", this);
+    m_btn_draw_rotated_rect = new QPushButton("draw rotated rect", this);
     m_btn_clear_display = new QPushButton("clear display", this);
 
     // 设置按钮属性
@@ -90,14 +90,13 @@ void test_FrmVisionDisplay::displayContours(std::vector<std::vector<cv::Point2f>
     if (!scene) return;
     for (const auto& contour : contours) {
         if (!contour.empty()) {
-            auto contourComponent = std::make_shared<ContourItem> (contour, ContourItem::subpixelContour);
+            auto contourComponent = std::make_shared<ContourItem>(contour, ContourItem::subpixelContour);
             scene->whenAddGraphicComponent(contourComponent);
         }
     }
 }
 
-void test_FrmVisionDisplay::displayPoints(std::vector<cv::Point2f> points)
-{
+void test_FrmVisionDisplay::displayPoints(std::vector<cv::Point2f> points) {
     DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
     if (!displayMgr) return;
 
@@ -109,8 +108,7 @@ void test_FrmVisionDisplay::displayPoints(std::vector<cv::Point2f> points)
     }
 }
 
-void test_FrmVisionDisplay::displayBSpline(std::vector<cv::Point2f> controlPoints)
-{
+void test_FrmVisionDisplay::displayBSpline(std::vector<cv::Point2f> controlPoints) {
     DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
     if (!displayMgr) return;
 
@@ -141,7 +139,7 @@ void test_FrmVisionDisplay::displayLines(std::vector<cv::Vec4f> lines) {
     DisplayScene* scene = displayMgr->displayScene();
     if (!scene) return;
     for (const auto& line : lines) {
-        auto lineComponent = std::make_shared<LineItem> (line,0.5, 100,Qt::blue);
+        auto lineComponent = std::make_shared<LineItem>(line, 0.5, 100, Qt::blue);
         scene->whenAddGraphicComponent(lineComponent);
     }
 }
@@ -165,11 +163,9 @@ void test_FrmVisionDisplay::onBeginButtonClicked() {
     }
     displayRotateRects(tea.m_workpieceRotateRect);
     displayContours(contours);
-
 }
 
-void test_FrmVisionDisplay::onDrawLinesBtnClicked()
-{
+void test_FrmVisionDisplay::onDrawLinesBtnClicked() {
     // 构造几条经过原点的直线
     std::vector<cv::Vec4f> lines;
 
@@ -196,26 +192,38 @@ void test_FrmVisionDisplay::onDrawLinesBtnClicked()
     PLOG_INFO << "绘制了" << lines.size() << "条经过原点的直线";
 }
 
-void test_FrmVisionDisplay::onDrawContoursBtnClicked()
-{
+void test_FrmVisionDisplay::onDrawContoursBtnClicked() {
     std::vector<std::vector<cv::Point2f>> contours;
-    std::vector<cv::Point2f> contourPoints1 = {{0,0}, {100,0}, {100,100}, {0,100}};
-    std::vector<cv::Point2f> contourPoints2 = {{500,0}, {500,0}, {100,100}, {0,500}};
+    std::vector<cv::Point2f> contourPoints1 = {
+        {0,   0  },
+        {100, 0  },
+        {100, 100},
+        {0,   100}
+    };
+    std::vector<cv::Point2f> contourPoints2 = {
+        {500, 0  },
+        {500, 0  },
+        {100, 100},
+        {0,   500}
+    };
     contours.push_back(contourPoints1);
     contours.push_back(contourPoints2);
     displayContours(contours);
     PLOG_INFO << "绘制了" << contours.size() << "条轮廓";
 }
 
-void test_FrmVisionDisplay::onDrawPointsBtnClicked()
-{
-    std::vector<cv::Point2f> points1 = {{0,0}, {100,0}, {100,100}, {0,100}};
+void test_FrmVisionDisplay::onDrawPointsBtnClicked() {
+    std::vector<cv::Point2f> points1 = {
+        {0,   0  },
+        {100, 0  },
+        {100, 100},
+        {0,   100}
+    };
     displayPoints(points1);
     LOG_INFO << "绘制了" << points1.size() << "个点";
 }
 
-void test_FrmVisionDisplay::onDrawBSplineBtnClicked()
-{
+void test_FrmVisionDisplay::onDrawBSplineBtnClicked() {
     // 构造B样条曲线的控制点
     std::vector<cv::Point2f> controlPoints;
 
@@ -235,8 +243,7 @@ void test_FrmVisionDisplay::onDrawBSplineBtnClicked()
 }
 
 // 添加旋转矩形按钮点击槽函数实现
-void test_FrmVisionDisplay::onDrawRotatedRectBtnClicked()
-{
+void test_FrmVisionDisplay::onDrawRotatedRectBtnClicked() {
     // 构造几个旋转矩形用于测试
     std::vector<cv::RotatedRect> rotatedRects;
 
@@ -278,8 +285,7 @@ void test_FrmVisionDisplay::onDrawRotatedRectBtnClicked()
     PLOG_INFO << "绘制了" << rotatedRects.size() << "个旋转矩形";
 }
 
-void test_FrmVisionDisplay::onClearDisplayBtnClicked()
-{
+void test_FrmVisionDisplay::onClearDisplayBtnClicked() {
     DisplayManager* displayMgr = m_frmDisplay->getDisplayManager();
     if (!displayMgr) return;
 
@@ -290,8 +296,3 @@ void test_FrmVisionDisplay::onClearDisplayBtnClicked()
 
     PLOG_INFO << "已清除所有显示内容";
 }
-
-
-
-
-

@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
     // TestConvertCoordinate t;
     // t.pixel2World();
 
-    JointView w;
-    w.show();
+    // JointView w;
+    // w.show();
 
     // std::shared_ptr<CameraImageProcessor> imageProcessor;
     // imageProcessor = std::make_shared<CameraImageProcessor>();
@@ -63,7 +63,6 @@ int main(int argc, char *argv[]) {
 
     // TestDxfWriter td;
     // td.run();
-
 
     return a.exec();
 }

@@ -1,23 +1,24 @@
 ﻿#include "cis_camera_image.h"
 
+#include <QGraphicsLineItem>
+#include <QGraphicsScene>
+#include <fstream>
+#include <sstream>
+
 #include "src/cameraFactory/abstract_camera.h"
 #include "src/cameraFactory/abstract_camera_factory.h"
 #include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
+#include "src/config/calibration_data_io.h"
 #include "src/rail/rail_widget.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
+#include "src/ui/utils/display/graphicItems/axes_item.h"
+#include "src/ui/utils/display/graphicItems/circle_item.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_component.h"
+#include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
+#include "src/ui/utils/display/graphicItems/point_item.h"
 #include "src/utils/image_utils.cpp"
 #include "ui_cis_camera_image.h"
-#include <fstream>
-#include <sstream>
-#include "src/config/calibration_data_io.h"
-#include "src/ui/utils/display/graphicItems/axes_item.h"
-#include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
-#include <QGraphicsLineItem>
-#include <QGraphicsScene>
-#include "src/config/calibration_data_io.h"
-#include "src/ui/utils/display/graphicItems/graphic_item_composite.h"
-#include "src/ui/utils/display/graphicItems/graphic_item_component.h"
 #define ENABLE_SLAVE_CAMERA
 CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     ui->setupUi(this);
@@ -159,6 +160,7 @@ void CISWidget::initCameraImageProcessor() {
     connect(imageProcessor.get(), &CameraImageProcessor::text, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
     connect(imageProcessor.get(), &CameraImageProcessor::error, this, &CISWidget::whenAppendMessageLog, Qt::QueuedConnection);
     connect(imageProcessor.get(), &CameraImageProcessor::platformCalibDone, this, &CISWidget::whenDrawPlatformAxes, Qt::QueuedConnection);
+    connect(imageProcessor.get(), &CameraImageProcessor::platformCalibDone, this, &CISWidget::whenDrawDetectCircles, Qt::QueuedConnection);
     QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->initCameraCalibrator(); }, Qt::QueuedConnection);
 }
 void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
@@ -435,7 +437,10 @@ void CISWidget::whenDrawPlatformAxes() {
     imageProcessor->setWorldPose(wRvec, wTvec);
 
     // 2. 收集像素坐标
-    struct PlatAxes { int id; double cx, cy, xx, xy, yx, yy; };
+    struct PlatAxes {
+        int id;
+        double cx, cy, xx, xy, yx, yy;
+    };
     std::vector<PlatAxes> axes;
     const double axisLen = 3.2;  // ~150 像素
 
@@ -459,20 +464,11 @@ void CISWidget::whenDrawPlatformAxes() {
         auto px = imageProcessor->convertToPix(pts);
         axes.push_back({pid, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
         std::cout << "平台 " << pid << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
-        // 往返验证: 像素→世界，对比 JSON 里的 T
-        {
-            auto worldBack = imageProcessor->convertToWorld({{px[0].x(), px[0].y()}});
-            if (!worldBack.empty())
-                std::cout << "  往返世界(" << worldBack[0].x() << "," << worldBack[0].y()
-                          << ")  JSON T(" << T_w(0) << "," << T_w(1) << ")"
-                          << " 偏差(" << worldBack[0].x()-T_w(0) << "," << worldBack[0].y()-T_w(1) << ")" << std::endl;
-        }
-
         pos = end + 1;
     }
     imageProcessor->setWorldPose(savedR, savedT);
 
-    // 3. 加载原图，画轴，保存（全精度，无转换损失）
+    // 3. 加载原图，画轴，画拟合的圆
     if (axes.empty()) return;
 
     cv::Mat img = readLargeBMP("./data/PaltfromCalibrate/vis/vis.bmp");
@@ -483,68 +479,85 @@ void CISWidget::whenDrawPlatformAxes() {
     cv::Mat gray = img.clone();  // 独立副本，不破坏 vis.bmp
     if (gray.channels() == 3) cv::cvtColor(gray, gray, cv::COLOR_BGR2GRAY);
 
+    ui->imgSplice->clearAllGraphicComponents();
     for (auto& a : axes) {
-        cv::Point center(cvRound(a.cx), cvRound(a.cy));
-        cv::Point xTip(cvRound(a.xx), cvRound(a.xy));
-        cv::Point yTip(cvRound(a.yx), cvRound(a.yy));
-
-        cv::arrowedLine(gray, center, xTip, cv::Scalar(0), 1, cv::LINE_AA);       // X轴(黑,1px)
-        cv::arrowedLine(gray, center, yTip, cv::Scalar(0), 1, cv::LINE_AA);       // Y轴(黑,1px)
-        cv::circle(gray, center, 1, cv::Scalar(0), -1, cv::LINE_AA);
-        // X/Y 标签放在轴中间位置（离中心近，在亮区）
-        cv::Point xMid((center.x + xTip.x) / 2, (center.y + xTip.y) / 2);
-        cv::Point yMid((center.x + yTip.x) / 2, (center.y + yTip.y) / 2);
-        cv::putText(gray, "X", xMid, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-        cv::putText(gray, "Y", yMid, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-        cv::putText(gray, std::to_string(a.id), cv::Point(center.x+10, center.y-8),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
+        std::shared_ptr<AxesItem> CpAxis = std::make_shared<AxesItem>(a.cx, a.cy, a.xx, a.xy, a.yx, a.yy, a.id);
+        ui->imgSplice->addGraphicComponent(CpAxis);
     }
-
-    // 手动写 8-bit 灰度 BMP，绕过 OpenCV 像素限制
-    {
-        std::ofstream f("./data/PaltfromCalibrate/vis/result_axes.bmp", std::ios::binary);
-        int w = gray.cols, h = gray.rows;
-        int stride = ((w + 3) / 4) * 4;
-        uint32_t fileSize = 14 + 40 + 1024 + stride * h;  // 1024 = 256×4 调色板
-        // BITMAPFILEHEADER
-        f.put('B').put('M');
-        f.write(reinterpret_cast<const char*>(&fileSize), 4);
-        uint32_t reserved = 0; f.write(reinterpret_cast<const char*>(&reserved), 4);
-        uint32_t offBits = 14 + 40 + 1024; f.write(reinterpret_cast<const char*>(&offBits), 4);
-        // BITMAPINFOHEADER
-        uint32_t biSize = 40; int32_t biWidth = w, biHeight = h;
-        uint16_t biPlanes = 1, biBitCount = 8;
-        uint32_t biCompression = 0, biSizeImage = stride * h;
-        int32_t biXPels = 2835, biYPels = 2835;
-        uint32_t biClrUsed = 256, biClrImportant = 0;
-        f.write(reinterpret_cast<const char*>(&biSize), 4);
-        f.write(reinterpret_cast<const char*>(&biWidth), 4);
-        f.write(reinterpret_cast<const char*>(&biHeight), 4);
-        f.write(reinterpret_cast<const char*>(&biPlanes), 2);
-        f.write(reinterpret_cast<const char*>(&biBitCount), 2);
-        f.write(reinterpret_cast<const char*>(&biCompression), 4);
-        f.write(reinterpret_cast<const char*>(&biSizeImage), 4);
-        f.write(reinterpret_cast<const char*>(&biXPels), 4);
-        f.write(reinterpret_cast<const char*>(&biYPels), 4);
-        f.write(reinterpret_cast<const char*>(&biClrUsed), 4);
-        f.write(reinterpret_cast<const char*>(&biClrImportant), 4);
-        // 调色板 (256 灰度)
-        for (int i = 0; i < 256; ++i) {
-            uint8_t c = static_cast<uint8_t>(i);
-            f.write(reinterpret_cast<const char*>(&c), 1);  // B
-            f.write(reinterpret_cast<const char*>(&c), 1);  // G
-            f.write(reinterpret_cast<const char*>(&c), 1);  // R
-            uint8_t zero = 0; f.write(reinterpret_cast<const char*>(&zero), 1);
-        }
-        // 像素数据 (bottom-up)
-        std::vector<uint8_t> row(stride, 0);
-        for (int r = h - 1; r >= 0; --r) {
-            memcpy(row.data(), gray.ptr(r), w);
-            f.write(reinterpret_cast<const char*>(row.data()), stride);
-        }
-    }
-    std::cout << "已保存: result_axes.bmp" << std::endl;
     ui->imgSplice->displayImage(std::make_shared<cv::Mat>(gray), true);
+}
+
+void CISWidget::whenDrawDetectCircles() {
+    if (!imageProcessor) return;
+
+    // 定义blob参数
+    cv::SimpleBlobDetector::Params params;
+    params.minArea = 7e4;
+    params.maxArea = 8e4;
+    params.minCircularity = 0.7f;
+    params.filterByCircularity = true;
+    params.filterByColor = false;
+    params.filterByConvexity = false;
+    params.filterByInertia = false;
+
+    // 创建blob检测对象
+    cv::Ptr<cv::FeatureDetector> blobDetector = cv::SimpleBlobDetector::create(params);
+
+    // 读取图片
+    std::vector<cv::KeyPoint> keypoints;
+    cv::Mat img = readLargeBMP("./data/PaltfromCalibrate/vis/vis.bmp");
+    if (img.empty()) img = cv::imread("./data/PaltfromCalibrate/vis/vis.bmp", cv::IMREAD_UNCHANGED);
+    if (img.empty()) return;
+
+    // 检测圆形光源（粗定位）
+    blobDetector->detect(img, keypoints);
+    if (keypoints.empty()) return;
+
+    // 灰度图
+    cv::Mat gray;
+    if (img.channels() == 3)
+        cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+    else
+        gray = img.clone();
+
+    // 阈值二值化 → 只取纯白区域（阈值 240，图像灰度范围 0-255）
+    cv::Mat binary;
+    cv::threshold(gray, binary, 240, 255, cv::THRESH_BINARY);
+
+    // 在二值图上找轮廓，拟合圆
+    std::vector<cv::Point2d> centers;
+    std::vector<double> diameters;
+    const int pad = 20;
+    for (auto& kp : keypoints) {
+        int cx = cvRound(kp.pt.x), cy = cvRound(kp.pt.y);
+        int roiSize = cvRound(kp.size) + pad * 2;
+        int x = std::max(0, cx - roiSize / 2);
+        int y = std::max(0, cy - roiSize / 2);
+        int w = std::min(roiSize, binary.cols - x);
+        int h = std::min(roiSize, binary.rows - y);
+
+        // 在 ROI 内找白色轮廓
+        cv::Mat roiBin = binary(cv::Rect(x, y, w, h));
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(roiBin, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+
+        if (contours.empty()) continue;
+
+        // 取面积最大的轮廓，用 minEnclosingCircle 拟合
+        auto& cnt = *std::max_element(contours.begin(), contours.end(), [](auto& a, auto& b) { return cv::contourArea(a) < cv::contourArea(b); });
+        if (cnt.size() < 6) continue;
+
+        cv::Point2f center;
+        float radius;
+        cv::minEnclosingCircle(cnt, center, radius);
+        // 还原到原图坐标
+        centers.emplace_back(center.x + x, center.y + y);
+        diameters.push_back(radius * 2.0);
+    }
+
+    // 画到 imgSplice
+    std::shared_ptr<CircleItem> circleLight = std::make_shared<CircleItem>(centers, diameters, Qt::green, 1.0, 15.0);
+    ui->imgSplice->addGraphicComponent(circleLight);
 }
 
 std::vector<Eigen::Vector2d> CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {

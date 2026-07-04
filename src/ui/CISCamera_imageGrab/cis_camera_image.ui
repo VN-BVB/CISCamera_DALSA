@@ -40,7 +40,7 @@
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -338,54 +338,17 @@
          <string>相机-对位平台标定</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0" colspan="2">
-          <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,1">
-           <item>
-            <widget class="FrmVisionDisplay" name="graphicsView">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>1000</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="FrmVisionDisplay" name="graphicsView_3">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>1000</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="FrmVisionDisplay" name="graphicsView_4">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>1000</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="FrmVisionDisplay" name="graphicsView_2">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>1000</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="FrmVisionDisplay" name="graphicsView_6"/>
-           </item>
-          </layout>
+         <item row="0" column="1">
+          <widget class="FrmVisionDisplay" name="graphicsView_5">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
          </item>
-         <item row="1" column="0">
+         <item row="0" column="0">
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -567,16 +530,6 @@
             </layout>
            </item>
           </layout>
-         </item>
-         <item row="1" column="1">
-          <widget class="FrmVisionDisplay" name="graphicsView_5">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
          </item>
         </layout>
        </widget>
