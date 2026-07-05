@@ -65,14 +65,14 @@ void MeasurementMonitor::setupUi() {
     m_rightSplitter->addWidget(m_dataSourcePanel);
     m_rightSplitter->addWidget(m_resultPanel);
     m_rightSplitter->setStretchFactor(0, 1);
-    m_rightSplitter->setStretchFactor(1, 2);
+    m_rightSplitter->setStretchFactor(1, 1);
 
     rightLayout->addWidget(m_rightSplitter);
 
     m_mainSplitter->addWidget(m_imageDisplay);
     m_mainSplitter->addWidget(rightPanel);
-    m_mainSplitter->setStretchFactor(0, 3);
-    m_mainSplitter->setStretchFactor(1, 1);
+    m_mainSplitter->setStretchFactor(0, 5);
+    m_mainSplitter->setStretchFactor(1, 2);
 
     mainLayout->addWidget(m_mainSplitter, 1);
 

@@ -20,7 +20,6 @@ private:
     void setupMenuBar();
     void setupPages();
     void setupConnections();
-    void applyDarkStyle();
 
 private slots:
     void onMenuButtonClicked(int index);
