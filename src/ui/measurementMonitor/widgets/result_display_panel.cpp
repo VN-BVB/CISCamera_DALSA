@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QScrollArea>
 
+#include "../qss_loader.h"
 #include "measurement_data_card.h"
 
 ResultDisplayPanel::ResultDisplayPanel(QWidget *parent)
@@ -44,7 +45,8 @@ void ResultDisplayPanel::setupMeasurementResultsTab() {
     layout->setSpacing(12);
 
     m_statusLabel = new QLabel(QString::fromUtf8("Status: IDLE"), m_resultsTab);
-    m_statusLabel->setStyleSheet("font-size: 13px; color: #808080; padding: 5px;");
+    m_statusLabel->setObjectName("statusLabel");
+    m_statusLabel->setProperty("state", "idle");
     layout->addWidget(m_statusLabel);
 
     m_gapWidthCard = new MeasurementDataCard(QString::fromUtf8("Gap Width"), QString::fromUtf8("mm"), m_resultsTab);
@@ -68,7 +70,7 @@ void ResultDisplayPanel::setupDisplaySettingsTab() {
     layout->setSpacing(8);
 
     QLabel* descLabel = new QLabel(QString::fromUtf8("勾选以在左侧图像上叠加显示辅助信息："), m_settingsTab);
-    descLabel->setStyleSheet("font-size: 12px; color: #AAAAAA;");
+    descLabel->setObjectName("descLabel");
     descLabel->setWordWrap(true);
     layout->addWidget(descLabel);
 
@@ -79,7 +81,7 @@ void ResultDisplayPanel::setupDisplaySettingsTab() {
     layout->addWidget(m_chkRoiFrame);
 
     QLabel* roiDesc = new QLabel(QString::fromUtf8("蓝色虚线，标记分析区域"), m_settingsTab);
-    roiDesc->setStyleSheet("font-size: 11px; color: #808080; margin-left: 24px;");
+    roiDesc->setObjectName("roiDesc");
     layout->addWidget(roiDesc);
 
     layout->addSpacing(5);
@@ -89,7 +91,7 @@ void ResultDisplayPanel::setupDisplaySettingsTab() {
     layout->addWidget(m_chkFittedCenterLine);
 
     QLabel* lineDesc = new QLabel(QString::fromUtf8("绿色实线，拼缝中心位置"), m_settingsTab);
-    lineDesc->setStyleSheet("font-size: 11px; color: #808080; margin-left: 24px;");
+    lineDesc->setObjectName("lineDesc");
     layout->addWidget(lineDesc);
 
     layout->addSpacing(5);
@@ -99,7 +101,7 @@ void ResultDisplayPanel::setupDisplaySettingsTab() {
     layout->addWidget(m_chkMeasurementPoints);
 
     QLabel* pointDesc = new QLabel(QString::fromUtf8("红色点，边缘关键计算点"), m_settingsTab);
-    pointDesc->setStyleSheet("font-size: 11px; color: #808080; margin-left: 24px;");
+    pointDesc->setObjectName("pointDesc");
     layout->addWidget(pointDesc);
 
     layout->addSpacing(5);
@@ -109,7 +111,7 @@ void ResultDisplayPanel::setupDisplaySettingsTab() {
     layout->addWidget(m_chkSubpixelContour);
 
     QLabel* contourDesc = new QLabel(QString::fromUtf8("亚像素精度的轮廓信息"), m_settingsTab);
-    contourDesc->setStyleSheet("font-size: 11px; color: #808080; margin-left: 24px;");
+    contourDesc->setObjectName("contourDesc");
     layout->addWidget(contourDesc);
 
     layout->addStretch();
@@ -132,15 +134,17 @@ void ResultDisplayPanel::setStatus(const QString &status) {
     QString displayStatus = QString::fromUtf8("Status: ") + status;
     m_statusLabel->setText(displayStatus);
 
+    QString state;
     if (status == QString::fromUtf8("IDLE")) {
-        m_statusLabel->setStyleSheet("font-size: 13px; color: #808080; padding: 5px;");
+        state = "idle";
     } else if (status == QString::fromUtf8("MEASURING")) {
-        m_statusLabel->setStyleSheet("font-size: 13px; color: #FFC107; padding: 5px;");
+        state = "measuring";
     } else if (status == QString::fromUtf8("ERROR")) {
-        m_statusLabel->setStyleSheet("font-size: 13px; color: #F44336; padding: 5px;");
+        state = "error";
     } else {
-        m_statusLabel->setStyleSheet("font-size: 13px; color: #4CAF50; padding: 5px;");
+        state = "ok";
     }
+    qss_loader::setState(m_statusLabel, "state", state);
 }
 
 DisplayOverlayFlags ResultDisplayPanel::getDisplayOverlayFlags() const {

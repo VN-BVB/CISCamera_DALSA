@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/mm">
+        <file>measurement_monitor.qss</file>
+    </qresource>
+</RCC>

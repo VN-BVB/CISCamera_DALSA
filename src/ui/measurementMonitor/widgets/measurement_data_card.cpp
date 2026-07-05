@@ -1,6 +1,7 @@
 #include "measurement_data_card.h"
 
 #include <QBoxLayout>
+#include "../qss_loader.h"
 
 MeasurementDataCard::MeasurementDataCard(const QString &title, const QString &unit, QWidget *parent)
     : QFrame(parent)
@@ -29,7 +30,7 @@ void MeasurementDataCard::setupUi() {
     leftLayout->setSpacing(5);
 
     m_titleLabel = new QLabel(m_title, leftWidget);
-    m_titleLabel->setStyleSheet("font-size: 12px; color: #AAAAAA; background: transparent;");
+    m_titleLabel->setObjectName("titleLabel");
     leftLayout->addWidget(m_titleLabel);
 
     QWidget* valueWidget = new QWidget(leftWidget);
@@ -38,11 +39,12 @@ void MeasurementDataCard::setupUi() {
     valueLayout->setSpacing(5);
 
     m_valueLabel = new QLabel("--", valueWidget);
-    m_valueLabel->setStyleSheet("font-size: 22px; font-weight: bold; color: #4CAF50; background: transparent;");
+    m_valueLabel->setObjectName("valueLabel");
+    m_valueLabel->setProperty("state", "invalid");
     valueLayout->addWidget(m_valueLabel);
 
     m_unitLabel = new QLabel(m_unit, valueWidget);
-    m_unitLabel->setStyleSheet("font-size: 12px; color: #AAAAAA; background: transparent;");
+    m_unitLabel->setObjectName("unitLabel");
     valueLayout->addWidget(m_unitLabel);
     valueLayout->addStretch();
 
@@ -50,13 +52,12 @@ void MeasurementDataCard::setupUi() {
     mainLayout->addWidget(leftWidget, 1);
 
     m_statusIcon = new QLabel(this);
+    m_statusIcon->setObjectName("statusIcon");
     m_statusIcon->setFixedSize(24, 24);
     m_statusIcon->setText(QString::fromUtf8("○"));
-    m_statusIcon->setStyleSheet("font-size: 20px; color: #808080; background: transparent;");
+    m_statusIcon->setProperty("state", "invalid");
     m_statusIcon->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(m_statusIcon);
-
-    updateStyle();
 }
 
 void MeasurementDataCard::setValue(double value, bool valid) {
@@ -65,28 +66,18 @@ void MeasurementDataCard::setValue(double value, bool valid) {
 
     if (valid) {
         m_valueLabel->setText(QString::number(value, 'f', 3));
-        m_valueLabel->setStyleSheet("font-size: 22px; font-weight: bold; color: #4CAF50; background: transparent;");
+        qss_loader::setState(m_valueLabel, "state", "valid");
         m_statusIcon->setText(QString::fromUtf8("✓"));
-        m_statusIcon->setStyleSheet("font-size: 18px; color: #4CAF50; background: transparent;");
+        qss_loader::setState(m_statusIcon, "state", "valid");
     } else {
         m_valueLabel->setText("--");
-        m_valueLabel->setStyleSheet("font-size: 22px; font-weight: bold; color: #808080; background: transparent;");
+        qss_loader::setState(m_valueLabel, "state", "invalid");
         m_statusIcon->setText(QString::fromUtf8("○"));
-        m_statusIcon->setStyleSheet("font-size: 20px; color: #808080; background: transparent;");
+        qss_loader::setState(m_statusIcon, "state", "invalid");
     }
 }
 
 void MeasurementDataCard::setTitle(const QString &title) {
     m_title = title;
     m_titleLabel->setText(title);
-}
-
-void MeasurementDataCard::updateStyle() {
-    setStyleSheet(R"(
-        MeasurementDataCard {
-            background-color: #2D2D2D;
-            border: 1px solid #3D3D3D;
-            border-radius: 6px;
-        }
-    )");
 }

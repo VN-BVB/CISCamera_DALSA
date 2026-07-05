@@ -1,0 +1,120 @@
+/* ====== Color palette (QSS 无变量，仅注释分组参考) ======
+   BG_PANEL   #2D2D2D   BG_INNER #252526   BG_DEEP  #1E1E1E
+   BORDER     #3D3D3D   TEXT_DIM #AAAAAA    TEXT_MUTE #808080
+   TEXT_FG    #D4D4D4   TEXT_HI  #FFFFFF
+   OK         #4CAF50   WARN    #FFC107     ERR      #F44336
+   INFO       #2196F3
+   ======================================================= */
+
+/* ----- LogPanel ----- */
+LogPanel {
+    background-color: #1E1E1E;
+    border-top: 1px solid #3D3D3D;
+}
+LogPanel #titleLabel {
+    font-size: 13px;
+    font-weight: bold;
+    color: #AAAAAA;
+}
+LogPanel QTextEdit {
+    background-color: #252526;
+    color: #D4D4D4;
+    border: 1px solid #3D3D3D;
+    border-radius: 4px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 12px;
+    padding: 5px;
+}
+
+/* ----- MeasurementDataCard ----- */
+MeasurementDataCard {
+    background-color: #2D2D2D;
+    border: 1px solid #3D3D3D;
+    border-radius: 6px;
+}
+MeasurementDataCard QLabel {
+    background: transparent;
+}
+MeasurementDataCard #titleLabel,
+MeasurementDataCard #unitLabel {
+    font-size: 12px;
+    color: #AAAAAA;
+}
+MeasurementDataCard #valueLabel {
+    font-size: 22px;
+    font-weight: bold;
+}
+MeasurementDataCard #valueLabel[state="valid"] {
+    color: #4CAF50;
+}
+MeasurementDataCard #valueLabel[state="invalid"] {
+    color: #808080;
+}
+MeasurementDataCard #statusIcon {
+    font-size: 20px;
+    color: #808080;
+}
+MeasurementDataCard #statusIcon[state="valid"] {
+    color: #4CAF50;
+    font-size: 18px;
+}
+MeasurementDataCard #statusIcon[state="invalid"] {
+    font-size: 20px;
+}
+
+/* ----- ResultDisplayPanel ----- */
+ResultDisplayPanel #statusLabel {
+    font-size: 13px;
+    padding: 5px;
+}
+ResultDisplayPanel #statusLabel[state="idle"] {
+    color: #808080;
+}
+ResultDisplayPanel #statusLabel[state="measuring"] {
+    color: #FFC107;
+}
+ResultDisplayPanel #statusLabel[state="error"] {
+    color: #F44336;
+}
+ResultDisplayPanel #statusLabel[state="ok"] {
+    color: #4CAF50;
+}
+ResultDisplayPanel QLabel#descLabel {
+    font-size: 12px;
+    color: #AAAAAA;
+}
+ResultDisplayPanel QLabel#roiDesc,
+ResultDisplayPanel QLabel#lineDesc,
+ResultDisplayPanel QLabel#pointDesc,
+ResultDisplayPanel QLabel#contourDesc {
+    font-size: 11px;
+    color: #808080;
+    margin-left: 24px;
+}
+
+/* ----- DataSourcePanel ----- */
+DataSourcePanel #titleLabel {
+    font-size: 14px;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+DataSourcePanel #sectionTitle {
+    font-size: 13px;
+    font-weight: bold;
+}
+DataSourcePanel #connectionStatus,
+DataSourcePanel #filePath {
+    font-size: 12px;
+}
+DataSourcePanel #connectionStatus[state="online"] {
+    color: #4CAF50;
+}
+DataSourcePanel #connectionStatus[state="offline"] {
+    color: #808080;
+}
+DataSourcePanel #filePath[state="set"] {
+    color: #FFFFFF;
+}
+DataSourcePanel #filePath[state="empty"] {
+    color: #808080;
+}

@@ -5,6 +5,8 @@
 #include <QLabel>
 #include <QVariant>
 
+#include "../qss_loader.h"
+
 DataSourcePanel::DataSourcePanel(QWidget *parent)
     : QWidget(parent)
     , m_currentMode(Mode::SharedMemory)
@@ -29,7 +31,7 @@ void DataSourcePanel::setupUi() {
     mainLayout->setSpacing(12);
 
     QLabel* titleLabel = new QLabel(QString::fromUtf8("数据源与操作"), this);
-    titleLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #FFFFFF;");
+    titleLabel->setObjectName("titleLabel");
     mainLayout->addWidget(titleLabel);
 
     QWidget* modeSwitchWidget = new QWidget(this);
@@ -62,11 +64,12 @@ void DataSourcePanel::setupUi() {
     sharedMemLayout->setSpacing(10);
 
     QLabel* sharedMemTitle = new QLabel(QString::fromUtf8("共享内存流"), m_sharedMemoryPage);
-    sharedMemTitle->setStyleSheet("font-size: 13px; font-weight: bold;");
+    sharedMemTitle->setObjectName("sectionTitle");
     sharedMemLayout->addWidget(sharedMemTitle);
 
     m_lblConnectionStatus = new QLabel(QString::fromUtf8("● 未连接 (Offline)"), m_sharedMemoryPage);
-    m_lblConnectionStatus->setStyleSheet("color: #808080; font-size: 12px;");
+    m_lblConnectionStatus->setObjectName("connectionStatus");
+    m_lblConnectionStatus->setProperty("state", "offline");
     sharedMemLayout->addWidget(m_lblConnectionStatus);
 
     m_btnConnect = new QPushButton(QString::fromUtf8("连接"), m_sharedMemoryPage);
@@ -83,11 +86,12 @@ void DataSourcePanel::setupUi() {
     localFileLayout->setSpacing(10);
 
     QLabel* localFileTitle = new QLabel(QString::fromUtf8("本地图像"), m_localFilePage);
-    localFileTitle->setStyleSheet("font-size: 13px; font-weight: bold;");
+    localFileTitle->setObjectName("sectionTitle");
     localFileLayout->addWidget(localFileTitle);
 
     m_lblFilePath = new QLabel(QString::fromUtf8("未选择文件"), m_localFilePage);
-    m_lblFilePath->setStyleSheet("color: #808080; font-size: 12px;");
+    m_lblFilePath->setObjectName("filePath");
+    m_lblFilePath->setProperty("state", "empty");
     m_lblFilePath->setWordWrap(true);
     localFileLayout->addWidget(m_lblFilePath);
 
@@ -150,11 +154,11 @@ void DataSourcePanel::onConnectClicked() {
 void DataSourcePanel::updateConnectionUI() {
     if (m_isConnected) {
         m_lblConnectionStatus->setText(QString::fromUtf8("● 已连接 (Online)"));
-        m_lblConnectionStatus->setStyleSheet("color: #4CAF50; font-size: 12px;");
+        qss_loader::setState(m_lblConnectionStatus, "state", "online");
         m_btnConnect->setText(QString::fromUtf8("断开"));
     } else {
         m_lblConnectionStatus->setText(QString::fromUtf8("● 未连接 (Offline)"));
-        m_lblConnectionStatus->setStyleSheet("color: #808080; font-size: 12px;");
+        qss_loader::setState(m_lblConnectionStatus, "state", "offline");
         m_btnConnect->setText(QString::fromUtf8("连接"));
     }
 }
@@ -191,5 +195,5 @@ void DataSourcePanel::setFilePath(const QString &path) {
     m_currentFilePath = path;
     QFileInfo fileInfo(path);
     m_lblFilePath->setText(fileInfo.fileName());
-    m_lblFilePath->setStyleSheet("color: #FFFFFF; font-size: 12px;");
+    qss_loader::setState(m_lblFilePath, "state", path.isEmpty() ? "empty" : "set");
 }

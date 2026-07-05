@@ -24,6 +24,11 @@ private:
     QString getLevelString(LogLevel level) const;
     QString getLevelColor(LogLevel level) const;
 
+    static constexpr const char* kColorInfo = "#2196F3";
+    static constexpr const char* kColorWarning = "#FFC107";
+    static constexpr const char* kColorError = "#F44336";
+    static constexpr const char* kColorSuccess = "#4CAF50";
+
 private:
     QTextEdit* m_logTextEdit;
 };
