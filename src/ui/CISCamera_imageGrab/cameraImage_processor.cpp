@@ -1,5 +1,7 @@
 #include "cameraImage_processor.h"
 
+#include <QDebug>
+
 #include "src/config/config_manager.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
@@ -735,9 +737,10 @@ std::vector<Eigen::Vector2d> CameraImageProcessor::convertToPix(const std::vecto
     return pix_pts;
 }
 
+// 选标定板上的一个点，给出一定距离后的像素坐标，将这两个点转到世界坐标下后算出来欧式距离和投影到x轴上的距离，看方向向量有没有求错
 void CameraImageProcessor::debugProjectionDistancesFromFixedPixels() {
-    const Eigen::Vector2d refPix1(17201, 2787);
-    const Eigen::Vector2d refPix2(17209, 2646);
+    const Eigen::Vector2d refPix1(9043, 5795);
+    const Eigen::Vector2d refPix2(9280, 5809);
 
     // 参考的世界坐标系方向，按你的要求使用这组向量
     const Eigen::Vector2d dirX(0.0397084390641, 0.999211308917);
@@ -748,19 +751,30 @@ void CameraImageProcessor::debugProjectionDistancesFromFixedPixels() {
     const std::vector<Eigen::Vector2d> worldRef2 = convertToWorld({refPix2});
 
     if (worldRef1.empty()) {
-        std::cout << "debugProjectionDistancesFromFixedPixels: worldRef1 转换到世界坐标失败" << std::endl;
+        qDebug() << "方向向量验证: worldRef1 转换到世界坐标失败";
         return;
     }
 
     const Eigen::Vector2d xdir_unit2d = dirX.normalized();
     const Eigen::Vector2d refWorldPt = worldRef1.front();
+    // 点积，得到投影点到旋转中心在x轴的长度（投影标量）
     const double refProj = refWorldPt.dot(xdir_unit2d);
+    // 得到2D坐标（投影点）
     const Eigen::Vector2d refProjPt = refProj * xdir_unit2d;
 
-    std::cout << "debugProjectionDistancesFromFixedPixels: dirX = " << dirX.transpose() << ", dirY = " << dirY.transpose()
-              << ", centerT = " << centerT.transpose() << std::endl;
-    std::cout << "debugProjectionDistancesFromFixedPixels: 第一个参考世界点 = " << refWorldPt.transpose() << ", 投影标量 = " << refProj
-              << ", 投影点 = " << refProjPt.transpose() << std::endl;
+    qDebug() << QString("方向向量验证: dirX = (%1, %2), dirY = (%3, %4), centerT = (%5, %6)")
+                    .arg(QString::number(dirX.x(), 'f', 4))
+                    .arg(QString::number(dirX.y(), 'f', 4))
+                    .arg(QString::number(dirY.x(), 'f', 4))
+                    .arg(QString::number(dirY.y(), 'f', 4))
+                    .arg(QString::number(centerT.x(), 'f', 2))
+                    .arg(QString::number(centerT.y(), 'f', 2));
+    qDebug() << QString("方向向量验证: 第一个参考世界点 = (%1, %2), 投影标量 = %3, 投影点 = (%4, %5)")
+                    .arg(QString::number(refWorldPt.x(), 'f', 2))
+                    .arg(QString::number(refWorldPt.y(), 'f', 2))
+                    .arg(QString::number(refProj, 'f', 2))
+                    .arg(QString::number(refProjPt.x(), 'f', 2))
+                    .arg(QString::number(refProjPt.y(), 'f', 2));
 
     const std::vector<Eigen::Vector2d> testWorldPts = {
         refWorldPt,
@@ -769,16 +783,18 @@ void CameraImageProcessor::debugProjectionDistancesFromFixedPixels() {
 
     for (size_t i = 0; i < testWorldPts.size(); ++i) {
         const Eigen::Vector2d& p = testWorldPts[i];
+        // 两个点相减得到refWorldPt指向p的向量，再求模长
         const double rawDist = (p - refWorldPt).norm();
+        // 两个点都投影到x轴方向向量上，再求模长
         const double proj = p.dot(xdir_unit2d);
         const Eigen::Vector2d projPt = proj * xdir_unit2d;
         const double dist = (projPt - refProjPt).norm();
 
-        std::cout << "debugProjectionDistancesFromFixedPixels: 点 " << i << " 投影前距离 = " << rawDist << " mm，投影后距离 = " << dist << " mm"
-                  << std::endl;
+        qDebug() << QString("方向向量验证: 点 %1 投影前距离 = %2 mm，投影后距离 = %3 mm").arg(i).arg(rawDist, 0, 'f', 2).arg(dist, 0, 'f', 2);
     }
 }
 
+// 虚拟移动，输入像素坐标，转换到世界坐标系下移动并转回来，得到移动后的对应像素坐标
 Eigen::Vector2d CameraImageProcessor::applyWorldOffsetToPixel(const Eigen::Vector2d& world_pt) {
     // ====== id=0 对位平台标定数据（硬编码自 platform_pose.json）======
     // dirX = 方向向量（平台X轴在世界坐标系的方向, 前2分量）
@@ -791,15 +807,15 @@ Eigen::Vector2d CameraImageProcessor::applyWorldOffsetToPixel(const Eigen::Vecto
 
     // ====== 方向向量平移 + 绕旋转中心旋转 ======
     // ---------- 硬编码参数（按需修改） ----------
-    const double kTranslateX_mm = 3.0;  // 沿 dirX 方向向量的平移量 (mm)
+    const double kTranslateX_mm = 0.0;  // 沿 dirX 方向向量的平移量 (mm)
     const double kTranslateY_mm = 0.0;  // 沿 dirY 方向向量的平移量 (mm)
-    const double kRotate_deg = 0.0;     // 绕旋转中心旋转的角度 (度)
+    const double kRotate_deg = 10.0;    // 绕旋转中心旋转的角度 (度)
     // -------------------------------------------
 
     // 沿 dirX / dirY 方向向量平移
     Eigen::Vector2d translated = world_pt + dirX * kTranslateX_mm + dirY * kTranslateY_mm;
 
-    // 绕旋转中心 centerT 旋转
+    // 绕旋转中心 centerT 旋转（平移到世界原点旋转，转完再平移回去）
     double rad = kRotate_deg * M_PI / 180.0;
     double c = std::cos(rad);
     double s = std::sin(rad);

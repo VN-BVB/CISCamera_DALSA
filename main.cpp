@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QDebug>
 // clang-format off
 #include <winsock2.h>
 #include <windows.h>
@@ -33,12 +34,20 @@ int main(int argc, char *argv[]) {
     }
 
     Eigen::Vector2d pix1(225.7406, 555.4853);
-    std::vector<Eigen::Vector2d> pix2{Eigen::Vector2d(17201, 2787)};
+    std::vector<Eigen::Vector2d> pix2{Eigen::Vector2d(8779, 5557)};
     CameraImageProcessor test;
     test.initCameraCalibrator();
     PLOG_INFO << "===========" << test.convertToWorld(pix2)[0];
-    Eigen::Vector2d reb = test.applyWorldOffsetToPixel(test.convertToWorld(pix2)[0]);
-    std::cout << "llllll" << reb << std::endl;
+
+    const Eigen::Vector2d origPix = pix2[0];
+    const Eigen::Vector2d worldPt = test.convertToWorld(pix2)[0];
+    Eigen::Vector2d reb = test.applyWorldOffsetToPixel(worldPt);
+
+    qDebug() << QString("虚拟移动验证: 处理前像素(%1, %2) → 处理后像素(%3, %4)")
+                    .arg(QString::number(origPix.x(), 'f', 2))
+                    .arg(QString::number(origPix.y(), 'f', 2))
+                    .arg(QString::number(reb.x(), 'f', 2))
+                    .arg(QString::number(reb.y(), 'f', 2));
 
     test.debugProjectionDistancesFromFixedPixels();
 

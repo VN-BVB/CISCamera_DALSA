@@ -1,4 +1,5 @@
 ﻿#include "telecentricplatform_calib.h"
+#include <QDebug>
 
 TelecentricPlatformCalib::TelecentricPlatformCalib() {}
 // void TelecentricPlatformCalib::iniCalibParams() {
@@ -835,8 +836,12 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
     Eigen::Vector3d xdir(xdir2d.x(), xdir2d.y(), 0.0);
     Eigen::Vector3d ydir(ydir2d.x(), ydir2d.y(), 0.0);
     const Eigen::Vector2d xdir_unit2d = xdir2d.normalized();
-    std::cout << "X方向(累计): " << xdir2d.norm() << "mm, dir=" << xdir.head<2>().normalized().transpose() << std::endl;
-    std::cout << "Y方向(累计): " << ydir2d.norm() << "mm, dir=" << ydir.head<2>().normalized().transpose() << std::endl;
+    {
+        Eigen::Vector2d xn = xdir.head<2>().normalized();
+        Eigen::Vector2d yn = ydir.head<2>().normalized();
+        qDebug() << QString("X方向(累计): %1 mm, dir = (%2, %3)").arg(xdir2d.norm(), 0, 'f', 2).arg(xn.x(), 0, 'f', 4).arg(xn.y(), 0, 'f', 4);
+        qDebug() << QString("Y方向(累计): %1 mm, dir = (%2, %3)").arg(ydir2d.norm(), 0, 'f', 2).arg(yn.x(), 0, 'f', 4).arg(yn.y(), 0, 'f', 4);
+    }
 
     if (!xWorlds.empty() && !xWorlds.front().empty()) {
         const Eigen::Vector2d refPt(17212, 2641);
@@ -855,10 +860,12 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
 
         const Eigen::Vector2d refWorldPt = xWorldsForDebug.front()[0];
         const double refProj = refWorldPt.dot(xdir_unit2d);
-        std::cout << "dddddd" << xdir_unit2d << std::endl;
+        qDebug() << QString("X方向单位向量: (%1, %2)").arg(xdir_unit2d.x(), 0, 'f', 6).arg(xdir_unit2d.y(), 0, 'f', 6);
         const Eigen::Vector2d refProjPt = refProj * xdir_unit2d;
-        std::cout << "XAAAA: " << "第一个标定板第一个点投影到 x 方向上的参考点 = " << refProjPt.transpose() << "，投影标量 = " << refProj
-                  << std::endl;
+        qDebug() << QString("X方向投影验证: 第一个标定板第一个点投影到x方向上的参考点 = (%1, %2)，投影标量 = %3")
+                        .arg(QString::number(refProjPt.x(), 'f', 2))
+                        .arg(QString::number(refProjPt.y(), 'f', 2))
+                        .arg(QString::number(refProj, 'f', 2));
 
         for (size_t i = 0; i < xWorldsForDebug.size(); ++i) {
             if (xWorldsForDebug[i].empty()) {
@@ -869,7 +876,10 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
             const double proj = p.dot(xdir_unit2d);
             const Eigen::Vector2d projPt = proj * xdir_unit2d;
             const double dist = (projPt - refProjPt).norm();
-            std::cout << "AAAA: " << " 标定板 " << i << " aaaaa " << rawDist << " mm，" << "BBBB" << dist << " mm" << std::endl;
+            qDebug() << QString("标定板投影验证: 标定板 %1 投影前距离 = %2 mm，投影后距离 = %3 mm")
+                            .arg(i)
+                            .arg(rawDist, 0, 'f', 2)
+                            .arg(dist, 0, 'f', 2);
         }
     }
 

@@ -4,6 +4,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += c++17
 CONFIG += release debug_info
 
+qmake
+msvc {
+    QMAKE_CXXFLAGS += /utf-8
+}
+
+
 QMAKE_CXXFLAGS += /MP
 QMAKE_CXXFLAGS += /bigobj
 QMAKE_CXXFLAGS += /utf-8
