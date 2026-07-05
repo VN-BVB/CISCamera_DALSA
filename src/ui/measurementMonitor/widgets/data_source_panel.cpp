@@ -170,7 +170,7 @@ void DataSourcePanel::onOpenFileClicked() {
                                                  "Images (*.png *.jpg *.bmp *.tif)");
     if (!path.isEmpty()) {
         setFilePath(path);
-        emit fileSelected(path);
+        emit startImageRead(path);
     }
 }
 

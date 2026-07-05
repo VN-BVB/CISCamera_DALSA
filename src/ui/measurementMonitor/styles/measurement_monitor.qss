@@ -101,9 +101,6 @@ DataSourcePanel #connectionStatus[state="online"] {
 DataSourcePanel #connectionStatus[state="offline"] {
     color: #808080;
 }
-DataSourcePanel #filePath[state="set"] {
-    color: #FFFFFF;
-}
 DataSourcePanel #filePath[state="empty"] {
     color: #808080;
 }

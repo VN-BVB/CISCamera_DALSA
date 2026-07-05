@@ -18,8 +18,10 @@
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/ui/jointView/joint_view.h"
 #include "src/utils/plog_utils.h"
-#include "src/ui/measurementMonitor/measurement_monitor.h"
 #include "src/ui/measurementMonitor/qss_loader.h"
+#include "src/ui/measurementMonitor/measurement_monitor.h"
+#include "src/ui/measurementMonitor/models/measurement_pipeline.h"
+#include "src/ui/measurementMonitor/presenters/measurement_presenter.h"
 #include "src/ui/mainwindow/main_window.h"
 
 int main(int argc, char *argv[]) {
@@ -42,8 +44,14 @@ int main(int argc, char *argv[]) {
     // JointView w;
     // w.show();
 
-    MainWindow w;
-    w.show();
+    // Temporary: MeasurementMonitor with MVP architecture
+    MeasurementMonitor view;
+    MeasurementPipeline model;
+    MeasurementPresenter presenter(&view, &model);
+    view.show();
+
+    // MainWindow w;
+    // w.show();
 
     // MeasurementMonitor m;
     // m.show();
