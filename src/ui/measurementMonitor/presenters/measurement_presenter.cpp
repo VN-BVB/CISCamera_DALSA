@@ -13,6 +13,7 @@ MeasurementPresenter::MeasurementPresenter(MeasurementMonitor* view,
 {
     connectViewToPresenter();
     connectModelToPresenter();
+    m_view->setMeasurementEnabled(false);
 }
 
 void MeasurementPresenter::connectViewToPresenter() {
@@ -31,8 +32,6 @@ void MeasurementPresenter::connectViewToPresenter() {
             this, &MeasurementPresenter::onExecuteSingleMeasurementRequested);
     connect(m_view, &MeasurementMonitor::displayOverlayFlagsChanged,
             this, &MeasurementPresenter::onDisplayOverlayFlagsChanged);
-
-    PLOG_INFO << "Presenter: connected view signals to presenter slots";
 }
 
 void MeasurementPresenter::connectModelToPresenter() {
@@ -43,12 +42,12 @@ void MeasurementPresenter::connectModelToPresenter() {
             this, &MeasurementPresenter::onMeasurementCompleted);
     connect(m_model, &MeasurementPipeline::errorOccurred,
             this, &MeasurementPresenter::onErrorOccurred);
-
-    PLOG_INFO << "Presenter: connected model signals to presenter slots";
 }
 
 void MeasurementPresenter::onStartImageReadRequested(const QString& path) {
     PLOG_INFO << "Presenter: onStartImageReadRequested - " << path.toStdString();
+    m_view->setMeasurementEnabled(false);
+    m_view->setStatus(QString::fromUtf8("读取中..."));
     m_model->readFromFile(path);
 }
 
@@ -73,12 +72,15 @@ void MeasurementPresenter::onStopAutoMeasurementRequested() {
 }
 
 void MeasurementPresenter::onExecuteSingleMeasurementRequested() {
-    PLOG_INFO << "Presenter: onExecuteSingleMeasurementRequested";
-    if (m_lastImage) {
-        m_model->processImage(m_lastImage);
-    } else {
-        m_view->appendLog(QString::fromUtf8("无图像可重测"), LogPanel::LogLevel::Warning);
+    PLOG_INFO << "开始处理单张图像";
+    if (!m_lastImage) {
+        PLOG_WARNING << "Presenter: execute requested but no image loaded";
+        m_view->appendLog(QString::fromUtf8("请先选择图像文件"), LogPanel::LogLevel::Warning);
+        return;
     }
+    m_view->setMeasurementEnabled(false);
+    m_view->setStatus(QString::fromUtf8("测量中..."));
+    m_model->processImage(m_lastImage);
 }
 
 void MeasurementPresenter::onDisplayOverlayFlagsChanged(const DisplayOverlayFlags& flags) {
@@ -89,20 +91,23 @@ void MeasurementPresenter::onDisplayOverlayFlagsChanged(const DisplayOverlayFlag
 }
 
 void MeasurementPresenter::onImageRead(std::shared_ptr<cv::Mat> image) {
-    PLOG_INFO << "Presenter: onImageRead - caching image and auto-triggering process";
     m_lastImage = image;
-    // Automatically trigger processing after image read
-    m_model->processImage(image);
+    m_view->displayOriginalImage(image);
+    m_view->setMeasurementEnabled(true);
+    m_view->setStatus(QString::fromUtf8("就绪 - 点击执行测量"));
 }
 
 void MeasurementPresenter::onMeasurementCompleted(std::shared_ptr<cv::Mat> image,
                                                    std::shared_ptr<JointSeam> seam) {
     PLOG_INFO << "Presenter: onMeasurementCompleted - sending to view";
     m_view->displayMeasurementResult(image, seam);
+    m_view->setMeasurementEnabled(true);
+    m_view->setStatus(QString::fromUtf8("测量完成"));
 }
 
 void MeasurementPresenter::onErrorOccurred(const QString& msg) {
     PLOG_ERROR << "Presenter: onErrorOccurred - " << msg.toStdString();
     m_view->appendLog(msg, LogPanel::LogLevel::Error);
     m_view->setStatus(QString::fromUtf8("ERROR"));
+    m_view->setMeasurementEnabled(m_lastImage != nullptr);
 }

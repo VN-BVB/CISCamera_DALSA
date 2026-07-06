@@ -197,3 +197,7 @@ void DataSourcePanel::setFilePath(const QString &path) {
     m_lblFilePath->setText(fileInfo.fileName());
     qss_loader::setState(m_lblFilePath, "state", path.isEmpty() ? "empty" : "set");
 }
+
+void DataSourcePanel::setMeasurementEnabled(bool enabled) {
+    m_btnExecute->setEnabled(enabled);
+}

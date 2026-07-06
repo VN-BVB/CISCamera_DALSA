@@ -25,8 +25,10 @@ public:
     void appendLog(const QString& msg, LogPanel::LogLevel level = LogPanel::LogLevel::Info);
     void displayMeasurementResult(std::shared_ptr<cv::Mat> image,
                                   std::shared_ptr<JointSeam> seam);
+    void displayOriginalImage(std::shared_ptr<cv::Mat> image);
     void setConnectionStatus(bool connected);
     void setFilePath(const QString& path);
+    void setMeasurementEnabled(bool enabled);
 
 signals:
     // View → Presenter: user operations (forwarder signals from widgets)

@@ -150,3 +150,13 @@ void MeasurementMonitor::setConnectionStatus(bool connected) {
 void MeasurementMonitor::setFilePath(const QString& path) {
     m_dataSourcePanel->setFilePath(path);
 }
+
+void MeasurementMonitor::setMeasurementEnabled(bool enabled) {
+    m_dataSourcePanel->setMeasurementEnabled(enabled);
+}
+
+void MeasurementMonitor::displayOriginalImage(std::shared_ptr<cv::Mat> image) {
+    appendLog(QString::fromUtf8("图像加载完成"));
+    m_imageDisplay->displayImage(image, true);
+    m_imageDisplay->clearAllGraphicComponents();
+}

@@ -49,7 +49,7 @@ void MeasurementPipeline::setupWorkers() {
     m_readThread.start();
     m_processThread.start();
 
-    PLOG_INFO << "MeasurementPipeline: workers initialized and threads started";
+    PLOG_INFO << "读图和处理图像worker初始化成功";
 }
 
 void MeasurementPipeline::readFromFile(const QString& path) {
@@ -71,7 +71,7 @@ void MeasurementPipeline::processImage(std::shared_ptr<cv::Mat> image) {
 }
 
 void MeasurementPipeline::onWorkerImageRead(std::shared_ptr<cv::Mat> image) {
-    PLOG_INFO << "Pipeline: onWorkerImageRead - emitting imageRead";
+    // PLOG_INFO << "Pipeline: onWorkerImageRead - emitting imageRead";
     emit imageRead(image);
 }
 
