@@ -99,14 +99,10 @@ void MeasurementMonitor::setStatus(const QString& status) {
     m_resultPanel->setStatus(status);
 }
 
-void MeasurementMonitor::appendLog(const QString& msg, LogPanel::LogLevel level) {
-    m_logPanel->appendLog(msg, level);
-}
-
 void MeasurementMonitor::displayMeasurementResult(std::shared_ptr<cv::Mat> image,
                                                   std::shared_ptr<JointSeam> seam) {
     PLOG_INFO << "View: displayMeasurementResult";
-    appendLog(QString::fromUtf8("图像处理完成"));
+    PLOG_INFO << "图像处理完成";
 
     m_imageDisplay->displayImage(image, true);
     m_imageDisplay->clearAllGraphicComponents();
@@ -156,7 +152,6 @@ void MeasurementMonitor::setMeasurementEnabled(bool enabled) {
 }
 
 void MeasurementMonitor::displayOriginalImage(std::shared_ptr<cv::Mat> image) {
-    appendLog(QString::fromUtf8("图像加载完成"));
     m_imageDisplay->displayImage(image, true);
     m_imageDisplay->clearAllGraphicComponents();
 }

@@ -5,11 +5,16 @@
 #include <QLabel>
 #include <QScrollBar>
 
+#include <plog/Severity.h>
+
 LogPanel::LogPanel(QWidget *parent)
     : QWidget(parent)
     , m_logTextEdit(nullptr)
 {
     setupUi();
+
+    connect(&PlogQtAppender::instance(), &PlogQtAppender::logMessage,
+            this, &LogPanel::onPlogMessage);
 }
 
 void LogPanel::setupUi() {
@@ -51,6 +56,24 @@ void LogPanel::clear() {
 
 void LogPanel::onLogReceived(const QString &message) {
     appendLog(message, LogLevel::Info);
+}
+
+void LogPanel::onPlogMessage(int severity, const QString &message) {
+    LogLevel level;
+    switch (static_cast<plog::Severity>(severity)) {
+        case plog::fatal:
+        case plog::error:
+            level = LogLevel::Error;
+            break;
+        case plog::warning:
+            level = LogLevel::Warning;
+            break;
+        case plog::info:
+        default:
+            level = LogLevel::Info;
+            break;
+    }
+    appendLog(message, level);
 }
 
 QString LogPanel::getTimestamp() const {

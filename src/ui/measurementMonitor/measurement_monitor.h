@@ -22,7 +22,6 @@ public:
 
     // Presenter → View: display commands
     void setStatus(const QString& status);
-    void appendLog(const QString& msg, LogPanel::LogLevel level = LogPanel::LogLevel::Info);
     void displayMeasurementResult(std::shared_ptr<cv::Mat> image,
                                   std::shared_ptr<JointSeam> seam);
     void displayOriginalImage(std::shared_ptr<cv::Mat> image);

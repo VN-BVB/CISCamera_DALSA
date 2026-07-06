@@ -1,7 +1,6 @@
 #include "measurement_presenter.h"
 
 #include "../measurement_monitor.h"
-#include "../widgets/log_panel.h"
 #include "src/utils/plog_utils.h"
 
 MeasurementPresenter::MeasurementPresenter(MeasurementMonitor* view,
@@ -45,7 +44,6 @@ void MeasurementPresenter::connectModelToPresenter() {
 }
 
 void MeasurementPresenter::onStartImageReadRequested(const QString& path) {
-    PLOG_INFO << "Presenter: onStartImageReadRequested - " << path.toStdString();
     m_view->setMeasurementEnabled(false);
     m_view->setStatus(QString::fromUtf8("读取中..."));
     m_model->readFromFile(path);
@@ -74,8 +72,7 @@ void MeasurementPresenter::onStopAutoMeasurementRequested() {
 void MeasurementPresenter::onExecuteSingleMeasurementRequested() {
     PLOG_INFO << "开始处理单张图像";
     if (!m_lastImage) {
-        PLOG_WARNING << "Presenter: execute requested but no image loaded";
-        m_view->appendLog(QString::fromUtf8("请先选择图像文件"), LogPanel::LogLevel::Warning);
+        PLOG_WARNING << "请先选择图像文件";
         return;
     }
     m_view->setMeasurementEnabled(false);
@@ -107,7 +104,6 @@ void MeasurementPresenter::onMeasurementCompleted(std::shared_ptr<cv::Mat> image
 
 void MeasurementPresenter::onErrorOccurred(const QString& msg) {
     PLOG_ERROR << "Presenter: onErrorOccurred - " << msg.toStdString();
-    m_view->appendLog(msg, LogPanel::LogLevel::Error);
     m_view->setStatus(QString::fromUtf8("ERROR"));
     m_view->setMeasurementEnabled(m_lastImage != nullptr);
 }

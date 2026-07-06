@@ -49,11 +49,10 @@ void MeasurementPipeline::setupWorkers() {
     m_readThread.start();
     m_processThread.start();
 
-    PLOG_INFO << "读图和处理图像worker初始化成功";
+    PLOG_INFO << "测量处理管道初始化成功";
 }
 
 void MeasurementPipeline::readFromFile(const QString& path) {
-    PLOG_INFO << "Pipeline: readFromFile - " << path.toStdString();
     QMetaObject::invokeMethod(m_readWorker, "whenReadImage",
                               Q_ARG(const QString&, path));
 }
