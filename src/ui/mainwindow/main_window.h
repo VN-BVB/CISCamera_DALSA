@@ -7,6 +7,8 @@
 #include <memory>
 
 class MeasurementMonitor;
+class MeasurementPipeline;
+class MeasurementPresenter;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -34,6 +36,9 @@ private:
     MeasurementMonitor* m_measurementMonitor;
     QWidget* m_systemCalibrationPage;
     QWidget* m_configManagementPage;
+
+    std::unique_ptr<MeasurementPipeline>  m_pipeline;
+    std::unique_ptr<MeasurementPresenter> m_presenter;
 };
 
 #endif  // MAIN_WINDOW_H

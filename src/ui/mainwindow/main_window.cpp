@@ -6,6 +6,8 @@
 #include <QVBoxLayout>
 
 #include "src/ui/measurementMonitor/measurement_monitor.h"
+#include "src/ui/measurementMonitor/models/measurement_pipeline.h"
+#include "src/ui/measurementMonitor/presenters/measurement_presenter.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -81,6 +83,10 @@ void MainWindow::setupPages() {
 
     m_measurementMonitor = new MeasurementMonitor(this);
     m_stackedWidget->addWidget(m_measurementMonitor);
+
+    // 组装测量监控的MVP
+    m_pipeline  = std::make_unique<MeasurementPipeline>();
+    m_presenter = std::make_unique<MeasurementPresenter>(m_measurementMonitor, m_pipeline.get(), this);
 
     m_systemCalibrationPage = new QWidget(this);
     QVBoxLayout* calibLayout = new QVBoxLayout(m_systemCalibrationPage);
