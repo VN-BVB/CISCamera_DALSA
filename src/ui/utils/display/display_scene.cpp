@@ -41,8 +41,7 @@ DisplayScene::DisplayScene(DisplayView *parentView)
     d_ptr(new DisplayScenePrivate(this))
 {
     m_parentView->setScene(this);
-    setDisplayImageItem(m_displayImageItem);
-    // 将主图像图元添加到列表
+    this->addItem(m_displayImageItem);
     m_displayImageItems.append(m_displayImageItem);
 }
 
@@ -52,28 +51,6 @@ DisplayScene::~DisplayScene()
     whenClearAllDisplayImages();
 }
 
-bool DisplayScene::whenDisplayImage(const QImage &image, bool bAutoFit)
-{
-    if (!m_displayImageItem) return false;
-    emit sendUpdateDisplayImage(image);
-    auto bRet =  m_displayImageItem->displayImage(image);
-    if (!bRet) return false;
-    m_parentView->whenUpdateDisplayFit();    // 更新父视图图像合适尺寸
-    if (bAutoFit)
-    {
-        m_parentView->whenZoomToDisplayFit();
-    }
-    return true;
-}
-
-void DisplayScene::whenClearImage()
-{
-    if (!m_displayImageItem) return ;
-    m_displayImageItem->clearImage();
-    emit sendClearDisplayImage();
-}
-
-// 新接口实现：添加图像图元并显示图像
 DisplayImageItem* DisplayScene::whenAddDisplayImage(const QImage &image, const QPointF &pos, bool bAutoFit)
 {
     // 创建新的图像图元
@@ -174,16 +151,6 @@ void DisplayScene::whenClearAllDisplayTextItems()
         delete textItem;
     }
     m_displayTextItems.clear();
-}
-
-QPixmap DisplayScene::getDisplayImage()
-{
-    return m_displayImageItem ? m_displayImageItem->pixmap() : QPixmap();
-}
-
-QSize DisplayScene::getDisplayImageSize() const
-{
-    return m_displayImageItem ? m_displayImageItem->getDisplayImageSize() : QSize();
 }
 
 void DisplayScene::setDisplayImageItem(DisplayImageItem* imageItem)

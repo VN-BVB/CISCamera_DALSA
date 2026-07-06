@@ -50,7 +50,6 @@ void test_multiRoi::displayMultiRoi()
     QImage overlayImage2("E:/work/车门门环拼接/image/背面打光/9/1/4382_23770.bmp");
     QImage overlayImage3("E:/work/车门门环拼接/image/背面打光/9/1/6611_3858.bmp");
 
-    scene->whenDisplayImage(mainImage, true);
     DisplayImageItem* iamgeItem1 = scene->whenAddDisplayImage(overlayImage1, QPointF(500, 100));
     DisplayImageItem* iamgeItem2 = scene->whenAddDisplayImage(overlayImage2, QPointF(1000, 100));
     DisplayImageItem* iamgeItem3 = scene->whenAddDisplayImage(overlayImage3, QPointF(4000, 1000));
