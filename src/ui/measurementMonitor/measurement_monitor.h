@@ -1,18 +1,16 @@
 #ifndef MEASUREMENT_MONITOR_H
 #define MEASUREMENT_MONITOR_H
 
-#include <QThread>
 #include <QWidget>
 #include <memory>
-#include <opencv2/core/core.hpp>
+
+#include "src/jointDetection/joint_seam.h"
+#include "src/ui/measurementMonitor/widgets/log_panel.h"
+#include "src/ui/measurementMonitor/widgets/result_display_panel.h"
 
 class FrmVisionDisplay;
-class ImageReadWorker;
-class ImageProcessWorker;
-class JointSeam;
 class DataSourcePanel;
 class ResultDisplayPanel;
-class LogPanel;
 class QSplitter;
 
 class MeasurementMonitor : public QWidget {
@@ -22,19 +20,28 @@ public:
     explicit MeasurementMonitor(QWidget *parent = nullptr);
     ~MeasurementMonitor();
 
+    // Presenter → View: display commands
+    void setStatus(const QString& status);
+    void displayMeasurementResult(std::shared_ptr<cv::Mat> image,
+                                  std::shared_ptr<JointSeam> seam);
+    void displayOriginalImage(std::shared_ptr<cv::Mat> image);
+    void setConnectionStatus(bool connected);
+    void setFilePath(const QString& path);
+    void setMeasurementEnabled(bool enabled);
+
+signals:
+    // View → Presenter: user operations (forwarder signals from widgets)
+    void startImageReadRequested(const QString& path);
+    void startImageReadFromSharedMemoryRequested(int pid);
+    void stopSharedMemoryRequested();
+    void startAutoMeasurementRequested();
+    void stopAutoMeasurementRequested();
+    void executeSingleMeasurementRequested();
+    void displayOverlayFlagsChanged(const DisplayOverlayFlags& flags);
+
 private:
     void setupUi();
-    void setupWorkers();
-    void setupConnections();
-
-private slots:
-    void onImageRead(std::shared_ptr<cv::Mat> image);
-    void onImageProcessed(std::shared_ptr<cv::Mat> processedImage,
-                          std::shared_ptr<JointSeam> jointSeam);
-    void onError(const QString &error);
-    void onDisplayOverlayFlagsChanged();
-    void onFileSelected(const QString &path);
-    void onExecuteSingleMeasurementRequested();
+    void setupInternalSignals();  // Connect widget signals to forwarder signals
 
 private:
     FrmVisionDisplay* m_imageDisplay;
@@ -43,13 +50,6 @@ private:
     LogPanel* m_logPanel;
     QSplitter* m_mainSplitter;
     QSplitter* m_rightSplitter;
-
-    QThread m_readThread;
-    QThread m_processThread;
-    ImageReadWorker* m_readWorker;
-    ImageProcessWorker* m_processWorker;
-
-    std::shared_ptr<cv::Mat> m_currentImage;
 };
 
 #endif  // MEASUREMENT_MONITOR_H

@@ -17,6 +17,7 @@ public:
 
     void setConnectionStatus(bool connected);
     void setFilePath(const QString &path);
+    void setMeasurementEnabled(bool enabled);
     Mode getCurrentMode() const { return m_currentMode; }
     bool isConnected() const { return m_isConnected; }
 
@@ -26,7 +27,7 @@ signals:
     void disconnectSharedMemoryRequested();
     void startAutoMeasurementRequested();
     void stopAutoMeasurementRequested();
-    void fileSelected(const QString &path);
+    void startImageRead(const QString &path);
     void executeSingleMeasurementRequested();
 
 private slots:

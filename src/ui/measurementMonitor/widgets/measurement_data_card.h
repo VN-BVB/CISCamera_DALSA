@@ -17,7 +17,6 @@ public:
 
 private:
     void setupUi();
-    void updateStyle();
 
 private:
     QString m_title;

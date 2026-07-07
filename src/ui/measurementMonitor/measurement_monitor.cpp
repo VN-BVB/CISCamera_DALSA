@@ -3,16 +3,15 @@
 #include <QBoxLayout>
 #include <QSplitter>
 
-#include "src/jointDetection/image_process_worker.h"
-#include "src/jointDetection/image_read_worker.h"
-#include "src/jointDetection/joint_seam.h"
 #include "src/ui/measurementMonitor/widgets/data_source_panel.h"
 #include "src/ui/measurementMonitor/widgets/log_panel.h"
 #include "src/ui/measurementMonitor/widgets/result_display_panel.h"
+
 #include "src/ui/utils/display/frm_display.h"
 #include "src/ui/utils/display/graphicItems/contour_item.h"
 #include "src/ui/utils/display/graphicItems/line_item.h"
 #include "src/ui/utils/display/graphicItems/point_item.h"
+#include "src/utils/plog_utils.h"
 
 MeasurementMonitor::MeasurementMonitor(QWidget *parent)
     : QWidget(parent)
@@ -22,20 +21,12 @@ MeasurementMonitor::MeasurementMonitor(QWidget *parent)
     , m_logPanel(nullptr)
     , m_mainSplitter(nullptr)
     , m_rightSplitter(nullptr)
-    , m_readWorker(new ImageReadWorker)
-    , m_processWorker(new ImageProcessWorker)
 {
     setupUi();
-    setupWorkers();
-    setupConnections();
+    setupInternalSignals();
 }
 
-MeasurementMonitor::~MeasurementMonitor() {
-    m_readThread.quit();
-    m_readThread.wait();
-    m_processThread.quit();
-    m_processThread.wait();
-}
+MeasurementMonitor::~MeasurementMonitor() = default;
 
 void MeasurementMonitor::setupUi() {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -65,14 +56,14 @@ void MeasurementMonitor::setupUi() {
     m_rightSplitter->addWidget(m_dataSourcePanel);
     m_rightSplitter->addWidget(m_resultPanel);
     m_rightSplitter->setStretchFactor(0, 1);
-    m_rightSplitter->setStretchFactor(1, 2);
+    m_rightSplitter->setStretchFactor(1, 1);
 
     rightLayout->addWidget(m_rightSplitter);
 
     m_mainSplitter->addWidget(m_imageDisplay);
     m_mainSplitter->addWidget(rightPanel);
-    m_mainSplitter->setStretchFactor(0, 3);
-    m_mainSplitter->setStretchFactor(1, 1);
+    m_mainSplitter->setStretchFactor(0, 5);
+    m_mainSplitter->setStretchFactor(1, 2);
 
     mainLayout->addWidget(m_mainSplitter, 1);
 
@@ -81,50 +72,45 @@ void MeasurementMonitor::setupUi() {
     mainLayout->addWidget(m_logPanel);
 }
 
-void MeasurementMonitor::setupWorkers() {
-    m_readWorker->moveToThread(&m_readThread);
-    m_processWorker->moveToThread(&m_processThread);
-
-    connect(&m_readThread, &QThread::finished, m_readWorker, &QObject::deleteLater);
-    connect(&m_processThread, &QThread::finished, m_processWorker, &QObject::deleteLater);
-
-    m_readThread.start();
-    m_processThread.start();
-}
-
-void MeasurementMonitor::setupConnections() {
-    connect(m_readWorker, &ImageReadWorker::sendImageRead, this, &MeasurementMonitor::onImageRead);
-    connect(m_readWorker, &ImageReadWorker::sendErrorOccurred, this, &MeasurementMonitor::onError);
-
-    connect(this, &MeasurementMonitor::onImageRead, m_processWorker, &ImageProcessWorker::whenProcessImage);
-
-    connect(m_processWorker, &ImageProcessWorker::imageProcessed, this, &MeasurementMonitor::onImageProcessed);
-    connect(m_processWorker, &ImageProcessWorker::errorOccurred, this, &MeasurementMonitor::onError);
-
-    connect(m_dataSourcePanel, &DataSourcePanel::fileSelected, this, &MeasurementMonitor::onFileSelected);
+void MeasurementMonitor::setupInternalSignals() {
+    // DataSourcePanel → forwarder signals
+    connect(m_dataSourcePanel, &DataSourcePanel::startImageRead,
+            this, &MeasurementMonitor::startImageReadRequested);
+    connect(m_dataSourcePanel, &DataSourcePanel::connectSharedMemoryRequested,
+            [this](int pid) {
+                PLOG_INFO << "View: connectSharedMemoryRequested - PID=" << pid;
+                emit startImageReadFromSharedMemoryRequested(pid);
+            });
+    connect(m_dataSourcePanel, &DataSourcePanel::disconnectSharedMemoryRequested,
+            this, &MeasurementMonitor::stopSharedMemoryRequested);
+    connect(m_dataSourcePanel, &DataSourcePanel::startAutoMeasurementRequested,
+            this, &MeasurementMonitor::startAutoMeasurementRequested);
+    connect(m_dataSourcePanel, &DataSourcePanel::stopAutoMeasurementRequested,
+            this, &MeasurementMonitor::stopAutoMeasurementRequested);
     connect(m_dataSourcePanel, &DataSourcePanel::executeSingleMeasurementRequested,
-            this, &MeasurementMonitor::onExecuteSingleMeasurementRequested);
+            this, &MeasurementMonitor::executeSingleMeasurementRequested);
 
+    // ResultDisplayPanel → forwarder signal
     connect(m_resultPanel, &ResultDisplayPanel::displayOverlayFlagsChanged,
-            this, &MeasurementMonitor::onDisplayOverlayFlagsChanged);
+            this, &MeasurementMonitor::displayOverlayFlagsChanged);
 }
 
-void MeasurementMonitor::onImageRead(std::shared_ptr<cv::Mat> image) {
-    m_currentImage = image;
-    m_logPanel->appendLog(QString::fromUtf8("图像读取完成，开始处理..."));
+void MeasurementMonitor::setStatus(const QString& status) {
+    m_resultPanel->setStatus(status);
 }
 
-void MeasurementMonitor::onImageProcessed(std::shared_ptr<cv::Mat> processedImage,
-                                          std::shared_ptr<JointSeam> jointSeam) {
-    m_logPanel->appendLog(QString::fromUtf8("图像处理完成"));
+void MeasurementMonitor::displayMeasurementResult(std::shared_ptr<cv::Mat> image,
+                                                  std::shared_ptr<JointSeam> seam) {
+    PLOG_INFO << "View: displayMeasurementResult";
+    PLOG_INFO << "图像处理完成";
 
-    m_imageDisplay->displayImage(processedImage, true);
+    m_imageDisplay->displayImage(image, true);
     m_imageDisplay->clearAllGraphicComponents();
 
     auto overlayFlags = m_resultPanel->getDisplayOverlayFlags();
 
     if (overlayFlags.showSubpixelContour) {
-        for (const auto& contourData : jointSeam->getContourDatas()) {
+        for (const auto& contourData : seam->getContourDatas()) {
             auto contour = contourData.getSortedContour();
             if (!contour.empty()) {
                 auto contourItem = std::make_shared<ContourItem>(contour, ContourItem::subpixelContour, Qt::red, 2);
@@ -134,7 +120,7 @@ void MeasurementMonitor::onImageProcessed(std::shared_ptr<cv::Mat> processedImag
     }
 
     if (overlayFlags.showFittedCenterLine) {
-        for (const auto& contourData : jointSeam->getContourDatas()) {
+        for (const auto& contourData : seam->getContourDatas()) {
             for (const auto& line : contourData.getTangentLines()) {
                 auto lineItem = std::make_shared<LineItem>(line, 0.5, 100, Qt::green);
                 m_imageDisplay->addGraphicComponent(lineItem);
@@ -143,7 +129,7 @@ void MeasurementMonitor::onImageProcessed(std::shared_ptr<cv::Mat> processedImag
     }
 
     if (overlayFlags.showMeasurementPoints) {
-        for (const auto& contourData : jointSeam->getContourDatas()) {
+        for (const auto& contourData : seam->getContourDatas()) {
             for (const auto& intersection : contourData.getIntersections()) {
                 std::vector<cv::Point2f> points = {intersection.coordinates};
                 auto pointItem = std::make_shared<PointItem>(points, Qt::blue, 0.5, 10.0);
@@ -153,18 +139,19 @@ void MeasurementMonitor::onImageProcessed(std::shared_ptr<cv::Mat> processedImag
     }
 }
 
-void MeasurementMonitor::onError(const QString &error) {
-    m_logPanel->appendLog(QString::fromUtf8("错误: ") + error);
+void MeasurementMonitor::setConnectionStatus(bool connected) {
+    m_dataSourcePanel->setConnectionStatus(connected);
 }
 
-void MeasurementMonitor::onDisplayOverlayFlagsChanged() {
-    m_logPanel->appendLog(QString::fromUtf8("显示设置已更新"));
+void MeasurementMonitor::setFilePath(const QString& path) {
+    m_dataSourcePanel->setFilePath(path);
 }
 
-void MeasurementMonitor::onFileSelected(const QString &path) {
-    m_logPanel->appendLog(QString::fromUtf8("选择文件: ") + path);
+void MeasurementMonitor::setMeasurementEnabled(bool enabled) {
+    m_dataSourcePanel->setMeasurementEnabled(enabled);
 }
 
-void MeasurementMonitor::onExecuteSingleMeasurementRequested() {
-    m_logPanel->appendLog(QString::fromUtf8("开始执行单次测量..."));
+void MeasurementMonitor::displayOriginalImage(std::shared_ptr<cv::Mat> image) {
+    m_imageDisplay->displayImage(image, true);
+    m_imageDisplay->clearAllGraphicComponents();
 }

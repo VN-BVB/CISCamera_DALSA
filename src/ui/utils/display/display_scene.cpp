@@ -36,14 +36,10 @@ public:
 DisplayScene::DisplayScene(DisplayView *parentView)
     :QGraphicsScene(parentView),    // 派生类调用父类构造函数
     m_parentView(parentView),
-    m_displayImageItem(new DisplayImageItem(this)),
     m_graphicItemComposite(std::make_shared<GraphicItemComposite>()),
     d_ptr(new DisplayScenePrivate(this))
 {
     m_parentView->setScene(this);
-    setDisplayImageItem(m_displayImageItem);
-    // 将主图像图元添加到列表
-    m_displayImageItems.append(m_displayImageItem);
 }
 
 DisplayScene::~DisplayScene()
@@ -52,28 +48,6 @@ DisplayScene::~DisplayScene()
     whenClearAllDisplayImages();
 }
 
-bool DisplayScene::whenDisplayImage(const QImage &image, bool bAutoFit)
-{
-    if (!m_displayImageItem) return false;
-    emit sendUpdateDisplayImage(image);
-    auto bRet =  m_displayImageItem->displayImage(image);
-    if (!bRet) return false;
-    m_parentView->whenUpdateDisplayFit();    // 更新父视图图像合适尺寸
-    if (bAutoFit)
-    {
-        m_parentView->whenZoomToDisplayFit();
-    }
-    return true;
-}
-
-void DisplayScene::whenClearImage()
-{
-    if (!m_displayImageItem) return ;
-    m_displayImageItem->clearImage();
-    emit sendClearDisplayImage();
-}
-
-// 新接口实现：添加图像图元并显示图像
 DisplayImageItem* DisplayScene::whenAddDisplayImage(const QImage &image, const QPointF &pos, bool bAutoFit)
 {
     // 创建新的图像图元
@@ -105,25 +79,12 @@ DisplayImageItem* DisplayScene::whenAddDisplayImage(const QImage &image, const Q
 void DisplayScene::whenRemoveDisplayImage(DisplayImageItem* imageItem)
 {
     if (!imageItem) return;
-    
+
     // 从场景中移除
     this->removeItem(imageItem);
     // 从列表中移除
     m_displayImageItems.removeOne(imageItem);
-    
-    // 如果移除的是主图像图元，设置新的主图像图元
-    if (imageItem == m_displayImageItem)
-    {
-        if (!m_displayImageItems.isEmpty())
-        {
-            m_displayImageItem = m_displayImageItems.first();
-        }
-        else
-        {
-            m_displayImageItem = nullptr;
-        }
-    }
-    
+
     // 释放内存
     delete imageItem;
 }
@@ -137,12 +98,33 @@ void DisplayScene::whenClearAllDisplayImages()
         this->removeItem(item);
         delete item;
     }
-    
-    // 清空列表并重置主图像图元
+
     m_displayImageItems.clear();
-    m_displayImageItem = nullptr;
-    
+
     emit sendClearDisplayImage();
+}
+
+
+// 图形图元组件管理槽函数实现
+void DisplayScene::whenAddGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (component) {
+        m_graphicItemComposite->addComponent(component);
+        m_graphicItemComposite->addToScene(this);
+    }
+}
+
+void DisplayScene::whenRemoveGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
+{
+    if (component) {
+        m_graphicItemComposite->removeComponent(component);
+    }
+}
+
+void DisplayScene::whenClearAllGraphicComponents()
+{
+    m_graphicItemComposite->removeFromScene(this);
+    m_graphicItemComposite->clearComponents();
 }
 
 DisplayTextItem* DisplayScene::whenAddDisplayTextItem(const QString &text, const QPointF &pt,
@@ -176,43 +158,6 @@ void DisplayScene::whenClearAllDisplayTextItems()
     m_displayTextItems.clear();
 }
 
-QPixmap DisplayScene::getDisplayImage()
-{
-    return m_displayImageItem ? m_displayImageItem->pixmap() : QPixmap();
-}
-
-QSize DisplayScene::getDisplayImageSize() const
-{
-    return m_displayImageItem ? m_displayImageItem->getDisplayImageSize() : QSize();
-}
-
-void DisplayScene::setDisplayImageItem(DisplayImageItem* imageItem)
-{
-    // 不再强制只保留一个图像图元，仅设置主图像图元
-    if (imageItem)
-    {
-        if (m_displayImageItem != imageItem)
-        {
-            // 如果新图像图元还不在场景中，添加它
-            if (!this->items().contains(imageItem))
-            {
-                imageItem->setPos(-0.5, -0.5);  // 向左上角位移半个像素
-                this->addItem(imageItem);
-                
-                // 如果新图像图元还不在列表中，添加到列表
-                if (!m_displayImageItems.contains(imageItem))
-                {
-                    m_displayImageItems.append(imageItem);
-                }
-            }
-            
-            m_displayImageItem = imageItem;
-        }
-    }
-    
-    m_parentView->setScene(this);
-}
-
 void DisplayScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     emit sendMousePress(event);
@@ -225,24 +170,3 @@ void DisplayScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     return QGraphicsScene::mouseReleaseEvent(event);
 }
 
-// 图元组件管理槽函数实现
-void DisplayScene::whenAddGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
-{
-    if (component) {
-        m_graphicItemComposite->addComponent(component);
-        m_graphicItemComposite->addToScene(this);
-    }
-}
-
-void DisplayScene::whenRemoveGraphicComponent(std::shared_ptr<GraphicsItemComponent> component)
-{
-    if (component) {
-        m_graphicItemComposite->removeComponent(component);
-    }
-}
-
-void DisplayScene::whenClearAllGraphicComponents()
-{
-    m_graphicItemComposite->removeFromScene(this);
-    m_graphicItemComposite->clearComponents();
-}

@@ -10,6 +10,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "plog_qt_appender.h"
+
 namespace PlogUtils {
 
 /**
@@ -42,6 +44,9 @@ inline void initPlog(plog::Severity logLevel = plog::debug) {
     // 添加控制台日志
     static plog::ColorConsoleAppender<plog::MessageOnlyFormatter> consoleAppender;
     plog::get()->addAppender(&consoleAppender);
+
+    // 添加 Qt UI 日志（桥接到 LogPanel）
+    plog::get()->addAppender(&PlogQtAppender::instance());
 }
 
 } // namespace plog_utils

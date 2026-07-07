@@ -6,6 +6,8 @@
 #include <QVBoxLayout>
 
 #include "src/ui/measurementMonitor/measurement_monitor.h"
+#include "src/ui/measurementMonitor/models/measurement_pipeline.h"
+#include "src/ui/measurementMonitor/presenters/measurement_presenter.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -19,7 +21,6 @@ MainWindow::MainWindow(QWidget *parent)
     , m_configManagementPage(nullptr)
 {
     setupUi();
-    applyDarkStyle();
 }
 
 MainWindow::~MainWindow() {}
@@ -83,6 +84,10 @@ void MainWindow::setupPages() {
     m_measurementMonitor = new MeasurementMonitor(this);
     m_stackedWidget->addWidget(m_measurementMonitor);
 
+    // 组装测量监控的MVP
+    m_pipeline  = std::make_unique<MeasurementPipeline>();
+    m_presenter = std::make_unique<MeasurementPresenter>(m_measurementMonitor, m_pipeline.get(), this);
+
     m_systemCalibrationPage = new QWidget(this);
     QVBoxLayout* calibLayout = new QVBoxLayout(m_systemCalibrationPage);
     QLabel* calibLabel = new QLabel(QString::fromUtf8("系统标定页面 - 待实现"), m_systemCalibrationPage);
@@ -116,148 +121,3 @@ void MainWindow::onMenuButtonClicked(int index) {
     m_stackedWidget->setCurrentIndex(index);
 }
 
-void MainWindow::applyDarkStyle() {
-    QString style = R"(
-        QMainWindow, QWidget {
-            background-color: #1E1E1E;
-            color: #FFFFFF;
-        }
-        #menuBarWidget {
-            background-color: #2D2D2D;
-            border-bottom: 1px solid #3D3D3D;
-        }
-        #menuButton {
-            background-color: transparent;
-            color: #AAAAAA;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        #menuButton:hover {
-            background-color: #3D3D3D;
-            color: #FFFFFF;
-        }
-        #menuButton:checked {
-            background-color: #0078D4;
-            color: #FFFFFF;
-        }
-        QPushButton {
-            background-color: #0078D4;
-            color: #FFFFFF;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        QPushButton:hover {
-            background-color: #1084D8;
-        }
-        QPushButton:pressed {
-            background-color: #006CBD;
-        }
-        QPushButton:disabled {
-            background-color: #3D3D3D;
-            color: #808080;
-        }
-        QTabWidget::pane {
-            border: 1px solid #3D3D3D;
-            background-color: #2D2D2D;
-            border-radius: 4px;
-        }
-        QTabBar::tab {
-            background-color: #2D2D2D;
-            color: #AAAAAA;
-            padding: 8px 16px;
-            border: none;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-        }
-        QTabBar::tab:selected {
-            background-color: #0078D4;
-            color: #FFFFFF;
-        }
-        QTabBar::tab:hover:!selected {
-            background-color: #3D3D3D;
-        }
-        QCheckBox {
-            color: #FFFFFF;
-            spacing: 8px;
-            font-size: 13px;
-        }
-        QCheckBox::indicator {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #0078D4;
-            border-radius: 3px;
-        }
-        QCheckBox::indicator:checked {
-            background-color: #0078D4;
-            border-color: #0078D4;
-        }
-        QCheckBox::indicator:hover {
-            border-color: #1084D8;
-        }
-        QSplitter::handle {
-            background-color: #3D3D3D;
-        }
-        QTextEdit {
-            background-color: #252526;
-            color: #D4D4D4;
-            border: 1px solid #3D3D3D;
-            border-radius: 4px;
-            font-family: Consolas, 'Courier New', monospace;
-            font-size: 12px;
-        }
-        QScrollArea {
-            border: none;
-            background-color: transparent;
-        }
-        QScrollBar:vertical {
-            background-color: #2D2D2D;
-            width: 12px;
-            border-radius: 6px;
-        }
-        QScrollBar::handle:vertical {
-            background-color: #555555;
-            border-radius: 6px;
-            min-height: 30px;
-        }
-        QScrollBar::handle:vertical:hover {
-            background-color: #666666;
-        }
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-            height: 0px;
-        }
-        QScrollBar:horizontal {
-            background-color: #2D2D2D;
-            height: 12px;
-            border-radius: 6px;
-        }
-        QScrollBar::handle:horizontal {
-            background-color: #555555;
-            border-radius: 6px;
-            min-width: 30px;
-        }
-        QScrollBar::handle:horizontal:hover {
-            background-color: #666666;
-        }
-        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-            width: 0px;
-        }
-        QLabel {
-            color: #FFFFFF;
-            background-color: transparent;
-        }
-        QFrame {
-            background-color: #2D2D2D;
-            border: 1px solid #3D3D3D;
-            border-radius: 4px;
-        }
-        QStackedWidget {
-            border: none;
-        }
-    )";
-    this->setStyleSheet(style);
-}

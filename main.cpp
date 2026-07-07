@@ -21,10 +21,13 @@
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/ui/jointView/joint_view.h"
 #include "src/utils/plog_utils.h"
+#include "src/ui/measurementMonitor/qss_loader.h"
+#include "src/ui/mainwindow/main_window.h"
 
 int main(int argc, char *argv[]) {
     SetConsoleOutputCP(CP_UTF8);
     QApplication a(argc, argv);
+    a.setStyleSheet(qss_loader::load(":/mm/measurement_monitor.qss"));
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
     PlogUtils::initPlog();              // 初始化日志类
 
@@ -72,6 +75,14 @@ int main(int argc, char *argv[]) {
 
     // TestDxfWriter td;
     // td.run();
+    // JointView w;
+    // w.show();
+
+    // JointView w;
+    // w.show();
+
+    MainWindow w;
+    w.show();
 
     return a.exec();
 }
