@@ -19,22 +19,43 @@ public:
     bool plcDisconnect();
     // PLC系统复位
     bool plcReset();
-    // 外部轴1伺服使能
-    bool plcExAxis1Enable();
-    // 外部轴1伺服下使能
-    bool plcExAxis1Disable();
-    // 外部轴1机械归零运动
-    bool plcExAxis1HOME();
-    // 外部轴1绝对位置运动
-    bool plcExAxis1Move(double pos = 0.0, double vel = 0.0, double acc = 0.0, double jerk = 0.0);
-    // 外部轴1暂停
-    bool plcExAxis1Halt(double dec = 0.0, double jerk = 0.0);
-    // 外部轴1停转
-    bool plcExAxis1Stop(double dec = 0.0, double jerk = 0.0);
-    // 外部轴1复位
-    bool plcExAxis1Reset();
+    // // 外部轴1伺服使能
+    // bool plcExAxis1Enable();
+    // // 外部轴1伺服下使能
+    // bool plcExAxis1Disable();
+    // // 外部轴1机械归零运动
+    // bool plcExAxis1HOME();
+    // // 外部轴1绝对位置运动
+    // bool plcExAxis1Move(double pos = 0.0, double vel = 0.0, double acc = 0.0, double jerk = 0.0);
+    // // 外部轴1暂停
+    // bool plcExAxis1Halt(double dec = 0.0, double jerk = 0.0);
+    // // 外部轴1停转
+    // bool plcExAxis1Stop(double dec = 0.0, double jerk = 0.0);
+    // // 外部轴1复位
+    // bool plcExAxis1Reset();
     // PLC设备状态反馈
     bool plcStateFdbk(plcFdbkParams &data);
+
+    //连接地轨
+
+    //断开地轨
+
+    //地轨绝对定位移动
+
+    //地轨回零
+
+    //单对位平台相对移动
+
+    //单轴相对运动
+
+    //对位平台一键使能
+
+    //对位平台一键回参
+
+    //对位平台一键复位
+
+    //对位平台一键停止
+
 
 private:
     void tryToConnect();  // 重连

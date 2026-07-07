@@ -329,7 +329,7 @@
         </attribute>
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="0">
-          <widget class="RailWidget" name="railWidget" native="true"/>
+          <widget class="MotionWidget" name="motionWidget" native="true"/>
          </item>
         </layout>
        </widget>
@@ -610,9 +610,9 @@
    <header location="global">src/ui/utils/display/openGLImageWidget.h</header>
   </customwidget>
   <customwidget>
-   <class>RailWidget</class>
+   <class>MotionWidget</class>
    <extends>QWidget</extends>
-   <header>src/rail/rail_widget.h</header>
+   <header>src/motion/motion_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

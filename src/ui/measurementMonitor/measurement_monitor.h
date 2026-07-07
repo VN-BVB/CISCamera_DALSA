@@ -17,13 +17,12 @@ class MeasurementMonitor : public QWidget {
     Q_OBJECT
 
 public:
-    explicit MeasurementMonitor(QWidget *parent = nullptr);
+    explicit MeasurementMonitor(QWidget* parent = nullptr);
     ~MeasurementMonitor();
 
     // Presenter → View: display commands
     void setStatus(const QString& status);
-    void displayMeasurementResult(std::shared_ptr<cv::Mat> image,
-                                  std::shared_ptr<JointSeam> seam);
+    void displayMeasurementResult(std::shared_ptr<cv::Mat> image, std::shared_ptr<JointSeam> seam);
     void displayOriginalImage(std::shared_ptr<cv::Mat> image);
     void setConnectionStatus(bool connected);
     void setFilePath(const QString& path);

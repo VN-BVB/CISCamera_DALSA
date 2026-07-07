@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RailWidget</class>
- <widget class="QWidget" name="RailWidget">
+ <class>MotionWidget</class>
+ <widget class="QWidget" name="MotionWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -162,7 +162,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
-             <widget class="QTableWidget" name="tableWidget">
+             <widget class="QTableWidget" name="table_axispos">
               <row>
                <property name="text">
                 <string>对位平台0</string>
@@ -219,14 +219,14 @@
              <widget class="QWidget" name="widget_6" native="true">
               <layout class="QHBoxLayout" name="horizontalLayout_7">
                <item>
-                <widget class="QPushButton" name="pushButton_10">
+                <widget class="QPushButton" name="plt_btn_singlepltmover">
                  <property name="text">
                   <string>单对位平台运动</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox_3">
+                <widget class="QComboBox" name="combo_singlepltchoose">
                  <item>
                   <property name="text">
                    <string>对位平台0</string>
@@ -271,14 +271,14 @@
              <widget class="QWidget" name="widget_5" native="true">
               <layout class="QHBoxLayout" name="horizontalLayout_6">
                <item>
-                <widget class="QPushButton" name="pushButton_5">
+                <widget class="QPushButton" name="plt_btn_singleaxismover">
                  <property name="text">
                   <string>单轴运动</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox">
+                <widget class="QComboBox" name="combo_singleaxispltchoose">
                  <item>
                   <property name="text">
                    <string>对位平台0</string>
@@ -317,7 +317,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox_2">
+                <widget class="QComboBox" name="combo_singleaxischoose">
                  <item>
                   <property name="text">
                    <string>X</string>
@@ -336,7 +336,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="lineEdit_5"/>
+                <widget class="QLineEdit" name="plt_edit_singleaxismoverpos"/>
                </item>
               </layout>
              </widget>
@@ -398,7 +398,7 @@
     <widget class="QWidget" name="widget_8" native="true">
      <layout class="QGridLayout" name="gridLayout_3">
       <item row="0" column="0">
-       <widget class="QFrame" name="frame_2">
+       <widget class="QFrame" name="card_rail">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -454,7 +454,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_12">
+             <widget class="QLabel" name="rail_label_state">
               <property name="text">
                <string>TextLabel</string>
               </property>
@@ -467,7 +467,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QFrame" name="frame_3">
+       <widget class="QFrame" name="card_plt0">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -536,7 +536,7 @@
        </widget>
       </item>
       <item row="0" column="2">
-       <widget class="QFrame" name="frame_4">
+       <widget class="QFrame" name="card_plt1">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -605,7 +605,7 @@
        </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QFrame" name="frame_5">
+       <widget class="QFrame" name="card_plt2">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -674,7 +674,7 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QFrame" name="frame_6">
+       <widget class="QFrame" name="card_plt3">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -743,7 +743,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QFrame" name="frame_7">
+       <widget class="QFrame" name="card_plt4">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -812,7 +812,7 @@
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QFrame" name="frame_8">
+       <widget class="QFrame" name="card_plt5">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -881,7 +881,7 @@
        </widget>
       </item>
       <item row="1" column="3">
-       <widget class="QFrame" name="frame_9">
+       <widget class="QFrame" name="card_plt6">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>

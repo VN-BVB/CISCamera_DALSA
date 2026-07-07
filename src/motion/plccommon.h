@@ -11,32 +11,12 @@
 struct plcCtrlParams {
     std::string name = u8"PLC模块";  // 模块名称
 
-    // 运行开关
-    bool realConveyEnabled = true;    // 选择启用实体输送线
-    bool realExAxis1Enabled = true;   // 是否启用实体外部轴1
-    bool realExAxis2Enabled = false;  // 是否启用实体外部轴2
-    bool sprayGun1Enabled = true;     // 是否启用喷枪1
-    bool sprayGun2Enabled = true;     // 是否启用喷枪2
-
     // PLC硬件参数
     plc::plcParams plc;  // PLC硬件参数
 
-    // 编码器参数(标定)
-    double pulseDis;  // 编码器每个脉冲输送链的移动距离
-    // 采图工位参数(标定)
-    double capturePosition;  // 采图开启位置
-    double captureOnDiff;    // 采图开启距离偏差值
-    double captureOffDiff;   // 采图关闭距离偏移值
-    // 喷涂工位参数(标定)
-    int mscNumMax = 10;  // 多工位控制的最大可处理的工件数
-    double mscPos1;      // 多工位控制的工位1的位置
-    double mscPos1Diff;  // 多工位控制的工位1的位置偏差值
-    double mscPos2;      // 多工位控制的工位2的位置
-    double mscPos2Diff;  // 多工位控制的工位2的位置偏差值
-
     template <class Archive>
     void serialize(Archive &archive) {
-        archive(CEREAL_NVP(name), CEREAL_NVP(realConveyEnabled), CEREAL_NVP(realExAxis1Enabled), CEREAL_NVP(realExAxis2Enabled),
+        archive(CEREAL_NVP(name), CEREAL_NVP(realExAxis2Enabled),
                 CEREAL_NVP(sprayGun1Enabled), CEREAL_NVP(sprayGun2Enabled), CEREAL_NVP(pulseDis), CEREAL_NVP(capturePosition),
                 CEREAL_NVP(captureOnDiff), CEREAL_NVP(captureOffDiff), CEREAL_NVP(mscNumMax), CEREAL_NVP(mscPos1), CEREAL_NVP(mscPos1Diff),
                 CEREAL_NVP(mscPos2), CEREAL_NVP(mscPos2Diff));

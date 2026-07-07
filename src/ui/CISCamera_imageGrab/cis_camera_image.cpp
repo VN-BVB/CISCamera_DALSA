@@ -9,7 +9,7 @@
 #include "src/cameraFactory/abstract_camera_factory.h"
 #include "src/cameraFactory/dalsaCameralink/external_exe_runner.h"
 #include "src/config/calibration_data_io.h"
-#include "src/rail/rail_widget.h"
+#include "src/motion/motion_widget.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/telecentricLineCalibrator/telecentric_line_calibrator.h"
 #include "src/ui/utils/display/graphicItems/axes_item.h"
@@ -258,40 +258,40 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
     slaveImg.reset();
     on_btnStart_clicked();
     ui->btnSoftWareTrigger->setEnabled(false);
-    double currentPos = ui->railWidget->getCurrentXPosition();
-    disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+    double currentPos = ui->motionWidget->getCurrentXPosition();
+    disconnect(ui->motionWidget, &MotionWidget::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
     if (std::abs(currentPos - startPos) > 0.05) {
-        ui->railWidget->on_chk_Stop_toggled(false);
-        connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
-        ui->railWidget->setEditAbsPosition(QString::number(startPos));
-        ui->railWidget->setEditSpeed(QString::number(speed));
-        ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
+        ui->motionWidget->on_chk_Stop_toggled(false);
+        connect(ui->motionWidget, &MotionWidget::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+        ui->motionWidget->setEditAbsPosition(QString::number(startPos));
+        ui->motionWidget->setEditSpeed(QString::number(speed));
+        ui->motionWidget->on_btn_X_AbsPositionCommand_clicked();
     } else {
         // 已在起点，直接开始扫描
         whenMoveToStartFinished();
     }
 }
 // void CISWidget::whenMoveToStartFinished() {
-//     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+//     disconnect(ui->motionWidget, &MotionWidget::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
 
 //     // 启动相机采集（软件触发）
 //     if (masterCISCamera) QMetaObject::invokeMethod(masterCISCamera.get(), "softwareTrigger");
 // #ifdef ENABLE_SLAVE_CAMERA
 //     if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger");
 // #endif
-//     ui->railWidget->setEditAbsPosition(QString::number(endPos));
-//     ui->railWidget->setEditSpeed(QString::number(speed));
-//     ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
+//     ui->motionWidget->setEditAbsPosition(QString::number(endPos));
+//     ui->motionWidget->setEditSpeed(QString::number(speed));
+//     ui->motionWidget->on_btn_X_AbsPositionCommand_clicked();
 
-//     // connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
-//     //     disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, nullptr, nullptr);
+//     // connect(ui->motionWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+//     //     disconnect(ui->motionWidget->rail, &Rail::sendAbsFinished, nullptr, nullptr);
 //     //     on_btnStop_clicked();
 //     // });
 //     // 使用QMetaObject::Connection来管理信号连接，以便精确断开
 //     static QMetaObject::Connection endMoveConnection;
-//     endMoveConnection = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
+//     endMoveConnection = connect(ui->motionWidget->rail, &Rail::sendAbsFinished, this, [this]() {
 //         // 只断开当前建立的连接
-//         double currentPos = ui->railWidget->getCurrentXPosition();
+//         double currentPos = ui->motionWidget->getCurrentXPosition();
 //         if (std::abs(currentPos - endPos) < 0.5) {
 //             disconnect(endMoveConnection);
 //             on_btnStop_clicked();
@@ -301,12 +301,12 @@ void CISWidget::on_btnSoftWareTrigger_clicked() {
 // }
 
 void CISWidget::whenMoveToStartFinished() {
-    disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+    disconnect(ui->motionWidget, &MotionWidget::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
     disconnect(endMoveConnection_);
     // 下发扫描运动
-    ui->railWidget->setEditAbsPosition(QString::number(endPos));
-    ui->railWidget->setEditSpeed(QString::number(speed));
-    ui->railWidget->on_btn_X_AbsPositionCommand_clicked();
+    ui->motionWidget->setEditAbsPosition(QString::number(endPos));
+    ui->motionWidget->setEditSpeed(QString::number(speed));
+    ui->motionWidget->on_btn_X_AbsPositionCommand_clicked();
 
     whenAppendMessageLog(u8"扫描运动已下发，进入 lead-in 阶段");
     const int leadMs = static_cast<int>(leadInTimer);
@@ -318,7 +318,7 @@ void CISWidget::whenMoveToStartFinished() {
         if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger", Qt::QueuedConnection);
 #endif
         // 记录扫描起始位置（真实）
-        scanStartPosReal = ui->railWidget->getCurrentXPosition();
+        scanStartPosReal = ui->motionWidget->getCurrentXPosition();
 
         whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
                                      u8"扫描起始位置：%2")
@@ -326,8 +326,8 @@ void CISWidget::whenMoveToStartFinished() {
                                  .arg(scanStartPosReal, 0, 'f', 3));
 
         // 相机触发之后，再连接扫描结束监听（确保帧不会被过早 Abort）
-        endMoveConnection_ = connect(ui->railWidget->rail, &Rail::sendAbsFinished, this, [this]() {
-            scanEndPosReal = ui->railWidget->getCurrentXPosition();
+        endMoveConnection_ = connect(ui->motionWidget, &MotionWidget::sendAbsFinished, this, [this]() {
+            scanEndPosReal = ui->motionWidget->getCurrentXPosition();
             if (std::abs(scanEndPosReal - endPos) < 0.5) {
                 disconnect(endMoveConnection_);
 
@@ -354,11 +354,11 @@ void CISWidget::whenMoveToStartFinished() {
 }
 
 void CISWidget::on_btnStopTrigger_clicked() {
-    disconnect(ui->railWidget->rail, &Rail::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
+    disconnect(ui->motionWidget, &MotionWidget::sendAbsFinished, this, &CISWidget::whenMoveToStartFinished);
     disconnect(endMoveConnection_);
     triggerRunning = false;
     ui->btnSoftWareTrigger->setEnabled(true);
-    ui->railWidget->on_chk_Stop_toggled(true);
+    ui->motionWidget->on_chk_Stop_toggled(true);
     on_btnStop_clicked();
 }
 void CISWidget::on_ckbSplice_toggled(bool checked) {

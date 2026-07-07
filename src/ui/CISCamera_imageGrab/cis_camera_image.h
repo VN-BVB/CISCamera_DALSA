@@ -13,7 +13,7 @@
 #include <windows.h>
 // clang-format on
 #include "cameraImage_processor.h"
-class RailWidget;
+class MotionWidget;
 class AbstractCamera;
 class ExternalExeRunner;
 class CameraImageProcessor;

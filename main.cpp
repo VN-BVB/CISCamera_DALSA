@@ -20,9 +20,9 @@
 #include "src/test/test_tiny_spline.h"
 #include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
 #include "src/ui/jointView/joint_view.h"
-#include "src/utils/plog_utils.h"
-#include "src/ui/measurementMonitor/qss_loader.h"
 #include "src/ui/mainwindow/main_window.h"
+#include "src/ui/measurementMonitor/qss_loader.h"
+#include "src/utils/plog_utils.h"
 
 int main(int argc, char *argv[]) {
     SetConsoleOutputCP(CP_UTF8);
@@ -54,8 +54,8 @@ int main(int argc, char *argv[]) {
 
     test.debugProjectionDistancesFromFixedPixels();
 
-    CISWidget w;
-    w.show();
+    // CISWidget w;
+    // w.show();
 
     // TestConvertCoordinate t;
     // t.pixel2World();
