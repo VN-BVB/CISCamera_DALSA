@@ -38,23 +38,15 @@ public slots:
     void whenClearAllGraphicComponents();
 
     // =====================================文本显示槽函数=====================================
-    // 添加文本图元
     DisplayTextItem* whenAddDisplayTextItem(const QString &text, const QPointF &pt=QPointF(0,0),
                                             const double &size=1, const QColor &color=QColor(Qt::green));
-    // 移除文本项
     void whenRemoveDisplayTextItem(DisplayTextItem* textItem);
-    // 清除所有文本项
     void whenClearAllDisplayTextItems();
 
-protected:
-    // 设置显示图像图元（主图元）
-    void setDisplayImageItem(DisplayImageItem* imageItem);
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 signals:
-    // 更新显示图像
-    void sendUpdateDisplayImage(const QImage &image);
     // 清除图像
     void sendClearDisplayImage();
     // 鼠标点击信号
@@ -63,8 +55,6 @@ signals:
 protected:
     // 父视图
     DisplayView *m_parentView = nullptr;
-    // 主图像显示图元
-    DisplayImageItem *m_displayImageItem = nullptr;
     // 所有图像显示图元列表
     QList<DisplayImageItem*> m_displayImageItems;
     // 文本图元列表

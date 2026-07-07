@@ -41,7 +41,7 @@ void LogPanel::appendLog(const QString &message, LogLevel level) {
 
     QString htmlMessage = QString("<span style=\"color: #808080;\">[%1]</span> "
                                   "<span style=\"color: %2;\">[%3]</span> "
-                                  "<span style=\"color: #D4D4D4;\">%4</span>")
+                                  "<span style=\"color: #2D2D2D;\">%4</span>")
                               .arg(timestamp, color, levelStr, message);
 
     m_logTextEdit->append(htmlMessage);
