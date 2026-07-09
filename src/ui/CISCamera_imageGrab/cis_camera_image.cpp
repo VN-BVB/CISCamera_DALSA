@@ -317,7 +317,6 @@ void CISWidget::whenMoveToStartFinished() {
 #ifdef ENABLE_SLAVE_CAMERA
         if (slaveCISCamera) QMetaObject::invokeMethod(slaveCISCamera.get(), "softwareTrigger", Qt::QueuedConnection);
 #endif
-        // 记录扫描起始位置（真实）
         scanStartPosReal = ui->motionWidget->getCurrentXPosition();
 
         whenAppendMessageLog(QString(u8"Lead-in %1 ms 到达，开始相机触发\n"
@@ -325,30 +324,29 @@ void CISWidget::whenMoveToStartFinished() {
                                  .arg(leadInTimer)
                                  .arg(scanStartPosReal, 0, 'f', 3));
 
-        // 相机触发之后，再连接扫描结束监听（确保帧不会被过早 Abort）
         endMoveConnection_ = connect(ui->motionWidget, &MotionWidget::sendAbsFinished, this, [this]() {
+            disconnect(endMoveConnection_);
             scanEndPosReal = ui->motionWidget->getCurrentXPosition();
-            if (std::abs(scanEndPosReal - endPos) < 0.5) {
-                disconnect(endMoveConnection_);
 
-                whenAppendMessageLog(QString(u8"扫描结束\n"
-                                             u8"  起始位置：%1\n"
-                                             u8"  结束位置：%2\n"
-                                             u8"  实际位移：%3")
-                                         .arg(scanStartPosReal, 0, 'f', 3)
-                                         .arg(scanEndPosReal, 0, 'f', 3)
-                                         .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
-                whenAppendMessageLog(QString(u8"扫描结束\n"
-                                             u8"  起始位置：%1\n"
-                                             u8"  结束位置2：%2\n"
-                                             u8"  实际位移2：%3")
-                                         .arg(scanStartPosReal, 0, 'f', 3)
-                                         .arg(endPos, 0, 'f', 3)
-                                         .arg(endPos - scanStartPosReal, 0, 'f', 3));
-                on_btnStop_clicked();
-                triggerRunning = false;
-                ui->btnSoftWareTrigger->setEnabled(true);
-            }
+            whenAppendMessageLog(QString(u8"扫描结束\n"
+                                         u8"  起始位置：%1\n"
+                                         u8"  结束位置：%2\n"
+                                         u8"  实际位移：%3")
+                                     .arg(scanStartPosReal, 0, 'f', 3)
+                                     .arg(scanEndPosReal, 0, 'f', 3)
+                                     .arg(scanEndPosReal - scanStartPosReal, 0, 'f', 3));
+            whenAppendMessageLog(QString(u8"扫描结束\n"
+                                         u8"  起始位置：%1\n"
+                                         u8"  结束位置2：%2\n"
+                                         u8"  实际位移2：%3")
+                                     .arg(scanStartPosReal, 0, 'f', 3)
+                                     .arg(endPos, 0, 'f', 3)
+                                     .arg(endPos - scanStartPosReal, 0, 'f', 3));
+
+            triggerRunning = false;
+            ui->btnSoftWareTrigger->setEnabled(true);
+            // 延迟 1 秒等所有帧回传完再 stopGrab
+            QTimer::singleShot(1000, this, [this]() { on_btnStop_clicked(); });
         });
     });
 }

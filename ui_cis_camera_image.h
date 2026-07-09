@@ -25,7 +25,7 @@
 #include <QtWidgets/QWidget>
 #include <src/ui/utils/display/frm_display.h>
 #include <src/ui/utils/display/openGLImageWidget.h>
-#include "src/rail/rail_widget.h"
+#include "src/motion/motion_widget.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -60,7 +60,7 @@ public:
     QLineEdit *end_lineEdit;
     QWidget *tab_2;
     QGridLayout *gridLayout_3;
-    RailWidget *railWidget;
+    MotionWidget *motionWidget;
     QWidget *tab_4;
     QGridLayout *gridLayout_2;
     FrmVisionDisplay *graphicsView_5;
@@ -253,10 +253,10 @@ public:
         tab_2->setObjectName(QString::fromUtf8("tab_2"));
         gridLayout_3 = new QGridLayout(tab_2);
         gridLayout_3->setObjectName(QString::fromUtf8("gridLayout_3"));
-        railWidget = new RailWidget(tab_2);
-        railWidget->setObjectName(QString::fromUtf8("railWidget"));
+        motionWidget = new MotionWidget(tab_2);
+        motionWidget->setObjectName(QString::fromUtf8("motionWidget"));
 
-        gridLayout_3->addWidget(railWidget, 0, 0, 1, 1);
+        gridLayout_3->addWidget(motionWidget, 0, 0, 1, 1);
 
         tabWidget->addTab(tab_2, QString());
         tab_4 = new QWidget();

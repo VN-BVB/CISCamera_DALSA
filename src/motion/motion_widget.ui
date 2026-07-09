@@ -48,13 +48,6 @@
              </widget>
             </item>
             <item>
-             <widget class="QSlider" name="rail_slider_pos">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QWidget" name="widget_2" native="true">
               <layout class="QHBoxLayout" name="horizontalLayout_3">
                <item>
@@ -68,13 +61,6 @@
                 <widget class="QLineEdit" name="rail_edit_targetVel"/>
                </item>
               </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSlider" name="rail_slider_vel">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
              </widget>
             </item>
             <item>
@@ -163,6 +149,12 @@
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
              <widget class="QTableWidget" name="table_axispos">
+              <property name="minimumSize">
+               <size>
+                <width>250</width>
+                <height>250</height>
+               </size>
+              </property>
               <row>
                <property name="text">
                 <string>对位平台0</string>
@@ -341,13 +333,6 @@
               </layout>
              </widget>
             </item>
-            <item>
-             <widget class="QLineEdit" name="plt_edit_globalVel">
-              <property name="text">
-               <string>设置平台速度</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </widget>
          </item>
@@ -399,6 +384,14 @@
      <layout class="QGridLayout" name="gridLayout_3">
       <item row="0" column="0">
        <widget class="QFrame" name="card_rail">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -436,7 +429,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -468,6 +461,14 @@
       </item>
       <item row="0" column="1">
        <widget class="QFrame" name="card_plt0">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -505,7 +506,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -537,6 +538,14 @@
       </item>
       <item row="0" column="2">
        <widget class="QFrame" name="card_plt1">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -574,7 +583,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -606,6 +615,14 @@
       </item>
       <item row="0" column="3">
        <widget class="QFrame" name="card_plt2">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -643,7 +660,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -675,6 +692,14 @@
       </item>
       <item row="1" column="0">
        <widget class="QFrame" name="card_plt3">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -712,7 +737,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -744,6 +769,14 @@
       </item>
       <item row="1" column="1">
        <widget class="QFrame" name="card_plt4">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -781,7 +814,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -813,6 +846,14 @@
       </item>
       <item row="1" column="2">
        <widget class="QFrame" name="card_plt5">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -850,7 +891,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -882,6 +923,14 @@
       </item>
       <item row="1" column="3">
        <widget class="QFrame" name="card_plt6">
+        <property name="styleSheet">
+         <string notr="true">QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,
+QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
+    background: #ffffff;
+    border: 1px solid #b0b8c1;
+    border-radius: 4px;
+}</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -919,7 +968,7 @@
     border: 1px solid #d1d5db;</string>
               </property>
               <property name="text">
-               <string>TextLabel</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -951,9 +1000,6 @@
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <widget class="QTextEdit" name="text_log"/>
    </item>
   </layout>
  </widget>

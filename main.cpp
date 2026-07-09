@@ -46,16 +46,13 @@ int main(int argc, char *argv[]) {
     const Eigen::Vector2d worldPt = test.convertToWorld(pix2)[0];
     Eigen::Vector2d reb = test.applyWorldOffsetToPixel(worldPt);
 
-    qDebug() << QString("虚拟移动验证: 处理前像素(%1, %2) → 处理后像素(%3, %4)")
-                    .arg(QString::number(origPix.x(), 'f', 2))
-                    .arg(QString::number(origPix.y(), 'f', 2))
-                    .arg(QString::number(reb.x(), 'f', 2))
-                    .arg(QString::number(reb.y(), 'f', 2));
+    PLOG_INFO << std::fixed << std::setprecision(2) << "虚拟移动验证: 处理前像素(" << origPix.x() << ", " << origPix.y() << ") → 处理后像素("
+              << reb.x() << ", " << reb.y() << ")";
 
     test.debugProjectionDistancesFromFixedPixels();
 
-    // CISWidget w;
-    // w.show();
+    CISWidget w;
+    w.show();
 
     // TestConvertCoordinate t;
     // t.pixel2World();
@@ -81,8 +78,8 @@ int main(int argc, char *argv[]) {
     // JointView w;
     // w.show();
 
-    MainWindow w;
-    w.show();
+    // MainWindow w;
+    // w.show();
 
     return a.exec();
 }

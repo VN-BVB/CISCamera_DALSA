@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <qmetatype.h>
 
@@ -7,41 +7,36 @@
 #include "cereal/types/vector.hpp"
 #include "plc_params.h"
 
-// 用于配置PLC参数
+// PLC 控制参数（json 序列化用）
 struct plcCtrlParams {
-    std::string name = u8"PLC模块";  // 模块名称
+    std::string name = u8"PLC模块";
+    plc::plcParams plc;
 
-    // PLC硬件参数
-    plc::plcParams plc;  // PLC硬件参数
-
-    template <class Archive>
+    template<class Archive>
     void serialize(Archive &archive) {
-        archive(CEREAL_NVP(name), CEREAL_NVP(realExAxis2Enabled),
-                CEREAL_NVP(sprayGun1Enabled), CEREAL_NVP(sprayGun2Enabled), CEREAL_NVP(pulseDis), CEREAL_NVP(capturePosition),
-                CEREAL_NVP(captureOnDiff), CEREAL_NVP(captureOffDiff), CEREAL_NVP(mscNumMax), CEREAL_NVP(mscPos1), CEREAL_NVP(mscPos1Diff),
-                CEREAL_NVP(mscPos2), CEREAL_NVP(mscPos2Diff));
+        archive(CEREAL_NVP(name), CEREAL_NVP(plc));
     }
 };
 
-// 用于PLC状态反馈
-struct plcFdbkParams {
-    int connectStatus;                 // PLC连接状态
-    int runStatus;                     // PLC运行状态
-    int encoderCnt;                    // 输送链编码器计数值
-    int captureTrigger;                // 采图区域光幕信号
-    int sprayTrigger;                  // 喷涂区域光幕信号
-    int captureStatus;                 // PLC采图状态
-    double captureDis;                 // 触发光幕1后的移动距离
-    double captureLength;              // 工件长度
-    int workpieceNum;                  // 最后扫描的工件ID
-    std::vector<double> workpiecePos;  // 每个工件的输送链位置mm
-    int conveyorEnale;                 // 输送链使能状态
-    double conveyorVel;                // 输送链速度mm/s
-    int exAxis1Enable;                 // 外部轴1使能状态
-    double exAxis1Pos;                 // 外部轴1实际位置mm
-    double exAxis1Vel;                 // 外部轴1实际速度mm/s
-    int exAxis2Enable;                 // 外部轴2使能状态
-    double exAxis2Pos;                 // 外部轴2实际位置mm
-    double exAxis2Vel;                 // 外部轴2实际速度mm/s
+// 单轴状态反馈
+struct axisFdbk {
+    int    enable    = 0;
+    double pos       = 0.0;
+    double vel       = 0.0;
+    int    moving    = 0;
+    int    homed     = 0;
+    int    alarm     = 0;
 };
+
+// PLC 状态反馈（1 地轨 + 7 平台 = 8 单元）
+struct plcFdbkParams {
+    int connectStatus = 0;
+    int runStatus     = 0;
+
+    axisFdbk rail;                      // 地轨
+    struct {
+        axisFdbk x, y, r;              // 每个平台 3 轴
+    } plt[7];
+};
+
 Q_DECLARE_METATYPE(plcFdbkParams)
