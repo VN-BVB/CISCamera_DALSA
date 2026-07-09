@@ -1,23 +1,23 @@
 
-#include <iostream>
-#include <plog/Log.h>
 #include "geometry_utils.h"
+
+#include <plog/Log.h>
+
+#include <iostream>
+
+#include "src/config/calibration_data_io.h"
 #include "src/telecentricLineCalibrator/libcbdetect/lib_cb_detecor.h"
 #include "src/ui/CISCamera_imageGrab/cameraImage_processor.h"
-#include "src/config/calibration_data_io.h"
 
 namespace GeometryUtils {
 
 // 计算两个向量的叉积
-float crossProduct(const cv::Point2f& a, const cv::Point2f& b) {
-    return a.x * b.y - a.y * b.x;
-}
+float crossProduct(const cv::Point2f& a, const cv::Point2f& b) { return a.x * b.y - a.y * b.x; }
 
 // 判断点是否在线段上
 bool isPointOnSegment(const cv::Point2f& p, const cv::Point2f& a, const cv::Point2f& b) {
     // 检查点p是否在线段ab的边界框内
-    if (p.x < std::min(a.x, b.x) || p.x > std::max(a.x, b.x) ||
-        p.y < std::min(a.y, b.y) || p.y > std::max(a.y, b.y)) {
+    if (p.x < std::min(a.x, b.x) || p.x > std::max(a.x, b.x) || p.y < std::min(a.y, b.y) || p.y > std::max(a.y, b.y)) {
         return false;
     }
 
@@ -27,14 +27,11 @@ bool isPointOnSegment(const cv::Point2f& p, const cv::Point2f& a, const cv::Poin
 }
 
 // 判断两条线段是否相交
-bool doSegmentsIntersect(const cv::Point2f& p1, const cv::Point2f& p2,
-                         const cv::Point2f& q1, const cv::Point2f& q2) {
+bool doSegmentsIntersect(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& q1, const cv::Point2f& q2) {
     // 使用快速排斥实验和跨立实验判断线段相交
 
     // 快速排斥实验：检查两个线段的边界框是否相交
-    if (std::max(p1.x, p2.x) < std::min(q1.x, q2.x) ||
-        std::max(q1.x, q2.x) < std::min(p1.x, p2.x) ||
-        std::max(p1.y, p2.y) < std::min(q1.y, q2.y) ||
+    if (std::max(p1.x, p2.x) < std::min(q1.x, q2.x) || std::max(q1.x, q2.x) < std::min(p1.x, p2.x) || std::max(p1.y, p2.y) < std::min(q1.y, q2.y) ||
         std::max(q1.y, q2.y) < std::min(p1.y, p2.y)) {
         return false;
     }
@@ -53,8 +50,7 @@ bool doSegmentsIntersect(const cv::Point2f& p1, const cv::Point2f& p2,
     }
 
     // 检查端点重合的情况
-    if (isPointOnSegment(p1, q1, q2) || isPointOnSegment(p2, q1, q2) ||
-        isPointOnSegment(q1, p1, p2) || isPointOnSegment(q2, p1, p2)) {
+    if (isPointOnSegment(p1, q1, q2) || isPointOnSegment(p2, q1, q2) || isPointOnSegment(q1, p1, p2) || isPointOnSegment(q2, p1, p2)) {
         return true;
     }
 
@@ -76,8 +72,7 @@ bool isPolygonSelfIntersecting(const std::vector<cv::Point2f>& polygon) {
 
             // 边 i: polygon[i] -> polygon[(i + 1) % M]
             // 边 j: polygon[j] -> polygon[(j + 1) % M]
-            if (doSegmentsIntersect(polygon[i], polygon[(i + 1) % M],
-                                   polygon[j], polygon[(j + 1) % M])) {
+            if (doSegmentsIntersect(polygon[i], polygon[(i + 1) % M], polygon[j], polygon[(j + 1) % M])) {
                 return true;
             }
         }
@@ -117,52 +112,46 @@ bool isPointInRotatedRect(const cv::Point2f& point, const cv::RotatedRect& rotat
  * @param threshold                         阈值
  * @param iterations                        最大迭代次数
  */
-void lineRansac(const std::vector<cv::Point2f> &points,
-                                  cv::Vec4f &line,
-                                  std::vector<cv::Point2f> &inlierPoints,
-                                  const double &threshold,
-                                  const int &iterations)
-{
-    if(points.size() < 2){
-        std::cout<<"Input points is empty!"<<std::endl;
+void lineRansac(const std::vector<cv::Point2f>& points, cv::Vec4f& line, std::vector<cv::Point2f>& inlierPoints, const double& threshold,
+                const int& iterations) {
+    if (points.size() < 2) {
+        PLOG_INFO << "Input points is empty!" << std::endl;
         return;
     }
 
-    cv::RNG rng;// 创建随机数生成器
+    cv::RNG rng;  // 创建随机数生成器
     double bestScore = -1.;
     auto n = points.size();  // 获取点集大小
-    for(int iter = 0; iter < iterations; iter++){
+    for (int iter = 0; iter < iterations; iter++) {
         // 随机选择两个不同的点
-        auto i1 = rng.uniform(0, static_cast<int>(n-1));
-        auto i2 = rng.uniform(0, static_cast<int>(n-1));
-        if (i1 == i2)
-            continue;
+        auto i1 = rng.uniform(0, static_cast<int>(n - 1));
+        auto i2 = rng.uniform(0, static_cast<int>(n - 1));
+        if (i1 == i2) continue;
 
         // 直线的方向向量
         const cv::Point2f& p1 = points[i1];
         const cv::Point2f& p2 = points[i2];
-        cv::Point2f dp = p2-p1;
-        dp *= 1.0/cv::norm(dp);
+        cv::Point2f dp = p2 - p1;
+        dp *= 1.0 / cv::norm(dp);
 
         // 计算内点
         double score = 0;
         std::vector<cv::Point2f> inliers;
-        for(int i = 0; i< n; i++){
+        for (int i = 0; i < n; i++) {
             cv::Point2f v = points[i] - p1;
-            double d = v.y * dp.x - v.x * dp.y;//向量a与b叉乘/向量b的摸.||b||=1./norm(dp)
+            double d = v.y * dp.x - v.x * dp.y;  // 向量a与b叉乘/向量b的摸.||b||=1./norm(dp)
             // 判断点到直线的距离是否小于阈值
-            if( std::fabs(d) < threshold){
+            if (std::fabs(d) < threshold) {
                 score += 1;
                 inliers.push_back(points[i]);  // 存储内点
             }
         }
 
         // 如果当前拟合得分更高，则更新最优结果
-        if(score > bestScore) {
-            line = cv::Vec4f(static_cast<float>(dp.x), static_cast<float>(dp.y),
-                             static_cast<float>(p1.x), static_cast<float>(p1.y));
+        if (score > bestScore) {
+            line = cv::Vec4f(static_cast<float>(dp.x), static_cast<float>(dp.y), static_cast<float>(p1.x), static_cast<float>(p1.y));
             bestScore = score;
-            inlierPoints = inliers;//更新内点
+            inlierPoints = inliers;  // 更新内点
         }
     }
 }
@@ -174,7 +163,7 @@ cv::Point2f calculateLineIntersection(const cv::Vec4f& line1, const cv::Vec4f& l
     // 计算交点
     float denominator = vx1 * vy2 - vy1 * vx2;
     if (std::abs(denominator) < 1e-10) {
-        return cv::Point2f(-1, -1); // 平行线
+        return cv::Point2f(-1, -1);  // 平行线
     }
 
     float t = ((x02 - x01) * vy2 - (y02 - y01) * vx2) / denominator;
@@ -193,12 +182,10 @@ bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, co
     float det = relA.x * relB.y - relA.y * relB.x;
 
     // 如果叉积为正，b在a顺时针方向
-    if (det > 0)
-        return false;
+    if (det > 0) return false;
 
     // 如果叉积为负，a在b顺时针方向
-    if (det < 0)
-        return true;
+    if (det < 0) return true;
 
     // 叉积为0，共线情况，按距离排序（距离小的在顺时针方向）
     float d1 = relA.x * relA.x + relA.y * relA.y;
@@ -206,8 +193,7 @@ bool isPointClockwiseTo(const cv::Point2f& pointA, const cv::Point2f& pointB, co
     return d1 < d2;
 }
 
-cv::Vec4f fitLine(const std::vector<cv::Point> &points)
-{
+cv::Vec4f fitLine(const std::vector<cv::Point>& points) {
     if (points.empty()) {
         return cv::Vec4f(0, 0, 0, 0);
     }
@@ -220,8 +206,7 @@ cv::Vec4f fitLine(const std::vector<cv::Point> &points)
     return lineParams;
 }
 
-cv::Vec4f fitLine(const std::vector<cv::Point2f> &points)
-{
+cv::Vec4f fitLine(const std::vector<cv::Point2f>& points) {
     if (points.empty()) {
         return cv::Vec4f(0, 0, 0, 0);
     }
@@ -237,10 +222,8 @@ cv::Vec4f fitLine(const std::vector<cv::Point2f> &points)
     return lineParams;
 }
 
-
 // 将像素坐标转成世界坐标
-std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts)
-{
+std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts) {
     // 将cv::Point2f格式转换为Eigen::Vector2d格式
     std::vector<Eigen::Vector2d> eigen_pix_pts;
     eigen_pix_pts.reserve(pix_pts.size());
@@ -261,4 +244,4 @@ std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts
     return worldPoints;
 }
 
-} // namespace GeometryUtils
+}  // namespace GeometryUtils

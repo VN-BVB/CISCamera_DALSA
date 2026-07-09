@@ -36,18 +36,18 @@ DalsaCamera::~DalsaCamera() {
     delete m_Acquisition;
 }
 bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
-    PLOGD << "DALSA采集卡初始化中...";
+    PLOG_INFO << "DALSA采集卡初始化中...";
     // emit sendText(QString(u8"DALSA采集卡初始化中..."));
     m_ccfPath = configPath;
     cameraIndex = resourceIndex;
 
     char serverName[MAX_PATH];
     if (!SapManager::GetServerName(0, SapManager::ResourceAcq, serverName)) {
-        PLOGE << "SapManager::GetServerName 获取失败";
+        PLOG_ERROR << u8"SapManager::GetServerName 获取失败";
         // emit sendText(QString(u8"SapManager::GetServerName 获取失败"));
         return false;
     }
-    PLOGD << "ServerName = " << serverName;
+    PLOG_INFO << u8"ServerName = " << serverName;
     // emit sendText(QString(u8"ServerName = %1").arg(serverName));
 
     SapLocation loc(serverName, resourceIndex);
@@ -59,28 +59,28 @@ bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
 
     // ---- Acquisition ----
     if (!*m_Acquisition) {
-        PLOGD << "Acquisition 对象未创建，尝试 Create()...";
+        PLOG_INFO << "Acquisition 对象未创建，尝试 Create()...";
         // emit sendText(QString(u8"Acquisition 对象未创建，尝试 Create()..."));
         if (!m_Acquisition->Create()) {
-            PLOGE << "m_Acquisition->Create() 失败";
+            PLOG_ERROR << "m_Acquisition->Create() 失败";
             // emit sendText(QString(u8"m_Acquisition->Create() 失败"));
             return false;
         }
     }
-    PLOGD << "Acquisition 创建成功";
+    PLOG_INFO << "Acquisition 创建成功";
     // emit sendText(QString(u8"Acquisition 创建成功"));
 
     // ---- Buffers ----
     if (!*m_Buffers) {
-        PLOGD << "Buffers 对象未创建，尝试 Create()...";
+        PLOG_INFO << "Buffers 对象未创建，尝试 Create()...";
         // emit sendText(QString(u8"Buffers 对象未创建，尝试 Create()..."));
         if (!m_Buffers->Create()) {
-            PLOGE << "m_Buffers->Create() 失败";
+            PLOG_ERROR << "m_Buffers->Create() 失败";
             // emit sendText(QString(u8"m_Buffers->Create() 失败"));
             return false;
         }
     }
-    PLOGD << "Buffers 创建成功";
+    PLOG_INFO << "Buffers 创建成功";
     // emit sendText(QString(u8"Buffers 创建成功"));
     // ---- View ---- (可选)
     /*
@@ -98,15 +98,15 @@ bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
     */
     // ---- Xfer ----
     if (!*m_Xfer) {
-        PLOGD << "Xfer 对象未创建，尝试 Create()...";
+        PLOG_INFO << "Xfer 对象未创建，尝试 Create()...";
         // emit sendText(QString(u8"Xfer 对象未创建，尝试 Create()..."));
         if (!m_Xfer->Create()) {
-            PLOGE << "m_Xfer->Create() 失败";
+            PLOG_ERROR << "m_Xfer->Create() 失败";
             // emit sendText(QString(u8"m_Xfer->Create() 失败"));
             return false;
         }
     }
-    PLOGD << "Xfer 创建成功";
+    PLOG_INFO << "Xfer 创建成功";
     // emit sendText(QString(u8"Xfer 创建成功"));
     // ---- AcqDevice ----
     // if (m_pAcqDevice && !*m_pAcqDevice) {
@@ -123,13 +123,13 @@ bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
 
     if (m_Xfer && m_Xfer->GetPair(0)) {
         m_Xfer->GetPair(0)->SetCycleMode(SapXferPair::CycleNextWithTrash);
-        PLOGD << "XferPair 设置为 CycleNextWithTrash";
+        PLOG_INFO << u8"XferPair 设置为 CycleNextWithTrash";
         // emit sendText(QString(u8"XferPair 设置为 CycleNextWithTrash"));
     }
 
     m_width = m_Buffers->GetWidth();
     m_height = m_Buffers->GetHeight();
-    PLOGD << "DALSA采集卡初始化完成, 分辨率 = " << m_width << " x " << m_height;
+    PLOG_INFO << u8"DALSA采集卡初始化完成, 分辨率 = " << m_width << " x " << m_height;
     // emit sendText(QString(u8"DALSA采集卡初始化完成, 分辨率 = %1 x %2").arg(m_width).arg(m_height));
 
     int serverCount = SapManager::GetServerCount();
@@ -137,7 +137,7 @@ bool DalsaCamera::initCamera(const QString& configPath, int resourceIndex) {
         char name[CORSERVER_MAX_STRLEN] = {0};
         if (SapManager::GetServerName(i, name, sizeof(name))) {
             int resCount = SapManager::GetResourceCount(i, SapManager::ResourceAcq);
-            PLOGD << "Server[" << i << "] = " << name << ", ResourceCount = " << resCount;
+            PLOG_INFO << "Server[" << i << "] = " << name << ", ResourceCount = " << resCount;
             // emit sendText(QString(u8"Server[%1] = %2, ResourceCount = %3").arg(i).arg(name).arg(resCount));
         }
     }
@@ -173,7 +173,7 @@ void DalsaCamera::startGrab() {
             // 自动 → 按 CCF 文件里配置的触发模式
             break;
     }
-    PLOGD << "相机开始采集图像";
+    PLOG_INFO << "相机开始采集图像";
     emit sendText(QString(u8"相机开始采集图像"));
     // 启动采集（无论内/外/CCF）
     if (!m_Xfer->IsGrabbing()) {
@@ -187,7 +187,7 @@ void DalsaCamera::stopGrab() {
     if (m_Xfer) m_Xfer->Abort();
     if (m_worker.joinable()) m_worker.join();
     m_frameCount = 0;
-    PLOGD << " 相机停止采集图像";
+    PLOG_INFO << " 相机停止采集图像";
     emit sendText(QString(u8"相机停止采集图像"));
     emit grabFinished();
 }
@@ -197,11 +197,11 @@ void DalsaCamera::freezeGrab(bool freeze) {
     if (m_Xfer) {
         if (freeze) {
             m_Xfer->Freeze();  // 停采集
-            PLOGD << "采集已冻结";
+            PLOG_INFO << "采集已冻结";
             emit sendText(QString(u8"采集已冻结"));
         } else {
             m_Xfer->Grab();  // 继续采集
-            PLOGD << "采集继续";
+            PLOG_INFO << "采集继续";
             emit sendText(QString(u8"采集继续"));
         }
     }
@@ -216,19 +216,19 @@ void DalsaCamera::saveFrames(bool enable, int maxFrames) {
 // 触发一次采集
 bool DalsaCamera::softwareTrigger() {
     if (!m_Acquisition) {
-        PLOGE << "Acquisition 未初始化";
+        PLOG_ERROR << "Acquisition 未初始化";
         emit sendText(QString(u8"Acquisition 未初始化"));
         return false;
     }
     // 注意：要在 CCF 配置里设置好 External Trigger Source = Software
     // 否则这个调用不会真正触发
     if (!m_Acquisition->SoftwareTrigger(SapAcquisition::SoftwareTriggerExtFrame)) {
-        PLOGE << "SoftwareTrigger 调用失败";
+        PLOG_ERROR << "SoftwareTrigger 调用失败";
         emit sendText(QString(u8"SoftwareTrigger 调用失败"));
         return false;
     }
 
-    PLOGD << "SoftwareTrigger 触发成功";
+    PLOG_INFO << "SoftwareTrigger 触发成功";
     emit sendText(QString(u8"SoftwareTrigger 触发成功"));
     m_trigger = true;
     return true;
@@ -262,7 +262,7 @@ void DalsaCamera::XferCallBack(SapXferCallbackInfo* pInfo) {
     } else if (cam->m_Buffers->GetFormat() == SapFormatMono16) {
         *matPtr = cv::Mat(cam->m_height, cam->m_width, CV_16UC1, data).clone();
     } else {
-        std::cout << "none mode for converting to img " << std::endl;
+        PLOG_INFO << "none mode for converting to img " << std::endl;
         // 不支持的格式
         return;
     }

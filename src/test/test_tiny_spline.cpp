@@ -1,5 +1,7 @@
 ﻿#include "test_tiny_spline.h"
 
+#include "src/utils/plog_utils.h"
+
 TinySplineqqq::TinySplineqqq() {}
 
 void TinySplineqqq::run() {
@@ -28,14 +30,14 @@ void TinySplineqqq::run() {
 
     // Evaluate `spline` at u = 0.4 using 'eval'.
     std::vector<tinyspline::real> result = spline.eval(0.4f).result();
-    std::cout << "x = " << result[0] << ", y = " << result[1] << std::endl;
+    PLOG_INFO << "x = " << result[0] << ", y = " << result[1] << std::endl;
 
     // Derive `spline` and subdivide it into a sequence of Bezier curves.
     tinyspline::BSpline beziers = spline.derive().toBeziers();
 
     // Evaluate `beziers` at u = 0.3 using '()' instead of 'eval'.
     result = beziers((tsReal)0.3).result();
-    std::cout << "x = " << result[0] << ", y = " << result[1] << std::endl;
+    PLOG_INFO << "x = " << result[0] << ", y = " << result[1] << std::endl;
 }
 
 void TinySplineqqq::runcv() {
@@ -49,11 +51,11 @@ void TinySplineqqq::runcv() {
     controlPoints.push_back(cv::Point2f(350, 220));
     controlPoints.push_back(cv::Point2f(400, 120));
 
-    // std::cout << "原始控制点 (OpenCV Point2f格式):" << std::endl;
+    // plog_info << "原始控制点 (OpenCV Point2f格式):" << std::endl;
     for (size_t i = 0; i < controlPoints.size(); ++i) {
-        // std::cout << "点" << i << ": (" << controlPoints[i].x << ", " << controlPoints[i].y << ")" << std::endl;
+        // plog_info << "点" << i << ": (" << controlPoints[i].x << ", " << controlPoints[i].y << ")" << std::endl;
     }
-    std::cout << std::endl;
+    PLOG_INFO << std::endl;
 
     // 创建tinyspline样条曲线 (7个控制点，2维，3次样条)
     tinyspline::BSpline spline(7, 2, 3);
@@ -150,31 +152,31 @@ void TinySplineqqq::runcv() {
 
     // 保存图像
     cv::imwrite("spline_fitting_result.png", image);
-    std::cout << "图像已保存为 spline_fitting_result.png" << std::endl;
+    PLOG_INFO << "图像已保存为 spline_fitting_result.png" << std::endl;
 
     // 控制台输出评估结果
-    std::cout << "样条曲线评估结果:" << std::endl;
+    PLOG_INFO << "样条曲线评估结果:" << std::endl;
     for (float u = 0.0f; u <= 1.0f; u += 0.1f) {
         std::vector<tinyspline::real> result = spline.eval(u).result();
-        std::cout << "u = " << u << ": x = " << result[0] << ", y = " << result[1] << std::endl;
+        PLOG_INFO << "u = " << u << ": x = " << result[0] << ", y = " << result[1] << std::endl;
     }
-    std::cout << std::endl;
+    PLOG_INFO << std::endl;
 
     // 将样条曲线转换为贝塞尔曲线序列
     tinyspline::BSpline beziers = spline.toBeziers();
 
     // 评估贝塞尔曲线
-    std::cout << "贝塞尔曲线评估结果:" << std::endl;
+    PLOG_INFO << "贝塞尔曲线评估结果:" << std::endl;
     for (float u = 0.0f; u <= 1.0f; u += 0.1f) {
         std::vector<tinyspline::real> result = beziers(u).result();
-        std::cout << "u = " << u << ": x = " << result[0] << ", y = " << result[1] << std::endl;
+        PLOG_INFO << "u = " << u << ": x = " << result[0] << ", y = " << result[1] << std::endl;
     }
-    std::cout << std::endl;
+    PLOG_INFO << std::endl;
 
     // 计算样条曲线的导数（切线向量）
-    std::cout << "样条曲线导数（切线向量）:" << std::endl;
+    PLOG_INFO << "样条曲线导数（切线向量）:" << std::endl;
     for (float u = 0.0f; u <= 1.0f; u += 0.2f) {
         std::vector<tinyspline::real> tangent = derivative.eval(u).result();
-        std::cout << "u = " << u << ": 切线 = (" << tangent[0] << ", " << tangent[1] << ")" << std::endl;
+        PLOG_INFO << "u = " << u << ": 切线 = (" << tangent[0] << ", " << tangent[1] << ")" << std::endl;
     }
 }

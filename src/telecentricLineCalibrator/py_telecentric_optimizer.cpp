@@ -1,4 +1,6 @@
 ﻿#include "py_telecentric_optimizer.h"
+
+#include "src/utils/plog_utils.h"
 bool TelecentricPYOptimizer::pythonInitialized = false;
 namespace {
 
@@ -59,7 +61,7 @@ TelecentricPYOptimizer::TelecentricPYOptimizer() {
         static pybind11::scoped_interpreter guard{};
         pythonInitialized = true;
 
-        std::cout << "[TelecentricPYOptimizer] Python 初始化完成" << std::endl;
+        PLOG_INFO << "[TelecentricPYOptimizer] Python 初始化完成" << std::endl;
     }
 }
 bool TelecentricPYOptimizer::invokeTelecentricCalibration() {
@@ -306,9 +308,9 @@ bool TelecentricPYOptimizer::invokeTelecentricCalibration() {
 //         err = ret;
 //         v_rot = v_rot_opt;
 //         v_trans = v_trans_opt_3d;
-//         std::cout << "ret = " << ret << "\n";
-//         std::cout << "v_rot = " << v_rot.transpose() << "\n";
-//         std::cout << "v_trans = " << v_trans.transpose() << "\n";
+//         PLOG_INFO << "ret = " << ret << "\n";
+//         PLOG_INFO << "v_rot = " << v_rot.transpose() << "\n";
+//         PLOG_INFO << "v_trans = " << v_trans.transpose() << "\n";
 //     } catch (std::exception &e) {
 //         std::cerr << "Python 异常: " << e.what() << "\n";
 //         return false;

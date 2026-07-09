@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "src/telecentricLineCalibrator/libcbdetect/libcbdetect/config.h"
+#include "src/utils/plog_utils.h"
 
 namespace cbdetect {
 
@@ -30,30 +31,24 @@ void plot_boards(const cv::Mat& img, const Corner& corners, const std::vector<Bo
                 // 红线（粗线）绘制邻接格子
                 // 如果右边的点存在，画一条红色线（BGR颜色为(0, 0, 255)）表示横向相邻。
                 if (board.idx[i][j + 1] >= 0) {
-                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i][j + 1]], cv::Scalar(0, 0, 255), 3,
-                             cv::LINE_AA);
+                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i][j + 1]], cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
                 }
                 if (params.corner_type == MonkeySaddlePoint && board.idx[i + 1][j + 1] >= 0) {
-                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j + 1]], cv::Scalar(0, 0, 255), 3,
-                             cv::LINE_AA);
+                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j + 1]], cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
                 }
                 if (board.idx[i + 1][j] >= 0) {
-                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j]], cv::Scalar(0, 0, 255), 3,
-                             cv::LINE_AA);
+                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j]], cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
                 }
 
                 // 绘制白色细线
                 if (board.idx[i][j + 1] >= 0) {
-                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i][j + 1]], cv::Scalar(255, 255, 255), 1,
-                             cv::LINE_AA);
+                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i][j + 1]], cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
                 }
                 if (params.corner_type == MonkeySaddlePoint && board.idx[i + 1][j + 1] >= 0) {
-                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j + 1]], cv::Scalar(255, 255, 255),
-                             1, cv::LINE_AA);
+                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j + 1]], cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
                 }
                 if (board.idx[i + 1][j] >= 0) {
-                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j]], cv::Scalar(255, 255, 255), 1,
-                             cv::LINE_AA);
+                    cv::line(img_show, corners.p[board.idx[i][j]], corners.p[board.idx[i + 1][j]], cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
                 }
             }
         }
@@ -62,14 +57,11 @@ void plot_boards(const cv::Mat& img, const Corner& corners, const std::vector<Bo
         for (int i = 1; i < board.idx.size() * board.idx[0].size(); ++i) {
             int row = i / board.idx[0].size();
             int col = i % board.idx[0].size();
-            if (board.idx[row][col] < 0 || col == board.idx[0].size() - 1 || board.idx[row][col + 1] < 0 ||
-                board.idx[row + 1][col] < 0) {
+            if (board.idx[row][col] < 0 || col == board.idx[0].size() - 1 || board.idx[row][col + 1] < 0 || board.idx[row + 1][col] < 0) {
                 continue;
             }
-            cv::line(img_show, corners.p[board.idx[row][col]], corners.p[board.idx[row][col + 1]], cv::Scalar(255, 0, 0), 3,
-                     cv::LINE_AA);
-            cv::line(img_show, corners.p[board.idx[row][col]], corners.p[board.idx[row + 1][col]], cv::Scalar(0, 255, 0), 3,
-                     cv::LINE_AA);
+            cv::line(img_show, corners.p[board.idx[row][col]], corners.p[board.idx[row][col + 1]], cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
+            cv::line(img_show, corners.p[board.idx[row][col]], corners.p[board.idx[row + 1][col]], cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
             break;
         }
 
@@ -138,8 +130,7 @@ void plot_board_points(const cv::Mat& img, const Corner& corners, const std::vec
         int pt_counter = 0;
         for (const auto& pt : current_board_points) {
             cv::drawMarker(img_show, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 2, 1, cv::LINE_AA);
-            cv::putText(img_show, std::to_string(pt_counter++), pt + cv::Point2d(3, -3), cv::FONT_HERSHEY_PLAIN, 1.0,
-                        cv::Scalar(0, 0, 255), 2);
+            cv::putText(img_show, std::to_string(pt_counter++), pt + cv::Point2d(3, -3), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 0, 255), 2);
         }
 
         // 棋盘编号
@@ -172,11 +163,10 @@ cv::Mat warpToPlane(const cv::Mat& img,                       // 输入原图
 
     // Step2: 计算单应矩阵 (img -> world)
     cv::Mat H = cv::findHomography(img_pts, obj_points, cv::RANSAC);
-    std::cout << "Homography Matrix H:\n" << H << std::endl;
+    PLOG_INFO << "Homography Matrix H:\n" << H << std::endl;
 
     // Step3: 自适应输出范围
-    std::vector<cv::Point2f> corners = {cv::Point2f(0, 0), cv::Point2f(img.cols, 0), cv::Point2f(img.cols, img.rows),
-                                        cv::Point2f(0, img.rows)};
+    std::vector<cv::Point2f> corners = {cv::Point2f(0, 0), cv::Point2f(img.cols, 0), cv::Point2f(img.cols, img.rows), cv::Point2f(0, img.rows)};
 
     std::vector<cv::Point2f> warped_corners;
     cv::perspectiveTransform(corners, warped_corners, H);
@@ -208,8 +198,7 @@ cv::Mat warpToPlane(const cv::Mat& img,                       // 输入原图
     for (size_t i = 0; i < warped_points.size(); i++) {
         cv::circle(img_warped, warped_points[i], 5, cv::Scalar(0, 0, 255), -1);
         std::string text = "(" + std::to_string((int)warped_points[i].x) + ", " + std::to_string((int)warped_points[i].y) + ")";
-        cv::putText(img_warped, text, warped_points[i] + cv::Point2f(10, -10), cv::FONT_HERSHEY_SIMPLEX, 0.5,
-                    cv::Scalar(255, 255, 0), 1);
+        cv::putText(img_warped, text, warped_points[i] + cv::Point2f(10, -10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1);
     }
 
     return img_warped;

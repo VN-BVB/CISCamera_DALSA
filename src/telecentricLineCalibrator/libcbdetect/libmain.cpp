@@ -24,7 +24,7 @@
 //     cbdetect::find_corners(img, corners, params);
 //     auto t2 = high_resolution_clock::now();
 //     // cbdetect::plot_corners(img, corners);
-//     // std::cout<<"plot corners:"<<corners<<std::endl;
+//     // PLOG_INFO<<"plot corners:"<<corners<<std::endl;
 //     auto t3 = high_resolution_clock::now();
 //     cbdetect::boards_from_corners(img, corners, boards, params);
 //     auto t4 = high_resolution_clock::now();
@@ -36,11 +36,11 @@
 //     std::vector<std::vector<cv::Point2d>> board_points_sorted;
 //     cbdetect::plot_board_points(img, corners, boards, board_points_sorted);
 //     // for (size_t board_idx = 0; board_idx < board_points_sorted.size(); ++board_idx) {
-//     //     std::cout << "Board " << board_idx << ":\n";
+//     //     PLOG_INFO << "Board " << board_idx << ":\n";
 //     //     const auto& points = board_points_sorted[board_idx];
 //     //     for (size_t pt_idx = 0; pt_idx < points.size(); ++pt_idx) {
 //     //         const auto& pt = points[pt_idx];
-//     //         std::cout << "  Point " << pt_idx << ": (" << pt.x << ", " << pt.y << ")\n";
+//     //         PLOG_INFO << "  Point " << pt_idx << ": (" << pt.x << ", " << pt.y << ")\n";
 //     //     }
 //     // }
 //     // static int i = 0;
@@ -82,7 +82,7 @@
 //                 ofs << i << "\t" << points[i].x << "\t" << points[i].y << "\n";
 //             }
 //             ofs.close();
-//             std::cout << "[保存完成] 棋盘格1角点已写入：" << txtFile << std::endl;
+//             PLOG_INFO << "[保存完成] 棋盘格1角点已写入：" << txtFile << std::endl;
 //         } else {
 //             std::cerr << "[错误] 无法创建输出文件：" << txtFile << std::endl;
 //         }
@@ -99,7 +99,7 @@
 //     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
 //     static int i = 0;
 //     for (const QFileInfo& fileInfo : files) {
-//         std::cout << " 正在检测第" << (i++) << "图像" << std::endl;
+//         PLOG_INFO << " 正在检测第" << (i++) << "图像" << std::endl;
 //         QString filePath = fileInfo.absoluteFilePath();
 //         std::string stdFilePath = filePath.toStdString();
 //         detect(stdFilePath.c_str(), cbdetect::SaddlePoint);

@@ -9,11 +9,12 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <opencv2/opencv.hpp>
+#include <sstream>
 #include <vector>
 
 #include "plog/Log.h"
+#include "src/utils/plog_utils.h"
 struct Pose {
     Eigen::Matrix3d R;  // 旋转矩阵
     Eigen::Vector3d t;  // 平移向量
@@ -79,8 +80,8 @@ public:
 
     template <class Archive>
     void serialize(Archive& ar) {
-        ar(CEREAL_NVP(m), CEREAL_NVP(dx), CEREAL_NVP(dy), CEREAL_NVP(u0), CEREAL_NVP(v0), CEREAL_NVP(K), CEREAL_NVP(coff_dis),
-           CEREAL_NVP(v_rot), CEREAL_NVP(v_trans));
+        ar(CEREAL_NVP(m), CEREAL_NVP(dx), CEREAL_NVP(dy), CEREAL_NVP(u0), CEREAL_NVP(v0), CEREAL_NVP(K), CEREAL_NVP(coff_dis), CEREAL_NVP(v_rot),
+           CEREAL_NVP(v_trans));
     }
 
     bool save(const std::string& path) const {
@@ -116,12 +117,12 @@ public:
     std::vector<Eigen::Vector3d> allTransVecs;  // 所有平台的平移向量
 
     // 保存（纯序列化，无参数时用 .back() 作为 worldPose）
-    bool save(const std::string& path,
-              const Eigen::Vector3d& worldRvecBack = Eigen::Vector3d::Zero(),
+    bool save(const std::string& path, const Eigen::Vector3d& worldRvecBack = Eigen::Vector3d::Zero(),
               const Eigen::Vector3d& worldTvecBack = Eigen::Vector3d::Zero()) {
         auto wR = worldRvecBack, wT = worldTvecBack;
         if (wR.norm() < 1e-12 && wT.norm() < 1e-12 && !allRotVecs.empty()) {
-            wR = allRotVecs.back(); wT = allTransVecs.back();
+            wR = allRotVecs.back();
+            wT = allTransVecs.back();
         }
         try {
             std::ofstream os(path);
@@ -136,8 +137,8 @@ public:
                 if (!first) os << ",\n";
                 first = false;
                 os << "  {\"id\":" << i;
-                os << ",\"X\":[" << R.at<double>(0,0) << "," << R.at<double>(1,0) << "," << R.at<double>(2,0) << "]";
-                os << ",\"Y\":[" << R.at<double>(0,1) << "," << R.at<double>(1,1) << "," << R.at<double>(2,1) << "]";
+                os << ",\"X\":[" << R.at<double>(0, 0) << "," << R.at<double>(1, 0) << "," << R.at<double>(2, 0) << "]";
+                os << ",\"Y\":[" << R.at<double>(0, 1) << "," << R.at<double>(1, 1) << "," << R.at<double>(2, 1) << "]";
                 os << ",\"T\":[" << allTransVecs[i](0) << "," << allTransVecs[i](1) << "," << allTransVecs[i](2) << "]}";
             }
             os << "\n],\"worldPose\":{";
@@ -145,7 +146,9 @@ public:
             os << ",\"T\":[" << worldTvecBack(0) << "," << worldTvecBack(1) << "," << worldTvecBack(2) << "]";
             os << "}}}\n";
             return true;
-        } catch (...) { return false; }
+        } catch (...) {
+            return false;
+        }
     }
 
     // 加载（纯反序列化，无坐标转换）
@@ -172,10 +175,17 @@ public:
 
             // 读平台列表
             size_t pos = json.find("\"platforms\":[");
-            if (pos == std::string::npos) { allRotVecs.push_back(wRvec); allTransVecs.push_back(wTvec); return true; }
+            if (pos == std::string::npos) {
+                allRotVecs.push_back(wRvec);
+                allTransVecs.push_back(wTvec);
+                return true;
+            }
             pos = json.find('[', pos) + 1;
             size_t maxId = 0;
-            struct Entry { size_t id; Eigen::Vector3d rvec, tvec; };
+            struct Entry {
+                size_t id;
+                Eigen::Vector3d rvec, tvec;
+            };
             std::vector<Entry> entries;
 
             while (true) {
@@ -184,31 +194,65 @@ public:
                 size_t end = json.find('}', start) + 1;
                 std::string entry = json.substr(start, end - start);
 
-                size_t pid = 0; {size_t p = entry.find("\"id\":"); if(p!=std::string::npos) pid=atoi(entry.c_str()+p+5);}
+                size_t pid = 0;
+                {
+                    size_t p = entry.find("\"id\":");
+                    if (p != std::string::npos) pid = atoi(entry.c_str() + p + 5);
+                }
                 Eigen::Vector3d Xw = Eigen::Vector3d::Zero(), Yw = Eigen::Vector3d::Zero(), Tw = Eigen::Vector3d::Zero();
-                {size_t p=entry.find("\"X\":[");if(p!=std::string::npos){p=entry.find('[',p)+1;size_t q=entry.find(']',p);sscanf(entry.substr(p,q-p).c_str(),"%lf,%lf,%lf",&Xw(0),&Xw(1),&Xw(2));}}
-                {size_t p=entry.find("\"Y\":[");if(p!=std::string::npos){p=entry.find('[',p)+1;size_t q=entry.find(']',p);sscanf(entry.substr(p,q-p).c_str(),"%lf,%lf,%lf",&Yw(0),&Yw(1),&Yw(2));}}
-                {size_t p=entry.find("\"T\":[");if(p!=std::string::npos){p=entry.find('[',p)+1;size_t q=entry.find(']',p);sscanf(entry.substr(p,q-p).c_str(),"%lf,%lf,%lf",&Tw(0),&Tw(1),&Tw(2));}}
+                {
+                    size_t p = entry.find("\"X\":[");
+                    if (p != std::string::npos) {
+                        p = entry.find('[', p) + 1;
+                        size_t q = entry.find(']', p);
+                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &Xw(0), &Xw(1), &Xw(2));
+                    }
+                }
+                {
+                    size_t p = entry.find("\"Y\":[");
+                    if (p != std::string::npos) {
+                        p = entry.find('[', p) + 1;
+                        size_t q = entry.find(']', p);
+                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &Yw(0), &Yw(1), &Yw(2));
+                    }
+                }
+                {
+                    size_t p = entry.find("\"T\":[");
+                    if (p != std::string::npos) {
+                        p = entry.find('[', p) + 1;
+                        size_t q = entry.find(']', p);
+                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &Tw(0), &Tw(1), &Tw(2));
+                    }
+                }
 
-                Eigen::Vector3d Zw = Xw.cross(Yw); if(Zw.norm()>1e-12) Zw.normalize();
-                cv::Mat R(3,3,CV_64F);
-                for(int r=0;r<3;++r){R.at<double>(r,0)=Xw(r);R.at<double>(r,1)=Yw(r);R.at<double>(r,2)=Zw(r);}
-                cv::Mat rv; cv::Rodrigues(R, rv);
+                Eigen::Vector3d Zw = Xw.cross(Yw);
+                if (Zw.norm() > 1e-12) Zw.normalize();
+                cv::Mat R(3, 3, CV_64F);
+                for (int r = 0; r < 3; ++r) {
+                    R.at<double>(r, 0) = Xw(r);
+                    R.at<double>(r, 1) = Yw(r);
+                    R.at<double>(r, 2) = Zw(r);
+                }
+                cv::Mat rv;
+                cv::Rodrigues(R, rv);
 
                 if (pid > maxId) maxId = pid;
-                entries.push_back({pid,
-                    Eigen::Vector3d(rv.at<double>(0),rv.at<double>(1),rv.at<double>(2)), Tw});
+                entries.push_back({pid, Eigen::Vector3d(rv.at<double>(0), rv.at<double>(1), rv.at<double>(2)), Tw});
                 pos = end + 1;
             }
             allRotVecs.resize(maxId + 1, Eigen::Vector3d(0, 0, 0));
             allTransVecs.resize(maxId + 1, Eigen::Vector3d(0, 0, 0));
-            for (auto& e : entries) { allRotVecs[e.id] = e.rvec; allTransVecs[e.id] = e.tvec; }
+            for (auto& e : entries) {
+                allRotVecs[e.id] = e.rvec;
+                allTransVecs[e.id] = e.tvec;
+            }
             allRotVecs.push_back(wRvec);
             allTransVecs.push_back(wTvec);
             return true;
-        } catch (...) { return false; }
+        } catch (...) {
+            return false;
+        }
     }
-
 };
 inline bool readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pts) {
     std::ifstream fin(path);
@@ -231,7 +275,7 @@ inline bool readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector
         std::cerr << "文件 " << path << " 无有效点。" << std::endl;
         return false;
     }
-    std::cout << "读取 " << path << " 成功，共 " << pts.size() << " 个点\n";
+    PLOG_INFO << "读取 " << path << " 成功，共 " << pts.size() << " 个点\n";
     return true;
 }
 

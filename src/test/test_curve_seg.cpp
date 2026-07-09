@@ -1,6 +1,8 @@
-#include "src/jointDetection/contourProcess/methods/curve_seg.h"
-#include <opencv2/opencv.hpp>
 #include <iostream>
+#include <opencv2/opencv.hpp>
+
+#include "src/jointDetection/contourProcess/methods/curve_seg.h"
+#include "src/utils/plog_utils.h"
 
 void testCurveSeg(const std::vector<cv::Point2f> points) {
     // 创建测试点
@@ -43,11 +45,11 @@ void testCurveSeg(const std::vector<cv::Point2f> points) {
     cv::imwrite("spline_fitting_result.png", image);
 
     // 测试评估功能
-    std::cout << "样条曲线评估测试:" << std::endl;
+    PLOG_INFO << "样条曲线评估测试:" << std::endl;
     for (float u = 0.1f; u <= 0.9f; u += 0.2f) {
         cv::Point2f point = curve.evaluate(u);
         cv::Vec4f tangent = curve.getTangent(u);
-        // std::cout << "u = " << u << ": 点 = (" << point.x << ", " << point.y
+        // PLOG_INFO << "u = " << u << ": 点 = (" << point.x << ", " << point.y
         //           << "), 切线 = (" << tangent.x << ", " << tangent.y << ")" << std::endl;
     }
 }

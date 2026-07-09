@@ -25,7 +25,10 @@
 #include "src/utils/plog_utils.h"
 
 int main(int argc, char *argv[]) {
+    // 设置控制台输出代码页为 UTF-8
     SetConsoleOutputCP(CP_UTF8);
+    // 同时设置输入代码页为 UTF-8
+    SetConsoleCP(CP_UTF8);
     QApplication a(argc, argv);
     a.setStyleSheet(qss_loader::load(":/mm/measurement_monitor.qss"));
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
@@ -46,7 +49,7 @@ int main(int argc, char *argv[]) {
     const Eigen::Vector2d worldPt = test.convertToWorld(pix2)[0];
     Eigen::Vector2d reb = test.applyWorldOffsetToPixel(worldPt);
 
-    PLOG_INFO << std::fixed << std::setprecision(2) << "虚拟移动验证: 处理前像素(" << origPix.x() << ", " << origPix.y() << ") → 处理后像素("
+    PLOG_INFO << std::fixed << std::setprecision(6) << "虚拟移动验证: 处理前像素(" << origPix.x() << ", " << origPix.y() << ") → 处理后像素("
               << reb.x() << ", " << reb.y() << ")";
 
     test.debugProjectionDistancesFromFixedPixels();

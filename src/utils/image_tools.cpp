@@ -1,17 +1,16 @@
 #include "image_tools.h"
 
+#include "src/utils/plog_utils.h"
+
 ImageTools::ImageTools() {}
 
 /**
-* @brief drawColorfulContoursAndSave 绘制彩色轮廓并保存图像
-* @param src 输入源图像
-* @param contours 输入轮廓点集
-* @param savePath 输出图像保存路径
-*/
-void ImageTools::drawColorfulContoursAndSave(const cv::Mat &src,
-                                 const std::vector<std::vector<cv::Point>> &contours,
-                                 const std::string &savePath)
-{
+ * @brief drawColorfulContoursAndSave 绘制彩色轮廓并保存图像
+ * @param src 输入源图像
+ * @param contours 输入轮廓点集
+ * @param savePath 输出图像保存路径
+ */
+void ImageTools::drawColorfulContoursAndSave(const cv::Mat& src, const std::vector<std::vector<cv::Point>>& contours, const std::string& savePath) {
     // 创建原图的副本，直接在原图上绘制彩色轮廓
     cv::Mat resultImage;
     if (src.channels() == 1) {
@@ -35,23 +34,18 @@ void ImageTools::drawColorfulContoursAndSave(const cv::Mat &src,
 
     for (size_t i = 0; i < contours.size(); ++i) {
         cv::Scalar color = colors[i % colors.size()];
-        for (auto &point : contours[i]) {
-            if (point.x >= 0 && point.x < resultImage.cols &&
-                point.y >= 0 && point.y < resultImage.rows) {
-                resultImage.at<cv::Vec3b>(point.y, point.x) = cv::Vec3b(
-                    static_cast<uchar>(color[0]),
-                    static_cast<uchar>(color[1]),
-                    static_cast<uchar>(color[2])
-                    );
+        for (auto& point : contours[i]) {
+            if (point.x >= 0 && point.x < resultImage.cols && point.y >= 0 && point.y < resultImage.rows) {
+                resultImage.at<cv::Vec3b>(point.y, point.x) =
+                    cv::Vec3b(static_cast<uchar>(color[0]), static_cast<uchar>(color[1]), static_cast<uchar>(color[2]));
             }
         }
     }
     cv::imwrite(savePath, resultImage);
 }
 
-
-#include <unordered_set>
 #include <cmath>
+#include <unordered_set>
 
 // 自定义判等器（KeyEqual）：定义何时两个点被视为“相同”
 struct PointEqual {
@@ -64,22 +58,18 @@ struct PointEqual {
 
 // 自定义哈希器（Hash）：为点生成一个唯一的哈希值
 struct PointHash {
-    std::size_t operator()(const cv::Point2f& p) const {
-        return std::hash<float>()(p.x) ^ (std::hash<float>()(p.y) << 1);
-    }
+    std::size_t operator()(const cv::Point2f& p) const { return std::hash<float>()(p.x) ^ (std::hash<float>()(p.y) << 1); }
 };
 
 // 使用自定义的哈希和判等类型定义 unordered_set
 using PointSet = std::unordered_set<cv::Point2f, PointHash, PointEqual>;
 
 /**
-* @brief removeDuplicateContourPoints 轮廓点去重
-* @param contours 输入轮廓点集
-* @return 去重后的轮廓点集
-*/
-std::vector<std::vector<cv::Point>> ImageTools::removeDuplicateContourPoints(
-    const std::vector<std::vector<cv::Point>>& contours)
-{
+ * @brief removeDuplicateContourPoints 轮廓点去重
+ * @param contours 输入轮廓点集
+ * @return 去重后的轮廓点集
+ */
+std::vector<std::vector<cv::Point>> ImageTools::removeDuplicateContourPoints(const std::vector<std::vector<cv::Point>>& contours) {
     std::vector<std::vector<cv::Point>> unique_contours;
 
     // 定义PointSet类型（基于std::set的cv::Point比较）
@@ -91,8 +81,7 @@ std::vector<std::vector<cv::Point>> ImageTools::removeDuplicateContourPoints(
     };
     using PointSet = std::set<cv::Point, PointCompare>;
 
-    for (auto &contour : contours)
-    {
+    for (auto& contour : contours) {
         // 用于记录已出现点的集合
         PointSet seen;
         std::vector<cv::Point> unique_points;
@@ -110,35 +99,29 @@ std::vector<std::vector<cv::Point>> ImageTools::removeDuplicateContourPoints(
 }
 
 /**
-* @brief filterContours 过滤轮廓
-* @param contours 输入轮廓点集
-* @param minLength 最小轮廓长度
-* @param minHeight 最小高度
-* @param minWidth 最小宽度
-* @param maxAspectRatio 最大宽高比
-* @return 过滤后的轮廓点集
-*/
-std::vector<std::vector<cv::Point>> ImageTools::filterContours(const std::vector<std::vector<cv::Point>>& contours,
-                                                               double minLength,
-                                                               int minHeight,
-                                                               int minWidth,
-                                                               double maxAspectRatio)
-{
+ * @brief filterContours 过滤轮廓
+ * @param contours 输入轮廓点集
+ * @param minLength 最小轮廓长度
+ * @param minHeight 最小高度
+ * @param minWidth 最小宽度
+ * @param maxAspectRatio 最大宽高比
+ * @return 过滤后的轮廓点集
+ */
+std::vector<std::vector<cv::Point>> ImageTools::filterContours(const std::vector<std::vector<cv::Point>>& contours, double minLength, int minHeight,
+                                                               int minWidth, double maxAspectRatio) {
     std::vector<std::vector<cv::Point>> filteredContours;
 
-    for (auto &contour : contours)
-    {
-        if (contour.empty())
-            continue;
+    for (auto& contour : contours) {
+        if (contour.empty()) continue;
 
         double length = cv::arcLength(contour, false);
         cv::Rect bbox = cv::boundingRect(contour);
 
         // 根据长度和宽高比过滤小噪声
-        if (length > minLength &&     // 最小轮廓长度
-            bbox.height > minHeight && // 最小高度
-            bbox.width > minWidth &&  // 最小宽度
-            (bbox.height * 1.0 / bbox.width > maxAspectRatio)) // 宽高比限制
+        if (length > minLength &&                               // 最小轮廓长度
+            bbox.height > minHeight &&                          // 最小高度
+            bbox.width > minWidth &&                            // 最小宽度
+            (bbox.height * 1.0 / bbox.width > maxAspectRatio))  // 宽高比限制
         {
             filteredContours.push_back(contour);
         }
@@ -146,7 +129,6 @@ std::vector<std::vector<cv::Point>> ImageTools::filterContours(const std::vector
 
     return filteredContours;
 }
-
 
 // 去除轮廓两端的一部分
 std::vector<cv::Point2f> ImageTools::trimContourEnds(const std::vector<cv::Point2f>& contour, float trimRatio) {
@@ -188,15 +170,15 @@ void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directio
     }
 
     // 提取直线参数
-    float vx = directionVector[0]; // 方向向量x分量
-    float vy = directionVector[1]; // 方向向量y分量
-    float x0 = directionVector[2]; // 直线上的点x坐标
-    float y0 = directionVector[3]; // 直线上的点y坐标
+    float vx = directionVector[0];  // 方向向量x分量
+    float vy = directionVector[1];  // 方向向量y分量
+    float x0 = directionVector[2];  // 直线上的点x坐标
+    float y0 = directionVector[3];  // 直线上的点y坐标
 
     // 检查方向向量是否有效
     float length = std::sqrt(vx * vx + vy * vy);
     if (length < 1e-6) {
-        std::cout << "无效的方向向量" << std::endl;
+        PLOG_INFO << "无效的方向向量" << std::endl;
         return;
     }
 
@@ -276,10 +258,8 @@ void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directio
             cv::circle(resultImage, referencePoint, 3, cv::Scalar(255, 0, 0), -1);
 
             // 添加文字标注
-            std::string lineInfo = "Line: vx=" + std::to_string(vx).substr(0, 6) +
-                                   ", vy=" + std::to_string(vy).substr(0, 6) +
-                                   ", x0=" + std::to_string(x0).substr(0, 6) +
-                                   ", y0=" + std::to_string(y0).substr(0, 6);
+            std::string lineInfo = "Line: vx=" + std::to_string(vx).substr(0, 6) + ", vy=" + std::to_string(vy).substr(0, 6) +
+                                   ", x0=" + std::to_string(x0).substr(0, 6) + ", y0=" + std::to_string(y0).substr(0, 6);
             cv::putText(resultImage, lineInfo, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
 
             // 如果提供了保存路径，则保存图像
@@ -315,10 +295,8 @@ void ImageTools::drawLineAndSave(const cv::Mat& image, const cv::Vec4f& directio
     cv::circle(resultImage, referencePoint, 3, cv::Scalar(255, 0, 0), -1);
 
     // 添加文字标注
-    std::string lineInfo = "Line: vx=" + std::to_string(vx).substr(0, 6) +
-                           ", vy=" + std::to_string(vy).substr(0, 6) +
-                           ", x0=" + std::to_string(x0).substr(0, 6) +
-                           ", y0=" + std::to_string(y0).substr(0, 6);
+    std::string lineInfo = "Line: vx=" + std::to_string(vx).substr(0, 6) + ", vy=" + std::to_string(vy).substr(0, 6) +
+                           ", x0=" + std::to_string(x0).substr(0, 6) + ", y0=" + std::to_string(y0).substr(0, 6);
     cv::putText(resultImage, lineInfo, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
 
     // 如果提供了保存路径，则保存图像

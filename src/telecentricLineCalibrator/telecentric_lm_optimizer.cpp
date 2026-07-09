@@ -22,9 +22,8 @@ Eigen::Matrix3d rotVecToMat(const Eigen::Vector3d& rvec) {
 }
 
 TelecentricLMOptimizer::TelecentricLMOptimizer(const std::vector<std::vector<Eigen::Vector2d>>& all_img_pts,
-                                               const std::vector<Eigen::Vector2d>& world_pts, const std::vector<Pose>& init_poses,
-                                               double init_m, double init_dx, double init_dy, double init_u0, double init_v0,
-                                               double init_theta, double init_k)
+                                               const std::vector<Eigen::Vector2d>& world_pts, const std::vector<Pose>& init_poses, double init_m,
+                                               double init_dx, double init_dy, double init_u0, double init_v0, double init_theta, double init_k)
     : all_img_pts_(all_img_pts),
       world_pts_(world_pts),
       init_poses_(init_poses),
@@ -106,8 +105,8 @@ Eigen::VectorXd TelecentricLMOptimizer::encodeParams() const {
     return params;
 }
 
-void TelecentricLMOptimizer::decodeParams(const Eigen::VectorXd& params, double& m, double& dy, double& u0, double& v0,
-                                          double& theta, double& k, std::vector<Pose>& poses) const {
+void TelecentricLMOptimizer::decodeParams(const Eigen::VectorXd& params, double& m, double& dy, double& u0, double& v0, double& theta, double& k,
+                                          std::vector<Pose>& poses) const {
     int idx = 0;
     poses.resize(img_count_);
     Eigen::VectorXd scaled = params;
@@ -189,7 +188,7 @@ int TelecentricLMOptimizer::CostFunctor::operator()(const InputType& params, Val
     optimizer.computeResiduals(params, residuals);
     // 打印当前残差均方根（RMS）
     rms = totalErr / 12;
-    std::cout << "当前RMS = " << rms << std::endl;
+    PLOG_INFO << "当前RMS = " << rms << std::endl;
     return 0;
 }
 
@@ -256,11 +255,10 @@ bool TelecentricLMOptimizer::optimize(int max_iter, double eps_error, double eps
     }
 
     // 打印状态
-    std::cout << "\nLM优化终止状态：" << status_str << "（状态码：" << status << "）\n";
+    PLOG_INFO << "\nLM优化终止状态：" << status_str << "（状态码：" << status << "）\n";
 
     // 判断是否成功（1-9为正常收敛状态）
-    bool success = (status >= Eigen::LevenbergMarquardtSpace::RelativeReductionTooSmall &&
-                    status <= Eigen::LevenbergMarquardtSpace::UserAsked);
+    bool success = (status >= Eigen::LevenbergMarquardtSpace::RelativeReductionTooSmall && status <= Eigen::LevenbergMarquardtSpace::UserAsked);
 
     if (!success) {
         std::cerr << "优化失败！请检查输入数据或调整优化参数（如增大max_iter）\n";
@@ -268,8 +266,8 @@ bool TelecentricLMOptimizer::optimize(int max_iter, double eps_error, double eps
     return success;
 }
 
-void TelecentricLMOptimizer::getOptimizedParams(double& opt_m, double& opt_dy, double& opt_u0, double& opt_v0, double& opt_theta,
-                                                double& opt_k, std::vector<Pose>& opt_poses, double& total_reproj_err) const {
+void TelecentricLMOptimizer::getOptimizedParams(double& opt_m, double& opt_dy, double& opt_u0, double& opt_v0, double& opt_theta, double& opt_k,
+                                                std::vector<Pose>& opt_poses, double& total_reproj_err) const {
     // 解码优化后的参数
     decodeParams(optimized_params_, opt_m, opt_dy, opt_u0, opt_v0, opt_theta, opt_k, opt_poses);
 

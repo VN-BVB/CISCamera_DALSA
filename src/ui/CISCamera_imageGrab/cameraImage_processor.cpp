@@ -47,14 +47,14 @@ void CameraImageProcessor::lodaCam2PlatCalibrateParams() {
     PlatformPoseData cam2PlatParam;
     if (!cam2PlatParam.load("./data/calibration_config/platform_pose.json")) {
         // 文件不存在时用默认值，避免崩溃
-        std::cout << "nonononoononononononononon" << std::endl;
+        PLOG_INFO << "nonononoononononononononon" << std::endl;
         allRotVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
         allTransVecs_.resize(1, Eigen::Vector3d(0, 0, 0));
         return;
     }
     allRotVecs_ = cam2PlatParam.allRotVecs;
     allTransVecs_ = cam2PlatParam.allTransVecs;
-    std::cout << "allrotvecs" << allRotVecs_.back();
+    PLOG_INFO << "allrotvecs" << allRotVecs_.back();
 
     // load 存的是世界坐标 → 转为相机坐标
     if (!allRotVecs_.empty() && allTransVecs_.size() > 1 && allTransVecs_.back().norm() > 1e-6) {
@@ -337,7 +337,7 @@ void CameraImageProcessor::saveResult(const QString& dir, const QString& prefix,
     QString err;
     if (imwriteSmart(mainPath, *toSave, err)) {
         emit text(QString(u8"已保存：%1").arg(mainPath));
-        std::cout << u8"检测是否能发送";
+        PLOG_INFO << u8"检测是否能发送";
     } else {
         emit error(QString(u8"保存失败：%1 （%2）").arg(mainPath, err));
     }
@@ -404,7 +404,7 @@ void CameraImageProcessor::savePlatfromCailbImg(const QString& prefix, const QSt
     QString err;
     if (imwriteSmart(mainPath, *toSave, err)) {
         emit text(QString(u8"已保存：%1").arg(mainPath));
-        std::cout << u8"检测是否能发送";
+        PLOG_INFO << u8"检测是否能发送";
     } else {
         emit error(QString(u8"保存失败：%1 （%2）").arg(mainPath, err));
     }
@@ -607,7 +607,7 @@ void CameraImageProcessor::whenCalibrateCP() {
         if (useCamCoordsForPlat_) {
             Eigen::MatrixXd pxMat = vecToMat(pix);
             Eigen::MatrixXd cam = telecentricLineCalibrator->pixelToCameraCoordinates(pxMat, K_, coff_dis_);
-            std::cout << "cam" << cam;
+            PLOG_INFO << "cam" << cam;
             return matToVec(cam);
         } else {
             return convertToWorld(pix);

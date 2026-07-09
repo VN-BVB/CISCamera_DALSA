@@ -30,9 +30,9 @@ std::vector<std::vector<cv::Point2d>> LibCBDetector::detect(const cv::Mat& img, 
     cbdetect::boards_from_corners(img, corners, boards, params);
     auto t4 = std::chrono::high_resolution_clock::now();
 
-    std::cout << "Find corners took: " << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0 << " ms\n";
-    std::cout << "Find boards took: " << std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0 << " ms\n";
-    std::cout << "Total took: "
+    PLOG_INFO << "Find corners took: " << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0 << " ms\n";
+    PLOG_INFO << "Find boards took: " << std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0 << " ms\n";
+    PLOG_INFO << "Total took: "
               << (std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0 +
                   std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0)
               << " ms\n";
@@ -152,7 +152,7 @@ void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path
     allImagesBoardsPts.clear();
 
     parent_path_ = std::filesystem::path(dir_path).parent_path().string();
-    std::cout << "parent" << parent_path_ << std::endl;
+    PLOG_INFO << "parent" << parent_path_ << std::endl;
     QDir dir(QString::fromStdString(dir_path));
     QFileInfoList files = dir.entryInfoList(QDir::Files);
 
@@ -183,7 +183,7 @@ void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path
 
                 allImagesBoardsPts.push_back(boardsPtsXY);
 
-                std::cout << "[跳过检测] 已找到对应 TXT：" << txtFile << std::endl;
+                PLOG_INFO << "[跳过检测] 已找到对应 TXT：" << txtFile << std::endl;
 
                 file_counter_++;
                 continue;
@@ -201,7 +201,7 @@ void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path
             img = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
         }
         PLOGD << "正在检测第 " << file_counter_ << " 图像: " << file_path;
-        std::cout << "imgsize=" << img.size << std::endl;
+        PLOG_INFO << "imgsize=" << img.size << std::endl;
 
         boardsPtsXY = processSingleImage(img, file_counter_);
 
@@ -218,7 +218,7 @@ void LibCBDetector::processImagesInDirectoryFilePath(const std::string& dir_path
             saveBoardPointsFile(firstBoard, file_name);
         } else {
             // 没有检测到棋盘格，不创建 txt
-            std::cout << "[信息] 图像 " << file_name << " 未检测到可保存的第一个棋盘格。" << std::endl;
+            PLOG_INFO << "[信息] 图像 " << file_name << " 未检测到可保存的第一个棋盘格。" << std::endl;
         }
 
         allImagesBoardsPts.push_back(boardsPtsXY);
@@ -276,7 +276,7 @@ void LibCBDetector::saveBoardPoints(const std::vector<cv::Point2d>& points) {
             ofs << i << "\t" << points[i].x << "\t" << points[i].y << "\n";
         }
         ofs.close();
-        std::cout << "[保存完成] 棋盘格1角点已写入：" << txtFile << std::endl;
+        PLOG_INFO << "[保存完成] 棋盘格1角点已写入：" << txtFile << std::endl;
     } else {
         std::cerr << "[错误] 无法创建输出文件：" << txtFile << std::endl;
     }
@@ -295,7 +295,7 @@ void LibCBDetector::saveBoardPointsFile(const std::vector<cv::Point2d>& points, 
             ofs << i << "\t" << points[i].x << "\t" << points[i].y << "\n";
         }
         ofs.close();
-        std::cout << "[保存完成] 棋盘格角点已写入：" << txtFile << std::endl;
+        PLOG_INFO << "[保存完成] 棋盘格角点已写入：" << txtFile << std::endl;
     } else {
         std::cerr << "[错误] 无法创建输出文件：" << txtFile << std::endl;
     }

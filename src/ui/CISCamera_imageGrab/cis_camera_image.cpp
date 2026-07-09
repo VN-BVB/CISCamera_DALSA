@@ -28,7 +28,7 @@ CISWidget::CISWidget(QWidget* parent) : QWidget(parent), ui(new Ui::CISWidget) {
     initCISCameraConfig();
     initCameraImageProcessor();
     initCamera();
-    PLOGD << "当前主线程";
+    PLOG_INFO << "当前主线程";
     std::string filePath = R"(D:\Code\CISCamera_DALSA\data\CISCamera_Image\test\Splice_20251030_214803209.bmp)";
     // 读取图像
     cv::Mat img = readLargeBMP(filePath);
@@ -85,22 +85,22 @@ void CISWidget::initCamera() {
         // Master
         masterCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
         if (!masterCISCamera->initCamera(masterCameraCCF_, 0)) {
-            PLOGE << "Master 初始化失败";
+            PLOG_ERROR << "Master 初始化失败";
             whenAppendMessageLog(QString(u8"Master 初始化失败"));
             return;
         } else {
-            PLOGD << "Master 初始化成功";
+            PLOG_INFO << "Master 初始化成功";
             whenAppendMessageLog(QString(u8"Master 初始化成功"));
         }
 
         // Slave
         slaveCISCamera = AbstractCameraFactory::createCamera(CameraType::DALSA);
         if (!slaveCISCamera->initCamera(slaveCameraCCF_, 1)) {
-            PLOGE << "Slave 初始化失败";
+            PLOG_ERROR << "Slave 初始化失败";
             whenAppendMessageLog(QString(u8"Slave 初始化失败"));
             return;
         } else {
-            PLOGD << "Slave 初始化成功";
+            PLOG_INFO << "Slave 初始化成功";
             whenAppendMessageLog(QString(u8"Slave 初始化成功"));
         }
 
@@ -111,7 +111,7 @@ void CISWidget::initCamera() {
         slaveCISCamera->moveToThread(cameraThreadSlave);
         cameraThreadSlave->start();
 
-        PLOGD << "相机配置初始化完成";
+        PLOG_INFO << "相机配置初始化完成";
         whenAppendMessageLog(QString(u8"相机配置初始化完成"));
         initCamera2UIConnections();
     });
@@ -195,19 +195,19 @@ void CISWidget::on_btnSave_clicked() {
 // 添加返回值检查和显式连接类型
 void CISWidget::on_btnStart_clicked() {
     if (masterCISCamera) {
-        PLOGD << "启动 master camera";
+        PLOG_INFO << "启动 master camera";
         bool ok = QMetaObject::invokeMethod(masterCISCamera.get(), "startGrab", Qt::QueuedConnection);
         if (!ok) {
-            PLOGE << "Master startGrab invokeMethod 失败";
+            PLOG_ERROR << "Master startGrab invokeMethod 失败";
             whenAppendMessageLog(u8"Master 采集启动失败");
         }
     }
 #ifdef ENABLE_SLAVE_CAMERA
     if (slaveCISCamera) {
-        PLOGD << "启动 slave camera";
+        PLOG_INFO << "启动 slave camera";
         bool ok = QMetaObject::invokeMethod(slaveCISCamera.get(), "startGrab", Qt::QueuedConnection);
         if (!ok) {
-            PLOGE << "Slave startGrab invokeMethod 失败";
+            PLOG_ERROR << "Slave startGrab invokeMethod 失败";
             whenAppendMessageLog(u8"Slave 采集启动失败");
         }
     } else {
@@ -461,7 +461,7 @@ void CISWidget::whenDrawPlatformAxes() {
 
         auto px = imageProcessor->convertToPix(pts);
         axes.push_back({pid, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
-        std::cout << "平台 " << pid << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
+        PLOG_INFO << std::fixed << std::setprecision(5) << "平台 " << pid << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
         pos = end + 1;
     }
     imageProcessor->setWorldPose(savedR, savedT);

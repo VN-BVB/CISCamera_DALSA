@@ -1,4 +1,5 @@
 ﻿#include "telecentricplatform_calib.h"
+
 #include <QDebug>
 
 TelecentricPlatformCalib::TelecentricPlatformCalib() {}
@@ -90,7 +91,7 @@ void TelecentricPlatformCalib::solveAffineFromRelativeMotion(const std::vector<E
 
         A_ls = I_ideal * D.inverse();
 
-        std::cout << "A_ls (平均位移，修正版) =\n" << A_ls << std::endl;
+        PLOG_INFO << "A_ls (平均位移，修正版) =\n" << A_ls << std::endl;
     }
 }
 
@@ -160,7 +161,7 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterSequential(const 
 
         // 跳过旋转角太小的 pair（I-R 接近奇异，求逆会产生 inf/NaN）
         if (std::abs(ang) < 0.005) {
-            std::cout << "第 " << k << " 组旋转角 = " << ang << "° 过小，跳过\n";
+            PLOG_INFO << "第 " << k << " 组旋转角 = " << ang << "° 过小，跳过\n";
             continue;
         }
 
@@ -169,17 +170,17 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterSequential(const 
 
         // 防 NaN
         if (!std::isfinite(C.x()) || !std::isfinite(C.y())) {
-            std::cout << "第 " << k << " 组旋转中心 NaN，跳过\n";
+            PLOG_INFO << "第 " << k << " 组旋转中心 NaN，跳过\n";
             continue;
         }
 
         sumC += C;
         count++;
-        std::cout << u8"第 " << k << u8" 组旋转中心 = " << C.transpose() << u8" 角度 = " << ang << "°\n";
+        PLOG_INFO << u8"第 " << k << u8" 组旋转中心 = " << C.transpose() << u8" 角度 = " << ang << "°\n";
     }
 
     if (count == 0) {
-        std::cout << u8"警告: 没有有效的旋转对，返回零旋转中心\n";
+        PLOG_INFO << u8"警告: 没有有效的旋转对，返回零旋转中心\n";
         return Eigen::Vector2d::Zero();
     }
     return sumC / count;
@@ -249,7 +250,7 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterCircleFit(const s
         Eigen::Vector2d c = fitCircleTaubin(Pi);
         circle_centers.push_back(c);
 
-        std::cout << "点 index " << i << " 拟合圆心: [" << c.transpose() << "]\n";
+        PLOG_INFO << "点 index " << i << " 拟合圆心: [" << c.transpose() << "]\n";
     }
 
     // -------- 所有圆心求平均 --------
@@ -258,7 +259,7 @@ Eigen::Vector2d TelecentricPlatformCalib::computeRotationCenterCircleFit(const s
 
     final_center /= circle_centers.size();
 
-    std::cout << "最终平均旋转中心: [" << final_center.transpose() << "]\n";
+    PLOG_INFO << "最终平均旋转中心: [" << final_center.transpose() << "]\n";
     return final_center;
 }
 void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>> pts) {
@@ -325,18 +326,18 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     // for (int i = 0; i < 3; ++i) v_rot_(i) = rvec_fixed_cv.at<double>(i, 0);
 
     // -------- 6. 打印：用于误差分析（非常重要）--------
-    std::cout << "\n===== Polar Decomposition Analysis =====\n";
-    std::cout << "R_xy =\n" << R_xy << "\n\n";
+    PLOG_INFO << "\n===== Polar Decomposition Analysis =====\n";
+    PLOG_INFO << "R_xy =\n" << R_xy << "\n\n";
 
-    std::cout << "Q (SO(2)) =\n" << Q << "\n";
-    std::cout << "det(Q) = " << Q.determinant() << "\n\n";
+    PLOG_INFO << "Q (SO(2)) =\n" << Q << "\n";
+    PLOG_INFO << "det(Q) = " << Q.determinant() << "\n\n";
 
-    std::cout << "S (Symmetric, SPD) =\n" << S << "\n";
-    std::cout << "Singular values = " << sigma.transpose() << "\n";
+    PLOG_INFO << "S (Symmetric, SPD) =\n" << S << "\n";
+    PLOG_INFO << "Singular values = " << sigma.transpose() << "\n";
 
-    std::cout << "Anisotropy |s1 - s2| = " << std::abs(sigma(0) - sigma(1)) << "\n";
+    PLOG_INFO << "Anisotropy |s1 - s2| = " << std::abs(sigma(0) - sigma(1)) << "\n";
 
-    std::cout << "========================================\n";
+    PLOG_INFO << "========================================\n";
     std::vector<Eigen::Vector2d> p1, p2, p3, p4, p5;
     readPointsFromTxt("./src/telecentricLineCalibrator/matlab/xysita/chessboard_platform10.txt", p1);
     readPointsFromTxt("./src/telecentricLineCalibrator/matlab/xysita/chessboard_platform21.txt", p2);
@@ -353,12 +354,12 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     Eigen::Vector3d xdir = computeDirectionLS(w1, w2);
     Eigen::Vector3d ydir = computeDirectionLS(w2, w3);
 
-    std::cout << "X方向 = " << xdir.transpose() << std::endl;
-    std::cout << "Y方向 = " << ydir.transpose() << std::endl;
+    PLOG_INFO << "X方向 = " << xdir.transpose() << std::endl;
+    PLOG_INFO << "Y方向 = " << ydir.transpose() << std::endl;
     // ================= 最小二乘仿射 =================
     Eigen::Matrix2d A_ls;
     solveAffineFromRelativeMotion(w1, w2, w3, A_ls, 1);
-    std::cout << "A_ls (最小二乘) =\n" << A_ls << std::endl;
+    PLOG_INFO << "A_ls (最小二乘) =\n" << A_ls << std::endl;
     // ================= 计算旋转中心 =================
     std::vector<std::vector<Eigen::Vector2d>> ptsRot{w3, w4, w5};
     Eigen::Vector2d C = computeRotationCenterSequential(ptsRot);
@@ -371,7 +372,7 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
 
     Eigen::Vector2d C_in_temp_platform = computeRotationCenterSequential({p3_tempPlat, p4_tempPlat, p5_tempPlat});
 
-    std::cout << "旋转中心 = " << C_in_temp_platform.transpose() << std::endl;
+    PLOG_INFO << "旋转中心 = " << C_in_temp_platform.transpose() << std::endl;
     auto checkAffineDirection = [](const std::string& name, const Eigen::Matrix2d& A, const Eigen::Vector3d& xdir, const Eigen::Vector3d& ydir) {
         Eigen::Vector2d ax = A.col(0).normalized();
         Eigen::Vector2d ay = A.col(1).normalized();
@@ -382,9 +383,9 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
         double cos_x = ax.dot(xdir2.normalized());
         double cos_y = ay.dot(ydir2.normalized());
 
-        std::cout << "---- " << name << " 方向一致性 ----" << std::endl;
-        std::cout << "col0 vs xdir cos = " << cos_x << std::endl;
-        std::cout << "col1 vs ydir cos = " << cos_y << std::endl;
+        PLOG_INFO << "---- " << name << " 方向一致性 ----" << std::endl;
+        PLOG_INFO << "col0 vs xdir cos = " << cos_x << std::endl;
+        PLOG_INFO << "col1 vs ydir cos = " << cos_y << std::endl;
     };
     auto backProjectDisplacement = [](const std::string& name, const Eigen::Matrix2d& A, const std::vector<Eigen::Vector2d>& w1,
                                       const std::vector<Eigen::Vector2d>& w2, const std::vector<Eigen::Vector2d>& w3) {
@@ -392,9 +393,9 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
         double err_y = 0.0;
         int N = static_cast<int>(w1.size());
 
-        std::cout << "\n==== " << name << " 回代位移验证 (N=" << N << ") ====" << std::endl;
-        std::cout << "A =\n" << A << std::endl;
-        std::cout << "期望: d12 -> [50, 0]^T,  d23 -> [0, 50]^T (单位: mm)\n" << std::endl;
+        PLOG_INFO << "\n==== " << name << " 回代位移验证 (N=" << N << ") ====" << std::endl;
+        PLOG_INFO << "A =\n" << A << std::endl;
+        PLOG_INFO << "期望: d12 -> [50, 0]^T,  d23 -> [0, 50]^T (单位: mm)\n" << std::endl;
 
         for (int i = 0; i < N; ++i) {
             Eigen::Vector2d d12 = w2[i] - w1[i];
@@ -414,23 +415,23 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
 
             // 调试打印前几个点（避免刷屏）
             if (i < 3 || i == N - 1) {
-                std::cout << "[点 " << i << "] " << "d12=" << d12.transpose() << " → p12=" << p12.transpose() << " (res_x=" << residual_x.transpose()
+                PLOG_INFO << "[点 " << i << "] " << "d12=" << d12.transpose() << " → p12=" << p12.transpose() << " (res_x=" << residual_x.transpose()
                           << ", |res|=" << std::sqrt(sq_err_x) << ")" << std::endl;
-                std::cout << "         " << "d23=" << d23.transpose() << " → p23=" << p23.transpose() << " (res_y=" << residual_y.transpose()
+                PLOG_INFO << "         " << "d23=" << d23.transpose() << " → p23=" << p23.transpose() << " (res_y=" << residual_y.transpose()
                           << ", |res|=" << std::sqrt(sq_err_y) << ")" << std::endl;
             }
             if (i == 2 && N > 4) {
-                std::cout << "      ... (省略中间点) ..." << std::endl;
+                PLOG_INFO << "      ... (省略中间点) ..." << std::endl;
             }
         }
 
         err_x = std::sqrt(err_x / N);
         err_y = std::sqrt(err_y / N);
 
-        std::cout << "\n---- " << name << " 回代误差 ----" << std::endl;
-        std::cout << "X 方向 RMS = " << err_x << " mm" << std::endl;
-        std::cout << "Y 方向 RMS = " << err_y << " mm" << std::endl;
-        std::cout << "========================================\n" << std::endl;
+        PLOG_INFO << "\n---- " << name << " 回代误差 ----" << std::endl;
+        PLOG_INFO << "X 方向 RMS = " << err_x << " mm" << std::endl;
+        PLOG_INFO << "Y 方向 RMS = " << err_y << " mm" << std::endl;
+        PLOG_INFO << "========================================\n" << std::endl;
     };
     checkAffineDirection("A_ls", A_ls, xdir, ydir);
     backProjectDisplacement("A_ls", A_ls, w1, w2, w3);
@@ -452,9 +453,9 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     Eigen::Vector2d b = R_wc_2 * C_world + t_wc_2;  // 平移部分
 
     // 输出结果
-    std::cout << "\n=== Platform -> Camera (2D Affine) ===" << std::endl;
-    std::cout << "M =\n" << M << std::endl;
-    std::cout << "b = " << b.transpose() << std::endl;
+    PLOG_INFO << "\n=== Platform -> Camera (2D Affine) ===" << std::endl;
+    PLOG_INFO << "M =\n" << M << std::endl;
+    PLOG_INFO << "b = " << b.transpose() << std::endl;
     // 提取 M 的元素
     double m11 = M(0, 0), m21 = M(1, 0);  // 第一列 (x)
     double m12 = M(0, 1), m22 = M(1, 1);  // 第二列 (y)
@@ -541,10 +542,10 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
                                                    rvec_opt, tvec_opt, rms);
 
     if (ok) {
-        std::cout << "LM 优化成功\n";
-        std::cout << "rvec_opt = " << rvec_opt.transpose() << std::endl;
-        std::cout << "tvec_opt = " << tvec_opt.transpose() << std::endl;
-        std::cout << "RMS = " << rms << std::endl;
+        PLOG_INFO << "LM 优化成功\n";
+        PLOG_INFO << "rvec_opt = " << rvec_opt.transpose() << std::endl;
+        PLOG_INFO << "tvec_opt = " << tvec_opt.transpose() << std::endl;
+        PLOG_INFO << "RMS = " << rms << std::endl;
     }
     // // ==================== 1. 提取像素坐标（复用已加载的 p1~p5） ====================
     // auto p1_pix = p1;  // platform10.txt
@@ -604,22 +605,22 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     // Eigen::Vector3d ydir_world_to_cam = R_world_cam * ydir_world;
 
     // // 打印方向验证
-    // std::cout << "\n========== Direction Vector Consistency Verification ==========\n";
-    // std::cout << "X dir (world LS)      = " << xdir_world.head<2>().transpose() << "\n";
-    // std::cout << "Y dir (world LS)      = " << ydir_world.head<2>().transpose() << "\n";
-    // std::cout << "X dir (world→cam)     = " << xdir_world_to_cam.head<2>().transpose() << "\n";
-    // std::cout << "Y dir (world→cam)     = " << ydir_world_to_cam.head<2>().transpose() << "\n";
-    // std::cout << "X dir (camera LS)     = " << xdir_cam.head<2>().transpose() << "\n";
-    // std::cout << "Y dir (camera LS)     = " << ydir_cam.head<2>().transpose() << "\n";
-    // std::cout << "X dir (cam→world)     = " << xdir_cam_to_world.head<2>().transpose() << "\n";
-    // std::cout << "Y dir (cam→world)     = " << ydir_cam_to_world.head<2>().transpose() << "\n";
+    // PLOG_INFO << "\n========== Direction Vector Consistency Verification ==========\n";
+    // PLOG_INFO << "X dir (world LS)      = " << xdir_world.head<2>().transpose() << "\n";
+    // PLOG_INFO << "Y dir (world LS)      = " << ydir_world.head<2>().transpose() << "\n";
+    // PLOG_INFO << "X dir (world→cam)     = " << xdir_world_to_cam.head<2>().transpose() << "\n";
+    // PLOG_INFO << "Y dir (world→cam)     = " << ydir_world_to_cam.head<2>().transpose() << "\n";
+    // PLOG_INFO << "X dir (camera LS)     = " << xdir_cam.head<2>().transpose() << "\n";
+    // PLOG_INFO << "Y dir (camera LS)     = " << ydir_cam.head<2>().transpose() << "\n";
+    // PLOG_INFO << "X dir (cam→world)     = " << xdir_cam_to_world.head<2>().transpose() << "\n";
+    // PLOG_INFO << "Y dir (cam→world)     = " << ydir_cam_to_world.head<2>().transpose() << "\n";
 
-    // std::cout << "\n--- Direction Errors (XY plane L2 norm) ---\n";
-    // std::cout << "||X: cam→world - world|| = " << (xdir_cam_to_world.head<2>() - xdir_world.head<2>()).norm() << "\n";
-    // std::cout << "||Y: cam→world - world|| = " << (ydir_cam_to_world.head<2>() - ydir_world.head<2>()).norm() << "\n";
-    // std::cout << "||X: world→cam - cam||   = " << (xdir_world_to_cam.head<2>() - xdir_cam.head<2>()).norm() << "\n";
-    // std::cout << "||Y: world→cam - cam||   = " << (ydir_world_to_cam.head<2>() - ydir_cam.head<2>()).norm() << "\n";
-    // std::cout << "===============================================\n";
+    // PLOG_INFO << "\n--- Direction Errors (XY plane L2 norm) ---\n";
+    // PLOG_INFO << "||X: cam→world - world|| = " << (xdir_cam_to_world.head<2>() - xdir_world.head<2>()).norm() << "\n";
+    // PLOG_INFO << "||Y: cam→world - world|| = " << (ydir_cam_to_world.head<2>() - ydir_world.head<2>()).norm() << "\n";
+    // PLOG_INFO << "||X: world→cam - cam||   = " << (xdir_world_to_cam.head<2>() - xdir_cam.head<2>()).norm() << "\n";
+    // PLOG_INFO << "||Y: world→cam - cam||   = " << (ydir_world_to_cam.head<2>() - ydir_cam.head<2>()).norm() << "\n";
+    // PLOG_INFO << "===============================================\n";
 
     // // ===========================================================================
     // // ✅ 第二部分：旋转中心一致性验证（使用 p3, p4, p5）
@@ -662,21 +663,21 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     // Eigen::Vector2d C_pix_world = convertToWorld({C_pix})[0];
 
     // // 打印旋转中心验证
-    // std::cout << "\n========== Rotation Center Verification ==========\n";
-    // std::cout << "C_pixel (direct)      = " << C_pix.transpose() << std::endl;
-    // std::cout << "C_camera (direct)     = " << C_cam.transpose() << std::endl;
-    // std::cout << "C_world (direct)      = " << C_world.transpose() << std::endl;
-    // std::cout << "C_pixel -> camera     = " << C_pix_cam.transpose() << std::endl;
-    // std::cout << "C_world -> camera     = " << C_world_cam.transpose() << std::endl;
-    // std::cout << "C_camera -> world     = " << C_cam_world.transpose() << std::endl;
-    // std::cout << "C_pixel -> world      = " << C_pix_world.transpose() << std::endl;
+    // PLOG_INFO << "\n========== Rotation Center Verification ==========\n";
+    // PLOG_INFO << "C_pixel (direct)      = " << C_pix.transpose() << std::endl;
+    // PLOG_INFO << "C_camera (direct)     = " << C_cam.transpose() << std::endl;
+    // PLOG_INFO << "C_world (direct)      = " << C_world.transpose() << std::endl;
+    // PLOG_INFO << "C_pixel -> camera     = " << C_pix_cam.transpose() << std::endl;
+    // PLOG_INFO << "C_world -> camera     = " << C_world_cam.transpose() << std::endl;
+    // PLOG_INFO << "C_camera -> world     = " << C_cam_world.transpose() << std::endl;
+    // PLOG_INFO << "C_pixel -> world      = " << C_pix_world.transpose() << std::endl;
 
-    // std::cout << "-----------------------------------------------\n";
-    // std::cout << "||C_cam - C_pix_cam||   = " << (C_cam - C_pix_cam).norm() << std::endl;
-    // std::cout << "||C_cam - C_world_cam|| = " << (C_cam - C_world_cam).norm() << std::endl;
-    // std::cout << "||C_world - C_cam||     = " << (C_world - C_cam_world).norm() << std::endl;
-    // std::cout << "||C_world - C_pix||     = " << (C_world - C_pix_world).norm() << std::endl;
-    // std::cout << "===============================================\n" << std::endl;
+    // PLOG_INFO << "-----------------------------------------------\n";
+    // PLOG_INFO << "||C_cam - C_pix_cam||   = " << (C_cam - C_pix_cam).norm() << std::endl;
+    // PLOG_INFO << "||C_cam - C_world_cam|| = " << (C_cam - C_world_cam).norm() << std::endl;
+    // PLOG_INFO << "||C_world - C_cam||     = " << (C_world - C_cam_world).norm() << std::endl;
+    // PLOG_INFO << "||C_world - C_pix||     = " << (C_world - C_pix_world).norm() << std::endl;
+    // PLOG_INFO << "===============================================\n" << std::endl;
 
     // // ==================== 1. 世界坐标中的两个点 ====================
     // Eigen::Vector2d Pw1(10.0, 10.0);
@@ -725,17 +726,17 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     // double d_cam_Q = (Pc2_Q - Pc1_Q).norm();
 
     // // ==================== 7. 输出 ====================
-    // std::cout << "\n========== Distance Error Test ==========\n";
+    // PLOG_INFO << "\n========== Distance Error Test ==========\n";
 
-    // std::cout << "World distance          = " << d_world << std::endl;
-    // std::cout << "Camera distance (R_xy)  = " << d_cam_R << std::endl;
-    // std::cout << "Camera distance (SO2 Q) = " << d_cam_Q << std::endl;
+    // PLOG_INFO << "World distance          = " << d_world << std::endl;
+    // PLOG_INFO << "Camera distance (R_xy)  = " << d_cam_R << std::endl;
+    // PLOG_INFO << "Camera distance (SO2 Q) = " << d_cam_Q << std::endl;
 
-    // std::cout << "Distance error (abs)    = " << std::abs(d_cam_R - d_cam_Q) << std::endl;
+    // PLOG_INFO << "Distance error (abs)    = " << std::abs(d_cam_R - d_cam_Q) << std::endl;
 
-    // std::cout << "Distance error (ratio)  = " << std::abs(d_cam_R / d_cam_Q - 1.0) << std::endl;
+    // PLOG_INFO << "Distance error (ratio)  = " << std::abs(d_cam_R / d_cam_Q - 1.0) << std::endl;
 
-    // std::cout << "========================================\n";
+    // PLOG_INFO << "========================================\n";
     // -------------------- 5. 构建平台坐标系在临时世界下的旋转矩阵 --------------------
     Eigen::Vector3d zdir = xdir.cross(ydir).normalized();
     Eigen::Matrix3d R_plat_world;
@@ -755,8 +756,8 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
     // -------------------- 7. 平台坐标系 -> 相机坐标系 --------------------
     Eigen::Matrix3d R_plat_cam = R_world_cam23 * R_plat_world;
     Eigen::Vector3d t_plat_cam = R_world_cam23 * t_plat_world + t_world_cam;
-    std::cout << "平台 -> 相机旋转矩阵 = \n" << R_plat_cam << "\n";
-    std::cout << "平台 -> 相机平移向量 = " << t_plat_cam.transpose() << "\n";
+    PLOG_INFO << "平台 -> 相机旋转矩阵 = \n" << R_plat_cam << "\n";
+    PLOG_INFO << "平台 -> 相机平移向量 = " << t_plat_cam.transpose() << "\n";
 
     // -------------------- 8. 平台到相机旋转向量 --------------------
     cv::Mat R_plat_cv, rvec_plat_cv;
@@ -772,21 +773,21 @@ void TelecentricPlatformCalib::runDemo(std::vector<std::vector<Eigen::Vector2d>>
 
     // 像素 -> 相机平面坐标
     Eigen::MatrixXd cam_norm = lineCalib_->pixelToCameraCoordinates(px, K_, dist_);
-    std::cout << std::fixed << std::setprecision(12);
-    std::cout << "cam_norm =\n" << cam_norm << std::endl;
+    PLOG_INFO << std::fixed << std::setprecision(12);
+    PLOG_INFO << "cam_norm =\n" << cam_norm << std::endl;
 
     // 直接用平台到相机的外参进行相机 -> 平台坐标系转换
     Eigen::MatrixXd plat_pts = lineCalib_->cameraToWorldCoordinates(cam_norm, rvec_plat, t_plat_cam);
     // 直接用平台到相机的外参进行相机 -> 平台坐标系转换
     Eigen::MatrixXd plat_pts2 = lineCalib_->cameraToWorldCoordinates(cam_norm, rvec_opt, tvec_opt);
     // 输出结果
-    std::cout << "像素点在平台坐标系 = " << plat_pts(0, 0) << ", " << plat_pts(0, 1) << "\n";
+    PLOG_INFO << "像素点在平台坐标系 = " << plat_pts(0, 0) << ", " << plat_pts(0, 1) << "\n";
     // 输出结果
-    std::cout << "像素点在平台坐标系2 = " << plat_pts2(0, 0) << ", " << plat_pts2(0, 1) << "\n";
-    std::cout << "\nRecovered rotation vector (platform -> camera): " << rvec_plat.transpose() << " [rad]" << std::endl;
-    std::cout << "\nTrans vector (platform -> camera): " << t_plat_cam.transpose() << std::endl;
-    std::cout << "\nRecovered rotation vector (platform -> camera): " << rvec_opt.transpose() << " [rad]" << std::endl;
-    std::cout << "\nTrans vector (platform -> camera): " << tvec_opt.transpose() << std::endl;
+    PLOG_INFO << "像素点在平台坐标系2 = " << plat_pts2(0, 0) << ", " << plat_pts2(0, 1) << "\n";
+    PLOG_INFO << "\nRecovered rotation vector (platform -> camera): " << rvec_plat.transpose() << " [rad]" << std::endl;
+    PLOG_INFO << "\nTrans vector (platform -> camera): " << t_plat_cam.transpose() << std::endl;
+    PLOG_INFO << "\nRecovered rotation vector (platform -> camera): " << rvec_opt.transpose() << " [rad]" << std::endl;
+    PLOG_INFO << "\nTrans vector (platform -> camera): " << tvec_opt.transpose() << std::endl;
 }
 
 bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<std::vector<Eigen::Vector2d>>& xWorlds,
@@ -876,10 +877,8 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
             const double proj = p.dot(xdir_unit2d);
             const Eigen::Vector2d projPt = proj * xdir_unit2d;
             const double dist = (projPt - refProjPt).norm();
-            qDebug() << QString("标定板投影验证: 标定板 %1 投影前距离 = %2 mm，投影后距离 = %3 mm")
-                            .arg(i)
-                            .arg(rawDist, 0, 'f', 2)
-                            .arg(dist, 0, 'f', 2);
+            qDebug()
+                << QString("标定板投影验证: 标定板 %1 投影前距离 = %2 mm，投影后距离 = %3 mm").arg(i).arg(rawDist, 0, 'f', 2).arg(dist, 0, 'f', 2);
         }
     }
 
@@ -902,7 +901,7 @@ bool TelecentricPlatformCalib::estimatePlatformPoseFromBoards(const std::vector<
         }
         if (count > 0) C0 /= count;
     }
-    std::cout << "旋转中心 C₀ = " << C0.transpose() << std::endl;
+    PLOG_INFO << "旋转中心 C₀ = " << C0.transpose() << std::endl;
 
     // === 4. 构建平台→相机位姿 ===
     Eigen::Vector3d zdir = xdir.cross(ydir).normalized();
