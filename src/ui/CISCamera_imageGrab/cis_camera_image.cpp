@@ -477,18 +477,64 @@ void CISWidget::whenDrawPlatformAxes() {
     cv::Mat gray = img.clone();  // 独立副本，不破坏 vis.bmp
     if (gray.channels() == 3) cv::cvtColor(gray, gray, cv::COLOR_BGR2GRAY);
 
-    ui->imgSplice->clearAllGraphicComponents();
+    ui->graphicsView_5->clearAllGraphicComponents();
     for (auto& a : axes) {
         std::shared_ptr<AxesItem> CpAxis = std::make_shared<AxesItem>(a.cx, a.cy, a.xx, a.xy, a.yx, a.yy, a.id);
-        ui->imgSplice->addGraphicComponent(CpAxis);
+        ui->graphicsView_5->addGraphicComponent(CpAxis);
     }
-    ui->imgSplice->displayImage(std::make_shared<cv::Mat>(gray), true);
+    ui->graphicsView_5->displayImage(std::make_shared<cv::Mat>(gray), true);
 }
 
 void CISWidget::whenDrawDetectCircles() {
     if (!imageProcessor) return;
 
-    // 定义blob参数
+    // 1. 加载 platform_pose.json，提取各平台旋转中心 T 的世界坐标
+    std::ifstream is("./data/calibration_config/platform_pose.json");
+    std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+
+    auto extractVec = [&](const std::string& key, size_t from) -> Eigen::Vector3d {
+        size_t p = json.find("\"" + key + "\":[", from);
+        if (p == std::string::npos) return Eigen::Vector3d::Zero();
+        p = json.find('[', p) + 1;
+        size_t q = json.find(']', p);
+        Eigen::Vector3d v;
+        sscanf(json.substr(p, q - p).c_str(), "%lf,%lf,%lf", &v(0), &v(1), &v(2));
+        return v;
+    };
+
+    size_t wp = json.find("\"worldPose\":{");
+    auto savedR = imageProcessor->getWorldRvec();
+    auto savedT = imageProcessor->getWorldTvec();
+    imageProcessor->setWorldPose(extractVec("R", wp), extractVec("T", wp));
+
+    // 解析平台 id → T 世界坐标
+    struct PlatCenter {
+        int id;
+        Eigen::Vector2d worldT;
+    };
+    std::vector<PlatCenter> platCenters;
+    size_t pos = json.find("\"platforms\":[");
+    if (pos != std::string::npos) {
+        pos = json.find('[', pos) + 1;
+        while (true) {
+            size_t start = json.find('{', pos);
+            if (start == std::string::npos || start >= json.find(']', pos)) break;
+            size_t end = json.find('}', start) + 1;
+            int pid = atoi(&json[json.find("\"id\":", start) + 5]);
+            Eigen::Vector3d T_w = extractVec("T", start);
+            platCenters.push_back({pid, T_w.head<2>()});
+            pos = end + 1;
+        }
+    }
+
+    // 把平台旋转中心转成像素坐标
+    std::vector<Eigen::Vector2d> platPixels;
+    for (auto& pc : platCenters) {
+        auto px = imageProcessor->convertToPix({pc.worldT});
+        platPixels.push_back(px[0]);
+    }
+
+    // 2. blob 检测
     cv::SimpleBlobDetector::Params params;
     params.minArea = 7e4;
     params.maxArea = 8e4;
@@ -498,34 +544,30 @@ void CISWidget::whenDrawDetectCircles() {
     params.filterByConvexity = false;
     params.filterByInertia = false;
 
-    // 创建blob检测对象
     cv::Ptr<cv::FeatureDetector> blobDetector = cv::SimpleBlobDetector::create(params);
 
-    // 读取图片
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat img = readLargeBMP("./data/PaltfromCalibrate/vis/vis.bmp");
     if (img.empty()) img = cv::imread("./data/PaltfromCalibrate/vis/vis.bmp", cv::IMREAD_UNCHANGED);
     if (img.empty()) return;
 
-    // 检测圆形光源（粗定位）
     blobDetector->detect(img, keypoints);
     if (keypoints.empty()) return;
 
-    // 灰度图
     cv::Mat gray;
     if (img.channels() == 3)
         cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
     else
         gray = img.clone();
 
-    // 阈值二值化 → 只取纯白区域（阈值 240，图像灰度范围 0-255）
     cv::Mat binary;
     cv::threshold(gray, binary, 240, 255, cv::THRESH_BINARY);
 
-    // 在二值图上找轮廓，拟合圆
     std::vector<cv::Point2d> centers;
     std::vector<double> diameters;
+    std::vector<QString> labels;
     const int pad = 20;
+
     for (auto& kp : keypoints) {
         int cx = cvRound(kp.pt.x), cy = cvRound(kp.pt.y);
         int roiSize = cvRound(kp.size) + pad * 2;
@@ -534,28 +576,45 @@ void CISWidget::whenDrawDetectCircles() {
         int w = std::min(roiSize, binary.cols - x);
         int h = std::min(roiSize, binary.rows - y);
 
-        // 在 ROI 内找白色轮廓
         cv::Mat roiBin = binary(cv::Rect(x, y, w, h));
         std::vector<std::vector<cv::Point>> contours;
         cv::findContours(roiBin, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-
         if (contours.empty()) continue;
 
-        // 取面积最大的轮廓，用 minEnclosingCircle 拟合
         auto& cnt = *std::max_element(contours.begin(), contours.end(), [](auto& a, auto& b) { return cv::contourArea(a) < cv::contourArea(b); });
         if (cnt.size() < 6) continue;
 
-        cv::Point2f center;
-        float radius;
-        cv::minEnclosingCircle(cnt, center, radius);
-        // 还原到原图坐标
-        centers.emplace_back(center.x + x, center.y + y);
-        diameters.push_back(radius * 2.0);
+        cv::Point2f ctr;
+        float r;
+        cv::minEnclosingCircle(cnt, ctr, r);
+        double dx = ctr.x + x;
+        double dy = ctr.y + y;
+        centers.emplace_back(dx, dy);
+        diameters.push_back(r * 2.0);
+
+        // 3. 计算 offset：圆心到最近平台旋转中心的 (dx², dy²)
+        double minDist2 = 1e18;
+        int bestId = -1;
+        Eigen::Vector2d bestPlatPix;
+        for (size_t k = 0; k < platCenters.size(); ++k) {
+            double d2 = std::pow(dx - platPixels[k].x(), 2) + std::pow(dy - platPixels[k].y(), 2);
+            if (d2 < minDist2) {
+                minDist2 = d2;
+                bestId = platCenters[k].id;
+                bestPlatPix = platPixels[k];
+            }
+        }
+        double offsetX = dx - bestPlatPix.x();
+        double offsetY = dy - bestPlatPix.y();
+        double dist = std::sqrt(offsetX * offsetX + offsetY * offsetY);
+        labels.push_back(QString(u8"plt%1 offset: %2").arg(bestId).arg(dist, 0, 'f', 1));
     }
 
-    // 画到 imgSplice
-    std::shared_ptr<CircleItem> circleLight = std::make_shared<CircleItem>(centers, diameters, Qt::green, 1.0, 15.0);
-    ui->imgSplice->addGraphicComponent(circleLight);
+    imageProcessor->setWorldPose(savedR, savedT);
+
+    // 4. 显示
+    std::shared_ptr<CircleItem> circleLight = std::make_shared<CircleItem>(centers, diameters, Qt::green, 1.0, 15.0, labels);
+    ui->graphicsView_5->addGraphicComponent(circleLight);
 }
 
 std::vector<Eigen::Vector2d> CISWidget::convertToWorldDemo(const std::vector<Eigen::Vector2d>& pix_pts) {
