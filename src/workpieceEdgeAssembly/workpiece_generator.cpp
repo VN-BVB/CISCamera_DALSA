@@ -86,7 +86,7 @@ NearestIndicesMap WorkpieceGenerator::createNearestIndices(
  */
 std::pair<std::vector<int>, std::vector<int>>
 WorkpieceGenerator::partitionCandidatesByDirection(int currentId,
-                                                   OpeningDirection currentDirection,
+                                                   const cv::Point2f& openingDirection,
                                                    const cv::Point2f& currentCenter,
                                                    const std::vector<int>& candidateIds,
                                                    const UnpairedContoursMap& unpairedContours) {
@@ -94,32 +94,23 @@ WorkpieceGenerator::partitionCandidatesByDirection(int currentId,
     std::vector<int> preferredIds;
     std::vector<int> otherIds;
 
+    const float kEps = 1e-6f;
+    float dirNorm = std::sqrt(openingDirection.x * openingDirection.x +
+                              openingDirection.y * openingDirection.y);
+    bool directionValid = (dirNorm > kEps);
+
     for (int candidateId : candidateIds) {
-        if (currentId >= candidateId) continue; // 避免重复组合
+        if (currentId >= candidateId) continue;
 
         cv::Point2f candidateCenter = unpairedContours.at(candidateId)->getCenterPoint();
-        float dx = candidateCenter.x - currentCenter.x;
-        float dy = candidateCenter.y - currentCenter.y;
 
-        // 根据开口方向判断候选轮廓的位置
-        bool isInPreferredArea = false;
-        switch (currentDirection) {
-        case OpeningDirection::LEFT:
-            isInPreferredArea = (dx < 0); // 候选轮廓在当前轮廓左侧
-            break;
-        case OpeningDirection::RIGHT:
-            isInPreferredArea = (dx > 0); // 候选轮廓在当前轮廓右侧
-            break;
-        case OpeningDirection::UP:
-            isInPreferredArea = (dy < 0); // 候选轮廓在当前轮廓上方
-            break;
-        case OpeningDirection::DOWN:
-            isInPreferredArea = (dy > 0); // 候选轮廓在当前轮廓下方
-            break;
-        case OpeningDirection::UNKNOWN:
-        default:
-            isInPreferredArea = true; // 未知方向，不分区
-            break;
+        bool isInPreferredArea;
+        if (!directionValid) {
+            isInPreferredArea = true;  // 未知方向，不分区
+        } else {
+            cv::Point2f toCandidate = candidateCenter - currentCenter;
+            float dot = toCandidate.x * openingDirection.x + toCandidate.y * openingDirection.y;
+            isInPreferredArea = (dot > 0);
         }
 
         if (isInPreferredArea) {
@@ -222,7 +213,7 @@ void WorkpieceGenerator::searchAndGenerateCombinations(int currentId,
                                                        std::set<std::set<int>>& generatedCombinations) {
 
     // 获取当前轮廓信息
-    OpeningDirection currentDirection = unpairedContours.at(currentId)->getOpeningDirection();
+    cv::Point2f currentDirection = unpairedContours.at(currentId)->getOpeningDirection();
     cv::Point2f currentCenter = unpairedContours.at(currentId)->getCenterPoint();
 
     // 根据开口方向分区

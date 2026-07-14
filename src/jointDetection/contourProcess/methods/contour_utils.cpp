@@ -2,16 +2,6 @@
 
 namespace ContourUtils {
 // ==================== 工具函数实现 ====================
-std::string openingDirectionToString(OpeningDirection direction) {
-    switch (direction) {
-    case OpeningDirection::UNKNOWN: return "未知";
-    case OpeningDirection::UP: return "向上";
-    case OpeningDirection::DOWN: return "向下";
-    case OpeningDirection::LEFT: return "向左";
-    case OpeningDirection::RIGHT: return "向右";
-    default: return "未知";
-    }
-}
 
 /**
  * @brief 在轮廓中查找指定点的索引位置

@@ -11,35 +11,6 @@
 #endif
 
 /**
- * @brief 计算轮廓的开口方向
- * @param contour 输入轮廓点集
- * @return 开口方向枚举值
- */
-OpeningDirection ContourFeatureCalculator::calculateOpeningDirection(const std::vector<cv::Point2f>& contour) {
-    if (contour.empty()) return OpeningDirection::UNKNOWN;
-
-    cv::Point2f centroid = ContourUtils::calculateCentralPoint(contour);
-    float avgX = centroid.x;
-    float avgY = centroid.y;
-
-    bool hasUp = false, hasDown = false, hasLeft = false, hasRight = false;
-
-    for (const auto& point : contour) {
-        if (std::abs(point.x - avgX) < 1 && point.y < avgY) hasUp = true;       // 检查正上方（x坐标相同，y坐标更小）
-        if (std::abs(point.x - avgX) < 1 && point.y > avgY) hasDown = true;     // 检查正下方（x坐标相同，y坐标更大）
-        if (std::abs(point.y - avgY) < 1 && point.x < avgX) hasLeft = true;     // 检查正左方（y坐标相同，x坐标更小）
-        if (std::abs(point.y - avgY) < 1 && point.x > avgX) hasRight = true;    // 检查正右方（y坐标相同，x坐标更大）
-    }
-
-    if (!hasUp) return OpeningDirection::UP;
-    if (!hasDown) return OpeningDirection::DOWN;
-    if (!hasLeft) return OpeningDirection::LEFT;
-    if (!hasRight) return OpeningDirection::RIGHT;
-
-    return OpeningDirection::UNKNOWN;
-}
-
-/**
  * @brief 去除轮廓中的重复点
  * @param contour 输入轮廓点集
  * @return 去除重复点后的轮廓点集
@@ -83,177 +54,70 @@ std::vector<cv::Point2f> ContourFeatureCalculator::downsampleByTwo(const std::ve
 }
 
 /**
- * @brief 根据开口方向计算轮廓的起始点
- * @param direction 开口方向
+ * @brief 极角差最大 gap 辅助函数：返回 gap 的索引和角平分线角度
  * @param contour 输入轮廓点集
- * @return 起始点坐标，如果方向未知或轮廓为空则返回(-1, -1)
- *
- * @details 根据开口方向选择逆时针的起始点：
- *    - 开口向上：左上角
- *    - 开口向右：右上角
- *    - 开口向下：右下角
- *    - 开口向左：左下角
+ * @return {maxGapIdx, gapCenterAngle, valid}
  */
-cv::Point2f ContourFeatureCalculator::calculateStartPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour) {
-    if (direction == OpeningDirection::UNKNOWN || contour.empty()) {
-        return cv::Point2f(-1, -1);
+ContourFeatureCalculator::MaxGapResult ContourFeatureCalculator::computeMaxGapAngle(const std::vector<cv::Point2f>& contour) {
+    MaxGapResult result{-1, 0.0f, false};
+
+    if (contour.size() < 2) {
+        return result;
     }
 
-    float sumX = 0.0f, sumY = 0.0f;
-    for (const auto& point : contour) {
-        sumX += point.x;
-        sumY += point.y;
-    }
-    float avgX = sumX / contour.size();
-    float avgY = sumY / contour.size();
+    // 以包围盒中心作为极点
+    cv::Point2f center = ContourUtils::calculateCentralPoint(contour);
 
-    cv::Point2f startPoint;
-    switch (direction) {
-    case OpeningDirection::UP: {
-        std::vector<cv::Point2f> leftHalfPoints;
-        for (const auto& point : contour) {
-            if (point.x < avgX) leftHalfPoints.push_back(point);
-        }
-        if (leftHalfPoints.empty()) leftHalfPoints = contour;
-        startPoint = *std::min_element(leftHalfPoints.begin(), leftHalfPoints.end(),
-                                       [](const cv::Point2f& a, const cv::Point2f& b) {
-                                           if (a.y == b.y) return a.x < b.x;
-                                           return a.y < b.y;
-                                       });
-        break;
-    }
-    case OpeningDirection::RIGHT: {
-        std::vector<cv::Point2f> topHalfPoints;
-        for (const auto& point : contour) {
-            if (point.y < avgY) topHalfPoints.push_back(point);
-        }
-        if (topHalfPoints.empty()) topHalfPoints = contour;
-        startPoint = *std::min_element(topHalfPoints.begin(), topHalfPoints.end(),
-                                       [](const cv::Point2f& a, const cv::Point2f& b) {
-                                           if (a.x == b.x) return a.y < b.y;
-                                           return a.x > b.x;
-                                       });
-        break;
-    }
-    case OpeningDirection::DOWN: {
-        std::vector<cv::Point2f> rightHalfPoints;
-        for (const auto& point : contour) {
-            if (point.x > avgX) rightHalfPoints.push_back(point);
-        }
-        if (rightHalfPoints.empty()) rightHalfPoints = contour;
-        startPoint = *std::min_element(rightHalfPoints.begin(), rightHalfPoints.end(),
-                                       [](const cv::Point2f& a, const cv::Point2f& b) {
-                                           if (a.y == b.y) return a.x > b.x;
-                                           return a.y > b.y;
-                                       });
-        break;
-    }
-    case OpeningDirection::LEFT: {
-        std::vector<cv::Point2f> bottomHalfPoints;
-        for (const auto& point : contour) {
-            if (point.y > avgY) bottomHalfPoints.push_back(point);
-        }
-        if (bottomHalfPoints.empty()) bottomHalfPoints = contour;
-        startPoint = *std::min_element(bottomHalfPoints.begin(), bottomHalfPoints.end(),
-                                       [](const cv::Point2f& a, const cv::Point2f& b) {
-                                           if (a.x == b.x) return a.y > b.y;
-                                           return a.x < b.x;
-                                       });
-        break;
-    }
-    default:
-        return cv::Point2f(-1, -1);
-    }
-    return startPoint;
-}
-
-/**
- * @brief 根据开口方向计算轮廓的终点
- * @param direction 开口方向
- * @param contour 输入轮廓点集
- * @return 终点坐标，如果方向未知或轮廓为空则返回(-1, -1)
- *
- * @details 根据开口方向选择逆时针的终止点：
- *    - 开口向上：终点在右上角（右侧区域的最小Y值点）
- *    - 开口向右：终点在右下角（下方区域的最大X值点）
- *    - 开口向下：终点在左下角（左侧区域的最大Y值点）
- *    - 开口向左：终点在左上角（上方区域的最小X值点）
- */
-cv::Point2f ContourFeatureCalculator::calculateEndPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour) {
-    if (direction == OpeningDirection::UNKNOWN || contour.empty()) {
-        return cv::Point2f(-1, -1);
+    // 计算极角并归一化到 [0, 2π)
+    const float kTwoPi = 2.0f * static_cast<float>(M_PI);
+    std::vector<std::pair<float, cv::Point2f>> anglePoint;
+    anglePoint.reserve(contour.size());
+    for (const auto& p : contour) {
+        float raw = std::atan2(p.y - center.y, p.x - center.x);
+        float theta = (raw < 0.0f) ? raw + kTwoPi : raw;
+        anglePoint.emplace_back(theta, p);
     }
 
-    float sumX = 0.0f, sumY = 0.0f;
-    for (const auto& point : contour) {
-        sumX += point.x;
-        sumY += point.y;
-    }
-    float avgX = sumX / contour.size();
-    float avgY = sumY / contour.size();
+    // 按角度升序排列
+    std::sort(anglePoint.begin(), anglePoint.end(),
+              [](const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
+                  return a.first < b.first;
+              });
 
-    cv::Point2f endPoint;
-    switch (direction) {
-    case OpeningDirection::UP: {
-        // 开口向上：终点在右上角
-        std::vector<cv::Point2f> rightHalfPoints;
-        for (const auto& point : contour) {
-            if (point.x > avgX) rightHalfPoints.push_back(point);
+    // 找相邻角度差最大的位置（含首尾环绕差）
+    int n = static_cast<int>(anglePoint.size());
+    int maxGapIdx = 0;
+    float maxGap = -1.0f;
+    for (int i = 0; i < n; ++i) {
+        float gap = (i + 1 < n)
+                        ? (anglePoint[i + 1].first - anglePoint[i].first)
+                        : (anglePoint[0].first + kTwoPi - anglePoint[i].first);
+        if (gap > maxGap) {
+            maxGap = gap;
+            maxGapIdx = i;
         }
-        if (rightHalfPoints.empty()) rightHalfPoints = contour;
-        endPoint = *std::min_element(rightHalfPoints.begin(), rightHalfPoints.end(),
-                                     [](const cv::Point2f& a, const cv::Point2f& b) {
-                                         if (a.y == b.y) return a.x < b.x;
-                                         return a.y < b.y;
-                                     });
-        break;
     }
-    case OpeningDirection::RIGHT: {
-        // 开口向右：终点在右下角
-        std::vector<cv::Point2f> bottomHalfPoints;
-        for (const auto& point : contour) {
-            if (point.y > avgY) bottomHalfPoints.push_back(point);
-        }
-        if (bottomHalfPoints.empty()) bottomHalfPoints = contour;
-        endPoint = *std::max_element(bottomHalfPoints.begin(), bottomHalfPoints.end(),
-                                     [](const cv::Point2f& a, const cv::Point2f& b) {
-                                         if (a.x == b.x) return a.y < b.y;
-                                         return a.x < b.x;
-                                     });
-        break;
+
+    // 退化：全部点重合于极点（最大角度差为0）
+    if (maxGap <= 0.0f) {
+        return result;
     }
-    case OpeningDirection::DOWN: {
-        // 开口向下：终点在左下角
-        std::vector<cv::Point2f> leftHalfPoints;
-        for (const auto& point : contour) {
-            if (point.x < avgX) leftHalfPoints.push_back(point);
-        }
-        if (leftHalfPoints.empty()) leftHalfPoints = contour;
-        endPoint = *std::min_element(leftHalfPoints.begin(), leftHalfPoints.end(),
-                                     [](const cv::Point2f& a, const cv::Point2f& b) {
-                                         if (a.y == b.y) return a.x > b.x;
-                                         return a.y > b.y;
-                                     });
-        break;
+
+    // 计算 gap 角平分线
+    float beforeGap = anglePoint[maxGapIdx].first;
+    float afterGap;
+    if (maxGapIdx + 1 < n) {
+        afterGap = anglePoint[maxGapIdx + 1].first;
+    } else {
+        afterGap = anglePoint[0].first + kTwoPi;  // 环绕到下一周
     }
-    case OpeningDirection::LEFT: {
-        // 开口向左：终点在左上角
-        std::vector<cv::Point2f> topHalfPoints;
-        for (const auto& point : contour) {
-            if (point.y < avgY) topHalfPoints.push_back(point);
-        }
-        if (topHalfPoints.empty()) topHalfPoints = contour;
-        endPoint = *std::min_element(topHalfPoints.begin(), topHalfPoints.end(),
-                                     [](const cv::Point2f& a, const cv::Point2f& b) {
-                                         if (a.x == b.x) return a.y < b.y;
-                                         return a.x < b.x;
-                                     });
-        break;
-    }
-    default:
-        return cv::Point2f(-1, -1);
-    }
-    return endPoint;
+    float gapCenterAngle = (beforeGap + afterGap) / 2.0f;
+    if (gapCenterAngle >= kTwoPi) gapCenterAngle -= kTwoPi;
+
+    result.maxGapIdx = maxGapIdx;
+    result.gapCenterAngle = gapCenterAngle;
+    result.valid = true;
+    return result;
 }
 
 /**
@@ -293,29 +157,60 @@ std::pair<cv::Point2f, cv::Point2f> ContourFeatureCalculator::findOpeningEndsByA
                   return a.first < b.first;
               });
 
-    // 找相邻角度差最大的位置（含首尾环绕差）
-    int n = static_cast<int>(anglePoint.size());
-    int maxGapIdx = 0;
-    float maxGap = -1.0f;
-    for (int i = 0; i < n; ++i) {
-        float gap = (i + 1 < n)
-                        ? (anglePoint[i + 1].first - anglePoint[i].first)
-                        : (anglePoint[0].first + kTwoPi - anglePoint[i].first);
-        if (gap > maxGap) {
-            maxGap = gap;
-            maxGapIdx = i;
-        }
-    }
-
-    // 退化：全部点重合于极点（最大角度差为0），返回首点
-    if (maxGap <= 0.0f) {
+    // 复用 computeMaxGapAngle 获取 maxGapIdx
+    auto gap = computeMaxGapAngle(contour);
+    if (!gap.valid) {
         return {contour.front(), contour.front()};
     }
 
+    int n = static_cast<int>(anglePoint.size());
     // gap 之前的大角度端点为终点，gap 之后的小角度端点为起点
-    cv::Point2f endPoint = anglePoint[maxGapIdx].second;
-    cv::Point2f startPoint = anglePoint[(maxGapIdx + 1) % n].second;
+    cv::Point2f endPoint = anglePoint[gap.maxGapIdx].second;
+    cv::Point2f startPoint = anglePoint[(gap.maxGapIdx + 1) % n].second;
     return {startPoint, endPoint};
+}
+
+/**
+ * @brief 计算开口方向单位向量
+ * @param contour 输入轮廓点集
+ * @return 开口方向单位向量（从轮廓中心指向开口外侧），失败或退化时返回 (0, 0)
+ *
+ * @details 算法步骤：
+ *   1. 计算极角差最大 gap 的角平分线方向（gapDir）
+ *   2. 计算外接矩形长轴方向（longAxisDir）
+ *   3. 取长轴法线两个候选中与 gapDir 点积 ≥ 0 的那个作为最终开口方向
+ */
+cv::Point2f ContourFeatureCalculator::calculateOpeningDirectionVector(const std::vector<cv::Point2f>& contour) {
+    if (contour.size() < 2) {
+        return cv::Point2f(0, 0);
+    }
+
+    // 1. 极角差最大 gap 方向
+    auto gap = computeMaxGapAngle(contour);
+    if (!gap.valid) {
+        return cv::Point2f(0, 0);
+    }
+    cv::Point2f gapDir(std::cos(gap.gapCenterAngle), std::sin(gap.gapCenterAngle));
+
+    // 2. 外接矩形长轴方向
+    cv::RotatedRect box = cv::minAreaRect(contour);
+    if (box.size.width * box.size.height < 1e-6f) {
+        return cv::Point2f(0, 0);
+    }
+    cv::Point2f verts[4];
+    box.points(verts);
+    cv::Point2f edge01 = verts[1] - verts[0];
+    cv::Point2f edge12 = verts[2] - verts[1];
+    cv::Point2f longAxisDir = (cv::norm(edge01) >= cv::norm(edge12)) ? edge01 : edge12;
+    float len = static_cast<float>(cv::norm(longAxisDir));
+    if (len < 1e-6f) {
+        return cv::Point2f(0, 0);
+    }
+    longAxisDir /= len;
+
+    // 3. 长轴法线两个候选，选与 gapDir 同向的那个
+    cv::Point2f normal(-longAxisDir.y, longAxisDir.x);
+    return (normal.dot(gapDir) >= 0) ? normal : -normal;
 }
 
 std::pair<cv::Point2f, cv::Point2f> ContourFeatureCalculator::calculateStartAndEndPoint(const std::vector<cv::Point2f>& contour) {

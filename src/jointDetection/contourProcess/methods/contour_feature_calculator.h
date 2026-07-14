@@ -8,7 +8,9 @@
 class ContourFeatureCalculator {
 public:
     // =============计算开口方向=============
-    static OpeningDirection calculateOpeningDirection(const std::vector<cv::Point2f>& contour);
+    // 计算开口方向单位向量：极角差最大 gap 的角平分线，约束到外接矩形长轴法线
+    // 失败或退化时返回 cv::Point2f(0, 0)
+    static cv::Point2f calculateOpeningDirectionVector(const std::vector<cv::Point2f>& contour);
 
     // =============去重=============
     static std::vector<cv::Point2f> removeDuplicatePoints(const std::vector<cv::Point2f>& contour);
@@ -16,8 +18,6 @@ public:
     static std::vector<cv::Point2f> downsampleByTwo(const std::vector<cv::Point2f>& contour);
 
     // =============计算起始点=============
-    static cv::Point2f calculateStartPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour);
-    static cv::Point2f calculateEndPoint(OpeningDirection direction, const std::vector<cv::Point2f>& contour);
     // 角度法计算起点和终点（C型轮廓开口两侧），返回 {start, end}
     static std::pair<cv::Point2f, cv::Point2f> calculateStartAndEndPoint(const std::vector<cv::Point2f>& contour);
 
@@ -45,6 +45,17 @@ public:
                                                             double radius = 10.0);
 
 private:
+    // =============极角差最大 gap 辅助结构=============
+    struct MaxGapResult {
+        int maxGapIdx;        // 最大 gap 之前的端点索引（在排序后的 anglePoint 中）
+        float gapCenterAngle; // [0, 2π)
+        bool valid;           // false 表示退化（点数不足 / maxGap == 0）
+    };
+
+    // =============极角差最大 gap 辅助函数=============
+    // 以包围盒中心为极点，按极角排序后找最大 gap，返回 gap 角平分线
+    static MaxGapResult computeMaxGapAngle(const std::vector<cv::Point2f>& contour);
+
     // =============检测角点辅助函数=============
     static std::vector<cv::Point2f> detectCornerPointsByDouglasPeucker(const std::vector<cv::Point2f>& contour, double epsilon = 10.0);
     static std::vector<cv::Point2f> detectCornerPointsByRansac(const std::vector<cv::Point2f>& contour);
