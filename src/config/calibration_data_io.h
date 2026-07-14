@@ -109,6 +109,33 @@ public:
     }
 };
 // =======================
+//   旧 JSON 格式辅助结构（cereal 匹配 worldPose + platforms[]）
+// =======================
+struct PlatformPoseWorldPose {
+    Eigen::Vector3d R, T;
+    template <class Archive>
+    void serialize(Archive& ar) {
+        ar(CEREAL_NVP(R), CEREAL_NVP(T));
+    }
+};
+struct PlatformPosePlatform {
+    int id;
+    Eigen::Vector3d X, Y, T;
+    template <class Archive>
+    void serialize(Archive& ar) {
+        ar(CEREAL_NVP(id), CEREAL_NVP(X), CEREAL_NVP(Y), CEREAL_NVP(T));
+    }
+};
+struct PlatformPoseFile {
+    PlatformPoseWorldPose worldPose;
+    std::vector<PlatformPosePlatform> platforms;
+    template <class Archive>
+    void serialize(Archive& ar) {
+        ar(CEREAL_NVP(worldPose), CEREAL_NVP(platforms));
+    }
+};
+
+// =======================
 //     平台位姿保存类
 // =======================
 class PlatformPoseData {
@@ -116,7 +143,6 @@ public:
     std::vector<Eigen::Vector3d> allRotVecs;    // 所有平台的旋转向量
     std::vector<Eigen::Vector3d> allTransVecs;  // 所有平台的平移向量
 
-    // 保存（纯序列化，无参数时用 .back() 作为 worldPose）
     bool save(const std::string& path, const Eigen::Vector3d& worldRvecBack = Eigen::Vector3d::Zero(),
               const Eigen::Vector3d& worldTvecBack = Eigen::Vector3d::Zero()) {
         auto wR = worldRvecBack, wT = worldTvecBack;
@@ -124,134 +150,73 @@ public:
             wR = allRotVecs.back();
             wT = allTransVecs.back();
         }
-        try {
-            std::ofstream os(path);
-            os << std::setprecision(12);
-            os << "{\"PlatformPoseData\":{\"platforms\":[\n";
-            bool first = true;
-            for (size_t i = 0; i + 1 < allRotVecs.size(); ++i) {
-                if (allTransVecs[i].norm() < 1e-6) continue;
-                cv::Mat rv(3, 1, CV_64F), R(3, 3, CV_64F);
-                for (int j = 0; j < 3; ++j) rv.at<double>(j) = allRotVecs[i](j);
-                cv::Rodrigues(rv, R);
-                if (!first) os << ",\n";
-                first = false;
-                os << "  {\"id\":" << i;
-                os << ",\"X\":[" << R.at<double>(0, 0) << "," << R.at<double>(1, 0) << "," << R.at<double>(2, 0) << "]";
-                os << ",\"Y\":[" << R.at<double>(0, 1) << "," << R.at<double>(1, 1) << "," << R.at<double>(2, 1) << "]";
-                os << ",\"T\":[" << allTransVecs[i](0) << "," << allTransVecs[i](1) << "," << allTransVecs[i](2) << "]}";
-            }
-            os << "\n],\"worldPose\":{";
-            os << "\"R\":[" << worldRvecBack(0) << "," << worldRvecBack(1) << "," << worldRvecBack(2) << "]";
-            os << ",\"T\":[" << worldTvecBack(0) << "," << worldTvecBack(1) << "," << worldTvecBack(2) << "]";
-            os << "}}}\n";
-            return true;
-        } catch (...) {
+        if (!allRotVecs.empty()) {
+            allRotVecs.back() = wR;
+            allTransVecs.back() = wT;
+        }
+
+        PlatformPoseFile file;
+        file.worldPose = {wR, wT};
+        for (size_t i = 0; i + 1 < allRotVecs.size(); ++i) {
+            cv::Mat rv(3, 1, CV_64F);
+            rv.at<double>(0) = allRotVecs[i](0);
+            rv.at<double>(1) = allRotVecs[i](1);
+            rv.at<double>(2) = allRotVecs[i](2);
+            cv::Mat Rmat;
+            cv::Rodrigues(rv, Rmat);
+            file.platforms.push_back({int(i), Eigen::Vector3d(Rmat.at<double>(0, 0), Rmat.at<double>(1, 0), Rmat.at<double>(2, 0)),
+                                      Eigen::Vector3d(Rmat.at<double>(0, 1), Rmat.at<double>(1, 1), Rmat.at<double>(2, 1)), allTransVecs[i]});
+        }
+
+        std::ofstream os(path);
+        if (!os.is_open()) {
+            PLOGE << "[Error] Cannot open file for writing: " << path;
             return false;
         }
+        {
+            cereal::JSONOutputArchive archive(os);
+            archive(file);
+        }
+        PLOGD << "[OK] Calibration data saved: " << path;
+        return true;
     }
 
-    // 加载（纯反序列化，无坐标转换）
     bool load(const std::string& path) {
-        try {
-            std::ifstream is(path);
-            std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
-            allRotVecs.clear();
-            allTransVecs.clear();
-
-            // 读 worldPose
-            auto extractVec = [&](const std::string& key, size_t from) -> Eigen::Vector3d {
-                size_t p = json.find("\"" + key + "\":[", from);
-                if (p == std::string::npos) return Eigen::Vector3d::Zero();
-                p = json.find('[', p) + 1;
-                size_t q = json.find(']', p);
-                Eigen::Vector3d v;
-                sscanf(json.substr(p, q - p).c_str(), "%lf,%lf,%lf", &v(0), &v(1), &v(2));
-                return v;
-            };
-            size_t wp = json.find("\"worldPose\":{");
-            Eigen::Vector3d wRvec = extractVec("R", wp);
-            Eigen::Vector3d wTvec = extractVec("T", wp);
-
-            // 读平台列表
-            size_t pos = json.find("\"platforms\":[");
-            if (pos == std::string::npos) {
-                allRotVecs.push_back(wRvec);
-                allTransVecs.push_back(wTvec);
-                return true;
-            }
-            pos = json.find('[', pos) + 1;
-            size_t maxId = 0;
-            struct Entry {
-                size_t id;
-                Eigen::Vector3d rvec, tvec;
-            };
-            std::vector<Entry> entries;
-
-            while (true) {
-                size_t start = json.find('{', pos);
-                if (start == std::string::npos || start >= json.find(']', pos)) break;
-                size_t end = json.find('}', start) + 1;
-                std::string entry = json.substr(start, end - start);
-
-                size_t pid = 0;
-                {
-                    size_t p = entry.find("\"id\":");
-                    if (p != std::string::npos) pid = atoi(entry.c_str() + p + 5);
-                }
-                Eigen::Vector3d Xw = Eigen::Vector3d::Zero(), Yw = Eigen::Vector3d::Zero(), Tw = Eigen::Vector3d::Zero();
-                {
-                    size_t p = entry.find("\"X\":[");
-                    if (p != std::string::npos) {
-                        p = entry.find('[', p) + 1;
-                        size_t q = entry.find(']', p);
-                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &Xw(0), &Xw(1), &Xw(2));
-                    }
-                }
-                {
-                    size_t p = entry.find("\"Y\":[");
-                    if (p != std::string::npos) {
-                        p = entry.find('[', p) + 1;
-                        size_t q = entry.find(']', p);
-                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &Yw(0), &Yw(1), &Yw(2));
-                    }
-                }
-                {
-                    size_t p = entry.find("\"T\":[");
-                    if (p != std::string::npos) {
-                        p = entry.find('[', p) + 1;
-                        size_t q = entry.find(']', p);
-                        sscanf(entry.substr(p, q - p).c_str(), "%lf,%lf,%lf", &Tw(0), &Tw(1), &Tw(2));
-                    }
-                }
-
-                Eigen::Vector3d Zw = Xw.cross(Yw);
-                if (Zw.norm() > 1e-12) Zw.normalize();
-                cv::Mat R(3, 3, CV_64F);
-                for (int r = 0; r < 3; ++r) {
-                    R.at<double>(r, 0) = Xw(r);
-                    R.at<double>(r, 1) = Yw(r);
-                    R.at<double>(r, 2) = Zw(r);
-                }
-                cv::Mat rv;
-                cv::Rodrigues(R, rv);
-
-                if (pid > maxId) maxId = pid;
-                entries.push_back({pid, Eigen::Vector3d(rv.at<double>(0), rv.at<double>(1), rv.at<double>(2)), Tw});
-                pos = end + 1;
-            }
-            allRotVecs.resize(maxId + 1, Eigen::Vector3d(0, 0, 0));
-            allTransVecs.resize(maxId + 1, Eigen::Vector3d(0, 0, 0));
-            for (auto& e : entries) {
-                allRotVecs[e.id] = e.rvec;
-                allTransVecs[e.id] = e.tvec;
-            }
-            allRotVecs.push_back(wRvec);
-            allTransVecs.push_back(wTvec);
-            return true;
-        } catch (...) {
+        std::ifstream is(path);
+        if (!is.is_open()) {
+            PLOGE << "[Error] Cannot open file for reading: " << path;
             return false;
         }
+        PlatformPoseFile file;
+        {
+            cereal::JSONInputArchive archive(is);
+            archive(file);
+        }
+
+        allRotVecs.clear();
+        allTransVecs.clear();
+        for (auto& p : file.platforms) {
+            cv::Mat Rmat(3, 3, CV_64F);
+            Rmat.at<double>(0, 0) = p.X(0);
+            Rmat.at<double>(0, 1) = p.Y(0);
+            Rmat.at<double>(1, 0) = p.X(1);
+            Rmat.at<double>(1, 1) = p.Y(1);
+            Rmat.at<double>(2, 0) = p.X(2);
+            Rmat.at<double>(2, 1) = p.Y(2);
+            Eigen::Vector3d Z = p.X.cross(p.Y);
+            Rmat.at<double>(0, 2) = Z(0);
+            Rmat.at<double>(1, 2) = Z(1);
+            Rmat.at<double>(2, 2) = Z(2);
+            cv::Mat rvec;
+            cv::Rodrigues(Rmat, rvec);
+            allRotVecs.push_back(Eigen::Vector3d(rvec.at<double>(0), rvec.at<double>(1), rvec.at<double>(2)));
+            allTransVecs.push_back(p.T);
+        }
+        allRotVecs.push_back(file.worldPose.R);
+        allTransVecs.push_back(file.worldPose.T);
+
+        PLOGD << "[OK] Calibration data loaded: " << path;
+        return true;
     }
 };
 inline bool readPointsFromTxt(const std::string& path, std::vector<Eigen::Vector2d>& pts) {

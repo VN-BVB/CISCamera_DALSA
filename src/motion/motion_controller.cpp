@@ -1,20 +1,27 @@
 #include "motion_controller.h"
 
-#include <QThread>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QTextStream>
+#include <QThread>
 
 #include "plc_addr.h"
 #include "plccommon.h"
 
 using namespace plc;
 
-MotionController::MotionController(QObject *parent) : QObject(parent) {
-    prevCoilStatuses_ = QVector<bool>(32, false);
-}
+MotionController::MotionController(QObject *parent) : QObject(parent) { prevCoilStatuses_ = QVector<bool>(32, false); }
 
 MotionController::~MotionController() {
-    if (plc_)    { plc_->plcDisconnect(); delete plc_; plc_ = nullptr; }
-    if (params_) { delete params_; params_ = nullptr; }
+    if (plc_) {
+        plc_->plcDisconnect();
+        delete plc_;
+        plc_ = nullptr;
+    }
+    if (params_) {
+        delete params_;
+        params_ = nullptr;
+    }
 }
 
 // ============================================================
@@ -22,18 +29,25 @@ MotionController::~MotionController() {
 // ============================================================
 
 void MotionController::connectPlc(const QString &ip, int port) {
-    plcIp_   = ip;
+    plcIp_ = ip;
     plcPort_ = port;
 
     emit logMessage(u8"Modbus 状态: 正在连接...");
 
     // 清理旧连接
-    if (plc_)    { plc_->plcDisconnect(); delete plc_; plc_ = nullptr; }
-    if (params_) { delete params_; params_ = nullptr; }
+    if (plc_) {
+        plc_->plcDisconnect();
+        delete plc_;
+        plc_ = nullptr;
+    }
+    if (params_) {
+        delete params_;
+        params_ = nullptr;
+    }
 
     // 创建新 Modbus TCP 上下文
     params_ = new plcCtrlParams();
-    params_->plc.ip   = ip.toStdString();
+    params_->plc.ip = ip.toStdString();
     params_->plc.port = port;
 
     plc_ = new PlcCommunication(params_);
@@ -61,8 +75,7 @@ void MotionController::connectPlc(const QString &ip, int port) {
             realTimer_ = new QTimer(this);
             connect(realTimer_, &QTimer::timeout, this, &MotionController::onRealTimeout);
         }
-        stateTimer_->start(111);
-        realTimer_->start(100);
+        stateTimer_->start(500);
 
         // 复位
         plc_->writeHdLowBit(HD_ExAxis1Rst, true);
@@ -80,7 +93,7 @@ void MotionController::disconnectPlc() {
     }
 
     if (stateTimer_) stateTimer_->stop();
-    if (realTimer_)  realTimer_->stop();
+    if (realTimer_) realTimer_->stop();
 
     if (plc_) {
         plc_->plcDisconnect();
@@ -110,12 +123,11 @@ void MotionController::railAbsMove(double pos, double vel, double acc, double je
         return;
     }
 
-    targetAbsPos_    = pos;
-    absMoveStarted_  = true;
-    absMoveDone_     = false;
+    targetAbsPos_ = pos;
+    absMoveStarted_ = true;
+    absMoveDone_ = false;
 
-    emit logMessage(QString(u8"地轨绝对定位: pos=%1 vel=%2 acc=%3 jerk=%4")
-                        .arg(pos).arg(vel).arg(acc).arg(jerk));
+    emit logMessage(QString(u8"地轨绝对定位: pos=%1 vel=%2 acc=%3 jerk=%4").arg(pos).arg(vel).arg(acc).arg(jerk));
 
     if (!plc_->railAbsMove(pos, vel, acc, jerk)) {
         emit logMessage(u8"[错误] 地轨绝对定位指令发送失败");
@@ -172,8 +184,7 @@ void MotionController::pltSingleMove(int pltIdx, double x, double y, double r, d
         return;
     }
     if (pltIdx < 0 || pltIdx > 6) return;
-    emit logMessage(QString(u8"平台 %1 单平台运动: X=%2 Y=%3 R=%4")
-                        .arg(pltIdx).arg(x).arg(y).arg(r));
+    emit logMessage(QString(u8"平台 %1 单平台运动: X=%2 Y=%3 R=%4").arg(pltIdx).arg(x).arg(y).arg(r));
     plc_->pltLocate(pltIdx, x, y, r, vel, 100, 100);
 }
 
@@ -183,9 +194,8 @@ void MotionController::axisSingleMoveR(int pltIdx, int axis, double pos, double 
         return;
     }
     if (pltIdx < 0 || pltIdx > 6 || axis < 0 || axis > 2) return;
-    const char* axisName[] = {"X", "Y", "R"};
-    emit logMessage(QString(u8"平台 %1 %2 轴相对运动: pos=%3")
-                        .arg(pltIdx).arg(axisName[axis]).arg(pos));
+    const char *axisName[] = {"X", "Y", "R"};
+    emit logMessage(QString(u8"平台 %1 %2 轴相对运动: pos=%3").arg(pltIdx).arg(axisName[axis]).arg(pos));
     plc_->axisMoveR(pltIdx, axis, pos, vel, 100, 100);
 }
 
@@ -206,8 +216,64 @@ void MotionController::pltLocateAll() {
         emit logMessage(u8"[错误] PLC 未连接，无法一键定位");
         return;
     }
-    // TODO: 从 table_axispos + globalVel 读取 7 个平台的目标位置，然后 pltLocate
-    emit logMessage(u8"一键定位: 暂未实现，请使用单平台定位");
+
+    // 读取 motion_commands.csv，提取各平台最终位置
+    QString csvPath = "D:/Code/CISCamera_DALSA/data/motion_commands.csv";
+    QFile file(csvPath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        emit logMessage(QString(u8"[错误] 无法打开轨迹文件: %1").arg(csvPath));
+        return;
+    }
+
+    QTextStream in(&file);
+    QStringList headers;
+    QVector<double> finalTx(7, 0.0), finalTy(7, 0.0), finalRz(7, 0.0);
+    bool foundFinal = false;
+
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (line.isEmpty()) continue;
+
+        QStringList fields = line.split(',');
+        if (fields.size() < 23) continue;
+
+        // 跳过表头
+        if (fields[0] == "Time(s)") {
+            headers = fields;
+            continue;
+        }
+
+        double time = fields[0].toDouble();
+        // 取 t >= 2.5s 的第一行作为最终位置（运动已稳定）
+        if (time >= 2.5 && !foundFinal) {
+            // CSV列: Time,StepIndex, C0_Tx(2),C0_Ty(3),C0_Rz(4), C1_Tx(5),...,C6_Rz(22)
+            for (int plt = 0; plt < 7; ++plt) {
+                int base = 2 + plt * 3;  // C0起始列=2, 每平台3列
+                finalTx[plt] = fields[base].toDouble();
+                finalTy[plt] = fields[base + 1].toDouble();
+                finalRz[plt] = fields[base + 2].toDouble();
+            }
+            foundFinal = true;
+            break;
+        }
+    }
+    file.close();
+
+    if (!foundFinal) {
+        emit logMessage(u8"[错误] 轨迹文件中未找到稳定位置 (t>=2.5s)");
+        return;
+    }
+
+    // 发送7个平台定位指令
+    double vel = 5.0;
+    emit logMessage(u8"一键定位: 开始发送7个平台目标位置");
+    for (int i = 0; i < 7; ++i) {
+        emit logMessage(QString(u8"  平台%1: X=%2 Y=%3 R=%4")
+                            .arg(i).arg(finalTx[i], 0, 'f', 3)
+                            .arg(finalTy[i], 0, 'f', 3).arg(finalRz[i], 0, 'f', 3));
+        plc_->pltLocate(i, finalTx[i], finalTy[i], finalRz[i], vel, 100, 100);
+    }
+    emit logMessage(u8"一键定位: 7个平台指令已全部发送");
 }
 
 void MotionController::railReset() {
@@ -231,7 +297,7 @@ void MotionController::onStateTimeout() {
         if (absMoveStarted_ && !absMoveDone_) {
             int done = plc_->readHdLowBit(HD_ExAxis1MOVEADone);
             if (done == 1) {
-                absMoveDone_   = true;
+                absMoveDone_ = true;
                 absMoveStarted_ = false;
                 emit railAbsFinished();
                 emit logMessage(QString(u8"地轨绝对定位完成: pos=%1").arg(data.rail.pos));
@@ -240,7 +306,4 @@ void MotionController::onStateTimeout() {
     }
 }
 
-void MotionController::onRealTimeout() {
-    // 和 state timeout 共用，实际可合并
-    onStateTimeout();
-}
+void MotionController::onRealTimeout() {}

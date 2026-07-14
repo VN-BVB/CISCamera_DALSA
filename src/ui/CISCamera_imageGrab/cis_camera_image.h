@@ -78,7 +78,7 @@ private slots:
     void on_btnContinue_clicked();
     void on_ckbSplice_toggled(bool checked);
     void on_btnSoftWareTrigger_clicked();
-    void on_btnCISConfig_clicked();
+    // void on_btnCISConfig_clicked();
     void on_btnSave_clicked();
     void on_btnStopTrigger_clicked();
     void on_btn_ChessboardDetector_clicked();

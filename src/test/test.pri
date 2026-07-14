@@ -7,6 +7,7 @@ HEADERS += \
     $$PWD/test_cad_view.h \
     $$PWD/test_convert_coordinate.h \
     $$PWD/test_dxf_writer.h \
+    $$PWD/test_easy_calib.h \
     $$PWD/test_edge_assembly.h \
     $$PWD/test_frmVisionDisplay.h \
     $$PWD/test_multiRoi.h \
@@ -20,6 +21,7 @@ SOURCES += \
     $$PWD/test_convert_coordinate.cpp \
     $$PWD/test_curve_seg.cpp \
     $$PWD/test_dxfw_riter.cpp \
+    $$PWD/test_easy_calib.cpp \
     $$PWD/test_edge_assembly.cpp \
     $$PWD/test_frmVisionDisplay.cpp \
     $$PWD/test_multiRoi.cpp \

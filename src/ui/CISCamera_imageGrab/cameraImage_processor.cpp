@@ -792,41 +792,87 @@ void CameraImageProcessor::debugProjectionDistancesFromFixedPixels() {
     }
 }
 
-// 虚拟移动，输入像素坐标，转换到世界坐标系下移动并转回来，得到移动后的对应像素坐标
-Eigen::Vector2d CameraImageProcessor::applyWorldOffsetToPixel(const Eigen::Vector2d& world_pt) {
-    // ====== id=0 对位平台标定数据（硬编码自 platform_pose.json）======
-    // dirX = 方向向量（平台X轴在世界坐标系的方向, 前2分量）
-    // dirY = 方向向量（平台Y轴在世界坐标系的方向, 前2分量）
-    // centerT = 旋转中心在世界坐标系的位置（只取前两个数值, Z=0 舍弃）
-    // -----------------------------------------------------------------
-    const Eigen::Vector2d dirX(0.0397084390641, 0.999211308917);
-    const Eigen::Vector2d dirY(0.999211308917, -0.0397084390641);
-    const Eigen::Vector2d centerT(117.400973009, 516.666617276);
+// 虚拟移动，输入7个世界点（每个物理平台一个），对所有14个标定数据同时计算并输出
+std::vector<Eigen::Vector2d> CameraImageProcessor::applyWorldOffsetToPixel(
+    const std::vector<Eigen::Vector2d>& world_pts, double translateX_mm, double translateY_mm, double rotateDeg) {
 
-    // ====== 方向向量平移 + 绕旋转中心旋转 ======
-    // ---------- 硬编码参数（按需修改） ----------
-    const double kTranslateX_mm = 0.0;  // 沿 dirX 方向向量的平移量 (mm)
-    const double kTranslateY_mm = 0.0;  // 沿 dirY 方向向量的平移量 (mm)
-    const double kRotate_deg = 10.0;    // 绕旋转中心旋转的角度 (度)
-    // -------------------------------------------
+    // 每个条目: label, 使用第几个输入点, dirX, dirY, centerT
+    struct PlatformData { const char* label; int ptIdx; Eigen::Vector2d dirX, dirY, centerT; };
 
-    // 沿 dirX / dirY 方向向量平移
-    Eigen::Vector2d translated = world_pt + dirX * kTranslateX_mm + dirY * kTranslateY_mm;
+    // clang-format off
+    static const PlatformData kPlatforms[] = {
+        // ── 以 std 标定序号为准：std_i + 对应的 easy 标定 ──
+        // std_0 (117,517) ↔ easy_6
+        {"std_0",  0, { 0.0397084390641,  0.999211308917}, { 0.999211308917, -0.0397084390641},  {117.400973009, 516.666617276}},
+        {"easy_6", 0, { 0.0468261200398,  0.998903055597}, { 0.998903055597, -0.0468261200398},  {117.298959546, 516.724734988}},
+        // std_1 (344,471) ↔ easy_5
+        {"std_1",  1, { 0.103536091945,   0.994625697267}, { 0.994625697267, -0.103536091945},   {343.935351407, 471.446987612}},
+        {"easy_5", 1, { 0.110395957216,   0.993887686125}, { 0.993887686125, -0.110395957216},  {343.867335070, 471.714300593}},
+        // std_2 (396,203) ↔ easy_2
+        {"std_2",  2, { 0.00410651001399, 0.999991568252}, { 0.999991568252, -0.00410651001399},  {395.702675153, 203.294394065}},
+        {"easy_2", 2, {-0.000737737450164, 0.999999727872}, { 0.999999727872,  0.000737737450164}, {395.742677807, 203.542540440}},
+        // std_3 (355,-37) ↔ easy_0
+        {"std_3",  3, {-0.0390124164694,  0.999238725911}, { 0.999238725911,  0.0390124164694},  {355.393382340, -37.151571705}},
+        {"easy_0", 3, {-0.0305826882265,  0.999532240191}, { 0.999532240191,  0.0305826882265}, {355.271710745, -36.9104933537}},
+        // std_4 (221,254) ↔ easy_3
+        {"std_4",  4, {-0.0933465199551,  0.995633681236}, { 0.995633681236,  0.0933465199551},  {221.364649678, 254.116207313}},
+        {"easy_3", 4, {-0.117088506406,   0.993121483842}, { 0.993121483842,  0.117088506406},  {221.141778675, 253.999862059}},
+        // std_5 (11,393) ↔ easy_4
+        {"std_5",  5, { 0.996304684837,   0.0858893181435}, { 0.0858893181435, -0.996304684837},  { 10.5532598697, 393.181034468}},
+        {"easy_4", 5, { 0.996339080502,   0.0854893950416}, { 0.0854893950416, -0.996339080502},  { 10.6263307759, 393.342545734}},
+        // std_6 (90,135) ↔ easy_1
+        {"std_6",  6, {-0.0433862457733,  0.999058373509}, { 0.999058373509,  0.0433862457733},  { 89.9851096574, 134.637891493}},
+        {"easy_1", 6, {-0.0266033657331,  0.999646067832}, { 0.999646067832,  0.0266033657331}, { 89.9488432872, 134.750590294}},
+    };
+    // clang-format on
 
-    // 绕旋转中心 centerT 旋转（平移到世界原点旋转，转完再平移回去）
-    double rad = kRotate_deg * M_PI / 180.0;
-    double c = std::cos(rad);
-    double s = std::sin(rad);
-    Eigen::Vector2d centered = translated - centerT;
-    Eigen::Vector2d rotated;
-    rotated.x() = c * centered.x() - s * centered.y();
-    rotated.y() = s * centered.x() + c * centered.y();
-    Eigen::Vector2d new_world_pt = rotated + centerT;
+    constexpr int N = sizeof(kPlatforms) / sizeof(kPlatforms[0]);
+    double rad = rotateDeg * M_PI / 180.0;
+    double cs = std::cos(rad), sn = std::sin(rad);
 
-    // ====== 世界 → 像素 ======
-    std::vector<Eigen::Vector2d> new_world_vec = {new_world_pt};
-    std::vector<Eigen::Vector2d> new_pix_vec = convertToPix(new_world_vec);
-    if (new_pix_vec.empty()) return Eigen::Vector2d();
+    std::vector<Eigen::Vector2d> worldResults(N);
+    for (int i = 0; i < N; ++i) {
+        auto &p = kPlatforms[i];
+        const Eigen::Vector2d &world_pt = world_pts[p.ptIdx];
+        Eigen::Vector2d translated = world_pt + p.dirX * translateX_mm + p.dirY * translateY_mm;
+        Eigen::Vector2d centered = translated - p.centerT;
+        Eigen::Vector2d rotated(cs * centered.x() - sn * centered.y(),
+                                sn * centered.x() + cs * centered.y());
+        worldResults[i] = rotated + p.centerT;
+    }
 
-    return new_pix_vec[0];
+    std::vector<Eigen::Vector2d> pixResults = convertToPix(worldResults);
+
+    qDebug() << "===== applyWorldOffsetToPixel: translate(" << translateX_mm << "," << translateY_mm
+             << ") rotate(" << rotateDeg << "deg) =====";
+    for (int i = 0; i < N; ++i) {
+        qDebug() << "  [" << kPlatforms[i].label << "]"
+                 << " in_world(" << world_pts[kPlatforms[i].ptIdx].x() << "," << world_pts[kPlatforms[i].ptIdx].y() << ")"
+                 << " -> out_world(" << worldResults[i].x() << "," << worldResults[i].y() << ")";
+        if (i < (int)pixResults.size() && !pixResults[i].isZero()) {
+            qDebug() << "       pixel(" << pixResults[i].x() << ", " << pixResults[i].y() << ")";
+        } else {
+            qDebug() << "       pixel(FAILED)";
+        }
+    }
+
+    return pixResults;
+}
+
+// 三张图求解旋转中心，利用克拉默法则求解2维线性方程组
+Eigen::Vector2d CameraImageProcessor::calcCircumcenter(const Eigen::Vector2d& p1, const Eigen::Vector2d& p2, const Eigen::Vector2d& p3) {
+    double D = 2.0 * (p1.x() * (p2.y() - p3.y()) + p2.x() * (p3.y() - p1.y()) + p3.x() * (p1.y() - p2.y()));
+    if (std::abs(D) < 1e-12) return Eigen::Vector2d::Constant(std::numeric_limits<double>::quiet_NaN());
+    double s1 = p1.squaredNorm(), s2 = p2.squaredNorm(), s3 = p3.squaredNorm();
+    double cx = (s1 * (p2.y() - p3.y()) + s2 * (p3.y() - p1.y()) + s3 * (p1.y() - p2.y())) / D;
+    double cy = (s1 * (p3.x() - p2.x()) + s2 * (p1.x() - p3.x()) + s3 * (p2.x() - p1.x())) / D;
+    return Eigen::Vector2d(cx, cy);
+}
+
+// 两张图求解方向向量（归一化）
+Eigen::Vector2d CameraImageProcessor::calcDirectionVector(const Eigen::Vector2d& from, const Eigen::Vector2d& to) {
+    Eigen::Vector2d dir = to - from;
+    double n = dir.norm();
+    if (n < 1e-12) return Eigen::Vector2d::Constant(std::numeric_limits<double>::quiet_NaN());
+    return dir / n;
 }

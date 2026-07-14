@@ -217,10 +217,33 @@ bool PlcCommunication::pltLocate(int pltIdx, double x, double y, double r, doubl
     if (!modbusTcp_ || !connectStatus_) return false;
     if (pltIdx < 0 || pltIdx > 6) return false;
 
-    // 先旋转 R，再 X，再 Y
-    axisMoveR(pltIdx, 2, r, vel, acc, jerk);  // R
-    axisMoveR(pltIdx, 0, x, vel, acc, jerk);  // X
-    axisMoveR(pltIdx, 1, y, vel, acc, jerk);  // Y
+    uint16_t data[4] = {0};
+    uint16_t vel5[4] = {0};
+    dataTransDouble_UInt16(5.0, vel5);
+
+    // 写好速度和
+    const auto &ra = allAxisAddrs[pltIdx][2];  // R
+    dataTransDouble_UInt16(r, data);
+    writeRegisters(HDAddr + ra.moverPos, 4, data);
+    writeRegisters(HDAddr + ra.moverVel, 4, vel5);
+
+    const auto &xa = allAxisAddrs[pltIdx][0];  // X
+    dataTransDouble_UInt16(x, data);
+    writeRegisters(HDAddr + xa.moverPos, 4, data);
+    writeRegisters(HDAddr + xa.moverVel, 4, vel5);
+
+    const auto &ya = allAxisAddrs[pltIdx][1];  // Y
+    dataTransDouble_UInt16(y, data);
+    writeRegisters(HDAddr + ya.moverPos, 4, data);
+    writeRegisters(HDAddr + ya.moverVel, 4, vel5);
+
+    writeHdLowBit(ra.enable, true);
+    writeHdLowBit(xa.enable, true);
+    writeHdLowBit(ya.enable, true);
+    writeHdHighBit(ra.mover, true);
+    writeHdHighBit(xa.mover, true);
+    writeHdHighBit(ya.mover, true);
+
     return writeHdLowBit(pltAddrs[pltIdx].locate, true) == 0;
 }
 
@@ -238,35 +261,29 @@ bool PlcCommunication::axisMoveR(int pltIdx, int axis, double pos, double vel, d
 
     const auto &a = allAxisAddrs[pltIdx][axis];
 
-    // 写相对位置/相对速度参数（固定 5mm/s）
     uint16_t data[4] = {0};
-
     uint16_t vel5[4] = {0};
     dataTransDouble_UInt16(5.0, vel5);
-
     dataTransDouble_UInt16(pos, data);
-    writeRegisters(HDAddr + a.moverPos, 4, data);  // 相对位置 = pos
-    writeRegisters(HDAddr + a.moverVel, 4, vel5);  // 相对速度 = 5
 
-    // 写使能位
+    writeRegisters(HDAddr + a.moverPos, 4, data);
+    writeRegisters(HDAddr + a.moverVel, 4, vel5);
+
+    // 写使能，等待使能完成（高位=使能完成信号），超时 5 秒
     writeHdLowBit(a.enable, true);
-
-    // 等待使能完成（高位=使能完成信号），超时 5 秒
     for (int i = 0; i < 50; ++i) {
         QThread::msleep(100);
         if (readHdHighBit(a.enableDone) == 1) break;
     }
 
-    // 触发相对位置运动
+    // 触发相对运动，等待完成（低位=完成信号），超时 5 秒，然后清零触发位
     writeHdHighBit(a.mover, true);
-
-    // 等待相对运动完成（低位=完成信号），超时 5 秒
     for (int i = 0; i < 50; ++i) {
         QThread::msleep(100);
         if (readHdLowBit(a.moverDone) == 1) break;
     }
-    // 清零触发位
     writeHdHighBit(a.mover, false);
+
     return true;
 }
 
@@ -281,13 +298,7 @@ bool PlcCommunication::axisReset(int pltIdx, int axis) {
     if (!modbusTcp_ || !connectStatus_) return false;
     if (pltIdx < 0 || pltIdx > 6 || axis < 0 || axis > 2) return false;
     const auto &a = allAxisAddrs[pltIdx][axis];
-    writeHdLowBit(a.enable, true);
-    // 等待使能完成
-    for (int i = 0; i < 50; ++i) {
-        QThread::msleep(100);
-        if (readHdHighBit(a.enableDone) == 1) break;
-    }
-    return writeHdLowBit(a.rst, true) == 0;
+    return writeHdLowBit(a.enable, true) == 0;
 }
 
 // ============================================================
@@ -295,22 +306,34 @@ bool PlcCommunication::axisReset(int pltIdx, int axis) {
 // ============================================================
 
 bool PlcCommunication::pltEnableAll() {
-    for (int i = 0; i < 7; ++i) pltEnable(i);
+    for (int i = 0; i < 7; ++i) {
+        pltEnable(i);
+        if (i < 6) QThread::msleep(50);
+    }
     return true;
 }
 
 bool PlcCommunication::pltHomeAll() {
-    for (int i = 0; i < 7; ++i) pltHome(i);
+    for (int i = 0; i < 7; ++i) {
+        pltHome(i);
+        if (i < 6) QThread::msleep(50);
+    }
     return true;
 }
 
 bool PlcCommunication::pltResetAll() {
-    for (int i = 0; i < 7; ++i) pltReset(i);
+    for (int i = 0; i < 7; ++i) {
+        pltReset(i);
+        if (i < 6) QThread::msleep(50);
+    }
     return true;
 }
 
 bool PlcCommunication::pltStopAll() {
-    for (int i = 0; i < 7; ++i) pltStop(i);
+    for (int i = 0; i < 7; ++i) {
+        pltStop(i);
+        if (i < 6) QThread::msleep(50);
+    }
     return true;
 }
 

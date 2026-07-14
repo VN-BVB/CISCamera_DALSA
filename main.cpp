@@ -13,6 +13,7 @@
 #include "src/test/test_cad_view.h"'
 #include "src/test/test_convert_coordinate.h"
 #include "src/test/test_dxf_writer.h"
+#include "src/test/test_easy_calib.h"
 #include "src/test/test_frmVisionDisplay.h"
 #include "src/test/test_multiRoi.h"
 #include "src/test/test_pixel2world.h"
@@ -39,20 +40,7 @@ int main(int argc, char *argv[]) {
         PLOG_ERROR << "Failed to load configuration files";
     }
 
-    Eigen::Vector2d pix1(225.7406, 555.4853);
-    std::vector<Eigen::Vector2d> pix2{Eigen::Vector2d(8779, 5557)};
-    CameraImageProcessor test;
-    test.initCameraCalibrator();
-    PLOG_INFO << "===========" << test.convertToWorld(pix2)[0];
-
-    const Eigen::Vector2d origPix = pix2[0];
-    const Eigen::Vector2d worldPt = test.convertToWorld(pix2)[0];
-    Eigen::Vector2d reb = test.applyWorldOffsetToPixel(worldPt);
-
-    PLOG_INFO << std::fixed << std::setprecision(6) << "虚拟移动验证: 处理前像素(" << origPix.x() << ", " << origPix.y() << ") → 处理后像素("
-              << reb.x() << ", " << reb.y() << ")";
-
-    test.debugProjectionDistancesFromFixedPixels();
+    // runCalibComparison();
 
     CISWidget w;
     w.show();

@@ -34,6 +34,9 @@ class Ui_CISWidget
 public:
     QGridLayout *gridLayout_14;
     QGridLayout *gridLayout_4;
+    openGLImageWidget *imgLive;
+    QTextEdit *textEdit;
+    FrmVisionDisplay *imgSplice;
     QTabWidget *tabWidget;
     QWidget *tab;
     QGridLayout *gridLayout_5;
@@ -78,10 +81,6 @@ public:
     QHBoxLayout *horizontalLayout_2;
     QLabel *label_4;
     QComboBox *cbxPlatform;
-    QWidget *cisConfigHost;
-    QTextEdit *textEdit;
-    FrmVisionDisplay *imgSplice;
-    openGLImageWidget *imgLive;
 
     void setupUi(QWidget *CISWidget)
     {
@@ -93,13 +92,42 @@ public:
         gridLayout_14->setObjectName(QString::fromUtf8("gridLayout_14"));
         gridLayout_4 = new QGridLayout();
         gridLayout_4->setObjectName(QString::fromUtf8("gridLayout_4"));
-        tabWidget = new QTabWidget(CISWidget);
-        tabWidget->setObjectName(QString::fromUtf8("tabWidget"));
-        QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        imgLive = new openGLImageWidget(CISWidget);
+        imgLive->setObjectName(QString::fromUtf8("imgLive"));
+        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(tabWidget->sizePolicy().hasHeightForWidth());
-        tabWidget->setSizePolicy(sizePolicy);
+        sizePolicy.setHeightForWidth(imgLive->sizePolicy().hasHeightForWidth());
+        imgLive->setSizePolicy(sizePolicy);
+        imgLive->setMinimumSize(QSize(200, 0));
+        imgLive->setMaximumSize(QSize(16777215, 16777215));
+        imgLive->setSizeIncrement(QSize(0, 0));
+        imgLive->setBaseSize(QSize(0, 0));
+
+        gridLayout_4->addWidget(imgLive, 0, 0, 1, 1);
+
+        textEdit = new QTextEdit(CISWidget);
+        textEdit->setObjectName(QString::fromUtf8("textEdit"));
+        QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(textEdit->sizePolicy().hasHeightForWidth());
+        textEdit->setSizePolicy(sizePolicy1);
+
+        gridLayout_4->addWidget(textEdit, 0, 3, 1, 1);
+
+        imgSplice = new FrmVisionDisplay(CISWidget);
+        imgSplice->setObjectName(QString::fromUtf8("imgSplice"));
+        sizePolicy1.setHeightForWidth(imgSplice->sizePolicy().hasHeightForWidth());
+        imgSplice->setSizePolicy(sizePolicy1);
+        imgSplice->setMinimumSize(QSize(0, 500));
+
+        gridLayout_4->addWidget(imgSplice, 1, 0, 1, 4);
+
+        tabWidget = new QTabWidget(CISWidget);
+        tabWidget->setObjectName(QString::fromUtf8("tabWidget"));
+        sizePolicy1.setHeightForWidth(tabWidget->sizePolicy().hasHeightForWidth());
+        tabWidget->setSizePolicy(sizePolicy1);
         tabWidget->setMaximumSize(QSize(16777215, 16777215));
         tabWidget->setMouseTracking(true);
         tab = new QWidget();
@@ -110,8 +138,8 @@ public:
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
         btnSoftWareTrigger = new QPushButton(tab);
         btnSoftWareTrigger->setObjectName(QString::fromUtf8("btnSoftWareTrigger"));
-        sizePolicy.setHeightForWidth(btnSoftWareTrigger->sizePolicy().hasHeightForWidth());
-        btnSoftWareTrigger->setSizePolicy(sizePolicy);
+        sizePolicy1.setHeightForWidth(btnSoftWareTrigger->sizePolicy().hasHeightForWidth());
+        btnSoftWareTrigger->setSizePolicy(sizePolicy1);
         QFont font;
         font.setPointSize(20);
         btnSoftWareTrigger->setFont(font);
@@ -120,48 +148,48 @@ public:
 
         btnStopTrigger = new QPushButton(tab);
         btnStopTrigger->setObjectName(QString::fromUtf8("btnStopTrigger"));
-        sizePolicy.setHeightForWidth(btnStopTrigger->sizePolicy().hasHeightForWidth());
-        btnStopTrigger->setSizePolicy(sizePolicy);
+        sizePolicy1.setHeightForWidth(btnStopTrigger->sizePolicy().hasHeightForWidth());
+        btnStopTrigger->setSizePolicy(sizePolicy1);
         btnStopTrigger->setFont(font);
 
         gridLayout->addWidget(btnStopTrigger, 3, 0, 1, 2);
 
         btnStop = new QPushButton(tab);
         btnStop->setObjectName(QString::fromUtf8("btnStop"));
-        sizePolicy.setHeightForWidth(btnStop->sizePolicy().hasHeightForWidth());
-        btnStop->setSizePolicy(sizePolicy);
+        sizePolicy1.setHeightForWidth(btnStop->sizePolicy().hasHeightForWidth());
+        btnStop->setSizePolicy(sizePolicy1);
         btnStop->setFont(font);
 
         gridLayout->addWidget(btnStop, 0, 1, 1, 1);
 
         ckbSplice = new QCheckBox(tab);
         ckbSplice->setObjectName(QString::fromUtf8("ckbSplice"));
-        sizePolicy.setHeightForWidth(ckbSplice->sizePolicy().hasHeightForWidth());
-        ckbSplice->setSizePolicy(sizePolicy);
+        sizePolicy1.setHeightForWidth(ckbSplice->sizePolicy().hasHeightForWidth());
+        ckbSplice->setSizePolicy(sizePolicy1);
         ckbSplice->setFont(font);
 
         gridLayout->addWidget(ckbSplice, 5, 0, 1, 1);
 
         btnCISConfig = new QPushButton(tab);
         btnCISConfig->setObjectName(QString::fromUtf8("btnCISConfig"));
-        sizePolicy.setHeightForWidth(btnCISConfig->sizePolicy().hasHeightForWidth());
-        btnCISConfig->setSizePolicy(sizePolicy);
+        sizePolicy1.setHeightForWidth(btnCISConfig->sizePolicy().hasHeightForWidth());
+        btnCISConfig->setSizePolicy(sizePolicy1);
         btnCISConfig->setFont(font);
 
         gridLayout->addWidget(btnCISConfig, 1, 0, 1, 2);
 
         btnSave = new QPushButton(tab);
         btnSave->setObjectName(QString::fromUtf8("btnSave"));
-        sizePolicy.setHeightForWidth(btnSave->sizePolicy().hasHeightForWidth());
-        btnSave->setSizePolicy(sizePolicy);
+        sizePolicy1.setHeightForWidth(btnSave->sizePolicy().hasHeightForWidth());
+        btnSave->setSizePolicy(sizePolicy1);
         btnSave->setFont(font);
 
         gridLayout->addWidget(btnSave, 5, 1, 1, 1);
 
         btnStart = new QPushButton(tab);
         btnStart->setObjectName(QString::fromUtf8("btnStart"));
-        sizePolicy.setHeightForWidth(btnStart->sizePolicy().hasHeightForWidth());
-        btnStart->setSizePolicy(sizePolicy);
+        sizePolicy1.setHeightForWidth(btnStart->sizePolicy().hasHeightForWidth());
+        btnStart->setSizePolicy(sizePolicy1);
         btnStart->setFont(font);
 
         gridLayout->addWidget(btnStart, 0, 0, 1, 1);
@@ -265,11 +293,11 @@ public:
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
         graphicsView_5 = new FrmVisionDisplay(tab_4);
         graphicsView_5->setObjectName(QString::fromUtf8("graphicsView_5"));
-        QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Expanding);
-        sizePolicy1.setHorizontalStretch(0);
-        sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(graphicsView_5->sizePolicy().hasHeightForWidth());
-        graphicsView_5->setSizePolicy(sizePolicy1);
+        QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Expanding);
+        sizePolicy2.setHorizontalStretch(0);
+        sizePolicy2.setVerticalStretch(0);
+        sizePolicy2.setHeightForWidth(graphicsView_5->sizePolicy().hasHeightForWidth());
+        graphicsView_5->setSizePolicy(sizePolicy2);
 
         gridLayout_2->addWidget(graphicsView_5, 0, 1, 1, 1);
 
@@ -281,11 +309,11 @@ public:
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
         ckbShowPLlatImg = new QCheckBox(tab_4);
         ckbShowPLlatImg->setObjectName(QString::fromUtf8("ckbShowPLlatImg"));
-        QSizePolicy sizePolicy2(QSizePolicy::Minimum, QSizePolicy::Expanding);
-        sizePolicy2.setHorizontalStretch(0);
-        sizePolicy2.setVerticalStretch(0);
-        sizePolicy2.setHeightForWidth(ckbShowPLlatImg->sizePolicy().hasHeightForWidth());
-        ckbShowPLlatImg->setSizePolicy(sizePolicy2);
+        QSizePolicy sizePolicy3(QSizePolicy::Minimum, QSizePolicy::Expanding);
+        sizePolicy3.setHorizontalStretch(0);
+        sizePolicy3.setVerticalStretch(0);
+        sizePolicy3.setHeightForWidth(ckbShowPLlatImg->sizePolicy().hasHeightForWidth());
+        ckbShowPLlatImg->setSizePolicy(sizePolicy3);
         QFont font3;
         font3.setPointSize(16);
         ckbShowPLlatImg->setFont(font3);
@@ -326,16 +354,16 @@ public:
         gridLayout_9->setHorizontalSpacing(0);
         btnSaveAligenmentPlatImg = new QPushButton(tab_4);
         btnSaveAligenmentPlatImg->setObjectName(QString::fromUtf8("btnSaveAligenmentPlatImg"));
-        sizePolicy2.setHeightForWidth(btnSaveAligenmentPlatImg->sizePolicy().hasHeightForWidth());
-        btnSaveAligenmentPlatImg->setSizePolicy(sizePolicy2);
+        sizePolicy3.setHeightForWidth(btnSaveAligenmentPlatImg->sizePolicy().hasHeightForWidth());
+        btnSaveAligenmentPlatImg->setSizePolicy(sizePolicy3);
         btnSaveAligenmentPlatImg->setFont(font3);
 
         gridLayout_9->addWidget(btnSaveAligenmentPlatImg, 1, 0, 1, 1);
 
         btnCalibratePlat = new QPushButton(tab_4);
         btnCalibratePlat->setObjectName(QString::fromUtf8("btnCalibratePlat"));
-        sizePolicy2.setHeightForWidth(btnCalibratePlat->sizePolicy().hasHeightForWidth());
-        btnCalibratePlat->setSizePolicy(sizePolicy2);
+        sizePolicy3.setHeightForWidth(btnCalibratePlat->sizePolicy().hasHeightForWidth());
+        btnCalibratePlat->setSizePolicy(sizePolicy3);
         btnCalibratePlat->setFont(font3);
 
         gridLayout_9->addWidget(btnCalibratePlat, 2, 0, 1, 1);
@@ -375,47 +403,10 @@ public:
 
         tabWidget->addTab(tab_4, QString());
 
-        gridLayout_4->addWidget(tabWidget, 0, 2, 1, 1);
-
-        cisConfigHost = new QWidget(CISWidget);
-        cisConfigHost->setObjectName(QString::fromUtf8("cisConfigHost"));
-        cisConfigHost->setMinimumSize(QSize(100, 0));
-
-        gridLayout_4->addWidget(cisConfigHost, 0, 0, 2, 1);
-
-        textEdit = new QTextEdit(CISWidget);
-        textEdit->setObjectName(QString::fromUtf8("textEdit"));
-        sizePolicy.setHeightForWidth(textEdit->sizePolicy().hasHeightForWidth());
-        textEdit->setSizePolicy(sizePolicy);
-
-        gridLayout_4->addWidget(textEdit, 0, 4, 1, 1);
-
-        imgSplice = new FrmVisionDisplay(CISWidget);
-        imgSplice->setObjectName(QString::fromUtf8("imgSplice"));
-        sizePolicy.setHeightForWidth(imgSplice->sizePolicy().hasHeightForWidth());
-        imgSplice->setSizePolicy(sizePolicy);
-
-        gridLayout_4->addWidget(imgSplice, 1, 1, 1, 4);
-
-        imgLive = new openGLImageWidget(CISWidget);
-        imgLive->setObjectName(QString::fromUtf8("imgLive"));
-        QSizePolicy sizePolicy3(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        sizePolicy3.setHorizontalStretch(0);
-        sizePolicy3.setVerticalStretch(0);
-        sizePolicy3.setHeightForWidth(imgLive->sizePolicy().hasHeightForWidth());
-        imgLive->setSizePolicy(sizePolicy3);
-        imgLive->setMinimumSize(QSize(200, 0));
-        imgLive->setMaximumSize(QSize(16777215, 16777215));
-        imgLive->setSizeIncrement(QSize(0, 0));
-        imgLive->setBaseSize(QSize(0, 0));
-
-        gridLayout_4->addWidget(imgLive, 0, 1, 1, 1);
+        gridLayout_4->addWidget(tabWidget, 0, 1, 1, 1);
 
         gridLayout_4->setRowStretch(0, 1);
         gridLayout_4->setColumnStretch(0, 6);
-        gridLayout_4->setColumnStretch(1, 6);
-        gridLayout_4->setColumnStretch(2, 6);
-        gridLayout_4->setColumnStretch(4, 3);
 
         gridLayout_14->addLayout(gridLayout_4, 0, 0, 1, 1);
 

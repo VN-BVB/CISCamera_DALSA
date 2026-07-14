@@ -153,6 +153,7 @@ void CISWidget::initCameraImageProcessor() {
         imageProcessor.get(), &CameraImageProcessor::imageReady, this,
         [this](std::shared_ptr<cv::Mat> result) {
             if (result && !result->empty()) {
+                ui->imgSplice->clearAllDisplayImages();  // ← 新增：先清除旧图
                 ui->imgSplice->displayImage(result, true);
             }
         },
@@ -364,18 +365,18 @@ void CISWidget::on_ckbSplice_toggled(bool checked) {
     }
 }
 
-void CISWidget::on_btnCISConfig_clicked() {
-    if (!configCISCamera) return;
-    QMetaObject::invokeMethod(
-        configCISCamera.get(),
-        [this]() {
-            configCISCamera->addDllDirToPath("./data/CISConfig/externExE");
+// void CISWidget::on_btnCISConfig_clicked() {
+//     if (!configCISCamera) return;
+//     QMetaObject::invokeMethod(
+//         configCISCamera.get(),
+//         [this]() {
+//             configCISCamera->addDllDirToPath("./data/CISConfig/externExE");
 
-            configCISCamera->startEmbedded("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"}, ui->cisConfigHost->winId());
-            configCISCamera->writeInput("some command");
-        },
-        Qt::QueuedConnection);
-}
+//             configCISCamera->startEmbedded("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"}, ui->cisConfigHost->winId());
+//             configCISCamera->writeInput("some command");
+//         },
+//         Qt::QueuedConnection);
+// }
 
 void CISWidget::on_btn_ChessboardDetector_clicked() {
     QMetaObject::invokeMethod(imageProcessor.get(), &CameraImageProcessor::whenDetectChessboard, Qt::QueuedConnection);
@@ -412,29 +413,15 @@ void CISWidget::on_btnClearCPDetectResult_clicked() {
 void CISWidget::whenDrawPlatformAxes() {
     if (!imageProcessor) return;
 
-    // 1. 解析 JSON 世界坐标
-    std::ifstream is("./data/calibration_config/platform_pose.json");
-    std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
-
-    auto extractVec = [&](const std::string& key, size_t from) -> Eigen::Vector3d {
-        size_t p = json.find("\"" + key + "\":[", from);
-        if (p == std::string::npos) return Eigen::Vector3d::Zero();
-        p = json.find('[', p) + 1;
-        size_t q = json.find(']', p);
-        Eigen::Vector3d v;
-        sscanf(json.substr(p, q - p).c_str(), "%lf,%lf,%lf", &v(0), &v(1), &v(2));
-        return v;
-    };
-
-    size_t wp = json.find("\"worldPose\":{");
-    Eigen::Vector3d wRvec = extractVec("R", wp);
-    Eigen::Vector3d wTvec = extractVec("T", wp);
+    // 1. 加载 platform_pose.json（旧格式，含 worldPose + platforms[]）
+    PlatformPoseData cam2PlatParam;
+    if (!cam2PlatParam.load("./data/calibration_config/platform_pose.json")) return;
 
     auto savedR = imageProcessor->getWorldRvec();
     auto savedT = imageProcessor->getWorldTvec();
-    imageProcessor->setWorldPose(wRvec, wTvec);
+    imageProcessor->setWorldPose(cam2PlatParam.allRotVecs.back(), cam2PlatParam.allTransVecs.back());
 
-    // 2. 收集像素坐标
+    // 2. 收集像素坐标（从旋转向量恢复 X/Y 方向向量）
     struct PlatAxes {
         int id;
         double cx, cy, xx, xy, yx, yy;
@@ -442,17 +429,18 @@ void CISWidget::whenDrawPlatformAxes() {
     std::vector<PlatAxes> axes;
     const double axisLen = 3.2;  // ~150 像素
 
-    size_t pos = json.find("\"platforms\":[");
-    pos = json.find('[', pos) + 1;
-    while (true) {
-        size_t start = json.find('{', pos);
-        if (start == std::string::npos || start >= json.find(']', pos)) break;
-        size_t end = json.find('}', start) + 1;
-
-        int pid = atoi(&json[json.find("\"id\":", start) + 5]);
-        Eigen::Vector3d X_w = extractVec("X", start);
-        Eigen::Vector3d Y_w = extractVec("Y", start);
-        Eigen::Vector3d T_w = extractVec("T", start);
+    for (int i = 0; i + 1 < cam2PlatParam.allTransVecs.size(); ++i) {
+        Eigen::Vector3d T_w = cam2PlatParam.allTransVecs[i];
+        // 旋转向量 → 旋转矩阵 → X/Y 方向向量
+        Eigen::Vector3d rv = cam2PlatParam.allRotVecs[i];
+        cv::Mat rv_cv(3, 1, CV_64F);
+        rv_cv.at<double>(0) = rv(0);
+        rv_cv.at<double>(1) = rv(1);
+        rv_cv.at<double>(2) = rv(2);
+        cv::Mat R_cv;
+        cv::Rodrigues(rv_cv, R_cv);
+        Eigen::Vector3d X_w(R_cv.at<double>(0,0), R_cv.at<double>(1,0), R_cv.at<double>(2,0));
+        Eigen::Vector3d Y_w(R_cv.at<double>(0,1), R_cv.at<double>(1,1), R_cv.at<double>(2,1));
 
         std::vector<Eigen::Vector2d> pts;
         pts.push_back(T_w.head<2>());
@@ -460,21 +448,19 @@ void CISWidget::whenDrawPlatformAxes() {
         pts.push_back((T_w + axisLen * Y_w).head<2>());
 
         auto px = imageProcessor->convertToPix(pts);
-        axes.push_back({pid, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
-        PLOG_INFO << std::fixed << std::setprecision(5) << "平台 " << pid << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
-        pos = end + 1;
+        axes.push_back({i, px[0].x(), px[0].y(), px[1].x(), px[1].y(), px[2].x(), px[2].y()});
+        PLOG_INFO << std::fixed << std::setprecision(5) << "平台 " << i << " 像素(" << px[0].x() << "," << px[0].y() << ")" << std::endl;
     }
     imageProcessor->setWorldPose(savedR, savedT);
 
-    // 3. 加载原图，画轴，画拟合的圆
+    // 3. 加载原图，画轴
     if (axes.empty()) return;
 
     cv::Mat img = readLargeBMP("./data/PaltfromCalibrate/vis/vis.bmp");
     if (img.empty()) img = cv::imread("./data/PaltfromCalibrate/vis/vis.bmp", cv::IMREAD_UNCHANGED);
     if (img.empty()) return;
 
-    // 直接在灰度原图上画（不转BGR，保持1GB）
-    cv::Mat gray = img.clone();  // 独立副本，不破坏 vis.bmp
+    cv::Mat gray = img.clone();
     if (gray.channels() == 3) cv::cvtColor(gray, gray, cv::COLOR_BGR2GRAY);
 
     ui->graphicsView_5->clearAllGraphicComponents();
@@ -482,6 +468,7 @@ void CISWidget::whenDrawPlatformAxes() {
         std::shared_ptr<AxesItem> CpAxis = std::make_shared<AxesItem>(a.cx, a.cy, a.xx, a.xy, a.yx, a.yy, a.id);
         ui->graphicsView_5->addGraphicComponent(CpAxis);
     }
+    ui->graphicsView_5->clearAllDisplayImages();
     ui->graphicsView_5->displayImage(std::make_shared<cv::Mat>(gray), true);
 }
 
@@ -489,23 +476,12 @@ void CISWidget::whenDrawDetectCircles() {
     if (!imageProcessor) return;
 
     // 1. 加载 platform_pose.json，提取各平台旋转中心 T 的世界坐标
-    std::ifstream is("./data/calibration_config/platform_pose.json");
-    std::string json((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+    PlatformPoseData cam2PlatParam;
+    if (!cam2PlatParam.load("./data/calibration_config/platform_pose.json")) return;
 
-    auto extractVec = [&](const std::string& key, size_t from) -> Eigen::Vector3d {
-        size_t p = json.find("\"" + key + "\":[", from);
-        if (p == std::string::npos) return Eigen::Vector3d::Zero();
-        p = json.find('[', p) + 1;
-        size_t q = json.find(']', p);
-        Eigen::Vector3d v;
-        sscanf(json.substr(p, q - p).c_str(), "%lf,%lf,%lf", &v(0), &v(1), &v(2));
-        return v;
-    };
-
-    size_t wp = json.find("\"worldPose\":{");
     auto savedR = imageProcessor->getWorldRvec();
     auto savedT = imageProcessor->getWorldTvec();
-    imageProcessor->setWorldPose(extractVec("R", wp), extractVec("T", wp));
+    imageProcessor->setWorldPose(cam2PlatParam.allRotVecs.back(), cam2PlatParam.allTransVecs.back());
 
     // 解析平台 id → T 世界坐标
     struct PlatCenter {
@@ -513,18 +489,8 @@ void CISWidget::whenDrawDetectCircles() {
         Eigen::Vector2d worldT;
     };
     std::vector<PlatCenter> platCenters;
-    size_t pos = json.find("\"platforms\":[");
-    if (pos != std::string::npos) {
-        pos = json.find('[', pos) + 1;
-        while (true) {
-            size_t start = json.find('{', pos);
-            if (start == std::string::npos || start >= json.find(']', pos)) break;
-            size_t end = json.find('}', start) + 1;
-            int pid = atoi(&json[json.find("\"id\":", start) + 5]);
-            Eigen::Vector3d T_w = extractVec("T", start);
-            platCenters.push_back({pid, T_w.head<2>()});
-            pos = end + 1;
-        }
+    for (int i = 0; i + 1 < cam2PlatParam.allTransVecs.size(); ++i) {
+        platCenters.push_back({i, cam2PlatParam.allTransVecs[i].head<2>()});
     }
 
     // 把平台旋转中心转成像素坐标
@@ -614,6 +580,7 @@ void CISWidget::whenDrawDetectCircles() {
 
     // 4. 显示
     std::shared_ptr<CircleItem> circleLight = std::make_shared<CircleItem>(centers, diameters, Qt::green, 1.0, 15.0, labels);
+    // ui->graphicsView_5->clearAllGraphicComponents();
     ui->graphicsView_5->addGraphicComponent(circleLight);
 }
 

@@ -32,7 +32,9 @@ public:
     std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
     std::vector<Eigen::Vector2d> convertToPix(const std::vector<Eigen::Vector2d>& world_pts);
     void debugProjectionDistancesFromFixedPixels();
-    Eigen::Vector2d applyWorldOffsetToPixel(const Eigen::Vector2d& world_pt);
+    std::vector<Eigen::Vector2d> applyWorldOffsetToPixel(
+        const std::vector<Eigen::Vector2d>& world_pts,
+        double translateX_mm, double translateY_mm, double rotateDeg);
     void setWorldPose(const Eigen::Vector3d& r, const Eigen::Vector3d& t) {
         allRotVecs_.back() = r;
         allTransVecs_.back() = t;
@@ -40,6 +42,10 @@ public:
     Eigen::Vector3d getWorldRvec() const { return allRotVecs_.back(); }
     Eigen::Vector3d getWorldTvec() const { return allTransVecs_.back(); }
     Eigen::Matrix3d getK() const { return K_; }
+
+    static Eigen::Vector2d calcCircumcenter(const Eigen::Vector2d& p1, const Eigen::Vector2d& p2, const Eigen::Vector2d& p3);
+    static Eigen::Vector2d calcDirectionVector(const Eigen::Vector2d& from, const Eigen::Vector2d& to);
+    // static void detectCircles();
 signals:
     void text(const QString& msg);
     void error(const QString& msg);
