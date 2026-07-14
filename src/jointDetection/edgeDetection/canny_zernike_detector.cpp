@@ -372,6 +372,8 @@ cv::Mat CannyZernikeDetector::filterEdgesByMinAreaRect(const cv::Mat& edge, cons
 
     // 最小外接旋转矩形
     cv::RotatedRect rotatedRect = cv::minAreaRect(whitePoints);
+    rotatedRect.size.width *= 0.9f;
+    rotatedRect.size.height *= 0.9f;
 
     // 4 角点 → int 多边形
     cv::Point2f corners2f[4];
@@ -380,6 +382,19 @@ cv::Mat CannyZernikeDetector::filterEdgesByMinAreaRect(const cv::Mat& edge, cons
     polygon.reserve(4);
     for (const auto& p : corners2f) {
         polygon.emplace_back(cvRound(p.x), cvRound(p.y));
+    }
+
+    // 调试可视化：在二值图和边缘图上画出最小外接旋转矩形
+    {
+        cv::Mat binaryColor;
+        cv::cvtColor(binary, binaryColor, cv::COLOR_GRAY2BGR);
+        cv::polylines(binaryColor, polygon, true, cv::Scalar(0, 255, 0), 1);
+        cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/binary_with_minAreaRect.bmp", binaryColor);
+
+        cv::Mat edgeColor;
+        cv::cvtColor(edge, edgeColor, cv::COLOR_GRAY2BGR);
+        cv::polylines(edgeColor, polygon, true, cv::Scalar(0, 255, 0), 1);
+        cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/edge_with_minAreaRect.bmp", edgeColor);
     }
 
     // 画旋转矩形为掩码，再与 edge 按位 AND
