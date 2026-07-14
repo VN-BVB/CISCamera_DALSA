@@ -579,7 +579,7 @@ CannyZernikeDetector::classifyContourPointsByCenterLine(const std::vector<std::v
  * @param is8Neighbor 是否使用8邻域（true=8邻域，false=4邻域）
  * @return 连通域数量
  */
-int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, bool is8Neighbor) {
+int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, bool is8Neighbor, int minArea) {
     // 检查输入图像是否有效
     if (binary.empty() || binary.channels() != 1) {
         PLOG_ERROR << "输入图像为空或不是单通道二值图！";
@@ -609,12 +609,11 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
         for (int j = 0; j < cols; ++j) {
             // 若当前像素是亮区（255）且未被访问，则开始BFS标记连通域
             if (binary.at<uchar>(i, j) == 255 && visited.at<uchar>(i, j) == 0) {
-                componentCount++;  // 连通域数量+1
-
                 // BFS队列，存储待访问的像素坐标
                 std::queue<cv::Point> q;
                 q.push(cv::Point(j, i));  // 注意：OpenCV中Point(x,y)，x=列，y=行
                 visited.at<uchar>(i, j) = 1;  // 标记当前像素为已访问
+                int componentPixelCount = 1;  // 起始点已计入
 
                 // 遍历当前连通域的所有像素
                 while (!q.empty()) {
@@ -630,10 +629,16 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
                         if (x >= 0 && x < cols && y >= 0 && y < rows) {
                             if (binary.at<uchar>(y, x) == 255 && visited.at<uchar>(y, x) == 0) {
                                 visited.at<uchar>(y, x) = 1;  // 标记为已访问
+                                ++componentPixelCount;
                                 q.push(cv::Point(x, y));      // 加入队列继续遍历
                             }
                         }
                     }
+                }
+
+                // 只有面积达到阈值才计数（minArea <= 0 时不过滤，保持原行为）
+                if (minArea <= 0 || componentPixelCount >= minArea) {
+                    ++componentCount;
                 }
             }
         }
@@ -663,8 +668,7 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
     cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/binaryImage.bmp", binaryImage);
 
     // 连通域分析：检查工件是否发生碰撞
-    // 使用BFS算法计算亮区连通域数量（使用8邻域）
-    int brightComponentCount = countBrightConnectedComponents(binaryImage, true);
+    int brightComponentCount = countBrightConnectedComponents(binaryImage, true, 500);
     // 如果亮区连通域数量大于1，说明工件可能发生碰撞
     if (brightComponentCount > 1) {
         PLOG_INFO << "警告：检测到 " << brightComponentCount << " 个亮区连通域，工件可能已发生碰撞！";

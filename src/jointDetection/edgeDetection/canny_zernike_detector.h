@@ -33,8 +33,8 @@ private:
     classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
     std::vector<std::vector<cv::Point>>
     classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
-    // 检测亮连通域数量
-    int countBrightConnectedComponents(const cv::Mat& binary, bool is8Neighbor = false);
+    // 检测亮连通域数量（minArea <= 0 时不过滤）
+    int countBrightConnectedComponents(const cv::Mat& binary, bool is8Neighbor = false, int minArea = 0);
 };
 
 #endif // CANNY_ZERNIKE_DETECTOR_H
