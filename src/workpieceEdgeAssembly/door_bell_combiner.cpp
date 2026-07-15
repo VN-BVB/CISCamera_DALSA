@@ -109,7 +109,7 @@ void DoorBellCombiner::generateValidCombinations(int n, const std::vector<std::s
  */
 void DoorBellCombiner::calculateMostLikelyCombination() {
     // TODO: 后续用 sourceImageId 等规则重新设计组合筛选
-    static const std::vector<int> kFixedCombination = {4, 20, 13, 31, 16, 47, 49};
+    static const std::vector<int> kFixedCombination = {21, 4, 35, 14, 33, 53, 55};
 
     for (int idx : kFixedCombination) {
         if (idx < 0 || idx >= static_cast<int>(m_possibleWorkpieces.size())) {

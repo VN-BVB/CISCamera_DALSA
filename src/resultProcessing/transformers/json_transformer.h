@@ -34,5 +34,6 @@ private:
     const std::map<int, ProcessedROIInfo>& m_processedRoiInfos;
     std::vector<SeamEndpoint> m_allEndpoints;                   // 从processedRoiInfos中解析出来
     std::map<int, int> m_contourToWorkpieceMapping;
+    std::map<int, int> m_oldToNewWorkpieceId;                   // 旧工件ID → 新工件ID（= 对位平台ID）
 };
 #endif // JSON_TRANSFORMER_H
