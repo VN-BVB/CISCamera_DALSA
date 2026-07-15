@@ -28,6 +28,10 @@ private:
     cv::Mat filterEdgesByMinAreaRect(const cv::Mat& edge, const cv::Mat& binary);
     // 计算中间缝隙中心线（中轴变换 + RANSAC）
     cv::Vec4f calculateCenterLine(const cv::Mat& rawGray);
+    // Zhang-Suen骨架化方法（用于对比）
+    cv::Vec4f calculateCenterLineWithZhangSuen(const cv::Mat& grayImage, cv::Mat& debugOutput);
+    // 扫描线法计算中心线：minAreaRect + 法线方向扫描取中点 + RANSAC，内部完成可视化保存
+    cv::Vec4f calculateCenterLineByScanline(const cv::Mat& grayImage);
     // 根据中心线将轮廓分类到两侧
     std::pair<std::vector<std::vector<cv::Point>>, std::vector<std::vector<cv::Point>>>
     classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);

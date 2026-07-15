@@ -3,12 +3,14 @@
 #include <cmath>
 #include <queue>
 #include <set>
+#include <numeric>
 
 #include <plog/Log.h>
 
 #include "canny_zernike_detector.h"
 #include "src/utils/image_tools.h"
 #include "src/utils/geometry_utils.h"
+#include "src/utils/scoped_timer.h"
 
 
 CannyZernikeDetector::CannyZernikeDetector() {}
@@ -216,6 +218,7 @@ cv::Point2f CannyZernikeDetector::zernikeSubpixel(const cv::Mat &gray, const cv:
  * @return 亚像素级精度的轮廓点集
  */
 std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const cv::Mat &src, const std::vector<cv::Point> &contour) {
+    SCOPED_TIMER("亚像素轮廓提取");
     cv::Mat gray;
     if (src.channels() > 1) {
         cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
@@ -239,59 +242,14 @@ std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const c
 
 /**
  * @brief 使用Otsu算法自适应计算Canny边缘检测的阈值
- * @param srcImage 输入图像（彩色或灰度）
- * @return 计算得到的Canny阈值
- * @details 该方法通过计算图像的梯度幅值，应用非极大值抑制后，使用Otsu算法自动确定最佳阈值
+ * @param grayImage 输入灰度图像
+ * @return 计算得到的Canny高阈值
+ * @details 直接在灰度图上应用Otsu算法计算最佳阈值，简化计算流程
  */
-double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage) {
-    cv::Mat grayImage;
-    if (srcImage.channels() > 1) {
-        cv::cvtColor(srcImage, grayImage, cv::COLOR_BGR2GRAY);
-    } else {
-        grayImage = srcImage.clone();
-    }
-
-    cv::Mat gx, gy;
-    cv::Mat mag, angle;
-
-    cv::Sobel(grayImage, gx, CV_32F, 1, 0, 3);
-    cv::Sobel(grayImage, gy, CV_32F, 0, 1, 3);
-    // 计算梯度幅值和梯度的方向（角度）
-    cv::cartToPolar(gx, gy, mag, angle, true);
-    // 定义全黑非极大值抑制图像
-    cv::Mat Non_maxImage = cv::Mat::zeros(grayImage.size(), CV_32FC1);
-    int height = grayImage.rows;
-    int width = grayImage.cols;
-    // 获得非极大值抑制图像
-    for (int i = 1; i < height - 1; ++i) {
-        for (int j = 1; j < width - 1; ++j) {
-            float g_angle = angle.at<float>(i, j);
-            float K_mag = mag.at<float>(i, j);
-            // 梯度方向在垂直方向
-            if ((g_angle <= 112.5 && g_angle > 67.5) || (g_angle <= 292.5 && g_angle > 247.5)) {
-                if (K_mag >= mag.at<float>(i - 1, j) && K_mag >= mag.at<float>(i + 1, j)) Non_maxImage.at<float>(i, j) = K_mag;
-            }
-            // 梯度方向在水平方向
-            else if (g_angle <= 22.5 || g_angle > 337.5 || (g_angle <= 202.5 && g_angle > 157.5)) {
-                if (K_mag >= mag.at<float>(i, j - 1) && K_mag >= mag.at<float>(i, j + 1)) Non_maxImage.at<float>(i, j) = K_mag;
-            }
-            // 梯度方向在+45方向
-            else if ((g_angle <= 67.5 && g_angle > 22.5) || (g_angle <= 247.5 && g_angle > 202.5)) {
-                if (K_mag >= mag.at<float>(i - 1, j - 1) && K_mag >= mag.at<float>(i + 1, j + 1))
-                    Non_maxImage.at<float>(i, j) = K_mag;
-            }
-            // 梯度方向在-45方向
-            else if ((g_angle <= 337.5 && g_angle > 292.5) || (g_angle <= 157.5 && g_angle > 112.5)) {
-                if (K_mag >= mag.at<float>(i + 1, j - 1) && K_mag >= mag.at<float>(i - 1, j + 1))
-                    Non_maxImage.at<float>(i, j) = K_mag;
-            }
-        }
-    }
-
-    cv::Mat nonMaxImage8U;
-    Non_maxImage.convertTo(nonMaxImage8U, CV_8UC1);
+double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &grayImage) {
+    SCOPED_TIMER("计算自适应canny阈值");
     cv::Mat thresholdedImage;
-    double TH = cv::threshold(nonMaxImage8U, thresholdedImage, 0, 255, cv::THRESH_OTSU);
+    double TH = cv::threshold(grayImage, thresholdedImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
     return TH;
 }
 
@@ -304,33 +262,11 @@ double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &srcImag
  * @details 该方法通过二值化、闭运算、腐蚀等形态学操作，去除边缘图像中的无关区域，保留与工件相关的有效边缘
  */
 cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, const cv::Mat& grayImage) {
+    SCOPED_TIMER("去除无关边缘区域（Otsu二值化）");
     // 对背光图去除工件外杂乱边缘，对正光图去除工件内杂乱边缘
     cv::Mat binaryImage;
-    // cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    // // cv::threshold(grayImage,binaryImage,30, 255, cv::THRESH_BINARY);
-    // cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/binaryImage.bmp", binaryImage);
-    // PLOG_INFO << "baocun binaryImage";
-
-    // 替换OTSU二值化为meanshift分割
-    cv::Mat shiftImage;
-    // 如果是灰度图，需要先转换为彩色图才能使用pyrMeanShiftFiltering
-    cv::Mat colorImage;
-    if (grayImage.channels() == 1) {
-        cv::cvtColor(grayImage, colorImage, cv::COLOR_GRAY2BGR);
-    } else {
-        colorImage = grayImage.clone();
-    }
-    // 使用pyrMeanShiftFiltering进行图像分割
-    // sp参数控制空间窗口大小，sr参数控制颜色窗口大小
-    int sp = 10;  // 空间窗口大小
-    int sr = 15;  // 颜色窗口大小
-    cv::pyrMeanShiftFiltering(colorImage, shiftImage, sp, sr);
-    cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/binaryImage.bmp", shiftImage);
-    // 将分割后的图像转换为灰度图
-    cv::Mat shiftGray;
-    cv::cvtColor(shiftImage, shiftGray, cv::COLOR_BGR2GRAY);
-    // 对分割后的图像进行二值化，可以使用固定阈值或OTSU
-    cv::threshold(shiftGray, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    // 直接使用Otsu二值化，替代慢速的pyrMeanShiftFiltering
+    cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
     // 对二值图进行腐蚀，减小边缘无关区域面积，对背光和正光都有用
     cv::Mat erodedBinary;
@@ -344,7 +280,6 @@ cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, c
     cv::Mat closedBinary;
     cv::Mat closeKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7,7));
     cv::morphologyEx(erodedBinary, closedBinary, cv::MORPH_CLOSE, closeKernel);
-    cv::imwrite("E:/work/车门门环拼接/image/正面打光/9/1/closedBinary.bmp", closedBinary);
 
     // 将处理后的二值图翻转，与edge相乘，保留边缘区域，去除无关区域
     cv::bitwise_not(closedBinary, closedBinary);
@@ -363,6 +298,7 @@ cv::Mat CannyZernikeDetector::removeIrrelevantEdgeRegions(const cv::Mat& edge, c
  *          fillConvexPoly 画 mask → bitwise_and 掩蔽
  */
 cv::Mat CannyZernikeDetector::filterEdgesByMinAreaRect(const cv::Mat& edge, const cv::Mat& binary) {
+    SCOPED_TIMER("minAreaRect二次过滤");
     // 收集所有白点
     std::vector<cv::Point2i> whitePoints;
     cv::findNonZero(binary, whitePoints);
@@ -384,18 +320,11 @@ cv::Mat CannyZernikeDetector::filterEdgesByMinAreaRect(const cv::Mat& edge, cons
         polygon.emplace_back(cvRound(p.x), cvRound(p.y));
     }
 
-    // 调试可视化：在二值图和边缘图上画出最小外接旋转矩形
-    {
-        cv::Mat binaryColor;
-        cv::cvtColor(binary, binaryColor, cv::COLOR_GRAY2BGR);
-        cv::polylines(binaryColor, polygon, true, cv::Scalar(0, 255, 0), 1);
-        cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/binary_with_minAreaRect.bmp", binaryColor);
-
-        cv::Mat edgeColor;
-        cv::cvtColor(edge, edgeColor, cv::COLOR_GRAY2BGR);
-        cv::polylines(edgeColor, polygon, true, cv::Scalar(0, 255, 0), 1);
-        cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/edge_with_minAreaRect.bmp", edgeColor);
-    }
+    // 在二值图上画出缩小后的外接矩形，保存可视化
+    cv::Mat binaryWithRect;
+    cv::cvtColor(binary, binaryWithRect, cv::COLOR_GRAY2BGR);
+    cv::polylines(binaryWithRect, polygon, true, cv::Scalar(0, 255, 0), 1);
+    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/binary_with_minAreaRect.bmp", binaryWithRect);
 
     // 画旋转矩形为掩码，再与 edge 按位 AND
     cv::Mat mask = cv::Mat::zeros(edge.size(), CV_8UC1);
@@ -406,57 +335,283 @@ cv::Mat CannyZernikeDetector::filterEdgesByMinAreaRect(const cv::Mat& edge, cons
 }
 
 /**
- * @brief 计算中间缝隙中心线（中轴变换 + RANSAC）
+ * @brief Zhang-Suen骨架化方法计算中心线（用于对比）
  * @param grayImage 预计算的灰度图
+ * @param debugOutput 输出骨架图像用于可视化
  * @return 中心线直线方程参数（vx, vy, x0, y0）
- * @details 图像二值化（保留极性处理）、中轴变换提取骨架，然后使用RANSAC算法拟合中心线
  */
-cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& grayImage) {
-    // 1. 图像二值化
+cv::Vec4f CannyZernikeDetector::calculateCenterLineWithZhangSuen(const cv::Mat& grayImage, cv::Mat& debugOutput) {
+    // 提取图像中间部分：以图像中心为中心，裁剪出宽高各1/4的区域（与 calculateCenterLine 保持一致）
+    cv::Point2f imgCenter(grayImage.cols / 2.0f, grayImage.rows / 2.0f);
+    int roiWidth = grayImage.cols / 4;
+    int roiHeight = grayImage.rows;
+    // cv::Rect 需要左上角坐标，由中心点推算
+    int roiX = static_cast<int>(imgCenter.x - roiWidth / 2.0f);
+    int roiY = static_cast<int>(imgCenter.y - roiHeight / 2.0f);
+    cv::Rect centerRect(roiX, roiY, roiWidth, roiHeight);
+    cv::Mat centerRegion = grayImage(centerRect).clone();
+
+    // 1. 图像二值化（只对中间区域处理）
     cv::Mat binary;
-    cv::threshold(grayImage, binary, 0, 255, cv::THRESH_BINARY_INV + cv::THRESH_OTSU);
-    // 反转二值图(正光和背光不一样,因为骨架提取算法是利用腐蚀，因此背光需要反转)
+    cv::threshold(centerRegion, binary, 0, 255, cv::THRESH_BINARY_INV + cv::THRESH_OTSU);
     cv::bitwise_not(binary, binary);
 
-    // 2. 中轴变换（Skeletonization）
-    cv::Mat skel = cv::Mat::zeros(binary.size(), CV_8UC1);
-    cv::Mat temp = cv::Mat::zeros(binary.size(), CV_8UC1);
-    cv::Mat eroded = cv::Mat::zeros(binary.size(), CV_8UC1);
+    // 2. Zhang-Suen骨架化
+    cv::Mat det = binary.clone();
+    det /= 255;
 
-    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
-    bool done = false;
+    static std::vector<bool> List1, List2;
+    static bool initialized = false;
+    if (!initialized) {
+        List1.assign(256, false);
+        List2.assign(256, false);
 
-    while (!done) {
-        cv::erode(binary, eroded, element);
-        cv::dilate(eroded, temp, element);
-        cv::subtract(binary, temp, temp);
-        cv::bitwise_or(skel, temp, skel);
-        eroded.copyTo(binary);
+        for (int n = 0; n < 256; n++) {
+            std::vector<int> p(8);
+            for (int k = 0; k < 8; k++) {
+                p[k] = (n >> k) & 1;
+            }
 
-        if (cv::countNonZero(binary) == 0) {
-            done = true;
+            int Np = std::accumulate(p.begin(), p.end(), 0);
+            int Tp = 0;
+            for (int k = 0; k < 8; k++) {
+                int diff = p[(k + 1) % 8] - p[k];
+                if (diff == 1) Tp++;
+            }
+
+            if (Np > 1 && Np < 7 && Tp == 1) {
+                if (p[0] * p[2] * p[4] == 0 && p[6] * p[2] * p[4] == 0) {
+                    List1[n] = true;
+                }
+                if (p[0] * p[2] * p[6] == 0 && p[0] * p[4] * p[6] == 0) {
+                    List2[n] = true;
+                }
+            }
         }
+        initialized = true;
     }
-    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260622/eroded.bmp", skel);
 
-    // 3. 提取中心线坐标点
+    int mat[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
+    bool changed = true;
+    int maxIterations = 1000; // 防止无限循环
+    int iteration = 0;
+
+    while (changed && iteration < maxIterations) {
+        changed = false;
+        iteration++;
+
+        // 局部变量，避免多线程竞争（不同 ROI 尺寸会导致 static 变量错乱）
+        cv::Mat label1 = cv::Mat::zeros(det.size(), CV_8UC1);
+        cv::Mat label2 = cv::Mat::zeros(det.size(), CV_8UC1);
+
+        for (int y = 1; y < det.rows - 1; y++) {
+            for (int x = 1; x < det.cols - 1; x++) {
+                if (det.at<uchar>(y, x)) {
+                    uchar p[8] = {
+                        det.at<uchar>(y - 1, x),
+                        det.at<uchar>(y - 1, x + 1),
+                        det.at<uchar>(y, x + 1),
+                        det.at<uchar>(y + 1, x + 1),
+                        det.at<uchar>(y + 1, x),
+                        det.at<uchar>(y + 1, x - 1),
+                        det.at<uchar>(y, x - 1),
+                        det.at<uchar>(y - 1, x - 1)
+                    };
+
+                    int idx = 0;
+                    for (int k = 0; k < 8; k++) {
+                        idx += p[k] * mat[k];
+                    }
+                    if (List1[idx]) {
+                        label1.at<uchar>(y, x) = 1;
+                        changed = true;
+                    }
+                }
+            }
+        }
+        det.setTo(0, label1);
+
+        for (int y = 1; y < det.rows - 1; y++) {
+            for (int x = 1; x < det.cols - 1; x++) {
+                if (det.at<uchar>(y, x)) {
+                    uchar p[8] = {
+                        det.at<uchar>(y - 1, x),
+                        det.at<uchar>(y - 1, x + 1),
+                        det.at<uchar>(y, x + 1),
+                        det.at<uchar>(y + 1, x + 1),
+                        det.at<uchar>(y + 1, x),
+                        det.at<uchar>(y + 1, x - 1),
+                        det.at<uchar>(y, x - 1),
+                        det.at<uchar>(y - 1, x - 1)
+                    };
+
+                    int idx = 0;
+                    for (int k = 0; k < 8; k++) {
+                        idx += p[k] * mat[k];
+                    }
+                    if (List2[idx]) {
+                        label2.at<uchar>(y, x) = 1;
+                        changed = true;
+                    }
+                }
+            }
+        }
+        det.setTo(0, label2);
+    }
+
+    det *= 255;
+    debugOutput = det.clone();
+
+    // 3. 提取点+RANSAC
     std::vector<cv::Point2f> centerLinePoints;
-    for (int y = 0; y < skel.rows; y++) {
-        for (int x = 0; x < skel.cols; x++) {
-            if (skel.at<uchar>(y, x) > 0) {
+    for (int y = 0; y < det.rows; y++) {
+        for (int x = 0; x < det.cols; x++) {
+            if (det.at<uchar>(y, x) > 0) {
                 centerLinePoints.push_back(cv::Point2f(x, y));
             }
         }
     }
 
-    // 4.RANSAC计算中心线直线方程
     cv::Vec4f centerLine;
     std::vector<cv::Point2f> inlierPoints;
-    double threshold = 3;
-    int iterations = 100;
-    GeometryUtils::lineRansac(centerLinePoints, centerLine, inlierPoints, threshold, iterations);
+    GeometryUtils::lineRansac(centerLinePoints, centerLine, inlierPoints, 3.0, 100);
 
     return centerLine;
+}
+
+/**
+ * @brief 扫描线法计算中心线
+ * @param grayImage 预计算的灰度图
+ * @return 中心线直线方程参数（vx, vy, x0, y0），坐标已转换为原图坐标系
+ * @details 提取 ROI → 二值化 → minAreaRect → 沿长轴法线方向扫描取中点 → RANSAC 拟合
+ *          内部完成可视化保存（scanline_method_N.bmp）
+ */
+cv::Vec4f CannyZernikeDetector::calculateCenterLineByScanline(const cv::Mat& grayImage) {
+    // 1. ROI 提取
+    cv::Point2f imgCenter(grayImage.cols / 2.0f, grayImage.rows / 2.0f);
+    int roiWidth = grayImage.cols / 4;
+    int roiHeight = grayImage.rows;
+    int roiX = static_cast<int>(imgCenter.x - roiWidth / 2.0f);
+    int roiY = static_cast<int>(imgCenter.y - roiHeight / 2.0f);
+    cv::Rect centerRect(roiX, roiY, roiWidth, roiHeight);
+    cv::Mat centerRegion = grayImage(centerRect).clone();
+
+    // 2. 二值化（白色 = 缝隙区域）
+    cv::Mat binary;
+    cv::threshold(centerRegion, binary, 0, 255, cv::THRESH_BINARY_INV + cv::THRESH_OTSU);
+    cv::bitwise_not(binary, binary);
+
+    // 3. 计算白色区域最小外接旋转矩形
+    std::vector<cv::Point2i> whitePoints;
+    cv::findNonZero(binary, whitePoints);
+    if (whitePoints.empty()) {
+        return cv::Vec4f(1, 0, imgCenter.x, imgCenter.y);
+    }
+    cv::RotatedRect rotatedRect = cv::minAreaRect(whitePoints);
+
+    // 4. 确定长轴方向（OpenCV 的 angle 关联 width 边，height 更长时需 +90）
+    float angleDeg = rotatedRect.angle;
+    float longLen, shortLen;
+    if (rotatedRect.size.width >= rotatedRect.size.height) {
+        longLen = rotatedRect.size.width;
+        shortLen = rotatedRect.size.height;
+    } else {
+        longLen = rotatedRect.size.height;
+        shortLen = rotatedRect.size.width;
+        angleDeg += 90.0f;
+    }
+    float angleRad = angleDeg * static_cast<float>(CV_PI) / 180.0f;
+
+    // 长轴方向向量 和 法线方向向量
+    cv::Point2f dir(std::cos(angleRad), std::sin(angleRad));
+    cv::Point2f normVec(-std::sin(angleRad), std::cos(angleRad));
+    cv::Point2f rectCenter = rotatedRect.center;
+
+    // 5. 沿长轴等步长扫描，每条线沿法线方向找黑白跳变对
+    std::vector<cv::Point2f> centerLinePoints;
+    float halfLong = longLen / 2.0f;
+    float halfShort = shortLen / 2.0f;
+    float step = 2.0f;
+
+    for (float t = -halfLong; t <= halfLong; t += step) {
+        cv::Point2f lineCenter = rectCenter + dir * t;
+
+        std::vector<float> transitions;
+        bool prevWhite = false;
+
+        for (float s = -halfShort; s <= halfShort; s += 1.0f) {
+            cv::Point2f pt = lineCenter + normVec * s;
+            int px = cvRound(pt.x);
+            int py = cvRound(pt.y);
+
+            if (px < 0 || px >= binary.cols || py < 0 || py >= binary.rows) {
+                prevWhite = false;
+                continue;
+            }
+
+            bool isWhite = binary.at<uchar>(py, px) > 0;
+            if (isWhite != prevWhite) {
+                transitions.push_back(s);
+                prevWhite = isWhite;
+            }
+        }
+
+        if (transitions.size() >= 2) {
+            float midS = (transitions[0] + transitions[1]) / 2.0f;
+            cv::Point2f midPoint = lineCenter + normVec * midS;
+            centerLinePoints.push_back(midPoint);
+        }
+    }
+
+    // 6. RANSAC 拟合中心线（ROI 局部坐标）
+    cv::Vec4f centerLine(1, 0, rectCenter.x, rectCenter.y);
+    std::vector<cv::Point2f> inlierPoints;
+    if (!centerLinePoints.empty()) {
+        GeometryUtils::lineRansac(centerLinePoints, centerLine, inlierPoints, 3.0, 100);
+    }
+
+    // 7. 可视化：在原图灰度图上画 minAreaRect（红）+ 中点（绿）+ 拟合直线（蓝），保存
+    static int saveCounter = 0;
+    saveCounter++;
+    cv::Mat visImg;
+    cv::cvtColor(grayImage, visImg, cv::COLOR_GRAY2BGR);
+
+    cv::Point2f corners[4];
+    rotatedRect.points(corners);
+    for (int i = 0; i < 4; ++i) {
+        corners[i].x += roiX;
+        corners[i].y += roiY;
+    }
+    for (int i = 0; i < 4; ++i) {
+        cv::line(visImg, corners[i], corners[(i + 1) % 4], cv::Scalar(0, 0, 255), 1);
+    }
+    for (const auto& pt : centerLinePoints) {
+        cv::circle(visImg, cv::Point2f(pt.x + roiX, pt.y + roiY), 1, cv::Scalar(0, 255, 0), -1);
+    }
+    cv::Point2f p1(centerLine[2] - 1000 * centerLine[0] + roiX,
+                   centerLine[3] - 1000 * centerLine[1] + roiY);
+    cv::Point2f p2(centerLine[2] + 1000 * centerLine[0] + roiX,
+                   centerLine[3] + 1000 * centerLine[1] + roiY);
+    cv::line(visImg, p1, p2, cv::Scalar(255, 0, 0), 2);
+
+    static std::string visDir = "E:/work/Car_door_ring_splicing/image/背面打光/260714/";
+    cv::imwrite(visDir + "scanline_method_" + std::to_string(saveCounter) + ".bmp", visImg);
+
+    // 返回原图坐标系的中心线
+    centerLine[2] += roiX;
+    centerLine[3] += roiY;
+    return centerLine;
+}
+
+/**
+ * @brief 计算中间缝隙中心线
+ * @param grayImage 预计算的灰度图
+ * @return 中心线直线方程参数（vx, vy, x0, y0），原图坐标系
+ * @details 当前采用扫描线法，内部完成 ROI 提取、RANSAC 拟合、可视化保存
+ */
+cv::Vec4f CannyZernikeDetector::calculateCenterLine(const cv::Mat& grayImage) {
+    SCOPED_TIMER("计算中心线");
+    return calculateCenterLineByScanline(grayImage);
 }
 
 /**
@@ -669,6 +824,7 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
  */
 std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const cv::Mat& inputImage)
 {
+    PLOG_INFO << "开始轮廓检测";
     ImageTools imageTools;
     cv::Mat grayImage;
     if (inputImage.channels() > 1) {
@@ -680,13 +836,16 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
 
     cv::Mat binaryImage;
     cv::threshold(grayImage, binaryImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/binaryImage.bmp", binaryImage);
+    // cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/binaryImage.bmp", binaryImage);
 
-    // 连通域分析：检查工件是否发生碰撞
-    int brightComponentCount = countBrightConnectedComponents(binaryImage, true, 500);
-    // 如果亮区连通域数量大于1，说明工件可能发生碰撞
-    if (brightComponentCount > 1) {
-        PLOG_INFO << "警告：检测到 " << brightComponentCount << " 个亮区连通域，工件可能已发生碰撞！";
+    {
+        SCOPED_TIMER("连通域分析");
+        // 连通域分析：检查工件是否发生碰撞
+        int brightComponentCount = countBrightConnectedComponents(binaryImage, true, 500);
+        // 如果亮区连通域数量大于1，说明工件可能发生碰撞
+        if (brightComponentCount > 1) {
+            PLOG_INFO << "警告：检测到 " << brightComponentCount << " 个亮区连通域，工件可能已发生碰撞！";
+        }
     }
 
     // 边缘检测
@@ -694,32 +853,37 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
     double TL = TH * 0.5;
     cv::Mat edge;
     cv::Canny(grayImage, edge, TL, TH);
-    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/edge.bmp", edge);
+    // cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/edge.bmp", edge);
+
     // 形态学处理，去除无关区域的边缘
     cv::Mat connectedEdge = removeIrrelevantEdgeRegions(edge, grayImage);
-    cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/connectedEdge.bmp", connectedEdge);
+    // cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/connectedEdge.bmp", connectedEdge);
+
     // 二次过滤：Otsu + minAreaRect，只保留落在工件外接旋转矩形内的边缘
     cv::Mat filteredEdge = filterEdgesByMinAreaRect(connectedEdge, binaryImage);
     cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/filteredEdge.bmp", filteredEdge);
-    // 计算中间缝隙中心线
-    cv::Vec4f centerLine = calculateCenterLine(grayImage);
-    imageTools.drawLineAndSave(grayImage, centerLine, "E:/work/Car_door_ring_splicing/image/背面打光/260714/centerLine.bmp");
+
+
     // 提取并筛选轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(filteredEdge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-    imageTools.drawColorfulContoursAndSave(grayImage, contours,
-                                           "E:/work/Car_door_ring_splicing/image/背面打光/260714/allContours.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, contours,
+    // "E:/work/Car_door_ring_splicing/image/背面打光/260714/allContours.bmp");
     std::vector<std::vector<cv::Point>> filteredContours = imageTools.filterContours(contours);
-    imageTools.drawColorfulContoursAndSave(grayImage, filteredContours,
-                                           "E:/work/Car_door_ring_splicing/image/背面打光/260714/filterContours.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, filteredContours,
+    // "E:/work/Car_door_ring_splicing/image/背面打光/260714/filterContours.bmp");
+
+    // 计算中间缝隙中心线
+    cv::Vec4f centerLine = calculateCenterLine(grayImage);
+    imageTools.drawLineAndSave(grayImage, centerLine, "E:/work/Car_door_ring_splicing/image/背面打光/260714/centerLine.bmp");
+
     // 根据中心线分类轮廓
     auto contoursLeftAndRight = classifyContourPointsByCenterLine(filteredContours, centerLine);
     std::vector<std::vector<cv::Point>> rightOnly = {contoursLeftAndRight[0]};
-    imageTools.drawColorfulContoursAndSave(grayImage, rightOnly,
-                                           "E:/work/Car_door_ring_splicing/image/背面打光/260714/right_contours.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, rightOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/right_contours.bmp");
     std::vector<std::vector<cv::Point>>  leftOnly= {contoursLeftAndRight[1]};
-    imageTools.drawColorfulContoursAndSave(grayImage, leftOnly,
-                                           "E:/work/Car_door_ring_splicing/image/背面打光/260714/left_contours.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, leftOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/left_contours.bmp");
+
     // 亚像素轮廓提取
     std::vector<std::vector<cv::Point2f>> subpixelConturs;
     for (const auto& contour : contoursLeftAndRight) {
@@ -738,11 +902,10 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
         subpixelContursInt.push_back(std::move(intContour));
     }
     std::vector<std::vector<cv::Point>> subrightOnly = {subpixelContursInt[0]};
-    imageTools.drawColorfulContoursAndSave(grayImage, subrightOnly,
-                                           "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_right.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, subrightOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_right.bmp");
     std::vector<std::vector<cv::Point>> subleftOnly = {subpixelContursInt[1]};
-    imageTools.drawColorfulContoursAndSave(grayImage, subleftOnly,
-                                           "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_left.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, subleftOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_left.bmp");
 
+    PLOG_INFO << "轮廓检测完成";
     return subpixelConturs;
 }

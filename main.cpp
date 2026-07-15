@@ -38,14 +38,14 @@ int main(int argc, char *argv[]) {
     // TestConvertCoordinate t;
     // t.pixel2World();
 
-    // JointView w;
-    // w.show();
-
-    // JointView w;
-    // w.show();
-
-    MainWindow w;
+    JointView w;
     w.show();
+
+    // JointView w;
+    // w.show();
+
+    // MainWindow w;
+    // w.show();
 
     return a.exec();
 }
