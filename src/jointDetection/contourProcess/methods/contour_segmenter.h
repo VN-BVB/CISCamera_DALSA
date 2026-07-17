@@ -18,5 +18,10 @@ public:
                                        std::vector<cv::Vec4f>& lines,
                                        double threshold = 0.5,
                                        int maxIterations = 100);
+
+    static std::vector<std::vector<cv::Point2f>> splitContourByCorners(
+        const std::vector<cv::Point2f>& contour,
+        const std::vector<cv::Point2f>& cornerPoints,
+        double radius = 10.0);
 };
 #endif // CONTOUR_SEGMENTER_H
