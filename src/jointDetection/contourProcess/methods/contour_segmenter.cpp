@@ -1,5 +1,7 @@
 #include "contour_segmenter.h"
 #include "src/utils/geometry_utils.h"
+#include "contour_utils.h"
+#include "contour_feature_calculator.h"
 
 /**
  * @brief 将轮廓分割为三段子轮廓
@@ -144,4 +146,67 @@ void ContourSegmenter::sequentialRansac3Times(const std::vector<cv::Point2f>& po
     if (!remainingPoints.empty() && segments.size() == 3) {
         remainingPoints.clear();
     }
+}
+
+/**
+ * @brief 按两个角点索引将 U 形开放轮廓切分为 3 段，并在每段内剔除角点邻域
+ * @param contour      已排序的开放轮廓（CCW）
+ * @param cornerPoints 恰好 2 个角点（须为 contour 成员点）
+ * @param radius       每段内角点邻域剔除半径（像素），默认 10.0
+ * @return 轮廓遍历顺序的 3 段子轮廓；退化输入返回空 vector
+ * @details 通过 findPointIndex 定位两个角点在排序轮廓中的索引，按索引将轮廓
+ *          切分为三个连续子段，然后对每个子段调用 removePointsNearCorners
+ *          剔除角点邻域内的点，确保后续直线拟合不受拐点影响。
+ */
+std::vector<std::vector<cv::Point2f>> ContourSegmenter::splitContourByCorners(
+    const std::vector<cv::Point2f>& contour,
+    const std::vector<cv::Point2f>& cornerPoints,
+    double radius)
+{
+    std::vector<std::vector<cv::Point2f>> segments;
+
+    // 退化输入检查
+    if (contour.size() < 3) {
+        std::cerr << "splitContourByCorners: contour too small (" << contour.size() << " points)" << std::endl;
+        return segments;
+    }
+    if (cornerPoints.size() != 2) {
+        std::cerr << "splitContourByCorners: expected 2 corner points, got " << cornerPoints.size() << std::endl;
+        return segments;
+    }
+
+    // 查找两个角点在轮廓中的索引
+    int idx1 = ContourUtils::findPointIndex(cornerPoints[0], contour);
+    int idx2 = ContourUtils::findPointIndex(cornerPoints[1], contour);
+
+    if (idx1 < 0 || idx2 < 0) {
+        std::cerr << "splitContourByCorners: corner point not found in contour (idx1=" << idx1 << ", idx2=" << idx2 << ")" << std::endl;
+        return segments;
+    }
+    if (idx1 == idx2) {
+        std::cerr << "splitContourByCorners: both corners resolve to same index (" << idx1 << ")" << std::endl;
+        return segments;
+    }
+
+    // 确保 idx1 < idx2
+    if (idx1 > idx2) {
+        std::swap(idx1, idx2);
+    }
+
+    const int n = static_cast<int>(contour.size());
+
+    // 原始切分：三个连续子段（角点在边界处被两个段共享，后续裁剪会处理）
+    // seg1: [0, idx1]
+    // seg2: [idx1, idx2]
+    // seg3: [idx2, n-1]
+    std::vector<cv::Point2f> seg1(contour.begin(), contour.begin() + idx1 + 1);
+    std::vector<cv::Point2f> seg2(contour.begin() + idx1, contour.begin() + idx2 + 1);
+    std::vector<cv::Point2f> seg3(contour.begin() + idx2, contour.end());
+
+    // 对每段剔除角点邻域（复用现有工具，保持 radius≈10 行为一致）
+    segments.push_back(ContourFeatureCalculator::removePointsNearCorners(seg1, cornerPoints, radius));
+    segments.push_back(ContourFeatureCalculator::removePointsNearCorners(seg2, cornerPoints, radius));
+    segments.push_back(ContourFeatureCalculator::removePointsNearCorners(seg3, cornerPoints, radius));
+
+    return segments;
 }
