@@ -1,4 +1,4 @@
-#ifndef MOTION_CONTROLLER_H
+﻿#ifndef MOTION_CONTROLLER_H
 #define MOTION_CONTROLLER_H
 
 #include <QObject>
@@ -35,6 +35,8 @@ public slots:
     // ---- 对位平台 ----
     void pltHomeAll();
     void pltEnableAll();
+    void pltDisableAll();
+    void pltStopAll();
     void pltResetAll();
     void pltLocateAll();
     // 单平台运动 (pltIdx 0~6)，读取 table_axispos 三轴位置 + 全局速度
@@ -45,6 +47,7 @@ public slots:
     // ---- 轮询 ----
     void onStateTimeout();
     void onRealTimeout();
+    void onPlaybackTick();
 
 signals:
     // 地轨位置/速度更新
@@ -57,6 +60,8 @@ signals:
     void logMessage(const QString &msg);
     // 连接状态灯
     void connectionStateChanged(const QString &color);
+    // 对位平台轴使能状态 [pltIdx][axis]: true=使能完成
+    void pltAxisEnableStatus(const QVector<QVector<bool>> &status);
 
 private:
     void setRailVelPosDouble(double pos, double vel, double acc, double jerk, int addr);
@@ -72,6 +77,7 @@ private:
     plcCtrlParams    *params_ = nullptr;
     QTimer           *stateTimer_ = nullptr;
     QTimer           *realTimer_  = nullptr;
+    QTimer           *playbackTimer_ = nullptr;
 
     QString plcIp_;
     int    plcPort_ = 502;
@@ -84,5 +90,15 @@ private:
     double absFinishTol_   = 0.5;
 
     QVector<bool> prevCoilStatuses_;
+
+    // 分步播放状态
+    struct PlaybackStep {
+        double tx[7], ty[7], rz[7];
+    };
+    QVector<PlaybackStep> playbackSteps_;
+    int     playbackIdx_ = 0;
+    int     playbackLastStep_ = 0;
+    bool    playbackRunning_ = false;
+    bool    playbackWaitingDone_ = false;
 };
 #endif  // MOTION_CONTROLLER_H

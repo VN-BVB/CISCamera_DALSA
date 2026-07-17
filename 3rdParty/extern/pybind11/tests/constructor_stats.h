@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
     tests/constructor_stats.h -- framework for printing and tracking object
     instance lifetimes in example/test code.

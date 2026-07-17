@@ -1,4 +1,4 @@
-#include "line_seg.h"
+﻿#include "line_seg.h"
 #include "src/utils/geometry_utils.h"
 
 /******************************

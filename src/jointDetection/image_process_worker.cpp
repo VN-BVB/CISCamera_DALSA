@@ -1,4 +1,4 @@
-#include <plog/Log.h>
+﻿#include <plog/Log.h>
 #include <future>
 
 #include "image_process_worker.h"

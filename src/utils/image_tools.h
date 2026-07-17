@@ -1,4 +1,4 @@
-#ifndef IMAGE_TOOLS_H
+﻿#ifndef IMAGE_TOOLS_H
 #define IMAGE_TOOLS_H
 
 #include <opencv2/opencv.hpp>

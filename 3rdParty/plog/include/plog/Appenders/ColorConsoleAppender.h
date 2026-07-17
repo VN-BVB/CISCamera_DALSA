@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <plog/Appenders/ConsoleAppender.h>
 #include <plog/WinApi.h>
 

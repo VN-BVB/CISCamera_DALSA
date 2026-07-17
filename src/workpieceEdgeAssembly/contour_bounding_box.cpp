@@ -1,4 +1,4 @@
-#include "contour_bounding_box.h"
+﻿#include "contour_bounding_box.h"
 
 ContourBoundingBox::ContourBoundingBox() : m_openingDirection(OpeningDirection::UNKNOWN)
 {}

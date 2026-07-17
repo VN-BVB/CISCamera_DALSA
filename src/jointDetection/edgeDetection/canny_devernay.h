@@ -1,4 +1,4 @@
-#ifndef CANNY_DEVERNAY_H
+﻿#ifndef CANNY_DEVERNAY_H
 #define CANNY_DEVERNAY_H
 
 #include <vector>

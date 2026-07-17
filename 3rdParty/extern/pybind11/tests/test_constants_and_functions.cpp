@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_constants_and_functions.cpp -- global constants and functions, enumerations, raw
     byte strings
 

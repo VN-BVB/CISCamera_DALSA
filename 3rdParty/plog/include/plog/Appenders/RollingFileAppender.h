@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <plog/Appenders/IAppender.h>
 #include <plog/Converters/UTF8Converter.h>
 #include <plog/Converters/NativeEOLConverter.h>

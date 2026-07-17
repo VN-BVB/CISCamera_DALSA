@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_eval.cpp -- Usage of eval() and eval_file()
 
     Copyright (c) 2016 Klemens D. Morgenstern

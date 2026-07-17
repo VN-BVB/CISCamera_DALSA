@@ -1,4 +1,4 @@
-#include "line_item.h"
+﻿#include "line_item.h"
 #include <QPainterPath>
 #include <QPen>
 #include <QGraphicsPathItem>

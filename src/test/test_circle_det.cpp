@@ -1,4 +1,4 @@
-bool TelecentricLineCalibrator::calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize,
+﻿bool TelecentricLineCalibrator::calculate_Image_Points(cv::Mat imageInput, cv::Size boardSize,
                                                        std::vector<cv::Point2d> &imagePoints)
 {
     // ---------- 1. 灰度化与反色 ----------

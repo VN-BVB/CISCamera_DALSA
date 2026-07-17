@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/detail/descr.h: Helper type for concatenating type signatures at compile time
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

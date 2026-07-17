@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/cross_module_gil_utils.cpp -- tools for acquiring GIL from a different module
 
     Copyright (c) 2019 Google LLC

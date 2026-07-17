@@ -1,4 +1,4 @@
-#include "segmentation_strategy.h"
+﻿#include "segmentation_strategy.h"
 
 SegmentationStrategy::SegmentationStrategy() {}
 

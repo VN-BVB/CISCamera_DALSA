@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_call_policies.cpp -- keep_alive and call_guard
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

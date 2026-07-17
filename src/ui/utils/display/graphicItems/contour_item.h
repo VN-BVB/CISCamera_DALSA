@@ -1,4 +1,4 @@
-#ifndef CONTOUR_ITEM_H
+﻿#ifndef CONTOUR_ITEM_H
 #define CONTOUR_ITEM_H
 
 #include <opencv2/core/core.hpp>

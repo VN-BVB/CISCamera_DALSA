@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Init.h>
 

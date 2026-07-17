@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/detail/holder_caster_foreign_helpers.h: Logic to implement
     set_foreign_holder() in copyable_ and movable_holder_caster.
 

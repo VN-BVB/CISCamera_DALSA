@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_stl_binders.cpp -- Usage of stl_binders functions
 
     Copyright (c) 2016 Sergey Lyskov

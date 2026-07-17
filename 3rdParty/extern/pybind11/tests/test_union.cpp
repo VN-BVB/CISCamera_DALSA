@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_class.cpp -- test py::class_ definitions and basic functionality
 
     Copyright (c) 2019 Roland Dreier <roland.dreier@gmail.com>

@@ -1,4 +1,4 @@
-#include "contour_processor.h"
+﻿#include "contour_processor.h"
 #include "strategies/deduplication_strategy.h"
 #include "strategies/direction_calculation_strategy.h"
 #include "strategies/sorting_strategy.h"

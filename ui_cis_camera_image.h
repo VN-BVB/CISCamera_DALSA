@@ -86,7 +86,7 @@ public:
     {
         if (CISWidget->objectName().isEmpty())
             CISWidget->setObjectName(QString::fromUtf8("CISWidget"));
-        CISWidget->resize(893, 600);
+        CISWidget->resize(893, 857);
         CISWidget->setBaseSize(QSize(0, 0));
         gridLayout_14 = new QGridLayout(CISWidget);
         gridLayout_14->setObjectName(QString::fromUtf8("gridLayout_14"));
@@ -120,7 +120,7 @@ public:
         imgSplice->setObjectName(QString::fromUtf8("imgSplice"));
         sizePolicy1.setHeightForWidth(imgSplice->sizePolicy().hasHeightForWidth());
         imgSplice->setSizePolicy(sizePolicy1);
-        imgSplice->setMinimumSize(QSize(0, 500));
+        imgSplice->setMinimumSize(QSize(0, 410));
 
         gridLayout_4->addWidget(imgSplice, 1, 0, 1, 4);
 

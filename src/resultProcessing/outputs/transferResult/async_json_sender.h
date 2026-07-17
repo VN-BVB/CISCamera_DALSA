@@ -1,4 +1,4 @@
-#ifndef ASYNC_JSON_SENDER_H
+﻿#ifndef ASYNC_JSON_SENDER_H
 #define ASYNC_JSON_SENDER_H
 
 #include <QObject>

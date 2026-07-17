@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_tagbased_polymorphic.cpp -- test of polymorphic_type_hook
 
     Copyright (c) 2018 Hudson River Trading LLC <opensource@hudson-trading.com>

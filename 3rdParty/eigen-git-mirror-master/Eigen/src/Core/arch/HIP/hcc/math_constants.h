@@ -1,4 +1,4 @@
-/*
+﻿/*
  * math_constants.h - 
  *  HIP equivalent of the CUDA header of the same name
  */

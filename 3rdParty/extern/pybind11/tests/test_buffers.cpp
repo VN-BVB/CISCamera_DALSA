@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_buffers.cpp -- supporting Pythons' buffer protocol
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

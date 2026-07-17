@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_modules.cpp -- nested modules, importing modules, and
                             internal references
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/typing.h: Convenience wrapper classes for basic Python types
     with more explicit annotations.
 

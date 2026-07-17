@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_warnings.cpp -- usage of warnings::warn() and warnings categories.
 
     Copyright (c) 2024 Jan Iwaszkiewicz <jiwaszkiewicz6@gmail.com>

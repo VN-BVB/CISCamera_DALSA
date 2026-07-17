@@ -1,4 +1,4 @@
-#ifndef TEST_TINY_SPLINE_H
+﻿#ifndef TEST_TINY_SPLINE_H
 #define TEST_TINY_SPLINE_H
 
 #include <iostream>

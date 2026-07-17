@@ -1,4 +1,4 @@
-#include <QApplication>
+﻿#include <QApplication>
 #include <QDebug>
 // clang-format off
 #include <winsock2.h>
@@ -42,14 +42,11 @@ int main(int argc, char *argv[]) {
 
     // runCalibComparison();
 
-    CISWidget w;
-    w.show();
+    CISWidget w1;
+    w1.show();
 
-    // TestConvertCoordinate t;
-    // t.pixel2World();
-
-    // JointView w;
-    // w.show();
+    JointView w2;
+    w2.show();
 
     // std::shared_ptr<CameraImageProcessor> imageProcessor;
     // imageProcessor = std::make_shared<CameraImageProcessor>();

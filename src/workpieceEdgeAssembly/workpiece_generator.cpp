@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <QString>
 
 #include <plog/Log.h>

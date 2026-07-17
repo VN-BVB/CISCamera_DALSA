@@ -1,4 +1,4 @@
-#ifndef SCOPED_TIMER_H
+﻿#ifndef SCOPED_TIMER_H
 #define SCOPED_TIMER_H
 
 #include <string>

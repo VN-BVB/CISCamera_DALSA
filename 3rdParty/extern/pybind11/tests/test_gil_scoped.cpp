@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_gil_scoped.cpp -- acquire and release gil
 
     Copyright (c) 2017 Borja Zarco (Google LLC) <bzarco@google.com>

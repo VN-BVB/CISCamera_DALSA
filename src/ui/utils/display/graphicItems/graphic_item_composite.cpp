@@ -1,4 +1,4 @@
-#include "graphic_item_composite.h"
+﻿#include "graphic_item_composite.h"
 
 GraphicItemComposite::GraphicItemComposite() {}
 

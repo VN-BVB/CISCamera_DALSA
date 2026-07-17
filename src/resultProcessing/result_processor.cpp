@@ -1,4 +1,4 @@
-#include <plog/Log.h>
+﻿#include <plog/Log.h>
 #include <QtConcurrent>
 #include <QFutureSynchronizer>
 

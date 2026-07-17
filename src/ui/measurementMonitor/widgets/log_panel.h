@@ -1,4 +1,4 @@
-#ifndef LOG_PANEL_H
+﻿#ifndef LOG_PANEL_H
 #define LOG_PANEL_H
 
 #include <QTextEdit>

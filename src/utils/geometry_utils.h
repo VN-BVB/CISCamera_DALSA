@@ -1,4 +1,4 @@
-#ifndef GEOMETRY_UTILS_H
+﻿#ifndef GEOMETRY_UTILS_H
 #define GEOMETRY_UTILS_H
 
 #include <opencv2/core.hpp>

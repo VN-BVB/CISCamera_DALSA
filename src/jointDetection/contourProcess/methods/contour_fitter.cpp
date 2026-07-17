@@ -1,4 +1,4 @@
-#include "contour_fitter.h"
+﻿#include "contour_fitter.h"
 #include "src/utils/geometry_utils.h"
 #include <plog/Log.h>
 

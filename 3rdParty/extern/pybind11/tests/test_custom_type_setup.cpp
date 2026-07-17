@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_custom_type_setup.cpp -- Tests `pybind11::custom_type_setup`
 
     Copyright (c) Google LLC

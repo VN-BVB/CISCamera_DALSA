@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/warnings.h: Python warnings wrappers.
 
     Copyright (c) 2024 Jan Iwaszkiewicz <jiwaszkiewicz6@gmail.com>

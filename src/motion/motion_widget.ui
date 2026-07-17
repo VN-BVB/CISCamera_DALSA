@@ -26,7 +26,19 @@
        <widget class="QWidget" name="widget_rail" native="true">
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="QGroupBox" name="groupBox">
+           <widget class="QGroupBox" name="groupBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>150</height>
+             </size>
+            </property>
            <property name="title">
             <string>地轨控制参数设置</string>
            </property>
@@ -126,9 +138,9 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QPushButton" name="rail_btn_home">
+             <widget class="QPushButton" name="rail_btn_stop">
               <property name="text">
-               <string>原点回归</string>
+               <string>停止运动</string>
               </property>
              </widget>
             </item>
@@ -342,6 +354,13 @@
             <string>对位平台联控</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_2">
+            <item row="2" column="0">
+             <widget class="QPushButton" name="plt_btn_resetAll">
+              <property name="text">
+               <string>一键复位</string>
+              </property>
+             </widget>
+            </item>
             <item row="0" column="0">
              <widget class="QPushButton" name="plt_btn_enableAll">
               <property name="text">
@@ -349,17 +368,17 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
+            <item row="1" column="0">
              <widget class="QPushButton" name="plt_btn_homeAll">
               <property name="text">
                <string>一键回参</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QPushButton" name="plt_btn_resetAll">
+            <item row="0" column="1">
+             <widget class="QPushButton" name="plt_btn_disenableAll">
               <property name="text">
-               <string>一键复位</string>
+               <string>一键去使能</string>
               </property>
              </widget>
             </item>
@@ -367,6 +386,13 @@
              <widget class="QPushButton" name="plt_btn_locateAll">
               <property name="text">
                <string>一键定位</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QPushButton" name="plt_btn_stopAll">
+              <property name="text">
+               <string>一键停止</string>
               </property>
              </widget>
             </item>
@@ -478,7 +504,7 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
         <layout class="QVBoxLayout" name="verticalLayout_8">
          <item>
           <widget class="QWidget" name="widget_13" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_12">
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
             <item>
              <widget class="QLabel" name="label_13">
               <property name="text">
@@ -487,7 +513,55 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="plt0_label_status">
+             <widget class="QLabel" name="plt0_label_Xstatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt0_label_Ystatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt0_label_Zstatus">
               <property name="minimumSize">
                <size>
                 <width>14</width>
@@ -555,7 +629,7 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
         <layout class="QVBoxLayout" name="verticalLayout_9">
          <item>
           <widget class="QWidget" name="widget_17" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_16">
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
             <item>
              <widget class="QLabel" name="label_21">
               <property name="text">
@@ -564,7 +638,55 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="plt1_label_status">
+             <widget class="QLabel" name="plt1_label_Xstatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt1_label_Ystatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt1_label_Zstatus">
               <property name="minimumSize">
                <size>
                 <width>14</width>
@@ -632,7 +754,7 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
         <layout class="QVBoxLayout" name="verticalLayout_10">
          <item>
           <widget class="QWidget" name="widget_21" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_20">
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
             <item>
              <widget class="QLabel" name="label_29">
               <property name="text">
@@ -641,7 +763,55 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="plt2_label_status">
+             <widget class="QLabel" name="plt2_label_Xstatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt2_label_Ystatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt2_label_Zstatus">
               <property name="minimumSize">
                <size>
                 <width>14</width>
@@ -709,7 +879,7 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
         <layout class="QVBoxLayout" name="verticalLayout_11">
          <item>
           <widget class="QWidget" name="widget_25" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_24">
+           <layout class="QHBoxLayout" name="horizontalLayout_13">
             <item>
              <widget class="QLabel" name="label_37">
               <property name="text">
@@ -718,7 +888,55 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="plt3_label_status">
+             <widget class="QLabel" name="plt3_label_Xstatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt3_label_Ystatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt3_label_Zstatus">
               <property name="minimumSize">
                <size>
                 <width>14</width>
@@ -786,7 +1004,7 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
         <layout class="QVBoxLayout" name="verticalLayout_12">
          <item>
           <widget class="QWidget" name="widget_29" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_28">
+           <layout class="QHBoxLayout" name="horizontalLayout_14">
             <item>
              <widget class="QLabel" name="label_45">
               <property name="text">
@@ -795,7 +1013,55 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="plt4_label_status">
+             <widget class="QLabel" name="plt4_label_Xstatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt4_label_Ystatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt4_label_Zstatus">
               <property name="minimumSize">
                <size>
                 <width>14</width>
@@ -863,7 +1129,7 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
         <layout class="QVBoxLayout" name="verticalLayout_15">
          <item>
           <widget class="QWidget" name="widget_41" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_40">
+           <layout class="QHBoxLayout" name="horizontalLayout_16">
             <item>
              <widget class="QLabel" name="label_69">
               <property name="text">
@@ -872,7 +1138,55 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="plt5_label_status">
+             <widget class="QLabel" name="plt5_label_Xstatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt5_label_Ystatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt5_label_Zstatus">
               <property name="minimumSize">
                <size>
                 <width>14</width>
@@ -940,7 +1254,7 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
         <layout class="QVBoxLayout" name="verticalLayout_16">
          <item>
           <widget class="QWidget" name="widget_45" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_44">
+           <layout class="QHBoxLayout" name="horizontalLayout_17">
             <item>
              <widget class="QLabel" name="label_77">
               <property name="text">
@@ -949,7 +1263,55 @@ QFrame#card_plt3, QFrame#card_plt4, QFrame#card_plt5, QFrame#card_plt6 {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="plt6_label_status">
+             <widget class="QLabel" name="plt6_label_Xstatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt6_label_Ystatus">
+              <property name="minimumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>14</width>
+                <height>14</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">    background-color: #9ca3af;   /* 默认灰色 */
+    border-radius: 7px;          /* 宽高的一半 = 正圆 */
+    border: 1px solid #d1d5db;</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="plt6_label_Zstatus">
               <property name="minimumSize">
                <size>
                 <width>14</width>

@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <opencv2/opencv.hpp>
 
 #include "src/jointDetection/contourProcess/methods/curve_seg.h"

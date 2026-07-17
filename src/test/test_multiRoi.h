@@ -1,4 +1,4 @@
-#ifndef TEST_MULTIROI_H
+﻿#ifndef TEST_MULTIROI_H
 #define TEST_MULTIROI_H
 
 #include <QWidget>

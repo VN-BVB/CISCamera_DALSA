@@ -1,4 +1,4 @@
-#ifndef WORKPIECE_BOUNDING_BOX_H
+﻿#ifndef WORKPIECE_BOUNDING_BOX_H
 #define WORKPIECE_BOUNDING_BOX_H
 
 #include "contour_bounding_box.h"

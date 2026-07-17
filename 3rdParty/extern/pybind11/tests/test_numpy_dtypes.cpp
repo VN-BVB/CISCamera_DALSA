@@ -1,4 +1,4 @@
-/*
+﻿/*
   tests/test_numpy_dtypes.cpp -- Structured and compound NumPy dtypes
 
   Copyright (c) 2016 Ivan Smirnov

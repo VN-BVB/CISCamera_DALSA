@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define PLOG_IMPL_PRINT_VAR_1(a1) #a1 ": " << a1
 #define PLOG_IMPL_PRINT_VAR_2(a1, a2) PLOG_IMPL_PRINT_VAR_1(a1) PLOG_IMPL_PRINT_VAR_TAIL(a2)

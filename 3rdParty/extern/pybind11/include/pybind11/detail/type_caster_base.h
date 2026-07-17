@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/detail/type_caster_base.h (originally first part of pybind11/cast.h)
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

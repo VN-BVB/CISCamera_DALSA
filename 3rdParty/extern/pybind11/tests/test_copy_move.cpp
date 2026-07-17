@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_copy_move_policies.cpp -- 'copy' and 'move' return value policies
                                          and related tests
 

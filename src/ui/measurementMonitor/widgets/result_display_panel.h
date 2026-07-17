@@ -1,4 +1,4 @@
-#ifndef RESULT_DISPLAY_PANEL_H
+﻿#ifndef RESULT_DISPLAY_PANEL_H
 #define RESULT_DISPLAY_PANEL_H
 
 #include <QCheckBox>

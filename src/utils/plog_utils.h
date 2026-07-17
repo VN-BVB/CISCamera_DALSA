@@ -1,4 +1,4 @@
-#ifndef PLOG_UTILS_H
+﻿#ifndef PLOG_UTILS_H
 #define PLOG_UTILS_H
 
 #include <plog/Init.h>

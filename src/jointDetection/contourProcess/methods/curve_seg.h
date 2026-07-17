@@ -1,4 +1,4 @@
-#ifndef CURVE_SEG_H
+﻿#ifndef CURVE_SEG_H
 #define CURVE_SEG_H
 
 #include <opencv2/opencv.hpp>

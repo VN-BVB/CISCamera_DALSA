@@ -1,4 +1,4 @@
-#ifndef WORKPIECE_GENERATOR_H
+﻿#ifndef WORKPIECE_GENERATOR_H
 #define WORKPIECE_GENERATOR_H
 
 #include "workpiece_bounding_box.h"

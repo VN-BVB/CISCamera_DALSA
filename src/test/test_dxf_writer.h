@@ -1,4 +1,4 @@
-#ifndef TEST_DXF_WRITER_H
+﻿#ifndef TEST_DXF_WRITER_H
 #define TEST_DXF_WRITER_H
 
 

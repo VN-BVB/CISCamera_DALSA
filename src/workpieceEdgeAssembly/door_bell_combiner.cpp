@@ -1,4 +1,4 @@
-#include <QString>
+﻿#include <QString>
 #include <plog/Log.h>
 
 #include "door_bell_combiner.h"

@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_custom-exceptions.cpp -- exception translation
 
     Copyright (c) 2016 Pim Schellart <P.Schellart@princeton.edu>

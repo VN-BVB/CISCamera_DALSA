@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <plog/Appenders/IAppender.h>
 #include <Arduino.h>
 

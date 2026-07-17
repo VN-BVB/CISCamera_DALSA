@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/eigen.cpp -- automatic conversion of Eigen types
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

@@ -1,4 +1,4 @@
-#ifndef GRAPHIC_ITEM_COMPOSITE_H
+﻿#ifndef GRAPHIC_ITEM_COMPOSITE_H
 #define GRAPHIC_ITEM_COMPOSITE_H
 
 #include <QGraphicsItem>

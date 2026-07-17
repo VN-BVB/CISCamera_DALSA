@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/chrono.h: Transparent conversion between std::chrono and python's datetime
 
     Copyright (c) 2016 Trent Houliston <trent@houliston.me> and

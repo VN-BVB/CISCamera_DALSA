@@ -1,4 +1,4 @@
-#include <QGraphicsItem>
+﻿#include <QGraphicsItem>
 #include <QGraphicsProxyWidget>
 
 #include "display_scene.h"

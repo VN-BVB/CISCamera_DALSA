@@ -1,4 +1,4 @@
-#include "contour_data.h"
+﻿#include "contour_data.h"
 
 ContourData::ContourData() : m_id(-1), m_openingDirection(OpeningDirection::UNKNOWN) {}
 

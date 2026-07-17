@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstdarg>
 #include <plog/Severity.h>
 #include <plog/Util.h>

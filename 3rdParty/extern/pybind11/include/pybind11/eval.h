@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/eval.h: Support for evaluating Python expressions and statements
     from strings and files
 

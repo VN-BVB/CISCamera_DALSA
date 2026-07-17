@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/gil.h: RAII helpers for managing the GIL
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

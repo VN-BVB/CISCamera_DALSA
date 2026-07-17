@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_opaque_types.cpp -- opaque types, passing void pointers
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

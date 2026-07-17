@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_sequences_and_iterators.cpp -- supporting Pythons' sequence protocol, iterators,
     etc.
 

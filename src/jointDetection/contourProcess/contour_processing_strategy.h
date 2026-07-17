@@ -1,4 +1,4 @@
-#ifndef CONTOUR_PROCESSING_STRATEGY_H
+﻿#ifndef CONTOUR_PROCESSING_STRATEGY_H
 #define CONTOUR_PROCESSING_STRATEGY_H
 
 #include <opencv2/opencv.hpp>

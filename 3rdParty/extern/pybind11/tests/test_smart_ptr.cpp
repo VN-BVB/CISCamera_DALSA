@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_smart_ptr.cpp -- binding classes with custom reference counting,
     implicit conversions between types
 

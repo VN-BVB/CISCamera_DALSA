@@ -1,4 +1,4 @@
-#ifndef JOINT_VIEW_H
+﻿#ifndef JOINT_VIEW_H
 #define JOINT_VIEW_H
 
 #include <QGraphicsView>

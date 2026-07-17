@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_numpy_array.cpp -- test core array functionality
 
     Copyright (c) 2016 Ivan Smirnov <i.s.smirnov@gmail.com>

@@ -1,6 +1,7 @@
-#pragma once
+﻿#pragma once
 
 #include <stdint.h>
+#include <QVector>
 
 #include "modbus-tcp.h"
 #include "modbus.h"
@@ -37,6 +38,8 @@ public:
     bool pltHome(int pltIdx);
     bool pltLocate(int pltIdx, double x, double y, double r,
                    double vel, double acc, double jerk);
+    bool pltLocatePos(int pltIdx, double x, double y, double r, double vel = 5.0);
+    bool pltIsLocationDone(int pltIdx);
     bool pltStop(int pltIdx);
     bool pltReset(int pltIdx);
 
@@ -47,8 +50,19 @@ public:
     bool axisStop(int pltIdx, int axis);
     bool axisReset(int pltIdx, int axis);
 
+    // ======================== 分步播放 ========================
+    // pltIdx: 0~6, axis: 0~2, pos: 绝对目标位置
+    bool pltStepAxis(int pltIdx, int axis, double pos, double vel = 5.0);
+    bool pltIsMoverDone(int pltIdx, int axis);
+    bool pltClearMover(int pltIdx, int axis);
+
+    // ======================== 状态查询 ========================
+    // 读取 7 平台 × 3 轴的 enableDone 状态（高位），返回 [pltIdx][axis]
+    QVector<QVector<bool>> readAllAxisEnableDone();
+
     // ======================== 批量控制 ========================
     bool pltEnableAll();
+    bool pltDisableAll();
     bool pltHomeAll();
     bool pltResetAll();
     bool pltStopAll();

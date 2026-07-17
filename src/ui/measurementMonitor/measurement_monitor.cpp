@@ -1,4 +1,4 @@
-#include "measurement_monitor.h"
+﻿#include "measurement_monitor.h"
 
 #include <QBoxLayout>
 #include <QSplitter>

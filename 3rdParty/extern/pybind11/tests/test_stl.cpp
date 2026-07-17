@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_stl.cpp -- STL type casters
 
     Copyright (c) 2017 Wenzel Jakob <wenzel.jakob@epfl.ch>

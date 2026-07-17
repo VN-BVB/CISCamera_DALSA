@@ -1,4 +1,4 @@
-#ifndef CANNY_ZERNIKE_DETECTOR_H
+﻿#ifndef CANNY_ZERNIKE_DETECTOR_H
 #define CANNY_ZERNIKE_DETECTOR_H
 
 #include "abstract_contour_detector.h"

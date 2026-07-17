@@ -1,4 +1,4 @@
-#ifndef JSON_SENDER_H
+﻿#ifndef JSON_SENDER_H
 #define JSON_SENDER_H
 
 #include <QString>

@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/detail/class.h: Python C API implementation details for py::class_
 
     Copyright (c) 2017 Wenzel Jakob <wenzel.jakob@epfl.ch>

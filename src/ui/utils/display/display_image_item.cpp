@@ -1,4 +1,4 @@
-#include "display_image_item.h"
+﻿#include "display_image_item.h"
 #include <QPen>
 #include <QPainter>
 #include <QGraphicsSceneHoverEvent>

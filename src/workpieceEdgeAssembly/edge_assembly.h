@@ -1,4 +1,4 @@
-#ifndef EDGE_ASSEMBLY_H
+﻿#ifndef EDGE_ASSEMBLY_H
 #define EDGE_ASSEMBLY_H
 
 #include "workpiece_generator.h"

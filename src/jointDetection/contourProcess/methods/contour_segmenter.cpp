@@ -1,4 +1,4 @@
-#include "contour_segmenter.h"
+﻿#include "contour_segmenter.h"
 #include "src/utils/geometry_utils.h"
 
 /**

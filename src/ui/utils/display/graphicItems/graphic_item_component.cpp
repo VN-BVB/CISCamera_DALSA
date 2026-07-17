@@ -1,4 +1,4 @@
-#include "graphic_item_component.h"
+﻿#include "graphic_item_component.h"
 #include <QGraphicsPathItem>
 #include <QGraphicsEllipseItem>
 #include <QPen>

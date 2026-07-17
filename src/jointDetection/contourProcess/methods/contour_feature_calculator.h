@@ -1,4 +1,4 @@
-#ifndef CONTOUR_FEATURE_CALCULATOR_H
+﻿#ifndef CONTOUR_FEATURE_CALCULATOR_H
 #define CONTOUR_FEATURE_CALCULATOR_H
 
 #include "contour_utils.h"

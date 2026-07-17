@@ -1,4 +1,4 @@
-
+﻿
 #include "test_frmVisionDisplay.h"
 
 #include <plog/Log.h>

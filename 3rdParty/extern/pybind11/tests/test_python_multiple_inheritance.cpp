@@ -1,4 +1,4 @@
-#include "pybind11_tests.h"
+﻿#include "pybind11_tests.h"
 
 namespace test_python_multiple_inheritance {
 

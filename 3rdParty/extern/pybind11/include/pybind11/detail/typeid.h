@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/detail/typeid.h: Compiler-independent access to type identifiers
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

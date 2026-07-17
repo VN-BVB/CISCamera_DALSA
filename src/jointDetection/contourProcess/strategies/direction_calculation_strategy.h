@@ -1,4 +1,4 @@
-#ifndef DIRECTION_CALCULATION_STRATEGY_H
+﻿#ifndef DIRECTION_CALCULATION_STRATEGY_H
 #define DIRECTION_CALCULATION_STRATEGY_H
 
 #include "src/jointDetection/contourProcess/contour_processing_strategy.h"

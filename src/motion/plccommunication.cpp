@@ -1,4 +1,4 @@
-#include "plccommunication.h"
+﻿#include "plccommunication.h"
 
 #include <QThread>
 #include <cstring>
@@ -89,7 +89,15 @@ bool PlcCommunication::railAbsMove(double pos, double vel, double acc, double je
 
 bool PlcCommunication::railHome() { return writeHdLowBit(HD_ExAxis1ZRN, true) == 0; }
 
-bool PlcCommunication::railStop(double /*dec*/, double /*jerk*/) { return writeHdLowBit(HD_ExAxis1Stop, true) == 0; }
+bool PlcCommunication::railStop(double /*dec*/, double /*jerk*/) {
+    writeHdLowBit(HD_ExAxis1Stop, true);
+    for (int i = 0; i < 50; ++i) {
+        QThread::msleep(100);
+        if (readHdHighBit(HD_ExAxis1Stop) == 1) break;
+    }
+    writeHdLowBit(HD_ExAxis1Stop, false);
+    return true;
+}
 
 bool PlcCommunication::railReset() { return writeHdLowBit(HD_ExAxis1Rst, true) == 0; }
 
@@ -102,17 +110,17 @@ bool PlcCommunication::railReset() { return writeHdLowBit(HD_ExAxis1Rst, true) =
 namespace {
 
 struct PltAddr {
-    int enable, back, locate, rst, stop;
+    int enable, back, locate, rst, stop, locateDone;
 };
 
 const PltAddr pltAddrs[7] = {
-    {HD_Plt_0_Enable, HD_Plt_0_Back, HD_Plt_0_Location, HD_Plt_0_Rst, HD_Plt_0_Stop},
-    {HD_Plt_1_Enable, HD_Plt_1_Back, HD_Plt_1_Location, HD_Plt_1_Rst, HD_Plt_1_Stop},
-    {HD_Plt_2_Enable, HD_Plt_2_Back, HD_Plt_2_Location, HD_Plt_2_Rst, HD_Plt_2_Stop},
-    {HD_Plt_3_Enable, HD_Plt_3_Back, HD_Plt_3_Location, HD_Plt_3_Rst, HD_Plt_3_Stop},
-    {HD_Plt_4_Enable, HD_Plt_4_Back, HD_Plt_4_Location, HD_Plt_4_Rst, HD_Plt_4_Stop},
-    {HD_Plt_5_Enable, HD_Plt_5_Back, HD_Plt_5_Location, HD_Plt_5_Rst, HD_Plt_5_Stop},
-    {HD_Plt_6_Enable, HD_Plt_6_Back, HD_Plt_6_Location, HD_Plt_6_Rst, HD_Plt_6_Stop},
+    {HD_Plt_0_Enable, HD_Plt_0_Back, HD_Plt_0_Location, HD_Plt_0_Rst, HD_Plt_0_Stop, HD_Plt_0_LocationDone},
+    {HD_Plt_1_Enable, HD_Plt_1_Back, HD_Plt_1_Location, HD_Plt_1_Rst, HD_Plt_1_Stop, HD_Plt_1_LocationDone},
+    {HD_Plt_2_Enable, HD_Plt_2_Back, HD_Plt_2_Location, HD_Plt_2_Rst, HD_Plt_2_Stop, HD_Plt_2_LocationDone},
+    {HD_Plt_3_Enable, HD_Plt_3_Back, HD_Plt_3_Location, HD_Plt_3_Rst, HD_Plt_3_Stop, HD_Plt_3_LocationDone},
+    {HD_Plt_4_Enable, HD_Plt_4_Back, HD_Plt_4_Location, HD_Plt_4_Rst, HD_Plt_4_Stop, HD_Plt_4_LocationDone},
+    {HD_Plt_5_Enable, HD_Plt_5_Back, HD_Plt_5_Location, HD_Plt_5_Rst, HD_Plt_5_Stop, HD_Plt_5_LocationDone},
+    {HD_Plt_6_Enable, HD_Plt_6_Back, HD_Plt_6_Location, HD_Plt_6_Rst, HD_Plt_6_Stop, HD_Plt_6_LocationDone},
 };
 
 }  // namespace
@@ -247,6 +255,102 @@ bool PlcCommunication::pltLocate(int pltIdx, double x, double y, double r, doubl
     return writeHdLowBit(pltAddrs[pltIdx].locate, true) == 0;
 }
 
+bool PlcCommunication::pltLocatePos(int pltIdx, double x, double y, double r, double vel) {
+    if (!modbusTcp_ || !connectStatus_) return false;
+    if (pltIdx < 0 || pltIdx > 6) return false;
+
+    uint16_t data[4] = {0};
+    uint16_t velData[4] = {0};
+    dataTransDouble_UInt16(vel, velData);
+
+    const auto &xa = allAxisAddrs[pltIdx][0];
+    dataTransDouble_UInt16(x, data);
+    writeRegisters(HDAddr + xa.moverPos, 4, data);
+    writeRegisters(HDAddr + xa.moverVel, 4, velData);
+
+    const auto &ya = allAxisAddrs[pltIdx][1];
+    dataTransDouble_UInt16(y, data);
+    writeRegisters(HDAddr + ya.moverPos, 4, data);
+    writeRegisters(HDAddr + ya.moverVel, 4, velData);
+
+    const auto &ra = allAxisAddrs[pltIdx][2];
+    dataTransDouble_UInt16(r, data);
+    writeRegisters(HDAddr + ra.moverPos, 4, data);
+    writeRegisters(HDAddr + ra.moverVel, 4, velData);
+
+    writeHdLowBit(pltAddrs[pltIdx].locate, true);
+
+    return true;
+}
+
+bool PlcCommunication::pltIsLocationDone(int pltIdx) {
+    if (!modbusTcp_ || !connectStatus_) return false;
+    if (pltIdx < 0 || pltIdx > 6) return false;
+    return readHdLowBit(pltAddrs[pltIdx].locateDone) == 1;
+}
+
+bool PlcCommunication::pltStepAxis(int pltIdx, int axis, double pos, double vel) {
+    if (!modbusTcp_ || !connectStatus_) return false;
+    if (pltIdx < 0 || pltIdx > 6 || axis < 0 || axis > 2) return false;
+
+    const auto &a = allAxisAddrs[pltIdx][axis];
+
+    uint16_t posData[4] = {0}, velData[4] = {0};
+    dataTransDouble_UInt16(pos, posData);
+    dataTransDouble_UInt16(vel, velData);
+
+    // 写使能（低位）
+    writeHdLowBit(a.enable, true);
+
+    // 写位置和速度（各4个寄存器，连续）
+    if (writeRegisters(HDAddr + a.moverPos, 4, posData) != 0) return false;
+    if (writeRegisters(HDAddr + a.moverVel, 4, velData) != 0) return false;
+
+    // 触发运动（高位）
+    return writeHdHighBit(a.mover, true) == 0;
+}
+
+bool PlcCommunication::pltIsMoverDone(int pltIdx, int axis) {
+    if (!modbusTcp_ || !connectStatus_) return false;
+    if (pltIdx < 0 || pltIdx > 6 || axis < 0 || axis > 2) return false;
+
+    const auto &a = allAxisAddrs[pltIdx][axis];
+    // moverDone 低位 = 1 表示完成
+    return readHdLowBit(a.moverDone) == 1;
+}
+
+bool PlcCommunication::pltClearMover(int pltIdx, int axis) {
+    if (!modbusTcp_ || !connectStatus_) return false;
+    if (pltIdx < 0 || pltIdx > 6 || axis < 0 || axis > 2) return false;
+
+    const auto &a = allAxisAddrs[pltIdx][axis];
+    // 清除触发位（高位）
+    return writeHdHighBit(a.mover, false) == 0;
+}
+
+QVector<QVector<bool>> PlcCommunication::readAllAxisEnableDone() {
+    QVector<QVector<bool>> result(7, QVector<bool>(3, false));
+    if (!modbusTcp_ || !connectStatus_) return result;
+
+    static bool loggedOnce = false;
+    for (int plt = 0; plt < 7; ++plt) {
+        for (int axis = 0; axis < 3; ++axis) {
+            const auto &a = allAxisAddrs[plt][axis];
+            int val = readHdHighBit(a.enableDone);
+            result[plt][axis] = (val == 1);
+            if (!loggedOnce) {
+                fprintf(stdout, "[PltStatus] plt%d axis%d enableDone addr=%d raw=%d\n",
+                        plt, axis, a.enableDone, val);
+            }
+        }
+    }
+    if (!loggedOnce) {
+        fflush(stdout);
+        loggedOnce = true;
+    }
+    return result;
+}
+
 bool PlcCommunication::pltStop(int pltIdx) { return writeHdLowBit(pltAddrs[pltIdx].stop, true) == 0; }
 
 bool PlcCommunication::pltReset(int pltIdx) { return writeHdHighBit(pltAddrs[pltIdx].rst, true) == 0; }
@@ -308,6 +412,14 @@ bool PlcCommunication::axisReset(int pltIdx, int axis) {
 bool PlcCommunication::pltEnableAll() {
     for (int i = 0; i < 7; ++i) {
         pltEnable(i);
+        if (i < 6) QThread::msleep(50);
+    }
+    return true;
+}
+
+bool PlcCommunication::pltDisableAll() {
+    for (int i = 0; i < 7; ++i) {
+        writeHdLowBit(pltAddrs[i].enable, false);
         if (i < 6) QThread::msleep(50);
     }
     return true;

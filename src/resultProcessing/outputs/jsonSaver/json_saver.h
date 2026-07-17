@@ -1,4 +1,4 @@
-#ifndef JSON_SAVER_H
+﻿#ifndef JSON_SAVER_H
 #define JSON_SAVER_H
 
 #include <string>

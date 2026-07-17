@@ -1,4 +1,4 @@
-#include "result_display_panel.h"
+﻿#include "result_display_panel.h"
 
 #include <QBoxLayout>
 #include <QLabel>

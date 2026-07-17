@@ -1,4 +1,4 @@
-#ifndef DISPLAY_GLOBAL_H
+﻿#ifndef DISPLAY_GLOBAL_H
 #define DISPLAY_GLOBAL_H
 
 

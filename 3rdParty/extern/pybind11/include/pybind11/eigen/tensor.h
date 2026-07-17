@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/eigen/tensor.h: Transparent conversion for Eigen tensors
 
     All rights reserved. Use of this source code is governed by a

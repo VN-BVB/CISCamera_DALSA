@@ -1,4 +1,4 @@
-
+﻿
 #ifdef EIGEN_PARSED_BY_DOXYGEN
 
 /// \returns an expression of \c *this with reshaped sizes.

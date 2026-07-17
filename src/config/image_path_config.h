@@ -1,4 +1,4 @@
-#ifndef IMAGE_PATH_CONFIG_H
+﻿#ifndef IMAGE_PATH_CONFIG_H
 #define IMAGE_PATH_CONFIG_H
 
 #include <string>

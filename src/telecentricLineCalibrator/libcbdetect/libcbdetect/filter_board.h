@@ -1,4 +1,4 @@
-/**
+﻿/**
 * Copyright 2018, ftdlyc <yclu.cn@gmail.com>
 *
 * This library is free software; you can redistribute it and/or

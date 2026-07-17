@@ -1,4 +1,4 @@
-#ifndef TEST_SOLVERBASE_H
+﻿#ifndef TEST_SOLVERBASE_H
 #define TEST_SOLVERBASE_H
 
 template<typename DstType, typename RhsType, typename MatrixType, typename SolverType>

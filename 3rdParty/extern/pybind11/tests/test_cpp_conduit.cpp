@@ -1,4 +1,4 @@
-// Copyright (c) 2024 The pybind Community.
+﻿// Copyright (c) 2024 The pybind Community.
 
 #include "pybind11_tests.h"
 #include "test_cpp_conduit_traveler_bindings.h"

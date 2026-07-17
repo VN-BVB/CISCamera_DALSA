@@ -1,4 +1,4 @@
-#include <QFileDialog>
+﻿#include <QFileDialog>
 #include <QGraphicsPathItem>
 #include <QPainterPath>
 #include <QInputDialog>

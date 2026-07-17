@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_builtin_casters.cpp -- Casters available without any additional headers
 
     Copyright (c) 2017 Wenzel Jakob <wenzel.jakob@epfl.ch>

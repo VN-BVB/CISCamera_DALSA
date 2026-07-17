@@ -1,4 +1,4 @@
-// This file is part of Eigen, a lightweight C++ template library for linear algebra.
+﻿// This file is part of Eigen, a lightweight C++ template library for linear algebra.
 //
 // Mehdi Goli    Codeplay Software Ltd.
 // Ralph Potter  Codeplay Software Ltd.

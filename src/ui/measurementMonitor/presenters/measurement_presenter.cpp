@@ -1,4 +1,4 @@
-#include "measurement_presenter.h"
+﻿#include "measurement_presenter.h"
 
 #include "../measurement_monitor.h"
 #include "src/utils/plog_utils.h"

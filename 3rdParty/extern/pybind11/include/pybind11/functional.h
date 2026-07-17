@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/functional.h: std::function<> support
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

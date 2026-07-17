@@ -1,4 +1,4 @@
-#ifndef POINT_ITEM_H
+﻿#ifndef POINT_ITEM_H
 #define POINT_ITEM_H
 
 #include <opencv2/core/core.hpp>

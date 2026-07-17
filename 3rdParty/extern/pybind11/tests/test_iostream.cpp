@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_iostream.cpp -- Usage of scoped_output_redirect
 
     Copyright (c) 2017 Henry F. Schreiner

@@ -1,5 +1,6 @@
-#include "motion_widget.h"
+﻿#include "motion_widget.h"
 
+#include <QLabel>
 #include <QThread>
 #include <cstdio>
 
@@ -8,6 +9,10 @@
 
 MotionWidget::MotionWidget(QWidget *parent) : QWidget(parent), ui(new Ui::MotionWidget) {
     ui->setupUi(this);
+
+    // 让顶部控制区(widget_7)在纵向布局中优先获得更多空间，防止全屏时被底部状态卡片区挤压
+    ui->verticalLayout_6->setStretch(0, 3);
+    ui->verticalLayout_6->setStretch(1, 1);
 
     // 初始化 21 个位置单元格
     for (int r = 0; r < 7; ++r)
@@ -22,18 +27,21 @@ MotionWidget::MotionWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Motion
     connect(controller_, &MotionController::connectionStateChanged, this, &MotionWidget::onConnectionStateChanged);
     connect(controller_, &MotionController::logMessage, this, &MotionWidget::onLogMessage);
     connect(controller_, &MotionController::railAbsFinished, this, &MotionWidget::sendAbsFinished);
+    connect(controller_, &MotionController::pltAxisEnableStatus, this, &MotionWidget::onPltAxisEnableStatus);
 
     // UI 按钮 → MotionController
     connect(ui->rail_btn_connect, &QPushButton::clicked, this, &MotionWidget::connectRail);
     connect(ui->rail_btn_disconnect, &QPushButton::clicked, this, &MotionWidget::disconnectRail);
     connect(ui->rail_btn_absLocate, &QPushButton::clicked, this, &MotionWidget::on_btn_X_AbsPositionCommand_clicked);
-    connect(ui->rail_btn_home, &QPushButton::clicked, this, &MotionWidget::on_rail_btn_home_clicked);
+    connect(ui->rail_btn_stop, &QPushButton::clicked, this, &MotionWidget::on_rail_btn_stop_clicked);
 
     // 平台联控按钮
     connect(ui->plt_btn_homeAll, &QPushButton::clicked, this, [this]() { QMetaObject::invokeMethod(controller_, "pltHomeAll"); });
     connect(ui->plt_btn_enableAll, &QPushButton::clicked, this, [this]() { QMetaObject::invokeMethod(controller_, "pltEnableAll"); });
+    connect(ui->plt_btn_disenableAll, &QPushButton::clicked, this, [this]() { QMetaObject::invokeMethod(controller_, "pltDisableAll"); });
     connect(ui->plt_btn_resetAll, &QPushButton::clicked, this, [this]() { QMetaObject::invokeMethod(controller_, "pltResetAll"); });
     connect(ui->plt_btn_locateAll, &QPushButton::clicked, this, [this]() { QMetaObject::invokeMethod(controller_, "pltLocateAll"); });
+    connect(ui->plt_btn_stopAll, &QPushButton::clicked, this, [this]() { QMetaObject::invokeMethod(controller_, "pltStopAll"); });
 
     // 单平台运动 / 单轴运动
     connect(ui->plt_btn_singlepltmover, &QPushButton::clicked, this, &MotionWidget::on_plt_single_move_clicked);
@@ -105,7 +113,7 @@ void MotionWidget::connectRail() { QMetaObject::invokeMethod(controller_, "conne
 
 void MotionWidget::disconnectRail() { QMetaObject::invokeMethod(controller_, "disconnectPlc"); }
 
-void MotionWidget::on_rail_btn_home_clicked() { QMetaObject::invokeMethod(controller_, "railHome"); }
+void MotionWidget::on_rail_btn_stop_clicked() { QMetaObject::invokeMethod(controller_, "railStop"); }
 
 void MotionWidget::onRailPosVelUpdated(double pos, double vel) {
     if (!std::isnan(pos) && !std::isnan(vel)) {
@@ -128,3 +136,29 @@ void MotionWidget::onConnectionStateChanged(const QString &color) {
 }
 
 void MotionWidget::onLogMessage(const QString &msg) { fprintf(stdout, "[Motion] %s\n", msg.toLocal8Bit().constData()); }
+
+void MotionWidget::onPltAxisEnableStatus(const QVector<QVector<bool>> &status) {
+    const char *axisSuffix[] = {"Xstatus", "Ystatus", "Zstatus"};
+    const char *greenSheet = "background-color: #22c55e; border-radius: 7px; border: 1px solid #16a34a;";
+    const char *redSheet = "background-color: #ef4444; border-radius: 7px; border: 1px solid #dc2626;";
+
+    static bool loggedOnce = false;
+    for (int plt = 0; plt < 7; ++plt) {
+        for (int axis = 0; axis < 3; ++axis) {
+            QString labelName = QString("plt%1_label_%2").arg(plt).arg(axisSuffix[axis]);
+            QLabel *label = findChild<QLabel *>(labelName);
+            if (!loggedOnce) {
+                fprintf(stdout, "[UI] plt%d axis%d name='%s' found=%s status=%d\n",
+                        plt, axis, labelName.toLocal8Bit().constData(),
+                        label ? "YES" : "NO", status[plt][axis]);
+            }
+            if (label) {
+                label->setStyleSheet(status[plt][axis] ? greenSheet : redSheet);
+            }
+        }
+    }
+    if (!loggedOnce) {
+        fflush(stdout);
+        loggedOnce = true;
+    }
+}

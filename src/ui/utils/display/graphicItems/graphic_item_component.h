@@ -1,4 +1,4 @@
-#ifndef GRAPHIC_ITEM_COMPONENT_H
+﻿#ifndef GRAPHIC_ITEM_COMPONENT_H
 #define GRAPHIC_ITEM_COMPONENT_H
 
 #include <QGraphicsScene>

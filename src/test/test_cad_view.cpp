@@ -1,4 +1,4 @@
-
+﻿
 #include "test_cad_view.h"
 #include "ui_test_cad_view.h"
 

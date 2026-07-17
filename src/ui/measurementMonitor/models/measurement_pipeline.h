@@ -1,4 +1,4 @@
-#ifndef MEASUREMENT_PIPELINE_H
+﻿#ifndef MEASUREMENT_PIPELINE_H
 #define MEASUREMENT_PIPELINE_H
 
 #include <QObject>

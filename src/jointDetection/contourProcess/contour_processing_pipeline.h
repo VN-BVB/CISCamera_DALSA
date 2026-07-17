@@ -1,4 +1,4 @@
-#ifndef CONTOUR_PROCESSING_PIPELINE_H
+﻿#ifndef CONTOUR_PROCESSING_PIPELINE_H
 #define CONTOUR_PROCESSING_PIPELINE_H
 
 #include "contour_processing_strategy.h"

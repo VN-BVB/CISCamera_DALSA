@@ -1,4 +1,4 @@
-/*
+﻿/*
   tests/test_numpy_scalars.cpp -- strict NumPy scalars
 
   Copyright (c) 2021 Steve R. Sun

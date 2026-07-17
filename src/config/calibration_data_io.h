@@ -1,4 +1,4 @@
-#ifndef CALIBRATION_DATA_IO_H
+﻿#ifndef CALIBRATION_DATA_IO_H
 #define CALIBRATION_DATA_IO_H
 #include <Eigen/Dense>
 #include <cereal/archives/json.hpp>

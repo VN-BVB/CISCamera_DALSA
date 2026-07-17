@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/pybind11_tests.cpp -- pybind example plugin
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

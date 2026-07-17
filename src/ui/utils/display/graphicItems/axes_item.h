@@ -1,4 +1,4 @@
-#ifndef AXES_ITEM_H
+﻿#ifndef AXES_ITEM_H
 #define AXES_ITEM_H
 
 #include "graphic_item_component.h"

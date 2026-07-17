@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/embed.h: Support for embedding the interpreter
 
     Copyright (c) 2017 Wenzel Jakob <wenzel.jakob@epfl.ch>

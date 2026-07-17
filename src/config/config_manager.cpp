@@ -1,4 +1,4 @@
-#include "config_manager.h"
+﻿#include "config_manager.h"
 #include <cereal/archives/json.hpp>
 #include <fstream>
 

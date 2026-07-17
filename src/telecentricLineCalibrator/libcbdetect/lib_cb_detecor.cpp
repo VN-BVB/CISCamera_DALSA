@@ -1,4 +1,4 @@
-#include "lib_cb_detecor.h"
+﻿#include "lib_cb_detecor.h"
 
 #include <QDir>
 #include <QFileInfo>

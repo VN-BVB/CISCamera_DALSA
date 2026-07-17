@@ -1,4 +1,4 @@
-#ifndef TEST_CAD_VIEW_H
+﻿#ifndef TEST_CAD_VIEW_H
 #define TEST_CAD_VIEW_H
 
 #include <QWidget>

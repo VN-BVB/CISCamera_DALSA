@@ -1,4 +1,4 @@
-// The Catch implementation is compiled here. This is a standalone
+﻿// The Catch implementation is compiled here. This is a standalone
 // translation unit to avoid recompiling it for every test change.
 
 #include <pybind11/embed.h>

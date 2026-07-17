@@ -1,4 +1,4 @@
-#ifndef CONTOUR_DATA_H
+﻿#ifndef CONTOUR_DATA_H
 #define CONTOUR_DATA_H
 
 #include "contour_utils.h"

@@ -1,4 +1,4 @@
-#include "json_sender.h"
+﻿#include "json_sender.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <cstring>

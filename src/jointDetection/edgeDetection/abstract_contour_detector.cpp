@@ -1,4 +1,4 @@
-#include "abstract_contour_detector.h"
+﻿#include "abstract_contour_detector.h"
 
 AbstractContourDetector::AbstractContourDetector() {}
 

@@ -1,4 +1,4 @@
-#ifndef CONTOUR_PROCESSOR_H
+﻿#ifndef CONTOUR_PROCESSOR_H
 #define CONTOUR_PROCESSOR_H
 
 #include "contour_processing_pipeline.h"

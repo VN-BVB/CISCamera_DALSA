@@ -1,4 +1,4 @@
-#if defined(DXFLIB_DLL)
+﻿#if defined(DXFLIB_DLL)
 #   ifdef _WIN32
 #       if defined(DXFLIB_LIBRARY)
 #           define DXFLIB_EXPORT __declspec(dllexport)

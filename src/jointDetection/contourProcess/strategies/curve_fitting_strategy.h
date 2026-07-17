@@ -1,4 +1,4 @@
-#ifndef CURVE_FITTING_STRATEGY_H
+﻿#ifndef CURVE_FITTING_STRATEGY_H
 #define CURVE_FITTING_STRATEGY_H
 
 #include "src/jointDetection/contourProcess/contour_processing_strategy.h"

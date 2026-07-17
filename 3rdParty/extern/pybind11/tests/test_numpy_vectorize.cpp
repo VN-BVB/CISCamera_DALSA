@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_numpy_vectorize.cpp -- auto-vectorize functions over NumPy array
     arguments
 

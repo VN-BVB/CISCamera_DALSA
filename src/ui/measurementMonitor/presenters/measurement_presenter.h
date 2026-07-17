@@ -1,4 +1,4 @@
-#ifndef MEASUREMENT_PRESENTER_H
+﻿#ifndef MEASUREMENT_PRESENTER_H
 #define MEASUREMENT_PRESENTER_H
 
 #include <QObject>

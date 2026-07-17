@@ -1,4 +1,4 @@
-#include "direction_calculation_strategy.h"
+﻿#include "direction_calculation_strategy.h"
 
 DirectionCalculationStrategy::DirectionCalculationStrategy() {}
 

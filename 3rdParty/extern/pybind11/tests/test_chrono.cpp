@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_chrono.cpp -- test conversions to/from std::chrono types
 
     Copyright (c) 2016 Trent Houliston <trent@houliston.me> and

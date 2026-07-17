@@ -1,4 +1,4 @@
-#ifndef CONTOUR_FITTER_H
+﻿#ifndef CONTOUR_FITTER_H
 #define CONTOUR_FITTER_H
 
 #include <opencv2/opencv.hpp>

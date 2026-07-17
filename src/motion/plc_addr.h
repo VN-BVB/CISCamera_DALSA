@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 
@@ -27,51 +27,60 @@ static constexpr std::int32_t HD_ExAxis1MOVEAVelParams = 2220;  // 地轨绝对�
 static constexpr std::int32_t HD_ExAxis1MOVEADone = 2224;       // 地轨绝对位置运动完成（低位）
 static constexpr std::int32_t HD_ExAxis1Stop = 2254;            // 地轨停止（低位）
 static constexpr std::int32_t HD_ExAxis1Rst = 2252;             // 地轨复位（低位）
+static constexpr std::int32_t D_ExAxis1Stop = 2254;             // 地轨运动停止(低位)
+static constexpr std::int32_t D_ExAxis1StopDone = 2254;         // 地轨运动停止完成(高位)
 static constexpr std::int32_t D_ExAxis1Pos = 20044;             // 地轨实际运动位置
 static constexpr std::int32_t D_ExAxis1Vel = 20048;             // 地轨实际运动速度
 
 // 对位平台总控（7个），对位平台0
-static constexpr std::int32_t HD_Plt_0_Enable = 100;    // 平台一键使能（低位）
-static constexpr std::int32_t HD_Plt_0_Back = 100;      // 平台一键回参考点（高位）
-static constexpr std::int32_t HD_Plt_0_Location = 101;  // 平台一键定位（低位）
-static constexpr std::int32_t HD_Plt_0_Rst = 101;       // 平台一键复位（高位）
-static constexpr std::int32_t HD_Plt_0_Stop = 102;      // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_0_Enable = 100;        // 平台一键使能（低位）
+static constexpr std::int32_t HD_Plt_0_Back = 100;          // 平台一键回参考点（高位）
+static constexpr std::int32_t HD_Plt_0_Location = 101;      // 平台一键定位（低位）
+static constexpr std::int32_t HD_Plt_0_Rst = 101;           // 平台一键复位（高位）
+static constexpr std::int32_t HD_Plt_0_Stop = 102;          // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_0_LocationDone = 117;  // 平台一键定位完成（低位）
 // 对位平台1
-static constexpr std::int32_t HD_Plt_1_Enable = 400;    // 平台一键使能（低位）
-static constexpr std::int32_t HD_Plt_1_Back = 400;      // 平台一键回参考点（高位）
-static constexpr std::int32_t HD_Plt_1_Location = 401;  // 平台一键定位（低位）
-static constexpr std::int32_t HD_Plt_1_Rst = 401;       // 平台一键复位（高位）
-static constexpr std::int32_t HD_Plt_1_Stop = 402;      // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_1_Enable = 400;        // 平台一键使能（低位）
+static constexpr std::int32_t HD_Plt_1_Back = 400;          // 平台一键回参考点（高位）
+static constexpr std::int32_t HD_Plt_1_Location = 401;      // 平台一键定位（低位）
+static constexpr std::int32_t HD_Plt_1_Rst = 401;           // 平台一键复位（高位）
+static constexpr std::int32_t HD_Plt_1_Stop = 402;          // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_1_LocationDone = 417;  // 平台一键定位完成（低位）
 // 对位平台2
-static constexpr std::int32_t HD_Plt_2_Enable = 700;    // 平台一键使能（低位）
-static constexpr std::int32_t HD_Plt_2_Back = 700;      // 平台一键回参考点（高位）
-static constexpr std::int32_t HD_Plt_2_Location = 701;  // 平台一键定位（低位）
-static constexpr std::int32_t HD_Plt_2_Rst = 701;       // 平台一键复位（高位）
-static constexpr std::int32_t HD_Plt_2_Stop = 702;      // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_2_Enable = 700;        // 平台一键使能（低位）
+static constexpr std::int32_t HD_Plt_2_Back = 700;          // 平台一键回参考点（高位）
+static constexpr std::int32_t HD_Plt_2_Location = 701;      // 平台一键定位（低位）
+static constexpr std::int32_t HD_Plt_2_Rst = 701;           // 平台一键复位（高位）
+static constexpr std::int32_t HD_Plt_2_Stop = 702;          // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_2_LocationDone = 717;  // 平台一键定位完成（低位）
 // 对位平台3
-static constexpr std::int32_t HD_Plt_3_Enable = 1000;    // 平台一键使能（低位）
-static constexpr std::int32_t HD_Plt_3_Back = 1000;      // 平台一键回参考点（高位）
-static constexpr std::int32_t HD_Plt_3_Location = 1001;  // 平台一键定位（低位）
-static constexpr std::int32_t HD_Plt_3_Rst = 1001;       // 平台一键复位（高位）
-static constexpr std::int32_t HD_Plt_3_Stop = 1002;      // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_3_Enable = 1000;        // 平台一键使能（低位）
+static constexpr std::int32_t HD_Plt_3_Back = 1000;          // 平台一键回参考点（高位）
+static constexpr std::int32_t HD_Plt_3_Location = 1001;      // 平台一键定位（低位）
+static constexpr std::int32_t HD_Plt_3_Rst = 1001;           // 平台一键复位（高位）
+static constexpr std::int32_t HD_Plt_3_Stop = 1002;          // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_3_LocationDone = 1017;  // 平台一键定位完成（低位）
 // 对位平台4
-static constexpr std::int32_t HD_Plt_4_Enable = 1300;    // 平台一键使能（低位）
-static constexpr std::int32_t HD_Plt_4_Back = 1300;      // 平台一键回参考点（高位）
-static constexpr std::int32_t HD_Plt_4_Location = 1301;  // 平台一键定位（低位）
-static constexpr std::int32_t HD_Plt_4_Rst = 1301;       // 平台一键复位（高位）
-static constexpr std::int32_t HD_Plt_4_Stop = 1302;      // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_4_Enable = 1300;        // 平台一键使能（低位）
+static constexpr std::int32_t HD_Plt_4_Back = 1300;          // 平台一键回参考点（高位）
+static constexpr std::int32_t HD_Plt_4_Location = 1301;      // 平台一键定位（低位）
+static constexpr std::int32_t HD_Plt_4_Rst = 1301;           // 平台一键复位（高位）
+static constexpr std::int32_t HD_Plt_4_Stop = 1302;          // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_4_LocationDone = 1317;  // 平台一键定位完成（低位）
 // 对位平台5
-static constexpr std::int32_t HD_Plt_5_Enable = 1600;    // 平台一键使能（低位）
-static constexpr std::int32_t HD_Plt_5_Back = 1600;      // 平台一键回参考点（高位）
-static constexpr std::int32_t HD_Plt_5_Location = 1601;  // 平台一键定位（低位）
-static constexpr std::int32_t HD_Plt_5_Rst = 1601;       // 平台一键复位（高位）
-static constexpr std::int32_t HD_Plt_5_Stop = 1602;      // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_5_Enable = 1600;        // 平台一键使能（低位）
+static constexpr std::int32_t HD_Plt_5_Back = 1600;          // 平台一键回参考点（高位）
+static constexpr std::int32_t HD_Plt_5_Location = 1601;      // 平台一键定位（低位）
+static constexpr std::int32_t HD_Plt_5_Rst = 1601;           // 平台一键复位（高位）
+static constexpr std::int32_t HD_Plt_5_Stop = 1602;          // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_5_LocationDone = 1617;  // 平台一键定位完成（低位）
 // 对位平台6
-static constexpr std::int32_t HD_Plt_6_Enable = 1900;    // 平台一键使能（低位）
-static constexpr std::int32_t HD_Plt_6_Back = 1900;      // 平台一键回参考点（高位）
-static constexpr std::int32_t HD_Plt_6_Location = 1901;  // 平台一键定位（低位）
-static constexpr std::int32_t HD_Plt_6_Rst = 1901;       // 平台一键复位（高位）
-static constexpr std::int32_t HD_Plt_6_Stop = 1902;      // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_6_Enable = 1900;        // 平台一键使能（低位）
+static constexpr std::int32_t HD_Plt_6_Back = 1900;          // 平台一键回参考点（高位）
+static constexpr std::int32_t HD_Plt_6_Location = 1901;      // 平台一键定位（低位）
+static constexpr std::int32_t HD_Plt_6_Rst = 1901;           // 平台一键复位（高位）
+static constexpr std::int32_t HD_Plt_6_Stop = 1902;          // 平台一键停止（低位）
+static constexpr std::int32_t HD_Plt_6_LocationDone = 1917;  // 平台一键定位完成（低位）
 
 // 0号对位平台X轴
 static constexpr std::int32_t HD_0_XAxis1Enable = 121;          // 0号对位平台X轴伺服使能（低位）

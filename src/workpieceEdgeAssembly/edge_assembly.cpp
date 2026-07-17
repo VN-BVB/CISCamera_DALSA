@@ -1,4 +1,4 @@
-#include <plog/Log.h>
+﻿#include <plog/Log.h>
 #include "edge_assembly.h"
 #include "workpiece_generator.h"
 #include "door_bell_combiner.h"

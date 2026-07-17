@@ -1,4 +1,4 @@
-#ifndef ABSTRACT_CAMERA_H
+﻿#ifndef ABSTRACT_CAMERA_H
 #define ABSTRACT_CAMERA_H
 // clang-format off
 #include <plog/Log.h>

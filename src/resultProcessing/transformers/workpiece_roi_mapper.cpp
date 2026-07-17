@@ -1,4 +1,4 @@
-#include "workpiece_roi_mapper.h"
+﻿#include "workpiece_roi_mapper.h"
 #include <plog/Log.h>
 
 std::map<int, std::vector<int>> WorkpieceRoiMapper::buildWorkpieceRoiMapping(

@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/detail/argument_vector.h: small_vector-like containers to
     avoid heap allocation of arguments during function call dispatch.
 

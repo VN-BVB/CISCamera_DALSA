@@ -1,4 +1,4 @@
-
+﻿
 #include "geometry_utils.h"
 
 #include <plog/Log.h>

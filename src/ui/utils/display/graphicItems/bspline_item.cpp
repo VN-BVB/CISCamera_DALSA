@@ -1,4 +1,4 @@
-#include "bspline_item.h"
+﻿#include "bspline_item.h"
 #include <QGraphicsPathItem>
 #include <QPen>
 

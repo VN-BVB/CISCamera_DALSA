@@ -1,4 +1,4 @@
-#ifndef DXF_SAVER_H
+﻿#ifndef DXF_SAVER_H
 #define DXF_SAVER_H
 
 #include <QObject>

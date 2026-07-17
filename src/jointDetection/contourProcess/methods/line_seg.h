@@ -1,4 +1,4 @@
-#ifndef LINESEGMENTH
+﻿#ifndef LINESEGMENTH
 #define LINESEGMENTH
 
 #include <opencv2/opencv.hpp>

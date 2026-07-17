@@ -1,4 +1,4 @@
-#ifndef PLOG_QT_APPENDER_H
+﻿#ifndef PLOG_QT_APPENDER_H
 #define PLOG_QT_APPENDER_H
 
 #include <QObject>

@@ -1,4 +1,4 @@
-#include <unordered_set>
+﻿#include <unordered_set>
 #include <cmath>
 
 #include "contour_feature_calculator.h"

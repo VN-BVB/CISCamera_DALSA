@@ -1,4 +1,4 @@
-#include "plog_qt_appender.h"
+﻿#include "plog_qt_appender.h"
 
 #include <plog/Record.h>
 #include <plog/Severity.h>

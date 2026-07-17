@@ -1,4 +1,4 @@
-#include "async_json_sender.h"
+﻿#include "async_json_sender.h"
 #include <plog/Log.h>
 
 /**

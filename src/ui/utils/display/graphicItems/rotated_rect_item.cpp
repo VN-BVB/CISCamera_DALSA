@@ -1,4 +1,4 @@
-#include "rotated_rect_item.h"
+﻿#include "rotated_rect_item.h"
 #include <QGraphicsPathItem>
 #include <QPainterPath>
 #include <QPen>

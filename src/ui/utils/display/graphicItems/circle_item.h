@@ -1,4 +1,4 @@
-#ifndef CIRCLE_ITEM_H
+﻿#ifndef CIRCLE_ITEM_H
 #define CIRCLE_ITEM_H
 
 #include <QColor>

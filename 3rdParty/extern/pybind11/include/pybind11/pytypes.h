@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/pytypes.h: Convenience wrapper classes for basic Python types
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

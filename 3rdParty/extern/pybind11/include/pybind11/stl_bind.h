@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/std_bind.h: Binding generators for STL data types
 
     Copyright (c) 2016 Sergey Lyskov and Wenzel Jakob

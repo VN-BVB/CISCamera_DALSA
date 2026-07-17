@@ -1,4 +1,4 @@
-#ifndef CONFIG_PATHS_H
+﻿#ifndef CONFIG_PATHS_H
 #define CONFIG_PATHS_H
 
 #include <string>

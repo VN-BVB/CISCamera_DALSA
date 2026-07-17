@@ -1,4 +1,4 @@
-#ifndef CONTOUR_BOUNDING_BOX_H
+﻿#ifndef CONTOUR_BOUNDING_BOX_H
 #define CONTOUR_BOUNDING_BOX_H
 
 #include "src/jointDetection/joint_seam.h"

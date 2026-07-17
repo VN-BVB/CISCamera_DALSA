@@ -1,4 +1,4 @@
-#ifndef IMAGE_PROCESS_WORKER_H
+﻿#ifndef IMAGE_PROCESS_WORKER_H
 #define IMAGE_PROCESS_WORKER_H
 
 #include <QObject>

@@ -1,4 +1,4 @@
-#ifndef DEDUPLICATION_STRATEGY_H
+﻿#ifndef DEDUPLICATION_STRATEGY_H
 #define DEDUPLICATION_STRATEGY_H
 
 #include "src/jointDetection/contourProcess/contour_processing_strategy.h"

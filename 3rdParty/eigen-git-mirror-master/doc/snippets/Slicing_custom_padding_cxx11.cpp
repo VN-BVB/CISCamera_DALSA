@@ -1,4 +1,4 @@
-struct pad {
+﻿struct pad {
   Index size() const { return out_size; }
   Index operator[] (Index i) const { return std::max<Index>(0,i-(out_size-in_size)); }
   Index in_size, out_size;

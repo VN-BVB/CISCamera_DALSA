@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_operator_overloading.cpp -- operator overloading
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

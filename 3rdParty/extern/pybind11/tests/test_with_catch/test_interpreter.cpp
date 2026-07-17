@@ -1,4 +1,4 @@
-#include <pybind11/critical_section.h>
+﻿#include <pybind11/critical_section.h>
 #include <pybind11/embed.h>
 
 // Silence MSVC C++17 deprecation warning from Catch regarding std::uncaught_exceptions (up to

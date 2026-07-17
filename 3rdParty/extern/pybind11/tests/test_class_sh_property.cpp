@@ -1,4 +1,4 @@
-// The compact 4-character naming matches that in test_class_sh_basic.cpp
+﻿// The compact 4-character naming matches that in test_class_sh_basic.cpp
 // Variable names are intentionally terse, to not distract from the more important C++ type names:
 // valu(e), ref(erence), ptr or p (pointer), r = rvalue, m = mutable, c = const,
 // sh = shared_ptr, uq = unique_ptr.

@@ -1,4 +1,4 @@
-// Copyright (c) 2024 The pybind Community.
+﻿// Copyright (c) 2024 The pybind Community.
 
 /* The pybind11_conduit_v1 feature enables type-safe interoperability between
 

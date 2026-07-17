@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/subinterpreter.h: Support for creating and using subinterpreters
 
     Copyright (c) 2025 The Pybind Development Team.

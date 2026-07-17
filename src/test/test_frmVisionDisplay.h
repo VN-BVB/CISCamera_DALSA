@@ -1,4 +1,4 @@
-#ifndef TEST_FRMVISIONDISPLAY_H
+﻿#ifndef TEST_FRMVISIONDISPLAY_H
 #define TEST_FRMVISIONDISPLAY_H
 
 #include <QWidget>

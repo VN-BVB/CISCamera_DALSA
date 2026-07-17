@@ -439,8 +439,8 @@ void CISWidget::whenDrawPlatformAxes() {
         rv_cv.at<double>(2) = rv(2);
         cv::Mat R_cv;
         cv::Rodrigues(rv_cv, R_cv);
-        Eigen::Vector3d X_w(R_cv.at<double>(0,0), R_cv.at<double>(1,0), R_cv.at<double>(2,0));
-        Eigen::Vector3d Y_w(R_cv.at<double>(0,1), R_cv.at<double>(1,1), R_cv.at<double>(2,1));
+        Eigen::Vector3d X_w(R_cv.at<double>(0, 0), R_cv.at<double>(1, 0), R_cv.at<double>(2, 0));
+        Eigen::Vector3d Y_w(R_cv.at<double>(0, 1), R_cv.at<double>(1, 1), R_cv.at<double>(2, 1));
 
         std::vector<Eigen::Vector2d> pts;
         pts.push_back(T_w.head<2>());

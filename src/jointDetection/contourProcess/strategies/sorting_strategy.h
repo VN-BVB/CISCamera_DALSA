@@ -1,4 +1,4 @@
-#ifndef SORTING_STRATEGY_H
+﻿#ifndef SORTING_STRATEGY_H
 #define SORTING_STRATEGY_H
 
 #include "src/jointDetection/contourProcess/contour_processing_strategy.h"

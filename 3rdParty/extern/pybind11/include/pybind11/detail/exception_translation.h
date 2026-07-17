@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/detail/exception_translation.h: means to translate C++ exceptions to Python exceptions
 
     Copyright (c) 2024 The Pybind Development Team.

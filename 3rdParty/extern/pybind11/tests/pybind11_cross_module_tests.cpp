@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/pybind11_cross_module_tests.cpp -- contains tests that require multiple modules
 
     Copyright (c) 2017 Jason Rhinelander <jason@imaginary.ca>

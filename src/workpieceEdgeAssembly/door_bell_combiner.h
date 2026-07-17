@@ -1,4 +1,4 @@
-#ifndef DOOR_BELL_COMBINER_H
+﻿#ifndef DOOR_BELL_COMBINER_H
 #define DOOR_BELL_COMBINER_H
 
 #include "workpiece_bounding_box.h"

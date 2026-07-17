@@ -1,4 +1,4 @@
-#ifndef FRM_DISPLAY_H
+﻿#ifndef FRM_DISPLAY_H
 #define FRM_DISPLAY_H
 
 #include <opencv2/core/core.hpp>

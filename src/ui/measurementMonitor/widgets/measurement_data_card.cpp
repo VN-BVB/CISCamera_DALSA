@@ -1,4 +1,4 @@
-#include "measurement_data_card.h"
+﻿#include "measurement_data_card.h"
 
 #include <QBoxLayout>
 #include "../qss_loader.h"

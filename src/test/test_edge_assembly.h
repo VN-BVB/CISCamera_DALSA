@@ -1,4 +1,4 @@
-#ifndef TEST_EDGE_ASSEMBLY_H
+﻿#ifndef TEST_EDGE_ASSEMBLY_H
 #define TEST_EDGE_ASSEMBLY_H
 
 #include "src/workpieceEdgeAssembly/edge_assembly.h"

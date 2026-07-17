@@ -1,4 +1,4 @@
-#ifndef CORNER_DETECTION_STRATEGY_H
+﻿#ifndef CORNER_DETECTION_STRATEGY_H
 #define CORNER_DETECTION_STRATEGY_H
 
 #include "src/jointDetection/contourProcess/contour_processing_strategy.h"

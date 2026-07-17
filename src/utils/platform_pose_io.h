@@ -1,4 +1,4 @@
-#ifndef PLATFORM_POSE_IO_H
+﻿#ifndef PLATFORM_POSE_IO_H
 #define PLATFORM_POSE_IO_H
 
 #include <string>

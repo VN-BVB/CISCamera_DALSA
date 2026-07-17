@@ -1,4 +1,4 @@
-#include <plog/Log.h>
+﻿#include <plog/Log.h>
 
 #include "image_read_worker.h"
 

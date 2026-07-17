@@ -1,4 +1,4 @@
-#ifndef ROTATED_RECT_ITEM_H
+﻿#ifndef ROTATED_RECT_ITEM_H
 #define ROTATED_RECT_ITEM_H
 
 #include "graphic_item_component.h"

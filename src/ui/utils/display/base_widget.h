@@ -1,4 +1,4 @@
-#ifndef BASE_WIDGET_H
+﻿#ifndef BASE_WIDGET_H
 #define BASE_WIDGET_H
 
 #include <QWidget>

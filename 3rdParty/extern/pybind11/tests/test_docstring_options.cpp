@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_docstring_options.cpp -- generation of docstrings and signatures
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

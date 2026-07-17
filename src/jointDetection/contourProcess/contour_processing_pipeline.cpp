@@ -1,4 +1,4 @@
-#include "contour_processing_pipeline.h"
+﻿#include "contour_processing_pipeline.h"
 #include <sstream>
 
 ContourProcessingPipeline::ContourProcessingPipeline() {}

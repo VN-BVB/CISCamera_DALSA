@@ -1,4 +1,4 @@
-#ifndef BSPLINE_ITEM_H
+﻿#ifndef BSPLINE_ITEM_H
 #define BSPLINE_ITEM_H
 
 #include <QColor>

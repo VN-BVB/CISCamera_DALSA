@@ -1,4 +1,4 @@
-#ifndef MEASUREMENT_DATA_CARD_H
+﻿#ifndef MEASUREMENT_DATA_CARD_H
 #define MEASUREMENT_DATA_CARD_H
 
 #include <QFrame>

@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_async.cpp -- __await__ support
 
     Copyright (c) 2019 Google Inc.

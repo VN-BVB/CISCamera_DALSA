@@ -1,4 +1,4 @@
-#ifndef DISPLAY_TEXT_ITEM_H
+﻿#ifndef DISPLAY_TEXT_ITEM_H
 #define DISPLAY_TEXT_ITEM_H
 
 #include "display_global.h"

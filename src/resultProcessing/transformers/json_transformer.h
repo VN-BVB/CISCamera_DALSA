@@ -1,4 +1,4 @@
-#ifndef JSON_TRANSFORMER_H
+﻿#ifndef JSON_TRANSFORMER_H
 #define JSON_TRANSFORMER_H
 
 #include <map>

@@ -1,4 +1,4 @@
-#ifndef ABSTRACT_CONTOUR_DETECTOR_H
+﻿#ifndef ABSTRACT_CONTOUR_DETECTOR_H
 #define ABSTRACT_CONTOUR_DETECTOR_H
 
 #include <opencv2/opencv.hpp>

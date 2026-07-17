@@ -1,4 +1,4 @@
-// Copyright (c) 2024 The pybind Community.
+﻿// Copyright (c) 2024 The pybind Community.
 
 // In production situations it is totally fine to build with
 // C++ Exception Handling enabled. However, here we want to ensure that

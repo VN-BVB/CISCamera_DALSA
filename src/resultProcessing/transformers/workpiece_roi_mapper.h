@@ -1,4 +1,4 @@
-#ifndef WORKPIECE_ROI_MAPPER_H
+﻿#ifndef WORKPIECE_ROI_MAPPER_H
 #define WORKPIECE_ROI_MAPPER_H
 
 #include <map>

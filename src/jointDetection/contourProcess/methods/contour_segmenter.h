@@ -1,4 +1,4 @@
-#ifndef CONTOUR_SEGMENTER_H
+﻿#ifndef CONTOUR_SEGMENTER_H
 #define CONTOUR_SEGMENTER_H
 
 #include <opencv2/opencv.hpp>

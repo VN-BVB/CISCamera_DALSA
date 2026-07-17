@@ -1,4 +1,4 @@
-#ifndef CONTOUR_DETECTOR_CONTEXT_H
+﻿#ifndef CONTOUR_DETECTOR_CONTEXT_H
 #define CONTOUR_DETECTOR_CONTEXT_H
 
 #include "abstract_contour_detector.h"

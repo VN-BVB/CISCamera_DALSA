@@ -1,4 +1,4 @@
-#ifndef MEASUREMENT_MONITOR_H
+﻿#ifndef MEASUREMENT_MONITOR_H
 #define MEASUREMENT_MONITOR_H
 
 #include <QWidget>

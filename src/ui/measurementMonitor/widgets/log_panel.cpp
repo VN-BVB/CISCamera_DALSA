@@ -1,4 +1,4 @@
-#include "log_panel.h"
+﻿#include "log_panel.h"
 
 #include <QBoxLayout>
 #include <QDateTime>

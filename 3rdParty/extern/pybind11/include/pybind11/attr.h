@@ -1,4 +1,4 @@
-/*
+﻿/*
     pybind11/attr.h: Infrastructure for processing custom
     type and function attributes
 

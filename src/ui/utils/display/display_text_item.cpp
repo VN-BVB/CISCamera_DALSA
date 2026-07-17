@@ -1,4 +1,4 @@
-#include <QPen>
+﻿#include <QPen>
 #include <QFont>
 #include "display_text_item.h"
 

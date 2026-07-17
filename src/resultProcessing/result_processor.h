@@ -1,4 +1,4 @@
-#ifndef RESULT_PROCESSOR_H
+﻿#ifndef RESULT_PROCESSOR_H
 #define RESULT_PROCESSOR_H
 
 #include <QObject>

@@ -1,4 +1,4 @@
-#ifndef SEGMENTATION_STRATEGY_H
+﻿#ifndef SEGMENTATION_STRATEGY_H
 #define SEGMENTATION_STRATEGY_H
 
 #include "src/jointDetection/contourProcess/contour_processing_strategy.h"

@@ -1,4 +1,4 @@
-#include "contour_item.h"
+﻿#include "contour_item.h"
 #include <opencv2/opencv.hpp>
 #include <QPainterPath>
 #include <QPen>

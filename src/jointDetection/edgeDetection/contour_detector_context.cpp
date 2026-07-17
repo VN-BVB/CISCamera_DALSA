@@ -1,4 +1,4 @@
-#include "contour_detector_context.h"
+﻿#include "contour_detector_context.h"
 
 ContourDetectorContext::ContourDetectorContext() = default;
 

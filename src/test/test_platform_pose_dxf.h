@@ -1,4 +1,4 @@
-#ifndef TEST_PLATFORM_POSE_DXF_H
+﻿#ifndef TEST_PLATFORM_POSE_DXF_H
 #define TEST_PLATFORM_POSE_DXF_H
 
 // 测试：将 data/calibration_config/platform_pose.json 中所有对位平台坐标系

@@ -1,4 +1,4 @@
-#include "telecentric_line_calibrator.h"
+﻿#include "telecentric_line_calibrator.h"
 
 #include <QDebug>
 #include <iomanip>

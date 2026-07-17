@@ -1,4 +1,4 @@
-#ifndef DISPLAY_SCENE_H
+﻿#ifndef DISPLAY_SCENE_H
 #define DISPLAY_SCENE_H
 
 #include <QGraphicsScene>

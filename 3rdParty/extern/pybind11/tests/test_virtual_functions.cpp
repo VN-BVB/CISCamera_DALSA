@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_virtual_functions.cpp -- overriding virtual functions from Python
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

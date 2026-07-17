@@ -1,4 +1,4 @@
-#ifndef JOINT_SEAM_H
+﻿#ifndef JOINT_SEAM_H
 #define JOINT_SEAM_H
 
 

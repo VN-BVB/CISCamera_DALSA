@@ -1,4 +1,4 @@
-#ifndef CONTOUR_UTILS_H
+﻿#ifndef CONTOUR_UTILS_H
 #define CONTOUR_UTILS_H
 
 

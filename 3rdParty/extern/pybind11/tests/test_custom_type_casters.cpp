@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_custom_type_casters.cpp -- tests type_caster<T>
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>

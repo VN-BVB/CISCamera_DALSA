@@ -1,4 +1,4 @@
-#ifndef TEST_CONVERT_COORDINATE_H
+﻿#ifndef TEST_CONVERT_COORDINATE_H
 #define TEST_CONVERT_COORDINATE_H
 
 #include <opencv2/core/core.hpp>

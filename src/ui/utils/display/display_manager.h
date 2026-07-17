@@ -1,4 +1,4 @@
-#ifndef DISPLAY_MANAGER_H
+﻿#ifndef DISPLAY_MANAGER_H
 #define DISPLAY_MANAGER_H
 
 #include <QObject>

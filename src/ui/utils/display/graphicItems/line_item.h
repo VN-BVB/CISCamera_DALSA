@@ -1,4 +1,4 @@
-#ifndef LINE_ITEM_H
+﻿#ifndef LINE_ITEM_H
 #define LINE_ITEM_H
 
 #include <opencv2/core/core.hpp>

@@ -1,4 +1,4 @@
-#ifdef EIGEN_WARNINGS_DISABLED_2
+﻿#ifdef EIGEN_WARNINGS_DISABLED_2
 // "DisableStupidWarnings.h" was included twice recursively: Do not reenable warnings yet!
 #  undef EIGEN_WARNINGS_DISABLED_2
 

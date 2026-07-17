@@ -1,4 +1,4 @@
-#include "curve_fitting_strategy.h"
+﻿#include "curve_fitting_strategy.h"
 
 CurveFittingStrategy::CurveFittingStrategy() {}
 

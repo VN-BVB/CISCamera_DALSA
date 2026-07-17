@@ -1,4 +1,4 @@
-#ifndef IMAGE_READ_WORKER_H
+﻿#ifndef IMAGE_READ_WORKER_H
 #define IMAGE_READ_WORKER_H
 
 #include <QObject>

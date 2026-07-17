@@ -1,4 +1,4 @@
-#ifndef BATCH_SEND_STATUS_H
+﻿#ifndef BATCH_SEND_STATUS_H
 #define BATCH_SEND_STATUS_H
 
 /**

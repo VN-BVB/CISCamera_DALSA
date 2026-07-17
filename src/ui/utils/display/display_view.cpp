@@ -1,4 +1,4 @@
-#include "display_view.h"
+﻿#include "display_view.h"
 
 #include <QGraphicsItem>
 #include <QKeyEvent>

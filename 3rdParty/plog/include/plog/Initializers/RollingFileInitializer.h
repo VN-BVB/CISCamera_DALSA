@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <plog/Appenders/RollingFileAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Formatters/CsvFormatter.h>

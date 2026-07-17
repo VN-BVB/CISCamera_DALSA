@@ -1,4 +1,4 @@
-#include "cameraImage_processor.h"
+﻿#include "cameraImage_processor.h"
 
 #include <QDebug>
 

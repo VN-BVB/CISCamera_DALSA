@@ -1,4 +1,4 @@
-#if !defined(__OBJECT_H)
+﻿#if !defined(__OBJECT_H)
 #    define __OBJECT_H
 
 #    include "constructor_stats.h"

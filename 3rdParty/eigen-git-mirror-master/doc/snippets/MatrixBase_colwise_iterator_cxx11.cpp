@@ -1,4 +1,4 @@
-Matrix3i m = Matrix3i::Random();
+﻿Matrix3i m = Matrix3i::Random();
 cout << "Here is the initial matrix m:" << endl << m << endl;
 int i = -1;
 for(auto c: m.colwise()) {

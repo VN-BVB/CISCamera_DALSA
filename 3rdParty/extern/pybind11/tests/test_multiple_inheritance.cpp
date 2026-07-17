@@ -1,4 +1,4 @@
-/*
+﻿/*
     tests/test_multiple_inheritance.cpp -- multiple inheritance,
     implicit MI casts
 

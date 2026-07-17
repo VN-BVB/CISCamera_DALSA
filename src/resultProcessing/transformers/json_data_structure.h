@@ -1,4 +1,4 @@
-#ifndef JSON_DATA_STRUCTURE_H
+﻿#ifndef JSON_DATA_STRUCTURE_H
 #define JSON_DATA_STRUCTURE_H
 
 #include <vector>

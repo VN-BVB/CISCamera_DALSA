@@ -1,4 +1,4 @@
-#include "canny_zernike_detector.h"
+﻿#include "canny_zernike_detector.h"
 
 #include <plog/Log.h>
 

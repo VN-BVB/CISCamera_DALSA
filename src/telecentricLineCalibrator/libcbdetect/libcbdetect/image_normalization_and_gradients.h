@@ -1,4 +1,4 @@
-// c++ version by ftdlyc
+﻿// c++ version by ftdlyc
 
 /*
 % Copyright 2012. All rights reserved.
