@@ -18,7 +18,7 @@ public:
     bool getIsPaired() const { return m_isPaired;}
     cv::RotatedRect getBoundingRect() const {return m_boundingRect;}
     cv::Point2f getCenterPoint() const {return m_centerPoint;}
-    OpeningDirection getOpeningDirection() const {return m_openingDirection;}
+    cv::Point2f getOpeningDirection() const {return m_openingDirection;}
     std::vector<cv::Point2f> getContourEndpoints() const;
 
 private:
@@ -36,7 +36,7 @@ private:
     int m_id;                               // 轮廓最小包围框id
     int m_oppositeId;                       // 与其相背轮廓的id（轮廓id从0开始，偶数与其id+1相背，奇数与其id-1相背）
     bool m_isPaired = false;                // 是否已被分配到工件
-    OpeningDirection m_openingDirection;    // 轮廓开口方向
+    cv::Point2f m_openingDirection;         // 轮廓开口方向单位向量，(0,0) 表示未知
 };
 
 #endif // CONTOUR_BOUNDING_BOX_H

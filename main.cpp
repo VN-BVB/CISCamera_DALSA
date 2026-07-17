@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     // JointView w;
     // w.show();
 
-    // JointView w;
+    // MainWindow w;
     // w.show();
 
     // MainWindow w;

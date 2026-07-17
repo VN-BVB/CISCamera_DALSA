@@ -219,33 +219,33 @@ ContourData TestEdgeAssembly::setContourData(cv::Point2f offset, int direction, 
     {
         std::vector<cv::Point2f> contourPoint = contourLeft(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
-        cd.setOpeningDirection(OpeningDirection::LEFT);
+        cd.setOpeningDirection(cv::Point2f(-1, 0));
         break;
     }
     case 1:
     {
         std::vector<cv::Point2f> contourPoint = contourRight(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
-        cd.setOpeningDirection(OpeningDirection::RIGHT);
+        cd.setOpeningDirection(cv::Point2f(1, 0));
         break;
     }
     case 2:
     {
         std::vector<cv::Point2f> contourPoint = contourUp(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
-        cd.setOpeningDirection(OpeningDirection::UP);
+        cd.setOpeningDirection(cv::Point2f(0, -1));
         break;
     }
     case 3:
     {
         std::vector<cv::Point2f> contourPoint = contourDown(offset, rotationAngle);
         cd.setSubpixelContour(contourPoint);
-        cd.setOpeningDirection(OpeningDirection::DOWN);
+        cd.setOpeningDirection(cv::Point2f(0, 1));
         break;
     }
     default:
     {
-        cd.setOpeningDirection(OpeningDirection::UNKNOWN);
+        cd.setOpeningDirection(cv::Point2f(0, 0));
         break;
     }
     }

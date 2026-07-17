@@ -8,8 +8,8 @@ DeduplicationStrategy::DeduplicationStrategy() {}
 bool DeduplicationStrategy::process(ContourData &context) {
     auto contour = context.getSubpixelContour();
     auto deduplicated = ContourFeatureCalculator::removeDuplicatePoints(contour);
-    // auto downsampled = ContourFeatureCalculator::downsampleByTwo(deduplicated);
-    context.setSubpixelContour(deduplicated);
+    auto downsampled = ContourFeatureCalculator::downsampleByTwo(deduplicated);
+    context.setSubpixelContour(downsampled);
 
     // 调试可视化：读入底图，把去重前后的轮廓画在同一张图上对比
     cv::Mat base = cv::imread("E:/work/Car_door_ring_splicing/image/背面打光/260622/cropped/28984_13220.bmp",

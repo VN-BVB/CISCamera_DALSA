@@ -88,10 +88,18 @@ EndpointInfo JsonTransformer::createEndpointInfo(const SeamEndpoint& endpoint)
             // 找到对应点，获取其contourId
             int correspondingContourId = targetEndpoint.contourId;
 
-            // 通过contourToWorkpieceMapping查找对应工件
+            // 通过contourToWorkpieceMapping查找对应工件（得到旧 workpieceId）
             auto it = m_contourToWorkpieceMapping.find(correspondingContourId);
             if (it != m_contourToWorkpieceMapping.end()) {
-                endpointInfo.correspondingWorkpieceId = it->second;
+                int oldWorkpieceId = it->second;
+                // 翻译成新工件 ID（= 平台 ID），与 JSON 外层键保持一致
+                auto remapIt = m_oldToNewWorkpieceId.find(oldWorkpieceId);
+                if (remapIt != m_oldToNewWorkpieceId.end()) {
+                    endpointInfo.correspondingWorkpieceId = remapIt->second;
+                } else {
+                    endpointInfo.correspondingWorkpieceId = oldWorkpieceId;
+                    PLOG_WARNING << "对应工件 " << oldWorkpieceId << " 未在重映射表中，保留原 ID";
+                }
             } else {
                 PLOG_WARNING << "未找到对应点轮廓ID " << correspondingContourId << " 所属的工件";
             }
@@ -213,9 +221,17 @@ BatchResultData JsonTransformer::transformToBatchResultData(const std::map<int, 
     // 1. 构建轮廓ID到工件ID的映射关系
     buildContourToWorkpieceMapping(combinationResult);
 
-    // 2. 为每个工件创建信息
+    // 2. 保存 旧工件ID → 新工件ID（= 平台ID）映射。
+    //    WorkpiecePlatformMapper::buildMapping 已保证 workpieceToPlatform 是单射且
+    //    覆盖 combinationResult 的所有 workpieceId，此处可直接拷贝使用。
+    m_oldToNewWorkpieceId = workpieceToPlatform;
+
+    // 3. 为每个工件创建信息（JSON 键用新工件 ID = 平台 ID）
     for (const auto& [workpieceId, contourIds] : combinationResult) {
-        std::string workpieceKey = "工件" + std::to_string(workpieceId);
+        int newWorkpieceId = m_oldToNewWorkpieceId.at(workpieceId);
+        std::string workpieceKey = "工件" + std::to_string(newWorkpieceId);
+        // createWorkpieceInfo 仍传旧 workpieceId，用于在 m_processedRoiInfos 中查轮廓、
+        // 在 workpieceToPlatform 中取真实 platformId 填 "对位平台序号" 字段
         WorkpieceInfo workpieceInfo = createWorkpieceInfo(workpieceId, contourIds, workpieceToPlatform);
         batchData.workpieces[workpieceKey] = workpieceInfo;
     }

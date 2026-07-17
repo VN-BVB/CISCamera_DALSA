@@ -41,8 +41,8 @@ inline void initPlog(plog::Severity logLevel = plog::debug) {
     // 初始化文件日志
     plog::init(logLevel, filename.str().c_str(), 1000000, 100);
 
-    // 添加控制台日志
-    static plog::ColorConsoleAppender<plog::MessageOnlyFormatter> consoleAppender;
+    // 添加控制台日志（包含时间戳等前缀）
+    static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
     plog::get()->addAppender(&consoleAppender);
 
     // 添加 Qt UI 日志（桥接到 LogPanel）

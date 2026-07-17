@@ -29,7 +29,7 @@ private:
     DistanceMatrix calculateDistanceMatrix(const UnpairedContoursMap& unpairedContours);
     NearestIndicesMap createNearestIndices(const UnpairedContoursMap& unpairedContours,
                                           const DistanceMatrix& distanceMatrix);
-    std::pair<std::vector<int>, std::vector<int>> partitionCandidatesByDirection(int currentId, OpeningDirection currentDirection, const cv::Point2f& currentCenter,
+    std::pair<std::vector<int>, std::vector<int>> partitionCandidatesByDirection(int currentId, const cv::Point2f& openingDirection, const cv::Point2f& currentCenter,
                                                                                  const std::vector<int>& candidateIds,
                                                                                  const UnpairedContoursMap& unpairedContours);
     bool tryGenerateTwoContourCombination(int currentId, const std::vector<int>& candidateIds,

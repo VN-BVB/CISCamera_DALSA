@@ -1,6 +1,6 @@
 ﻿#include "contour_bounding_box.h"
 
-ContourBoundingBox::ContourBoundingBox() : m_openingDirection(OpeningDirection::UNKNOWN)
+ContourBoundingBox::ContourBoundingBox() : m_openingDirection(0, 0)
 {}
 
 void ContourBoundingBox::initContourData(int id, const ContourData& contourData)

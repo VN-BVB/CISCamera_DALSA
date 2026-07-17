@@ -1,6 +1,6 @@
 ﻿#include "contour_data.h"
 
-ContourData::ContourData() : m_id(-1), m_openingDirection(OpeningDirection::UNKNOWN) {}
+ContourData::ContourData() : m_id(-1), m_openingDirection(0, 0) {}
 
 void ContourData::setPixelContour(const std::vector<cv::Point>& contour) {
     m_pixelContour = contour;
@@ -19,7 +19,7 @@ void ContourData::clear() {
     m_segmentedSubpixelContours.clear();
     m_counterClockwiseContours.clear();
     m_intersections.clear();
-    m_openingDirection = OpeningDirection::UNKNOWN;
+    m_openingDirection = cv::Point2f(0, 0);
 }
 
 bool ContourData::isValid() const {

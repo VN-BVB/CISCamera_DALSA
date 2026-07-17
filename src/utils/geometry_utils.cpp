@@ -240,7 +240,7 @@ std::vector<Eigen::Vector2d> pixel2World(const std::vector<cv::Point2f>& pix_pts
     // {
     //     std::swap(pt.x(), pt.y());
     // }
-    PLOG_INFO << "convert done";
+    // PLOG_INFO << "convert done";
     return worldPoints;
 }
 

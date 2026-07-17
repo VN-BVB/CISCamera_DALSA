@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 #include <unordered_set>
 #include <plog/Log.h>
 
@@ -69,8 +70,8 @@ std::map<int, int> WorkpiecePlatformMapper::buildMapping(
     std::map<int, int> mapping;
 
     if (platforms.empty()) {
-        PLOG_WARNING << "平台列表为空，无法建立工件→平台映射";
-        return mapping;
+        throw std::runtime_error(
+            "WorkpiecePlatformMapper: 平台列表为空，无法建立工件→平台映射");
     }
 
     for (const auto& [workpieceId, center] : workpieceCenters) {
@@ -92,6 +93,26 @@ std::map<int, int> WorkpiecePlatformMapper::buildMapping(
             mapping[workpieceId] = bestPlatformId;
             PLOG_INFO << "工件 " << workpieceId << " 关联平台 " << bestPlatformId
                       << "（距离 " << bestDist << " mm）";
+        }
+    }
+
+    // 单射校验：每个工件都必须关联到平台，且任意平台最多被一个工件占用。
+    // 不满足则抛异常，由调用方（ResultProcessor::whenEdgeAssemblyFinished）外层
+    // try/catch 捕获并中止本次输出。
+    if (mapping.size() != workpieceCenters.size()) {
+        throw std::runtime_error(
+            "WorkpiecePlatformMapper: 有 "
+            + std::to_string(workpieceCenters.size() - mapping.size())
+            + " 个工件未关联到任何平台，无法形成一一对应");
+    }
+
+    std::unordered_set<int> usedPlatformIds;
+    for (const auto& [wpId, pfId] : mapping) {
+        if (!usedPlatformIds.insert(pfId).second) {
+            throw std::runtime_error(
+                "WorkpiecePlatformMapper: 平台 " + std::to_string(pfId)
+                + " 被多个工件关联（包含工件 " + std::to_string(wpId)
+                + "），工件与对位平台不是一一对应");
         }
     }
 

@@ -24,15 +24,21 @@ private:
     double adaptiveCannyThresholdByOtsu(const cv::Mat &srcImage);
     // 去除边缘图中无关区域的边缘
     cv::Mat removeIrrelevantEdgeRegions(const cv::Mat& edge, const cv::Mat& grayImage);
+    // 用 Otsu + minAreaRect 生成工件外接旋转矩形掩码，对 edge 做像素级二次过滤
+    cv::Mat filterEdgesByMinAreaRect(const cv::Mat& edge, const cv::Mat& binary);
     // 计算中间缝隙中心线（中轴变换 + RANSAC）
-    cv::Vec4f calculateCenterLine(const cv::Mat& image);
+    cv::Vec4f calculateCenterLine(const cv::Mat& rawGray);
+    // Zhang-Suen骨架化方法（用于对比）
+    cv::Vec4f calculateCenterLineWithZhangSuen(const cv::Mat& grayImage, cv::Mat& debugOutput);
+    // 扫描线法计算中心线：minAreaRect + 法线方向扫描取中点 + RANSAC，内部完成可视化保存
+    cv::Vec4f calculateCenterLineByScanline(const cv::Mat& grayImage);
     // 根据中心线将轮廓分类到两侧
     std::pair<std::vector<std::vector<cv::Point>>, std::vector<std::vector<cv::Point>>>
     classifyContoursByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
     std::vector<std::vector<cv::Point>>
     classifyContourPointsByCenterLine(const std::vector<std::vector<cv::Point>>& contours, const cv::Vec4f& centerLine);
-    // 检测亮连通域数量
-    int countBrightConnectedComponents(const cv::Mat& grayImage, bool is8Neighbor = false);
+    // 检测亮连通域数量（minArea <= 0 时不过滤）
+    int countBrightConnectedComponents(const cv::Mat& binary, bool is8Neighbor = false, int minArea = 0);
 };
 
 #endif // CANNY_ZERNIKE_DETECTOR_H

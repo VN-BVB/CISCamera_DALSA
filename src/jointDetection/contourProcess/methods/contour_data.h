@@ -37,7 +37,7 @@ public:
     int getId() const { return m_id; }
     std::vector<cv::Point> getPixelContour() const { return m_pixelContour; }
     std::vector<cv::Point2f> getSubpixelContour() const { return m_subpixelContour; }
-    OpeningDirection getOpeningDirection() const { return m_openingDirection; }
+    cv::Point2f getOpeningDirection() const { return m_openingDirection; }
     std::vector<cv::Point2f> getSortedContour() const { return m_sortedSubpixelContour; }
     std::vector<cv::Point2f> getCornerPoints() const { return m_cornerPoints; }
     std::vector<std::vector<cv::Point2f>> getSegmentedContours() const { return m_segmentedSubpixelContours; }
@@ -48,7 +48,7 @@ public:
     std::vector<cv::Vec4f> getTangentLines() const { return m_tangentLines; }
 
     // 设置计算后的特征
-    void setOpeningDirection(OpeningDirection direction) { m_openingDirection = direction; }
+    void setOpeningDirection(const cv::Point2f& direction) { m_openingDirection = direction; }
     void setSortedContour(const std::vector<cv::Point2f>& contour) { m_sortedSubpixelContour = contour; }
     void setCornerPoints(const std::vector<cv::Point2f>& points) { m_cornerPoints = points; }
     void setSegmentedContours(const std::vector<std::vector<cv::Point2f>>& contours) { m_segmentedSubpixelContours = contours; }
@@ -64,7 +64,7 @@ private:
     int m_id;                                                               // 轮廓ID
     std::vector<cv::Point> m_pixelContour;                                  // 像素级坐标轮廓
     std::vector<cv::Point2f> m_subpixelContour;                             // 亚像素级坐标轮廓
-    OpeningDirection m_openingDirection;                                    // 轮廓开口方向
+    cv::Point2f m_openingDirection;                                         // 轮廓开口方向单位向量，(0,0) 表示未知
     std::vector<cv::Point2f> m_sortedSubpixelContour;                       // 点相对于中心逆时针排序后的轮廓
     std::vector<cv::Point2f> m_cornerPoints;                                // 轮廓多边形拟合后的角点
     std::vector<std::vector<cv::Point2f>> m_segmentedSubpixelContours;      // 分割后的轮廓
