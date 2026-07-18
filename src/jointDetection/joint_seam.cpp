@@ -35,6 +35,9 @@ void JointSeam::run() {
             point.y += m_position.y;
         }
     }
+    // centerLine 方向不变，仅将其所过点 (x0,y0) 平移到整体坐标
+    centerLine[2] += m_position.x;
+    centerLine[3] += m_position.y;
 
     // 轮廓信息处理（使用线程池并行处理）
     {
