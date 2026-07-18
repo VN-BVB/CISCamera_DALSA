@@ -75,13 +75,14 @@ private:
     // 按两个密集区间把父矩形切成长轴方向上的两个子矩形
     std::vector<cv::RotatedRect> splitMinAreaRect(const cv::RotatedRect& parent, const RectFrame& frame,
                                                   const std::pair<FloatRange, FloatRange>& intervals);
-    // 在子矩形内取整图 Canny 边缘点并拟合直线，outEdgePoints 返回子矩形内的边缘点
-    cv::Vec4f fitEdgeLineInRect(const cv::Mat& edgeMap, const cv::RotatedRect& subRect,
-                                std::vector<cv::Point2f>& outEdgePoints);
+    // 在子矩形内收集整图 Canny 边缘点（outEdgePoints）
+    void collectEdgePointsInRect(const cv::Mat& edgeMap, const cv::RotatedRect& subRect,
+                                 std::vector<cv::Point2f>& outEdgePoints);
     // 中心线 = 矩形长轴中线
     cv::Vec4f centerLineFromFrame(const RectFrame& frame);
-    // 边线与中心线求交点（平行则返回 (-1,-1)）
-    cv::Point2f intersectWithCenterLine(const cv::Vec4f& edgeLine, const cv::Vec4f& centerLine);
+    // 在两子矩形中间区域沿长轴扫描法线方向取缝隙中点 + RANSAC 求中心线（碰撞路径用，退化时退回长轴中线）
+    cv::Vec4f calculateCenterLineInGap(const cv::Mat& binary, const RectFrame& frame,
+                                       const std::pair<FloatRange, FloatRange>& intervals);
     // 把各子矩形边缘点按中心线法向分成 [右,左] 并做 Zernike 亚像素化；
     // 再把两子矩形中心之间的中心线等步长采样出 spine，各追加一份到右/左，使每条轮廓构成完整 C 形
     std::vector<std::vector<cv::Point2f>> buildRightLeftContours(const std::vector<std::vector<cv::Point2f>>& edgePointSets,

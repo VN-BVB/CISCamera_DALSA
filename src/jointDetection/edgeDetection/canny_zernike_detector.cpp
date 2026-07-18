@@ -1086,8 +1086,8 @@ std::vector<cv::RotatedRect> CannyZernikeDetector::splitMinAreaRect(
     return subRects;
 }
 
-cv::Vec4f CannyZernikeDetector::fitEdgeLineInRect(const cv::Mat& edgeMap, const cv::RotatedRect& subRect,
-                                                  std::vector<cv::Point2f>& outEdgePoints) {
+void CannyZernikeDetector::collectEdgePointsInRect(const cv::Mat& edgeMap, const cv::RotatedRect& subRect,
+                                                   std::vector<cv::Point2f>& outEdgePoints) {
     outEdgePoints.clear();
     std::vector<cv::Point> edgePx;
     cv::findNonZero(edgeMap, edgePx);
@@ -1099,18 +1099,79 @@ cv::Vec4f CannyZernikeDetector::fitEdgeLineInRect(const cv::Mat& edgeMap, const 
         }
     }
     if (outEdgePoints.size() < 2) {
-        PLOG_WARNING << "[碰撞路径] 子矩形内边缘点不足 2 个，返回默认直线";
-        return cv::Vec4f(1.0f, 0.0f, subRect.center.x, subRect.center.y);
+        PLOG_WARNING << "[碰撞路径] 子矩形内边缘点不足 2 个";
     }
-    return GeometryUtils::fitLine(outEdgePoints);  // Huber，返回 (vx,vy,x0,y0)
 }
 
 cv::Vec4f CannyZernikeDetector::centerLineFromFrame(const RectFrame& frame) {
     return cv::Vec4f(frame.longDir.x, frame.longDir.y, frame.center.x, frame.center.y);
 }
 
-cv::Point2f CannyZernikeDetector::intersectWithCenterLine(const cv::Vec4f& edgeLine, const cv::Vec4f& centerLine) {
-    return GeometryUtils::calculateLineIntersection(edgeLine, centerLine);
+cv::Vec4f CannyZernikeDetector::calculateCenterLineInGap(
+    const cv::Mat& binary, const RectFrame& frame,
+    const std::pair<FloatRange, FloatRange>& intervals) {
+    // 扫描范围 = 两子矩形在长轴上夹着的中间区域 [first.hi, second.lo]（first/second 已按 lo 升序）
+    float tLo = std::min(intervals.first.hi, intervals.second.lo);
+    float tHi = std::max(intervals.first.hi, intervals.second.lo);
+    const float halfShort = frame.shortLen / 2.0f;
+    const float kStep = 2.0f;
+
+    // 退化兜底：中间区域扫描中点不足时退回长轴中线
+    cv::Vec4f centerLine = centerLineFromFrame(frame);
+
+    // 沿长轴等步长扫描；每条线沿短轴(法向)找白↔黑跳变对，取前两跳变中点为缝隙中心
+    std::vector<cv::Point2f> centerLinePoints;
+    for (float t = tLo; t <= tHi; t += kStep) {
+        cv::Point2f lineCenter = frame.center + frame.longDir * t;
+        std::vector<float> transitions;
+        bool prevWhite = false;
+        for (float s = -halfShort; s <= halfShort; s += 1.0f) {
+            cv::Point2f pt = lineCenter + frame.shortDir * s;
+            int px = cvRound(pt.x);
+            int py = cvRound(pt.y);
+            if (px < 0 || px >= binary.cols || py < 0 || py >= binary.rows) {
+                prevWhite = false;
+                continue;
+            }
+            bool isWhite = binary.at<uchar>(py, px) > 0;
+            if (isWhite != prevWhite) {
+                transitions.push_back(s);
+                prevWhite = isWhite;
+            }
+        }
+        if (transitions.size() >= 2) {
+            float midS = (transitions[0] + transitions[1]) / 2.0f;
+            centerLinePoints.push_back(lineCenter + frame.shortDir * midS);
+        }
+    }
+
+    const size_t kMinScanPoints = 50;  // 扫描中点数低于此阈值则退回最小外接矩形中心线
+    if (centerLinePoints.size() >= kMinScanPoints) {
+        std::vector<cv::Point2f> inliers;
+        GeometryUtils::lineRansac(centerLinePoints, centerLine, inliers, 3.0, 100);
+    } else {
+        centerLine = centerLineFromFrame(frame);  // 显式退回最小外接矩形中心线
+        PLOG_WARNING << "[碰撞路径] 中间区域扫描中点 " << centerLinePoints.size()
+                     << " < " << kMinScanPoints << "，退回最小外接矩形中心线";
+    }
+
+    // [DEBUG] 可视化：扫描中点(绿) + 拟合中心线(蓝)，叠在二值化白色区域上
+    {
+        static int centerLineSaveCounter = 0;
+        ++centerLineSaveCounter;
+        cv::Mat vis;
+        cv::cvtColor(binary, vis, cv::COLOR_GRAY2BGR);
+        for (const auto& pt : centerLinePoints) {
+            cv::circle(vis, cv::Point(cvRound(pt.x), cvRound(pt.y)), 1, cv::Scalar(0, 255, 0), -1);
+        }
+        cv::Point2f p1(centerLine[2] - 1000 * centerLine[0], centerLine[3] - 1000 * centerLine[1]);
+        cv::Point2f p2(centerLine[2] + 1000 * centerLine[0], centerLine[3] + 1000 * centerLine[1]);
+        cv::line(vis, p1, p2, cv::Scalar(255, 0, 0), 2);
+        static std::string visDir = "E:/work/Car_door_ring_splicing/image/背面打光/260716/";
+        cv::imwrite(visDir + "collision_centerLine_" + std::to_string(centerLineSaveCounter) + ".bmp", vis);
+    }
+
+    return centerLine;
 }
 
 std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::buildRightLeftContours(
@@ -1145,31 +1206,33 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::buildRightLeftContou
     std::vector<cv::Point2f> right = getSubpixelContourZernike(inputImage, rightPx);
     std::vector<cv::Point2f> left = getSubpixelContourZernike(inputImage, leftPx);
 
-    // 中心线 spine：两子矩形中心之间按固定步长等步长采样（含两端）。
-    // spine 是合成点、落在拼缝中线（非边缘），不走 Zernike；各追加一份到右/左，
-    // 把长轴两端的两簇边缘桥成完整 C 形开口弧，供下游 SortingStrategy 正确重排。
+    // spine：两子矩形中心投影到扫描缝隙中线 centerLine 上，沿 centerLine 在两投影点之间
+    // 等步长采样（含两端）。spine 是合成点、落在缝隙中线（非边缘），不走 Zernike；
+    // 各追加一份到右/左，把长轴两端的两簇边缘桥成完整 C 形开口弧，供下游 SortingStrategy 正确重排。
     const float kCenterLineSampleStep = 5.0f;
-    auto sampleCenterLineSpine = [&](const std::vector<cv::Point2f>& centers) -> std::vector<cv::Point2f> {
-        std::vector<cv::Point2f> pts;
-        if (centers.size() < 2) {
-            return pts;
+    float vlen = std::sqrt(vx * vx + vy * vy);
+    float uvx = (vlen > 1e-6f) ? vx / vlen : vx;  // centerLine 方向归一化（lineRansac 方向未必单位长）
+    float uvy = (vlen > 1e-6f) ? vy / vlen : vy;
+    std::vector<cv::Point2f> spine;
+    if (subRectCenters.size() >= 2) {
+        const cv::Point2f& c0 = subRectCenters[0];
+        const cv::Point2f& c1 = subRectCenters[1];
+        // c0/c1 在 centerLine 上的投影参数 t = (c - 线上点)·单位方向
+        float t0 = (c0.x - x0) * uvx + (c0.y - y0) * uvy;
+        float t1 = (c1.x - x0) * uvx + (c1.y - y0) * uvy;
+        float tLo = std::min(t0, t1);
+        float tHi = std::max(t0, t1);
+        if (tHi - tLo < kCenterLineSampleStep) {
+            float tm = (tLo + tHi) * 0.5f;  // 退化：两投影点过近，只加投影中点
+            spine.emplace_back(x0 + uvx * tm, y0 + uvy * tm);
+        } else {
+            int n = static_cast<int>(std::ceil((tHi - tLo) / kCenterLineSampleStep));
+            for (int i = 0; i <= n; ++i) {
+                float t = tLo + (tHi - tLo) * static_cast<float>(i) / static_cast<float>(n);
+                spine.emplace_back(x0 + uvx * t, y0 + uvy * t);
+            }
         }
-        cv::Point2f c0 = centers[0];
-        cv::Point2f c1 = centers[1];
-        cv::Point2f d = c1 - c0;
-        float dist = std::sqrt(d.x * d.x + d.y * d.y);
-        if (dist < kCenterLineSampleStep) {
-            pts.emplace_back((c0.x + c1.x) * 0.5f, (c0.y + c1.y) * 0.5f);  // 退化：两中心过近，只加中点
-            return pts;
-        }
-        int n = static_cast<int>(std::ceil(dist / kCenterLineSampleStep));
-        for (int i = 0; i <= n; ++i) {
-            float t = static_cast<float>(i) / static_cast<float>(n);
-            pts.push_back(c0 + d * t);
-        }
-        return pts;
-    };
-    std::vector<cv::Point2f> spine = sampleCenterLineSpine(subRectCenters);
+    }
     right.insert(right.end(), spine.begin(), spine.end());
     left.insert(left.end(), spine.begin(), spine.end());
     return {right, left};
@@ -1234,22 +1297,17 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContoursWithCo
     edge = removeIrrelevantEdgeRegions(edge, grayImage);
     edge = filterEdgesByMinAreaRect(edge, binaryImage);
 
-    // 6. 每个子矩形取边缘点 + 拟合直线
-    std::vector<cv::Vec4f> edgeLines;
+    // 6. 每个子矩形内收集边缘点
     std::vector<std::vector<cv::Point2f>> edgePointSets;
     edgePointSets.reserve(subRects.size());
     for (const auto& subRect : subRects) {
         std::vector<cv::Point2f> pts;
-        edgeLines.push_back(fitEdgeLineInRect(edge, subRect, pts));
+        collectEdgePointsInRect(edge, subRect, pts);
         edgePointSets.push_back(std::move(pts));
     }
 
-    // 7-8. 中心线（长轴中线）+ 与每条边线求交
-    cv::Vec4f centerLine = centerLineFromFrame(frame);
-    for (const auto& line : edgeLines) {
-        cv::Point2f ip = intersectWithCenterLine(line, centerLine);
-        PLOG_DEBUG << "[碰撞路径] 边线与中心线交点: (" << ip.x << ", " << ip.y << ")";
-    }
+    // 7. 中心线：在两子矩形中间区域沿长轴扫描法线方向取缝隙中点 + RANSAC（限定中间区域的扫描法）
+    cv::Vec4f centerLine = calculateCenterLineInGap(binaryImage, frame, intervals);
 
     // 9. 边缘点按中心线法向分成 [右,左] 并亚像素化；中心线 spine 桥接长轴两端成完整 C 形
     std::vector<cv::Point2f> subRectCenters = {subRects[0].center, subRects[1].center};
