@@ -120,7 +120,8 @@
         "mprealsupport": "cpp",
         "openglsupport": "cpp",
         "specialfunctions": "cpp",
-        "splines": "cpp"
+        "splines": "cpp",
+        "*.expression": "cpp"
     },
     "cmake.sourceDirectory": "D:/Qt_Project/CISCamera_DALSA/3rdParty/extern/pybind11"
 }
