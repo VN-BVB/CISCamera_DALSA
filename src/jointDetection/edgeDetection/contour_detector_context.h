@@ -18,7 +18,7 @@ public:
     void setDetector(std::unique_ptr<AbstractContourDetector> detector);
 
     // 执行边缘轮廓检测
-    std::vector<std::vector<cv::Point2f>> detectContours(const cv::Mat &inputImage);
+    ContourDetectionResult detectContours(const cv::Mat &inputImage);
 
     // 获取当前策略描述
     std::string getCurrentDescription() const;

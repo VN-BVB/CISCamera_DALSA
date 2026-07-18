@@ -20,6 +20,7 @@ void ContourData::clear() {
     m_counterClockwiseContours.clear();
     m_intersections.clear();
     m_openingDirection = cv::Point2f(0, 0);
+    m_isCollision = false;
 }
 
 bool ContourData::isValid() const {

@@ -28,7 +28,7 @@ public:
     CannyZernikeDetector();
     virtual ~CannyZernikeDetector() override = default;
 
-    virtual std::vector<std::vector<cv::Point2f>> detectContours(const cv::Mat& inputImage) override;
+    virtual ContourDetectionResult detectContours(const cv::Mat& inputImage) override;
     virtual std::string getDescription() const override {return "基于Canny_Zernike矩的亚像素边缘检测算法";}
 private:
     // Zernike矩法辅助函数

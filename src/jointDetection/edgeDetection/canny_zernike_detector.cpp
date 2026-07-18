@@ -834,7 +834,7 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
  * @param inputImage 输入图像（彩色或灰度）
  * @return 包含左右两侧亚像素轮廓的vector，第一个元素为右侧轮廓，第二个元素为左侧轮廓
  */
-std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const cv::Mat& inputImage)
+ContourDetectionResult CannyZernikeDetector::detectContours(const cv::Mat& inputImage)
 {
     PLOG_INFO << "开始轮廓检测";
     cv::Mat grayImage;
@@ -855,8 +855,9 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
         brightComponentCount = countBrightConnectedComponents(binaryImage, true, 500);
     }
 
+    const bool isCollision = brightComponentCount > 1;
     std::vector<std::vector<cv::Point2f>> subpixelConturs;
-    if (brightComponentCount > 1) {
+    if (isCollision) {
         PLOG_INFO << "检测到 " << brightComponentCount
                   << " 个亮区连通域，工件可能已碰撞，进入碰撞处理路径";
         subpixelConturs = detectContoursWithCollision(grayImage, binaryImage, inputImage);
@@ -865,7 +866,7 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
     }
 
     PLOG_INFO << "轮廓检测完成";
-    return subpixelConturs;
+    return {subpixelConturs, isCollision};
 }
 
 /**

@@ -13,7 +13,7 @@ public:
     ContourProcessor();
 
     // 处理轮廓
-    bool processContour(const std::vector<cv::Point2f>& contour, int contourId = -1);
+    bool processContour(const std::vector<cv::Point2f>& contour, int contourId = -1, bool isCollision = false);
 
     // 获取处理结果
     const ContourData& getResult() const { return m_contourData; }
