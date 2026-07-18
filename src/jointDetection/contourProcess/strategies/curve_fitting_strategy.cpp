@@ -4,15 +4,20 @@ CurveFittingStrategy::CurveFittingStrategy() {}
 
 bool CurveFittingStrategy::process(ContourData& context) {
     auto sortedSegments = context.getSortedSegments();
-
-    // 拟合曲线
-    auto curveSegments = ContourFitter::fitCurvesToSegments(sortedSegments);
-
-    // 计算拼缝端点
-    auto centroid = ContourUtils::calculateCentralPoint(context.getSortedContour());
     std::vector<cv::Vec4f> tangentLines;
     std::vector<cv::Point2f> endPoints;
-    ContourFitter::calculateEndPoints(curveSegments, centroid, endPoints, tangentLines);
+
+    if (context.isCollision()) {
+        // 碰撞：跳过曲线拟合，直接对原始轮廓段拟合直线并与中心线求交
+        ContourFitter::calculateEndPointsFromCenterLine(
+            sortedSegments, endPoints, tangentLines, context.getCenterLine());
+    } else {
+        // 非碰撞：样条拟合 + 现有端点逻辑
+        auto curveSegments = ContourFitter::fitCurvesToSegments(sortedSegments);
+        auto centroid = ContourUtils::calculateCentralPoint(context.getSortedContour());
+        ContourFitter::calculateEndPoints(curveSegments, centroid, endPoints, tangentLines);
+        context.setCurveSegments(curveSegments);
+    }
 
     // 将端点转换为结构化的交点信息并分配ID
     std::vector<ContourIntersection> contourIntersections;
@@ -22,7 +27,6 @@ bool CurveFittingStrategy::process(ContourData& context) {
     }
 
     // 存储结果到上下文
-    context.setCurveSegments(curveSegments);
     context.setIntersections(contourIntersections);
     context.setTangentLines(tangentLines);
 

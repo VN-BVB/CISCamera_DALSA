@@ -127,6 +127,50 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
     }
 }
 
+/**
+ * @brief 碰撞情况下基于缝隙中心线计算端点
+ * @param segments 输入轮廓段集合，键为段索引，值为原始轮廓点集（不经样条拟合）
+ * @param[out] endPoints 计算得到的端点集合
+ * @param[out] lines 计算过程中使用的拟合直线
+ * @param centerLine 缝隙中心线 (vx, vy, x0, y0)
+ * @details 取第一条/第三条轮廓段的最小二乘拟合直线（cv::fitLine DIST_L2），
+ *          分别与缝隙中心线求交，得到两个端点。碰撞时样条拟合可能失败，
+ *          故直接对原始段点拟合，绕开样条。
+ */
+void ContourFitter::calculateEndPointsFromCenterLine(const std::map<int, std::vector<cv::Point2f>>& segments,
+                                                     std::vector<cv::Point2f>& endPoints,
+                                                     std::vector<cv::Vec4f>& lines,
+                                                     const cv::Vec4f& centerLine)
+{
+    // 清空输出参数
+    endPoints.clear();
+    lines.clear();
+
+    if (segments.empty()) {
+        PLOG_INFO << "警告：没有可用的轮廓段数据，无法计算端点";
+        return;
+    }
+
+    // 第一条/第三条轮廓段的最小二乘拟合直线 与 缝隙中心线求交
+    const std::vector<cv::Point2f>& pts1 = segments.at(1);
+    const std::vector<cv::Point2f>& pts3 = segments.at(3);
+
+    cv::Vec4f line1, line3;
+    cv::fitLine(pts1, line1, cv::DIST_L2, 0, 0.01, 0.01);
+    cv::fitLine(pts3, line3, cv::DIST_L2, 0, 0.01, 0.01);
+
+    cv::Point2f endPoint1 = GeometryUtils::calculateLineIntersection(line1, centerLine);
+    cv::Point2f endPoint2 = GeometryUtils::calculateLineIntersection(line3, centerLine);
+
+    lines.push_back(line1);
+    lines.push_back(line3);
+    endPoints.push_back(endPoint1);
+    endPoints.push_back(endPoint2);
+
+    PLOG_INFO << "[碰撞] 端点1坐标: (" << endPoint1.x << ", " << endPoint1.y << ")";
+    PLOG_INFO << "[碰撞] 端点2坐标: (" << endPoint2.x << ", " << endPoint2.y << ")";
+}
+
 // ... existing code ...
 /**
  * @brief 基于直线段计算端点

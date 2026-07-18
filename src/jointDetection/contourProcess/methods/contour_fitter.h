@@ -15,9 +15,15 @@ public:
     static std::map<int, CurveSeg> fitCurvesToSegments(const std::map<int, std::vector<cv::Point2f>>& segments);
 
     static void calculateEndPoints(const std::map<int, CurveSeg>& curveSegments,
-                                                  const cv::Point2f centroid,
-                                                  std::vector<cv::Point2f>& endPoints,
-                                                  std::vector<cv::Vec4f>& lines);
+                                   const cv::Point2f centroid,
+                                   std::vector<cv::Point2f>& endPoints,
+                                   std::vector<cv::Vec4f>& lines);
+
+    // 碰撞情况：跳过曲线拟合，直接对原始轮廓段做最小二乘拟合直线，与缝隙中心线求交得端点
+    static void calculateEndPointsFromCenterLine(const std::map<int, std::vector<cv::Point2f>>& segments,
+                                                 std::vector<cv::Point2f>& endPoints,
+                                                 std::vector<cv::Vec4f>& lines,
+                                                 const cv::Vec4f& centerLine);
 
     static std::vector<cv::Point2f> calculateEndPoints(const std::map<int, LineSeg>& lineSegments);
 };
