@@ -1,6 +1,8 @@
 #include "contour_fitter.h"
 #include "src/utils/geometry_utils.h"
 #include <plog/Log.h>
+#include <algorithm>
+#include <cmath>
 
 /**
  * @brief 将轮廓段拟合为直线段
@@ -131,11 +133,11 @@ void ContourFitter::calculateEndPoints(const std::map<int, CurveSeg>& curveSegme
  * @brief 碰撞情况下基于缝隙中心线计算端点
  * @param segments 输入轮廓段集合，键为段索引，值为原始轮廓点集（不经样条拟合）
  * @param[out] endPoints 计算得到的端点集合
- * @param[out] lines 计算过程中使用的拟合直线
+ * @param[out] lines 计算过程中使用的拟合直线（每段选中的最佳直线）
  * @param centerLine 缝隙中心线 (vx, vy, x0, y0)
- * @details 取第一条/第三条轮廓段的最小二乘拟合直线（cv::fitLine DIST_L2），
- *          分别与缝隙中心线求交，得到两个端点。碰撞时样条拟合可能失败，
- *          故直接对原始段点拟合，绕开样条。
+ * @details 对第一条/第三条轮廓段各做顺序RANSAC（最多4次，剥洋葱），在候选直线中
+ *          选取与缝隙中心线夹角最大者（方向点积绝对值最小），分别与中心线求交得到两个端点。
+ *          相比单次最小二乘，对碰撞段的多方向噪声/离群点更稳健。
  */
 void ContourFitter::calculateEndPointsFromCenterLine(const std::map<int, std::vector<cv::Point2f>>& segments,
                                                      std::vector<cv::Point2f>& endPoints,
@@ -151,24 +153,99 @@ void ContourFitter::calculateEndPointsFromCenterLine(const std::map<int, std::ve
         return;
     }
 
-    // 第一条/第三条轮廓段的最小二乘拟合直线 与 缝隙中心线求交
-    const std::vector<cv::Point2f>& pts1 = segments.at(1);
-    const std::vector<cv::Point2f>& pts3 = segments.at(3);
+    // 第一条/第三条轮廓段：顺序RANSAC选与中心线夹角最大的拟合直线，再与中心线求交
+    cv::Vec4f bestLine1 = selectLineWithMaxAngle(segments.at(1), centerLine);
+    cv::Vec4f bestLine3 = selectLineWithMaxAngle(segments.at(3), centerLine);
 
-    cv::Vec4f line1, line3;
-    cv::fitLine(pts1, line1, cv::DIST_L2, 0, 0.01, 0.01);
-    cv::fitLine(pts3, line3, cv::DIST_L2, 0, 0.01, 0.01);
+    cv::Point2f endPoint1 = GeometryUtils::calculateLineIntersection(bestLine1, centerLine);
+    cv::Point2f endPoint2 = GeometryUtils::calculateLineIntersection(bestLine3, centerLine);
 
-    cv::Point2f endPoint1 = GeometryUtils::calculateLineIntersection(line1, centerLine);
-    cv::Point2f endPoint2 = GeometryUtils::calculateLineIntersection(line3, centerLine);
-
-    lines.push_back(line1);
-    lines.push_back(line3);
+    lines.push_back(bestLine1);
+    lines.push_back(bestLine3);
     endPoints.push_back(endPoint1);
     endPoints.push_back(endPoint2);
 
     PLOG_INFO << "[碰撞] 端点1坐标: (" << endPoint1.x << ", " << endPoint1.y << ")";
     PLOG_INFO << "[碰撞] 端点2坐标: (" << endPoint2.x << ", " << endPoint2.y << ")";
+}
+
+/**
+ * @brief 顺序 RANSAC 拟合多条直线（剥洋葱）
+ * @param points 输入点集
+ * @param maxLines 最多拟合直线条数
+ * @param threshold 内点距离阈值
+ * @param maxIterations 单次RANSAC最大迭代次数
+ * @return 拟合得到的直线集合（≤maxLines 条），方向向量均已归一化
+ * @details 每次单次RANSAC拟合一条直线后，从剩余点中剔除其内点，对剩余点继续拟合，
+ *          直到达到 maxLines 次或剩余点/内点不足。
+ */
+std::vector<cv::Vec4f> ContourFitter::ransacFitMaxLines(const std::vector<cv::Point2f>& points,
+                                                        int maxLines,
+                                                        double threshold,
+                                                        int maxIterations)
+{
+    std::vector<cv::Vec4f> lines;
+    std::vector<cv::Point2f> remainingPoints = points;
+
+    for (int i = 0; i < maxLines; ++i) {
+        if (remainingPoints.size() < 2) break;
+
+        cv::Vec4f currentLine;
+        std::vector<cv::Point2f> currentInliers;
+        GeometryUtils::lineRansac(remainingPoints, currentLine, currentInliers, threshold, maxIterations);
+        if (currentInliers.size() < 2) break;  // 本次拟合无效，停止剥洋葱
+
+        lines.push_back(currentLine);
+
+        // 从剩余点中剔除本次内点，继续拟合下一条直线
+        remainingPoints.erase(
+            std::remove_if(remainingPoints.begin(), remainingPoints.end(),
+                           [&currentInliers](const cv::Point2f& p) {
+                               for (const auto& inlier : currentInliers) {
+                                   if (cv::norm(p - inlier) < 1e-6) return true;
+                               }
+                               return false;
+                           }),
+            remainingPoints.end());
+    }
+    return lines;
+}
+
+/**
+ * @brief 在一段点的RANSAC候选直线中，选出与中心线夹角最大者
+ * @param points 输入点集（一段原始轮廓点）
+ * @param centerLine 缝隙中心线 (vx, vy, x0, y0)，方向已归一化
+ * @return 与 centerLine 夹角最大的候选直线；候选为空时回退全点最小二乘拟合，再不足则返回零向量
+ * @details 对 points 做 ransacFitMaxLines(4) 得到 ≤4 条候选直线，取其方向与 centerLine
+ *          方向点积绝对值最小者（即夹角最大）。候选为空（点不足）时回退 cv::fitLine(DIST_L2)。
+ */
+cv::Vec4f ContourFitter::selectLineWithMaxAngle(const std::vector<cv::Point2f>& points,
+                                                const cv::Vec4f& centerLine)
+{
+    std::vector<cv::Vec4f> candidates = ransacFitMaxLines(points, 3);
+
+    // 候选为空（点不足或全部拟合失败）时回退对全部点做一次最小二乘拟合；仍无点则返回零向量
+    if (candidates.empty()) {
+        if (points.size() >= 2) {
+            cv::Vec4f fallback;
+            cv::fitLine(points, fallback, cv::DIST_L2, 0, 0.01, 0.01);
+            return fallback;
+        }
+        return cv::Vec4f(0, 0, 0, 0);
+    }
+
+    // centerLine 方向已归一化，候选直线方向也已归一化；取方向点积绝对值最小者（夹角最大）
+    cv::Vec2f centerDir(centerLine[0], centerLine[1]);
+    cv::Vec4f bestLine = candidates[0];
+    float bestAbsDot = std::fabs(centerDir.dot(cv::Vec2f(bestLine[0], bestLine[1])));
+    for (size_t i = 1; i < candidates.size(); ++i) {
+        float absDot = std::fabs(centerDir.dot(cv::Vec2f(candidates[i][0], candidates[i][1])));
+        if (absDot < bestAbsDot) {
+            bestAbsDot = absDot;
+            bestLine = candidates[i];
+        }
+    }
+    return bestLine;
 }
 
 // ... existing code ...

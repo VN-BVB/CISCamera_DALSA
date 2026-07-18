@@ -1251,10 +1251,11 @@ ContourDetectionResult CannyZernikeDetector::detectContoursWithCollision(
 
     // 1-2. 白色区域最小外接矩形 + 长/短轴坐标系
     cv::RotatedRect rect = computeWhiteMinAreaRect(binaryImage);
-    // 将最小外接矩形整体缩小到 0.8 倍（中心与角度不变，仅缩放宽高），收束到白色区域核心后再做后续切分
-    const float kRectShrinkScale = 0.8f;
-    rect.size.width *= kRectShrinkScale;
-    rect.size.height *= kRectShrinkScale;
+    // 将最小外接矩形整体缩小（中心与角度不变，仅缩放宽高），收束到白色区域核心后再做后续切分
+    const float kRectShrinkScaleWidth = 0.9f;
+    const float kRectShrinkScaleHeight = 0.8f;
+    rect.size.width *= kRectShrinkScaleWidth;
+    rect.size.height *= kRectShrinkScaleHeight;
     RectFrame frame = establishRectFrame(rect);
 
     // 3-4. 沿长轴扫描跳变投影 + 找两个密集区间

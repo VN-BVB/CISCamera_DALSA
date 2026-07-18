@@ -19,13 +19,23 @@ public:
                                    std::vector<cv::Point2f>& endPoints,
                                    std::vector<cv::Vec4f>& lines);
 
-    // 碰撞情况：跳过曲线拟合，直接对原始轮廓段做最小二乘拟合直线，与缝隙中心线求交得端点
+    // 碰撞情况：跳过曲线拟合，对原始轮廓段做顺序RANSAC，选与缝隙中心线夹角最大的拟合直线求交得端点
     static void calculateEndPointsFromCenterLine(const std::map<int, std::vector<cv::Point2f>>& segments,
                                                  std::vector<cv::Point2f>& endPoints,
                                                  std::vector<cv::Vec4f>& lines,
                                                  const cv::Vec4f& centerLine);
 
     static std::vector<cv::Point2f> calculateEndPoints(const std::map<int, LineSeg>& lineSegments);
+
+private:
+    // 顺序 RANSAC 最多拟合 maxLines 条直线（剥洋葱：每次拟合后剔除内点），剩余点不足则提前停止
+    static std::vector<cv::Vec4f> ransacFitMaxLines(const std::vector<cv::Point2f>& points,
+                                                    int maxLines,
+                                                    double threshold = 8.0,
+                                                    int maxIterations = 100);
+    // 在一段点的 RANSAC 候选直线中，选与 centerLine 夹角最大者（方向点积绝对值最小）
+    static cv::Vec4f selectLineWithMaxAngle(const std::vector<cv::Point2f>& points,
+                                            const cv::Vec4f& centerLine);
 };
 
 
