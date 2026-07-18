@@ -7,6 +7,12 @@
 
 #include "src/config/config_manager.h"
 #include "src/crashHandler/CrashHandler.h"
+#include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
+#include "src/ui/jointView/joint_view.h"
+#include "src/utils/plog_utils.h"
+#include "src/ui/measurementMonitor/qss_loader.h"
+#include "src/ui/mainwindow/main_window.h"
+
 #include "src/test/test_cad_view.h"'
 #include "src/test/test_convert_coordinate.h"
 #include "src/test/test_dxf_writer.h"
@@ -15,11 +21,9 @@
 #include "src/test/test_pixel2world.h"
 #include "src/test/test_platform_pose_dxf.h"
 #include "src/test/test_tiny_spline.h"
-#include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
-#include "src/ui/jointView/joint_view.h"
-#include "src/utils/plog_utils.h"
-#include "src/ui/measurementMonitor/qss_loader.h"
-#include "src/ui/mainwindow/main_window.h"
+
+// 测试函数前向声明（实现位于 src/test/test_zhang_suen.cpp）
+void testZhangSuenThinning();
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -38,11 +42,13 @@ int main(int argc, char *argv[]) {
     // TestConvertCoordinate t;
     // t.pixel2World();
 
-    JointView w;
-    w.show();
-
     // JointView w;
     // w.show();
+
+    // testZhangSuenThinning();
+
+    JointView w;
+    w.show();
 
     // MainWindow w;
     // w.show();

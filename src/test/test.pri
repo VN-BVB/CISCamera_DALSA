@@ -25,7 +25,8 @@ SOURCES += \
     $$PWD/test_multiRoi.cpp \
     $$PWD/test_platform_pose_dxf.cpp \
     $$PWD/test_tiny_spline.cpp \
-    $$PWD/test_write_plc.cpp
+    $$PWD/test_write_plc.cpp \
+    $$PWD/test_zhang_suen.cpp
 
 
 
