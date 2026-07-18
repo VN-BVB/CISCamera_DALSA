@@ -1294,7 +1294,7 @@ ContourDetectionResult CannyZernikeDetector::detectContoursWithCollision(
     double TH = adaptiveCannyThresholdByOtsu(grayImage);
     double TL = TH * 0.5;
     cv::Mat edge;
-    cv::Canny(grayImage, edge, TL, TH);
+    cv::Canny(binaryImage, edge, TL, TH);
     edge = removeIrrelevantEdgeRegions(edge, grayImage);
     edge = filterEdgesByMinAreaRect(edge, binaryImage);
 
