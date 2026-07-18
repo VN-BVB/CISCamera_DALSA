@@ -7,6 +7,7 @@
 struct ContourDetectionResult {
     std::vector<std::vector<cv::Point2f>> contours;
     bool isCollision = false;
+    cv::Vec4f centerLine{};   // 缝隙中心线 (vx, vy, x0, y0)
 };
 
 /**

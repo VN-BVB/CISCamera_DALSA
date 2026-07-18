@@ -855,18 +855,17 @@ ContourDetectionResult CannyZernikeDetector::detectContours(const cv::Mat& input
         brightComponentCount = countBrightConnectedComponents(binaryImage, true, 500);
     }
 
-    const bool isCollision = brightComponentCount > 1;
-    std::vector<std::vector<cv::Point2f>> subpixelConturs;
-    if (isCollision) {
+    ContourDetectionResult result;
+    if (brightComponentCount > 1) {
         PLOG_INFO << "检测到 " << brightComponentCount
                   << " 个亮区连通域，工件可能已碰撞，进入碰撞处理路径";
-        subpixelConturs = detectContoursWithCollision(grayImage, binaryImage, inputImage);
+        result = detectContoursWithCollision(grayImage, binaryImage, inputImage);
     } else {
-        subpixelConturs = detectContoursWithoutCollision(grayImage, binaryImage, inputImage);
+        result = detectContoursWithoutCollision(grayImage, binaryImage, inputImage);
     }
 
     PLOG_INFO << "轮廓检测完成";
-    return {subpixelConturs, isCollision};
+    return result;
 }
 
 /**
@@ -876,7 +875,7 @@ ContourDetectionResult CannyZernikeDetector::detectContours(const cv::Mat& input
  * @param inputImage  原始输入图（亚像素提取用）
  * @return 左右两侧亚像素轮廓，[0]=右、[1]=左
  */
-std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContoursWithoutCollision(
+ContourDetectionResult CannyZernikeDetector::detectContoursWithoutCollision(
     const cv::Mat& grayImage, const cv::Mat& binaryImage, const cv::Mat& inputImage)
 {
     ImageTools imageTools;
@@ -914,7 +913,7 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContoursWithou
         subpixelConturs.push_back(c);
     }
 
-    return subpixelConturs;
+    return {subpixelConturs, false, centerLine};
 }
 
 // =============================================================================
@@ -1245,7 +1244,7 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::buildRightLeftContou
  *          → 切成两个子矩形 → 整图一次 Canny 后按子矩形取边缘并拟合直线 → 与长轴中线求交
  *          → 边缘点按中心线法向分成 [右,左] 并亚像素化。输出契约与无碰撞路径一致。
  */
-std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContoursWithCollision(
+ContourDetectionResult CannyZernikeDetector::detectContoursWithCollision(
     const cv::Mat& grayImage, const cv::Mat& binaryImage, const cv::Mat& inputImage)
 {
     SCOPED_TIMER("碰撞路径轮廓检测");
@@ -1335,5 +1334,5 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContoursWithCo
         cv::imwrite(visDir + "collision_contours_" + std::to_string(contourSaveCounter) + ".bmp", contourVis);
     }
 
-    return contours;
+    return {contours, true, centerLine};
 }

@@ -22,12 +22,13 @@ void ContourProcessor::initializePipeline() {
     m_pipeline->addStrategy(std::make_shared<CurveFittingStrategy>());                  // 拟合分割后轮廓
 }
 
-bool ContourProcessor::processContour(const std::vector<cv::Point2f>& contour, int contourId, bool isCollision) {
+bool ContourProcessor::processContour(const std::vector<cv::Point2f>& contour, int contourId, bool isCollision, cv::Vec4f centerLine) {
     SCOPED_TIMER("处理单条轮廓");
     m_contourData.clear();
     m_contourData.setSubpixelContour(contour);
     m_contourData.setId(contourId);
     m_contourData.setIsCollision(isCollision);
+    m_contourData.setCenterLine(centerLine);
     return m_pipeline->process(m_contourData);
 }
 

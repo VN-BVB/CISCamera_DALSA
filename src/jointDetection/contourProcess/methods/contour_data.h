@@ -29,6 +29,7 @@ public:
     // 数据设置
     void setId(int id) { m_id = id; }
     void setIsCollision(bool isCollision) { m_isCollision = isCollision; }
+    void setCenterLine(const cv::Vec4f& line) { m_centerLine = line; }
     void setPixelContour(const std::vector<cv::Point>& contour);
     void setSubpixelContour(const std::vector<cv::Point2f>& contour);
     void clear();
@@ -37,6 +38,7 @@ public:
     // 数据获取
     int getId() const { return m_id; }
     bool isCollision() const { return m_isCollision; }
+    cv::Vec4f getCenterLine() const { return m_centerLine; }
     std::vector<cv::Point> getPixelContour() const { return m_pixelContour; }
     std::vector<cv::Point2f> getSubpixelContour() const { return m_subpixelContour; }
     cv::Point2f getOpeningDirection() const { return m_openingDirection; }
@@ -78,6 +80,7 @@ private:
     std::vector<ContourIntersection> m_intersections;       // 拟合直线或曲线切线的交点，也是拼缝的端点
     std::vector<cv::Vec4f> m_tangentLines;                  // 切线
     bool m_isCollision = false;                              // 本次轮廓是否为碰撞情况下检测得到
+    cv::Vec4f m_centerLine{};   // 缝隙中心线 (vx, vy, x0, y0)
 };
 
 #endif // CONTOUR_DATA_H

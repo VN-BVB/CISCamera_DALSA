@@ -18,6 +18,7 @@ void JointSeam::run() {
     std::unique_ptr<AbstractContourDetector> s1;
     std::vector<std::vector<cv::Point2f>> contours;
     bool isCollision = false;
+    cv::Vec4f centerLine;
     {
         std::unique_ptr<ContourDetectorContext> c = std::make_unique<ContourDetectorContext>();
         s1 = std::make_unique<CannyZernikeDetector>();
@@ -25,6 +26,7 @@ void JointSeam::run() {
         ContourDetectionResult detectionResult = c->detectContours(m_image);
         contours = std::move(detectionResult.contours);
         isCollision = detectionResult.isCollision;
+        centerLine = detectionResult.centerLine;
     }
     // 添加m_position偏移量,映射到整体图像坐标
     for (auto& contour : contours) {
@@ -44,12 +46,12 @@ void JointSeam::run() {
         for (size_t contourIndex = 0; contourIndex < contours.size(); ++contourIndex) {
             const auto& contour = contours[contourIndex];
             int contourId = m_id * 2 + contourIndex;
-            results.emplace_back(pool.enqueue([contour, contourId, isCollision]()
+            results.emplace_back(pool.enqueue([contour, contourId, isCollision, centerLine]()
                                               -> std::tuple<bool, ContourData,
                                                             std::vector<cv::Vec4f>,
                                                             std::vector<ContourIntersection>> {
                 ContourProcessor processor;
-                if (processor.processContour(contour, contourId, isCollision)) {
+                if (processor.processContour(contour, contourId, isCollision, centerLine)) {
                     return {true, processor.getResult(), processor.getTangentLines(), processor.getIntersections()};
                 }
                 return {false, ContourData(), {}, {}};

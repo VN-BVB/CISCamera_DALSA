@@ -56,10 +56,10 @@ private:
     // 检测亮连通域数量（minArea <= 0 时不过滤）
     int countBrightConnectedComponents(const cv::Mat& binary, bool is8Neighbor = false, int minArea = 0);
     // 正常情况（无碰撞）下的轮廓检测流水线：Canny → 形态学 → 轮廓提取 → 中心线分类 → 亚像素
-    std::vector<std::vector<cv::Point2f>> detectContoursWithoutCollision(
+    ContourDetectionResult detectContoursWithoutCollision(
         const cv::Mat& grayImage, const cv::Mat& binaryImage, const cv::Mat& inputImage);
     // 碰撞情况下的轮廓检测流水线：minAreaRect 长轴扫描法（详见各子步骤函数）
-    std::vector<std::vector<cv::Point2f>> detectContoursWithCollision(
+    ContourDetectionResult detectContoursWithCollision(
         const cv::Mat& grayImage, const cv::Mat& binaryImage, const cv::Mat& inputImage);
 
     // ===== 碰撞路径专用子步骤 =====
