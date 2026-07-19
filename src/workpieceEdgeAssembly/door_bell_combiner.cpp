@@ -1,7 +1,8 @@
-﻿#include <QString>
+﻿#include "door_bell_combiner.h"
+
 #include <plog/Log.h>
 
-#include "door_bell_combiner.h"
+#include <QString>
 
 //===========================WorkpieceInfo===========================
 /**
@@ -18,8 +19,7 @@ DoorBellCombiner::WorkpieceInfo::WorkpieceInfo(int idx, const WorkpieceBoundingB
     contourCount = static_cast<int>(ids.size());
     for (int id : ids) {
         if (id < 64) {  // 假设最多64个轮廓
-            contourMask |=
-                (1ULL << id);  // 将对应位设置为1，表示该轮廓存在。便于后续使用位与操作 & 快速判断两个工件是否有重复轮廓
+            contourMask |= (1ULL << id);  // 将对应位设置为1，表示该轮廓存在。便于后续使用位与操作 & 快速判断两个工件是否有重复轮廓
             // 1ULL << id：将数字1左移id位，创建一个只有第id位为1的位掩码
             // contourMask |= ...：使用位或操作将对应位设置为1
         }
@@ -31,9 +31,7 @@ DoorBellCombiner::WorkpieceInfo::WorkpieceInfo(int idx, const WorkpieceBoundingB
 }
 
 // ===========================DoorBellCombiner===========================
-DoorBellCombiner::DoorBellCombiner(const std::vector<WorkpieceBoundingBox>& possibleWorkpieces)
-    : m_possibleWorkpieces(possibleWorkpieces)
-{}
+DoorBellCombiner::DoorBellCombiner(const std::vector<WorkpieceBoundingBox>& possibleWorkpieces) : m_possibleWorkpieces(possibleWorkpieces) {}
 
 /**
  * @brief 生成并验证有效的门环工件组合
@@ -73,7 +71,7 @@ void DoorBellCombiner::generateValidCombinations(int n, const std::vector<std::s
     m_validCombinations = validCombinations;
 
     // 输出结果
-    PLOG_INFO << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：" ;
+    PLOG_INFO << "找到 " << validCombinations.size() << " 个合法的 " << n << " 工件组合：";
 
     for (size_t i = 0; i < validCombinations.size(); ++i) {
         QString str1 = "组合 " + QString::number(i + 1) + ": [";
@@ -109,12 +107,11 @@ void DoorBellCombiner::generateValidCombinations(int n, const std::vector<std::s
  */
 void DoorBellCombiner::calculateMostLikelyCombination() {
     // TODO: 后续用 sourceImageId 等规则重新设计组合筛选
-    static const std::vector<int> kFixedCombination = {21, 4, 35, 14, 33, 53, 55};
+    static const std::vector<int> kFixedCombination = {27, 15, 0, 3, 12, 45, 53};
 
     for (int idx : kFixedCombination) {
         if (idx < 0 || idx >= static_cast<int>(m_possibleWorkpieces.size())) {
-            PLOG_WARNING << "硬编码组合下标 " << idx << " 超出 m_possibleWorkpieces 范围 (size="
-                         << m_possibleWorkpieces.size() << ")，跳过";
+            PLOG_WARNING << "硬编码组合下标 " << idx << " 超出 m_possibleWorkpieces 范围 (size=" << m_possibleWorkpieces.size() << ")，跳过";
             m_mostLikelyCombination.clear();
             return;
         }
@@ -270,12 +267,9 @@ DoorBellCombiner::ContourSet DoorBellCombiner::createTargetMask(const std::vecto
  * 3. 对剩余工件进行启发式排序
  * 4. 递归搜索所有可能的组合，应用剪枝策略
  */
-void DoorBellCombiner::generateOptimizedCombinations(int start,
-                                                      int k,
-                                                      std::vector<int>& current,
-                                                      std::set<int>& usedContourIds,
-                                                      std::vector<std::vector<int>>& result,
-                                                      const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs) {
+void DoorBellCombiner::generateOptimizedCombinations(int start, int k, std::vector<int>& current, std::set<int>& usedContourIds,
+                                                     std::vector<std::vector<int>>& result,
+                                                     const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs) {
     // 提前剪枝1：如果剩余工件数量不足以完成组合，直接返回
     int remainingWorkpieces = static_cast<int>(m_possibleWorkpieces.size()) - start;
     if (remainingWorkpieces < k - static_cast<int>(current.size())) {
@@ -315,9 +309,8 @@ void DoorBellCombiner::generateOptimizedCombinations(int start,
     }
 
     // 按工件包含的轮廓数量排序（多的在前，更快覆盖所有轮廓）
-    std::sort(indices.begin(), indices.end(), [this](int a, int b) {
-        return m_possibleWorkpieces[a].getContourIds().size() > m_possibleWorkpieces[b].getContourIds().size();
-    });
+    std::sort(indices.begin(), indices.end(),
+              [this](int a, int b) { return m_possibleWorkpieces[a].getContourIds().size() > m_possibleWorkpieces[b].getContourIds().size(); });
 
     for (int idx : indices) {
         int i = idx;
@@ -384,10 +377,8 @@ void DoorBellCombiner::generateOptimizedCombinations(int start,
  * 4. 调用DFS算法进行组合搜索，使用位运算优化状态表示
  * 5. 应用剪枝策略减少搜索空间
  */
-void DoorBellCombiner::generateOptimizedCombinationsDP(int k,
-                                                        std::vector<std::vector<int>>& result,
-                                                        const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs)
-{
+void DoorBellCombiner::generateOptimizedCombinationsDP(int k, std::vector<std::vector<int>>& result,
+                                                       const std::vector<std::shared_ptr<ContourBoundingBox>>& cbbs) {
     if (m_possibleWorkpieces.empty() || k <= 0) {
         return;
     }
@@ -431,8 +422,8 @@ void DoorBellCombiner::generateOptimizedCombinationsDP(int k,
  *    - 剪枝4：剩余工件数量不足时终止
  *    - 剪枝5：跳过包含已使用轮廓的工件
  */
-void DoorBellCombiner::dfsCombinations(const std::vector<WorkpieceInfo>& infos, int start, int k, ContourSet targetMask,
-                                   ContourSet usedMask, std::vector<int>& current, std::vector<std::vector<int>>& result) {
+void DoorBellCombiner::dfsCombinations(const std::vector<WorkpieceInfo>& infos, int start, int k, ContourSet targetMask, ContourSet usedMask,
+                                       std::vector<int>& current, std::vector<std::vector<int>>& result) {
     // 剪枝1：如果当前组合已经包含所有轮廓
     if ((usedMask & targetMask) == targetMask) {
         if (current.size() <= k) {
@@ -529,8 +520,7 @@ bool DoorBellCombiner::doWorkpiecesIntersect(const WorkpieceBoundingBox& wp1, co
  * @param combination 工件组合索引数组
  * @return 组合是否合法
  */
-bool DoorBellCombiner::checkWorkpieceIntersections(const std::vector<WorkpieceBoundingBox>& workpieces,
-                                               const std::vector<int>& combination) {
+bool DoorBellCombiner::checkWorkpieceIntersections(const std::vector<WorkpieceBoundingBox>& workpieces, const std::vector<int>& combination) {
     // 遍历组合中所有两个工件的组合情况
     // 检查不同工件之间的中心线段是否有交点
     for (size_t i = 0; i < combination.size(); ++i) {
@@ -549,7 +539,6 @@ bool DoorBellCombiner::checkWorkpieceIntersections(const std::vector<WorkpieceBo
 
     return true;
 }
-
 
 /**
  * @brief 计算工件组合的总线段长度

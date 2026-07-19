@@ -82,7 +82,7 @@ void MotionController::connectPlc(const QString &ip, int port) {
             realTimer_ = new QTimer(this);
             connect(realTimer_, &QTimer::timeout, this, &MotionController::onRealTimeout);
         }
-        stateTimer_->start(100);
+        stateTimer_->start(500);
 
         // 复位
         plc_->writeHdLowBit(HD_ExAxis1Rst, true);
@@ -245,7 +245,9 @@ void MotionController::pltLocateAll() {
     }
 
     QTextStream in(&file);
-    struct CsvRow { double tx[7], ty[7], rz[7]; };
+    struct CsvRow {
+        double tx[7], ty[7], rz[7];
+    };
     QVector<CsvRow> rows;
 
     while (!in.atEnd()) {
@@ -287,17 +289,18 @@ void MotionController::pltLocateAll() {
     for (int i = playbackSteps_.size() - 1; i >= 0; --i) {
         bool same = true;
         for (int plt = 0; plt < 7; ++plt) {
-            if (playbackSteps_[i].tx[plt] != 0 || playbackSteps_[i].ty[plt] != 0 ||
-                playbackSteps_[i].rz[plt] != 0) {
+            if (playbackSteps_[i].tx[plt] != 0 || playbackSteps_[i].ty[plt] != 0 || playbackSteps_[i].rz[plt] != 0) {
                 same = false;
                 break;
             }
         }
-        if (!same) { playbackLastStep_ = i; break; }
+        if (!same) {
+            playbackLastStep_ = i;
+            break;
+        }
     }
 
-    emit logMessage(QString(u8"分步播放: 共 %1 步增量，有效至第 %2 步")
-                       .arg(playbackSteps_.size()).arg(playbackLastStep_));
+    emit logMessage(QString(u8"分步播放: 共 %1 步增量，有效至第 %2 步").arg(playbackSteps_.size()).arg(playbackLastStep_));
 
     // 发送第0步并启动定时器
     playbackIdx_ = 0;
@@ -317,10 +320,10 @@ void MotionController::onPlaybackTick() {
         // 发送当前步：对有增量的平台调用 pltLocatePos
         const PlaybackStep &step = playbackSteps_[playbackIdx_];
         emit logMessage(QString(u8"[Tick] 发送第 %1 步 (plt0: dx=%2 dy=%3 dr=%4)")
-                           .arg(playbackIdx_)
-                           .arg(step.tx[0], 0, 'f', 6)
-                           .arg(step.ty[0], 0, 'f', 6)
-                           .arg(step.rz[0], 0, 'f', 6));
+                            .arg(playbackIdx_)
+                            .arg(step.tx[0], 0, 'f', 6)
+                            .arg(step.ty[0], 0, 'f', 6)
+                            .arg(step.rz[0], 0, 'f', 6));
         for (int plt = 0; plt < 7; ++plt) {
             if (step.tx[plt] != 0 || step.ty[plt] != 0 || step.rz[plt] != 0) {
                 plc_->pltLocatePos(plt, step.tx[plt], step.ty[plt], step.rz[plt], 5.0);
@@ -334,8 +337,7 @@ void MotionController::onPlaybackTick() {
     const PlaybackStep &step = playbackSteps_[playbackIdx_];
     bool allDone = true;
     for (int plt = 0; plt < 7; ++plt) {
-        if (step.tx[plt] == 0 && step.ty[plt] == 0 && step.rz[plt] == 0)
-            continue;
+        if (step.tx[plt] == 0 && step.ty[plt] == 0 && step.rz[plt] == 0) continue;
         bool done = plc_->pltIsLocationDone(plt);
         if (!done) {
             allDone = false;
@@ -356,8 +358,7 @@ void MotionController::onPlaybackTick() {
     }
 
     ++playbackIdx_;
-    emit logMessage(QString(u8"[Tick] 第 %1 步完成 → %2")
-                       .arg(playbackIdx_ - 1).arg(playbackIdx_));
+    emit logMessage(QString(u8"[Tick] 第 %1 步完成 → %2").arg(playbackIdx_ - 1).arg(playbackIdx_));
 }
 
 void MotionController::railReset() {

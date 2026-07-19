@@ -4,15 +4,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <queue>
 #include <set>
-#include <numeric>
-
-#include <plog/Log.h>
 
 #include "src/utils/geometry_utils.h"
+#include "src/utils/image_tools.h"
 #include "src/utils/scoped_timer.h"
-
 
 CannyZernikeDetector::CannyZernikeDetector() {}
 
@@ -216,7 +214,7 @@ cv::Point2f CannyZernikeDetector::zernikeSubpixel(const cv::Mat& gray, const cv:
  * @param contour 像素级轮廓点集
  * @return 亚像素级精度的轮廓点集
  */
-std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const cv::Mat &src, const std::vector<cv::Point> &contour) {
+std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const cv::Mat& src, const std::vector<cv::Point>& contour) {
     SCOPED_TIMER("亚像素轮廓提取");
     cv::Mat gray;
     if (src.channels() > 1) {
@@ -245,7 +243,7 @@ std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const c
  * @return 计算得到的Canny高阈值
  * @details 直接在灰度图上应用Otsu算法计算最佳阈值，简化计算流程
  */
-double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat &grayImage) {
+double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat& grayImage) {
     SCOPED_TIMER("计算自适应canny阈值");
     cv::Mat thresholdedImage;
     double TH = cv::threshold(grayImage, thresholdedImage, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
@@ -302,7 +300,7 @@ cv::Mat CannyZernikeDetector::filterEdgesByMinAreaRect(const cv::Mat& edge, cons
     std::vector<cv::Point2i> whitePoints;
     cv::findNonZero(binary, whitePoints);
     if (whitePoints.empty()) {
-        return edge.clone();   // 无白点时退化返回原边缘，保证流水线不崩
+        return edge.clone();  // 无白点时退化返回原边缘，保证流水线不崩
     }
 
     // 最小外接旋转矩形
@@ -390,9 +388,9 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineWithZhangSuen(const cv::Mat& 
         initialized = true;
     }
 
-    int mat[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
+    int mat[8] = {1, 2, 4, 8, 16, 32, 64, 128};
     bool changed = true;
-    int maxIterations = 1000; // 防止无限循环
+    int maxIterations = 1000;  // 防止无限循环
     int iteration = 0;
 
     while (changed && iteration < maxIterations) {
@@ -406,16 +404,8 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineWithZhangSuen(const cv::Mat& 
         for (int y = 1; y < det.rows - 1; y++) {
             for (int x = 1; x < det.cols - 1; x++) {
                 if (det.at<uchar>(y, x)) {
-                    uchar p[8] = {
-                        det.at<uchar>(y - 1, x),
-                        det.at<uchar>(y - 1, x + 1),
-                        det.at<uchar>(y, x + 1),
-                        det.at<uchar>(y + 1, x + 1),
-                        det.at<uchar>(y + 1, x),
-                        det.at<uchar>(y + 1, x - 1),
-                        det.at<uchar>(y, x - 1),
-                        det.at<uchar>(y - 1, x - 1)
-                    };
+                    uchar p[8] = {det.at<uchar>(y - 1, x), det.at<uchar>(y - 1, x + 1), det.at<uchar>(y, x + 1), det.at<uchar>(y + 1, x + 1),
+                                  det.at<uchar>(y + 1, x), det.at<uchar>(y + 1, x - 1), det.at<uchar>(y, x - 1), det.at<uchar>(y - 1, x - 1)};
 
                     int idx = 0;
                     for (int k = 0; k < 8; k++) {
@@ -433,16 +423,8 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineWithZhangSuen(const cv::Mat& 
         for (int y = 1; y < det.rows - 1; y++) {
             for (int x = 1; x < det.cols - 1; x++) {
                 if (det.at<uchar>(y, x)) {
-                    uchar p[8] = {
-                        det.at<uchar>(y - 1, x),
-                        det.at<uchar>(y - 1, x + 1),
-                        det.at<uchar>(y, x + 1),
-                        det.at<uchar>(y + 1, x + 1),
-                        det.at<uchar>(y + 1, x),
-                        det.at<uchar>(y + 1, x - 1),
-                        det.at<uchar>(y, x - 1),
-                        det.at<uchar>(y - 1, x - 1)
-                    };
+                    uchar p[8] = {det.at<uchar>(y - 1, x), det.at<uchar>(y - 1, x + 1), det.at<uchar>(y, x + 1), det.at<uchar>(y + 1, x + 1),
+                                  det.at<uchar>(y + 1, x), det.at<uchar>(y + 1, x - 1), det.at<uchar>(y, x - 1), det.at<uchar>(y - 1, x - 1)};
 
                     int idx = 0;
                     for (int k = 0; k < 8; k++) {
@@ -587,10 +569,8 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineByScanline(const cv::Mat& gra
     for (const auto& pt : centerLinePoints) {
         cv::circle(visImg, cv::Point2f(pt.x + roiX, pt.y + roiY), 1, cv::Scalar(0, 255, 0), -1);
     }
-    cv::Point2f p1(centerLine[2] - 1000 * centerLine[0] + roiX,
-                   centerLine[3] - 1000 * centerLine[1] + roiY);
-    cv::Point2f p2(centerLine[2] + 1000 * centerLine[0] + roiX,
-                   centerLine[3] + 1000 * centerLine[1] + roiY);
+    cv::Point2f p1(centerLine[2] - 1000 * centerLine[0] + roiX, centerLine[3] - 1000 * centerLine[1] + roiY);
+    cv::Point2f p2(centerLine[2] + 1000 * centerLine[0] + roiX, centerLine[3] + 1000 * centerLine[1] + roiY);
     cv::line(visImg, p1, p2, cv::Scalar(255, 0, 0), 2);
 
     static std::string visDir = "E:/work/Car_door_ring_splicing/image/背面打光/260714/";
@@ -754,8 +734,8 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
         return -1;
     }
 
-    int rows = binary.rows;    // 图像高度（行数）
-    int cols = binary.cols;    // 图像宽度（列数）
+    int rows = binary.rows;                                 // 图像高度（行数）
+    int cols = binary.cols;                                 // 图像宽度（列数）
     cv::Mat visited = cv::Mat::zeros(rows, cols, CV_8UC1);  // 标记已访问的像素（0=未访问，1=已访问）
     int componentCount = 0;                                 // 连通域数量
 
@@ -797,7 +777,7 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
                             if (binary.at<uchar>(y, x) == 255 && visited.at<uchar>(y, x) == 0) {
                                 visited.at<uchar>(y, x) = 1;  // 标记为已访问
                                 ++componentPixelCount;
-                                q.push(cv::Point(x, y));      // 加入队列继续遍历
+                                q.push(cv::Point(x, y));  // 加入队列继续遍历
                             }
                         }
                     }
@@ -819,8 +799,7 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
  * @param inputImage 输入图像（彩色或灰度）
  * @return 包含左右两侧亚像素轮廓的vector，第一个元素为右侧轮廓，第二个元素为左侧轮廓
  */
-std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const cv::Mat& inputImage)
-{
+std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const cv::Mat& inputImage) {
     PLOG_INFO << "开始轮廓检测";
     ImageTools imageTools;
     cv::Mat grayImage;
@@ -860,7 +839,6 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
     cv::Mat filteredEdge = filterEdgesByMinAreaRect(connectedEdge, binaryImage);
     cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260714/filteredEdge.bmp", filteredEdge);
 
-
     // 提取并筛选轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(filteredEdge, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
@@ -878,7 +856,7 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
     auto contoursLeftAndRight = classifyContourPointsByCenterLine(filteredContours, centerLine);
     std::vector<std::vector<cv::Point>> rightOnly = {contoursLeftAndRight[0]};
     // imageTools.drawColorfulContoursAndSave(grayImage, rightOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/right_contours.bmp");
-    std::vector<std::vector<cv::Point>>  leftOnly= {contoursLeftAndRight[1]};
+    std::vector<std::vector<cv::Point>> leftOnly = {contoursLeftAndRight[1]};
     // imageTools.drawColorfulContoursAndSave(grayImage, leftOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/left_contours.bmp");
 
     // 亚像素轮廓提取
@@ -899,9 +877,11 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::detectContours(const
         subpixelContursInt.push_back(std::move(intContour));
     }
     std::vector<std::vector<cv::Point>> subrightOnly = {subpixelContursInt[0]};
-    // imageTools.drawColorfulContoursAndSave(grayImage, subrightOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_right.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, subrightOnly,
+    // "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_right.bmp");
     std::vector<std::vector<cv::Point>> subleftOnly = {subpixelContursInt[1]};
-    // imageTools.drawColorfulContoursAndSave(grayImage, subleftOnly, "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_left.bmp");
+    // imageTools.drawColorfulContoursAndSave(grayImage, subleftOnly,
+    // "E:/work/Car_door_ring_splicing/image/背面打光/260714/subpixel_contours_left.bmp");
 
     PLOG_INFO << "轮廓检测完成";
     return subpixelConturs;
