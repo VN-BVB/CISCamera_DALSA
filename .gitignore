@@ -27,3 +27,5 @@ src/CLAUDE/
 .claude/
 data/PaltfromCalibrate
 *.dxf
+*.rar
+*.pro.user
