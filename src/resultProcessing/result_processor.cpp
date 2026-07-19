@@ -21,7 +21,8 @@ ResultProcessor::ResultProcessor(QObject *parent)
 }
 
 void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<int>>& combinationResult,
-                                               const std::map<int, ProcessedROIInfo>& processedRoiInfos)
+                                               const std::map<int, ProcessedROIInfo>& processedRoiInfos,
+                                               const std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>>& workpieceBoundaryEdges)
 {
     PLOG_INFO << "ResultProcessor: 接收到EdgeAssembly完成信号";
     PLOG_INFO << "工件数量: " << combinationResult.size();
@@ -51,12 +52,13 @@ void ResultProcessor::whenEdgeAssemblyFinished(const std::map<int, std::vector<i
                                                      &processedRoiInfos,
                                                      &workpieceCenters,
                                                      &workpieceToPlatform,
-                                                     &platforms]() {
+                                                     &platforms,
+                                                     &workpieceBoundaryEdges]() {
             try {
                 SCOPED_TIMER("DXF文件保存");
                 m_dxfSaver->whenAllImagesProcessed(workpieceToRoiInfos, processedRoiInfos,
                                                    workpieceCenters, workpieceToPlatform,
-                                                   platforms);
+                                                   platforms, workpieceBoundaryEdges);
                 PLOG_INFO << "DXF文件保存完成";
             } catch (const std::exception& e) {
                 PLOG_ERROR << "DXF文件保存失败: " << e.what();

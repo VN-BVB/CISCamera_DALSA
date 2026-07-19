@@ -17,6 +17,7 @@ public:
     std::vector<int> getContourIds() const;
     cv::RotatedRect getouterBoundingBox() const {return m_outerBoundingBox;}
     std::vector<std::pair<cv::Point2f, cv::Point2f>> getCenterPointConnections() const {return m_centerPointConnections;}
+    std::vector<std::pair<cv::Point2f, cv::Point2f>> getWorkpieceBoundaryEdges() const {return m_workpieceBoundaryEdges;}
 
 
 private:

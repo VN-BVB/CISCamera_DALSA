@@ -163,6 +163,26 @@ std::map<int, std::vector<int>> DoorBellCombiner::outputResult() {
     return resultDictionary;
 }
 
+std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>> DoorBellCombiner::buildSelectedBoundaryEdges() const {
+    // 键为入选工件序号（与 outputResult 对齐），值为该工件闭合边界多边形的边集
+    std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>> result;
+
+    if (m_mostLikelyCombination.empty()) {
+        return result;
+    }
+
+    // 与 outputResult() 使用同一套下标：i 为入选工件序号，m_mostLikelyCombination[i] 为真实下标
+    for (size_t i = 0; i < m_mostLikelyCombination.size(); ++i) {
+        int workpieceIndex = m_mostLikelyCombination[i];
+        if (workpieceIndex < 0 || workpieceIndex >= static_cast<int>(m_possibleWorkpieces.size())) {
+            continue;
+        }
+        result[i] = m_possibleWorkpieces[workpieceIndex].getWorkpieceBoundaryEdges();
+    }
+
+    return result;
+}
+
 /**
  * @brief 获取工件集合中最大轮廓数
  * @param infos 工件信息集合
