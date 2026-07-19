@@ -77,6 +77,7 @@ void JointSeam::run() {
                     seamEndpoint.id = intersection.id;                    // 端点ID使用交点ID
                     seamEndpoint.coordinates = intersection.coordinates;  // 端点坐标
                     seamEndpoint.contourId = intersection.contourId;      // 交点所属轮廓ID
+                    seamEndpoint.isCollision = intersection.isCollision;  // 透传碰撞标记
 
                     m_endPoints.push_back(seamEndpoint);
                 }

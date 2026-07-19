@@ -13,10 +13,11 @@ struct ContourIntersection {
     int id;                           // 交点ID
     cv::Point2f coordinates;          // 交点坐标
     int contourId;                    // 交点所属轮廓ID
+    bool isCollision;                 // 该端点是否来自碰撞路径
 
-    ContourIntersection() : id(-1), contourId(-1) {}
-    ContourIntersection(int id, const cv::Point2f& coords, int _contourId = -1)
-        : id(id), coordinates(coords), contourId(_contourId) {}
+    ContourIntersection() : id(-1), contourId(-1), isCollision(false) {}
+    ContourIntersection(int id, const cv::Point2f& coords, int _contourId = -1, bool _isCollision = false)
+        : id(id), coordinates(coords), contourId(_contourId), isCollision(_isCollision) {}
 };
 
 /**
