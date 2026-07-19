@@ -245,6 +245,31 @@ cv::Vec4f ContourFitter::selectLineWithMaxAngle(const std::vector<cv::Point2f>& 
             bestLine = candidates[i];
         }
     }
+
+    // 调试可视化：画一张大空白图，绘制点、候选直线、中心线与选中直线
+    // {
+    //     static int imageIndex = 0;  // 同一次运行内每次调用递增，用于区分输出文件
+    //     cv::Mat canvas = cv::Mat::zeros(2000, 5000, CV_8UC3);
+    //     auto draw_line = [&](const cv::Vec4f& line, const cv::Scalar& color, int thickness) {
+    //         cv::Point2f p0(line[2], line[3]);
+    //         cv::Vec2f d(line[0], line[1]);
+    //         cv::line(canvas, p0 - cv::Point2f(d[0], d[1]) * 2000.0f,
+    //                  p0 + cv::Point2f(d[0], d[1]) * 2000.0f, color, thickness);
+    //     };
+    //     for (const auto& p : points) {  // 所有点（浅灰）
+    //         cv::circle(canvas, p, 5, cv::Scalar(200, 200, 200), -1);
+    //     }
+    //     for (const auto& c : candidates) {  // 候选直线（蓝色）
+    //         draw_line(c, cv::Scalar(255, 0, 0), 1);
+    //     }
+    //     draw_line(centerLine, cv::Scalar(0, 255, 255), 1);  // 中心线（黄色）
+    //     draw_line(bestLine, cv::Scalar(0, 255, 0), 2);       // 选中直线（绿色粗线）
+    //     cv::imwrite("E:/work/Car_door_ring_splicing/image/背面打光/260716/select_line_" +
+    //                     std::to_string(imageIndex) + ".bmp",
+    //                 canvas);
+    //     ++imageIndex;
+    // }
+
     return bestLine;
 }
 

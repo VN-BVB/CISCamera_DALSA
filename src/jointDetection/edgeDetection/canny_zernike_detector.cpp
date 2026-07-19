@@ -1006,7 +1006,7 @@ std::pair<FloatRange, FloatRange> CannyZernikeDetector::findTwoDenseIntervals(
     };
 
     // 1D 直方图
-    const float binWidth = 150.0f;
+    const float binWidth = 200.0f;
     int numBins = std::max(1, static_cast<int>(std::ceil(frame.longLen / binWidth)));
     std::vector<int> hist(numBins, 0);
     for (float t : projections) {
