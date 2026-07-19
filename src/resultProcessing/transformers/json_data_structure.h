@@ -18,6 +18,7 @@ struct EndpointInfo {
     std::vector<double> coordinates;    // 坐标 [x, y]
     int correspondingPointId;           // 对应点的序号
     int correspondingWorkpieceId;       // 对应点所属工件的序号
+    bool isCollision = false;           // 该端点是否来自碰撞路径
 
     // cereal序列化支持，自定义字段名，而不是用变量名
     template<class Archive>
@@ -25,7 +26,8 @@ struct EndpointInfo {
         ar(cereal::make_nvp("点序号", pointId),
            cereal::make_nvp("坐标", coordinates),
            cereal::make_nvp("对应点的序号", correspondingPointId),
-           cereal::make_nvp("对应点所属工件的序号", correspondingWorkpieceId));
+           cereal::make_nvp("对应点所属工件的序号", correspondingWorkpieceId),
+           cereal::make_nvp("是否碰撞", isCollision));
     }
 };
 

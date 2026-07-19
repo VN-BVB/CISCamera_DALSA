@@ -10,6 +10,12 @@
 
 #include "src/config/config_manager.h"
 #include "src/crashHandler/CrashHandler.h"
+#include "src/ui/CISCamera_imageGrab/cis_camera_image.h"
+#include "src/ui/jointView/joint_view.h"
+#include "src/utils/plog_utils.h"
+#include "src/ui/measurementMonitor/qss_loader.h"
+#include "src/ui/mainwindow/main_window.h"
+
 #include "src/test/test_cad_view.h"'
 #include "src/test/test_convert_coordinate.h"
 #include "src/test/test_dxf_writer.h"

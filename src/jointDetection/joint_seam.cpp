@@ -17,11 +17,16 @@ void JointSeam::run() {
     // 拼缝两侧亚像素轮廓检测
     std::unique_ptr<AbstractContourDetector> s1;
     std::vector<std::vector<cv::Point2f>> contours;
+    bool isCollision = false;
+    cv::Vec4f centerLine;
     {
         std::unique_ptr<ContourDetectorContext> c = std::make_unique<ContourDetectorContext>();
         s1 = std::make_unique<CannyZernikeDetector>();
         c->setDetector(std::move(s1));
-        contours = c->detectContours(m_image);
+        ContourDetectionResult detectionResult = c->detectContours(m_image);
+        contours = std::move(detectionResult.contours);
+        isCollision = detectionResult.isCollision;
+        centerLine = detectionResult.centerLine;
     }
     // 添加m_position偏移量,映射到整体图像坐标
     for (auto& contour : contours) {
@@ -30,6 +35,9 @@ void JointSeam::run() {
             point.y += m_position.y;
         }
     }
+    // centerLine 方向不变，仅将其所过点 (x0,y0) 平移到整体坐标
+    centerLine[2] += m_position.x;
+    centerLine[3] += m_position.y;
 
     // 轮廓信息处理（使用线程池并行处理）
     {
@@ -41,12 +49,12 @@ void JointSeam::run() {
         for (size_t contourIndex = 0; contourIndex < contours.size(); ++contourIndex) {
             const auto& contour = contours[contourIndex];
             int contourId = m_id * 2 + contourIndex;
-            results.emplace_back(pool.enqueue([contour, contourId]()
+            results.emplace_back(pool.enqueue([contour, contourId, isCollision, centerLine]()
                                               -> std::tuple<bool, ContourData,
                                                             std::vector<cv::Vec4f>,
                                                             std::vector<ContourIntersection>> {
                 ContourProcessor processor;
-                if (processor.processContour(contour, contourId)) {
+                if (processor.processContour(contour, contourId, isCollision, centerLine)) {
                     return {true, processor.getResult(), processor.getTangentLines(), processor.getIntersections()};
                 }
                 return {false, ContourData(), {}, {}};
@@ -69,6 +77,7 @@ void JointSeam::run() {
                     seamEndpoint.id = intersection.id;                    // 端点ID使用交点ID
                     seamEndpoint.coordinates = intersection.coordinates;  // 端点坐标
                     seamEndpoint.contourId = intersection.contourId;      // 交点所属轮廓ID
+                    seamEndpoint.isCollision = intersection.isCollision;  // 透传碰撞标记
 
                     m_endPoints.push_back(seamEndpoint);
                 }

@@ -11,7 +11,7 @@ void ContourDetectorContext::setDetector(std::unique_ptr<AbstractContourDetector
 }
 
 // 执行边缘轮廓检测
-std::vector<std::vector<cv::Point2f>> ContourDetectorContext::detectContours(const cv::Mat &inputImage)
+ContourDetectionResult ContourDetectorContext::detectContours(const cv::Mat &inputImage)
 {
     if (!m_currentDetector) {
         throw std::runtime_error("No detector strategy set");

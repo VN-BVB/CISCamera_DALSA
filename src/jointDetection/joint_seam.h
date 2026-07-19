@@ -14,13 +14,14 @@ struct SeamEndpoint {
     cv::Point2f coordinates;                // 端点坐标
     int contourId;                          // 所属轮廓ID
     int correspondingIntersectionId;        // 对应的交点ID
+    bool isCollision;                       // 该端点是否来自碰撞路径
 
     // 默认构造函数
-    SeamEndpoint() : id(-1), contourId(-1), correspondingIntersectionId(-1) {}
+    SeamEndpoint() : id(-1), contourId(-1), correspondingIntersectionId(-1), isCollision(false) {}
 
     // 完整构造函数
-    SeamEndpoint(int _id, const cv::Point2f& _coords, int _contourId, int _correspondingIntersectionId)
-        : id(_id), coordinates(_coords), contourId(_contourId), correspondingIntersectionId(_correspondingIntersectionId) {}
+    SeamEndpoint(int _id, const cv::Point2f& _coords, int _contourId, int _correspondingIntersectionId, bool _isCollision = false)
+        : id(_id), coordinates(_coords), contourId(_contourId), correspondingIntersectionId(_correspondingIntersectionId), isCollision(_isCollision) {}
 };
 
 /**

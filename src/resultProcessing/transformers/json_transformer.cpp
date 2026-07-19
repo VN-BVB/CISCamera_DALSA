@@ -58,6 +58,7 @@ EndpointInfo JsonTransformer::createEndpointInfo(const SeamEndpoint& endpoint)
 
     // 1. 点序号：直接使用SeamEndpoint中的ID
     endpointInfo.pointId = endpoint.id;
+    endpointInfo.isCollision = endpoint.isCollision;
 
     // 2. 坐标：转换为世界坐标
     std::vector<cv::Point2f> pixelPoints = {endpoint.coordinates};
