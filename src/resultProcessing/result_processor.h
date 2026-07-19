@@ -20,7 +20,8 @@ public:
 
 public slots:
     void whenEdgeAssemblyFinished(const std::map<int, std::vector<int>>& combinationResult,
-                                 const std::map<int, ProcessedROIInfo>& processedRoiInfos);
+                                 const std::map<int, ProcessedROIInfo>& processedRoiInfos,
+                                 const std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>>& workpieceBoundaryEdges);
 
 private slots:
     void onSendCompleted(int batchNumber, bool success);

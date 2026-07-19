@@ -17,6 +17,9 @@ public:
     void calculateMostLikelyCombination();
     std::map<int, std::vector<int>> outputResult();
 
+    // 输出入选工件组合中每个工件的边界边（key 与 outputResult 对齐：入选工件序号 -> 闭合多边形边集）
+    std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>> buildSelectedBoundaryEdges() const;
+
 private:
     // 位运算类型定义
     typedef uint64_t ContourSet;

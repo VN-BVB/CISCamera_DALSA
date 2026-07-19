@@ -65,9 +65,10 @@ void EdgeAssembly::whenAllImagesProcessed(const std::map<int, ProcessedROIInfo>&
     m_workpieceCombiner->generateValidCombinations(7, m_cbbs);
     m_workpieceCombiner->calculateMostLikelyCombination();
     std::map<int, std::vector<int>> combinationResult = m_workpieceCombiner->outputResult();
+    auto workpieceBoundaryEdges = m_workpieceCombiner->buildSelectedBoundaryEdges();
 
     // 4、发送组合完成信号（发送核心组合结果）
-    emit sendEdgeAssemblyFinished(combinationResult, processedRoiInfos);
+    emit sendEdgeAssemblyFinished(combinationResult, processedRoiInfos, workpieceBoundaryEdges);
 }
 
 

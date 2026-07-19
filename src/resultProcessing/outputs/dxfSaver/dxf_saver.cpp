@@ -16,7 +16,8 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
                                       const std::map<int, ProcessedROIInfo>& processedRoiInfos,
                                       const std::map<int, Eigen::Vector2d>& workpieceCenters,
                                       const std::map<int, int>& workpieceToPlatform,
-                                      const std::vector<PlatformAxis>& platforms)
+                                      const std::vector<PlatformAxis>& platforms,
+                                      const std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>>& workpieceBoundaryEdges)
 {
     try {
         SCOPED_TIMER("保存dxf文件");
@@ -47,7 +48,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         dw->tableEnd();
 
         // 写入图层表
-        dw->tableLayers(8);  // 增加图层数量
+        dw->tableLayers(9);  // 增加图层数量
         // 0层
         dxf.writeLayer(
             *dw,
@@ -95,6 +96,12 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
             *dw,
             DL_LayerData("WorkpiecePlatformLink", 0),
             DL_Attributes("", 1, 0x0000ffff, 15, "CONTINUOUS")
+            );
+        // 工件边界多边形图层（品红）
+        dxf.writeLayer(
+            *dw,
+            DL_LayerData("WorkpieceBoundary", 0),
+            DL_Attributes("", 1, 0x00ff00ff, 15, "CONTINUOUS")
             );
         dw->tableEnd();
 
@@ -147,6 +154,7 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
         DL_Attributes platformYAttributes("PlatformY", 256, -1, -1, "BYLAYER");
         DL_Attributes platformOriginAttributes("PlatformOrigin", 256, -1, -1, "BYLAYER");
         DL_Attributes workpiecePlatformLinkAttributes("WorkpiecePlatformLink", 256, -1, -1, "BYLAYER");
+        DL_Attributes workpieceBoundaryAttributes("WorkpieceBoundary", 256, -1, -1, "BYLAYER");
 
         // 遍历所有处理过的ROI
         {
@@ -157,10 +165,10 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
                 const ProcessedROIInfo& roiInfo = roiPair.second;
 
                 // 绘制亚像素轮廓（使用蓝色图层）
-                // drawSubpixelContours(dxf, dw, subpixelAttributes, roiInfo);
+                drawSubpixelContours(dxf, dw, subpixelAttributes, roiInfo);
 
                 // 绘制样条曲线（使用红色图层）
-                // drawSplines(dxf, dw, splineAttributes, roiInfo);
+                drawSplines(dxf, dw, splineAttributes, roiInfo);
 
                 // 绘制端点（使用黄色图层）
                 drawEndpoints(dxf, dw, endpointAttributes, roiInfo);
@@ -168,6 +176,9 @@ void DXFSaver::whenAllImagesProcessed(const std::map<int, std::vector<int>>& wor
                 roiIndex++;
             }
         }
+
+        // 绘制工件边界多边形（使用品红图层）
+        drawWorkpieceBoundaries(dxf, dw, workpieceBoundaryAttributes, workpieceBoundaryEdges);
 
         // 平台数据由调用方加载并传入，避免文件二次读取导致与映射数据不一致
         // 绘制所有对位平台坐标系（一次，非每 ROI）
@@ -322,6 +333,34 @@ void DXFSaver::drawEndpoints(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& a
         // 用小圆圈标记端点
         DL_CircleData circleData(wp.x(), wp.y(), 0.0, kEndpointRadius);
         dxf.writeCircle(*dw, circleData, attributes);
+    }
+}
+
+void DXFSaver::drawWorkpieceBoundaries(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                                       const std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>>& workpieceBoundaryEdges)
+{
+    // 检查是否有工件边界数据
+    if (workpieceBoundaryEdges.empty()) {
+        PLOG_INFO << "无工件边界边数据，跳过绘制";
+        return;
+    }
+
+    PLOG_INFO << "绘制 " << workpieceBoundaryEdges.size() << " 个工件边界";
+
+    // 每个工件一个闭合多边形：edges 已含连回起点的最后一条边，逐边画线即可
+    for (const auto& [workpieceIndex, edges] : workpieceBoundaryEdges) {
+        for (const auto& [p1, p2] : edges) {
+            // 像素坐标（整体大图系）→ 世界坐标
+            std::vector<cv::Point2f> pix = { p1, p2 };
+            std::vector<Eigen::Vector2d> worldPoints = GeometryUtils::pixel2World(pix);
+            if (worldPoints.size() < 2) continue;
+
+            DL_LineData lineData(
+                worldPoints[0].x(), worldPoints[0].y(), 0.0,
+                worldPoints[1].x(), worldPoints[1].y(), 0.0
+                );
+            dxf.writeLine(*dw, lineData, attributes);
+        }
     }
 }
 

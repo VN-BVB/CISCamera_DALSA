@@ -9,6 +9,8 @@
 
 namespace {
 
+    // @TODO:改成采用原始的cereal库加载
+
 // 自 from 起查找 "key" : [a, b, c] 形式的三维向量。
 // 容忍 key 与 '[' 之间的任意空白。
 Eigen::Vector3d extractVec(const std::string& json, const std::string& key, size_t from) {

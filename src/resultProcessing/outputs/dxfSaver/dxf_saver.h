@@ -20,7 +20,8 @@ public slots:
                                 const std::map<int, ProcessedROIInfo>& processedRoiInfos,
                                 const std::map<int, Eigen::Vector2d>& workpieceCenters,
                                 const std::map<int, int>& workpieceToPlatform,
-                                const std::vector<PlatformAxis>& platforms);
+                                const std::vector<PlatformAxis>& platforms,
+                                const std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>>& workpieceBoundaryEdges);
 
 private:
     // 绘制亚像素轮廓
@@ -34,6 +35,10 @@ private:
     // 绘制缝隙端点
     void drawEndpoints(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
                        const ProcessedROIInfo& roiInfo);
+
+    // 绘制工件边界闭合多边形（每个入选工件一个）
+    void drawWorkpieceBoundaries(DL_Dxf& dxf, DL_WriterA* dw, const DL_Attributes& attributes,
+                                 const std::map<int, std::vector<std::pair<cv::Point2f, cv::Point2f>>>& workpieceBoundaryEdges);
 
     // 绘制所有对位平台坐标系（数据由调用方加载后传入）
     void drawPlatforms(DL_Dxf& dxf, DL_WriterA* dw,
