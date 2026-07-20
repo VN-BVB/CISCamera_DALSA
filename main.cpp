@@ -32,10 +32,6 @@
 #include "src/utils/plog_utils.h"
 
 int main(int argc, char *argv[]) {
-    // 设置控制台输出代码页为 UTF-8
-    SetConsoleOutputCP(CP_UTF8);
-    // 同时设置输入代码页为 UTF-8
-    SetConsoleCP(CP_UTF8);
     QApplication a(argc, argv);
     a.setStyleSheet(qss_loader::load(":/mm/measurement_monitor.qss"));
     CrashHandler::Init(L"data/debug");  // 初始化Mini转储
@@ -53,24 +49,6 @@ int main(int argc, char *argv[]) {
 
     JointView w2;
     w2.show();
-
-    // std::shared_ptr<CameraImageProcessor> imageProcessor;
-    // imageProcessor = std::make_shared<CameraImageProcessor>();
-    // imageProcessor->initCameraCalibrator();
-
-    // TestPixel2World test;
-    // test.testPixel2World();
-
-    // TestPlatformPoseDxf tp;
-    // tp.runDirect();
-
-    // TestDxfWriter td;
-    // td.run();
-    // JointView w;
-    // w.show();
-
-    // MainWindow w;
-    // w.show();
 
     // MainWindow w;
     // w.show();

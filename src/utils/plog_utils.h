@@ -1,15 +1,16 @@
 ﻿#ifndef PLOG_UTILS_H
 #define PLOG_UTILS_H
 
+#include <plog/Formatters/MessageOnlyFormatter.h>
 #include <plog/Init.h>
-#include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Initializers/RollingFileInitializer.h>
 #include <plog/Log.h>
-#include <plog/Formatters/MessageOnlyFormatter.h>
+
 #include <chrono>
 #include <iomanip>
 #include <sstream>
 
+#include "plog_ide_appender.h"
 #include "plog_qt_appender.h"
 
 namespace PlogUtils {
@@ -34,21 +35,19 @@ inline void initPlog(plog::Severity logLevel = plog::debug) {
     localtime_s(&tm, &time_t);
 
     std::ostringstream filename;
-    filename << "./data/log/log_"
-             << std::put_time(&tm, "%Y%m%d")
-             << ".txt";
+    filename << "./data/log/log_" << std::put_time(&tm, "%Y%m%d") << ".txt";
 
     // 初始化文件日志
     plog::init(logLevel, filename.str().c_str(), 1000000, 100);
 
-    // 添加控制台日志（包含时间戳等前缀）
-    static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-    plog::get()->addAppender(&consoleAppender);
+    // Qt Creator captures stdout using the Windows ANSI code page.
+    static PlogIdeAppender ideAppender;
+    plog::get()->addAppender(&ideAppender);
 
     // 添加 Qt UI 日志（桥接到 LogPanel）
     plog::get()->addAppender(&PlogQtAppender::instance());
 }
 
-} // namespace plog_utils
+}  // namespace PlogUtils
 
-#endif // PLOG_UTILS_H
+#endif  // PLOG_UTILS_H

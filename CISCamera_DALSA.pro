@@ -5,14 +5,16 @@ CONFIG += c++17
 CONFIG += release debug_info
 
 qmake
+
+# All project sources are UTF-8.  Keep the compiler's source and execution
+# character sets independent from the Windows system ANSI code page.
 msvc {
-    QMAKE_CXXFLAGS += /utf-8
+    QMAKE_CXXFLAGS += /MP /bigobj /utf-8
 }
 
-
-QMAKE_CXXFLAGS += /MP
-QMAKE_CXXFLAGS += /bigobj
-QMAKE_CXXFLAGS += /utf-8
+mingw {
+    QMAKE_CXXFLAGS += -finput-charset=UTF-8 -fexec-charset=UTF-8
+}
 QMAKE_CXXFLAGS_RELEASE = -ZI -MD
 QMAKE_LFLAGS_RELEASE = /DEBUG
 # You can make your code fail to compile if it uses deprecated APIs.
@@ -34,4 +36,3 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES +=
-

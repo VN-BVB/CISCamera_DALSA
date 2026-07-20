@@ -2,6 +2,7 @@ HEADERS += \
     $$PWD/ThreadPool.h \
     $$PWD/geometry_utils.h \
     $$PWD/image_tools.h \
+    $$PWD/plog_ide_appender.h \
     $$PWD/plog_qt_appender.h \
     $$PWD/plog_utils.h \
     $$PWD/scoped_timer.h \
