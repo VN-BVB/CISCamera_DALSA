@@ -71,14 +71,13 @@ public slots:
     void whenAppendMessageLog(const QString& message);
     void whenMoveToStartFinished();
 private slots:
-    void whenGetNewImage(std::shared_ptr<cv::Mat> matPt);
     void on_btnStart_clicked();
     void on_btnStop_clicked();
     void on_btnFreeze_clicked();
     void on_btnContinue_clicked();
     void on_ckbSplice_toggled(bool checked);
     void on_btnSoftWareTrigger_clicked();
-    // void on_btnCISConfig_clicked();
+    void on_btnCISConfig_clicked();
     void on_btnSave_clicked();
     void on_btnStopTrigger_clicked();
     void on_btn_ChessboardDetector_clicked();

@@ -5,12 +5,10 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include <numeric>
 #include <queue>
 #include <set>
 
 #include "src/utils/geometry_utils.h"
-#include "src/utils/image_tools.h"
 #include "src/utils/image_tools.h"
 #include "src/utils/scoped_timer.h"
 
@@ -217,7 +215,6 @@ cv::Point2f CannyZernikeDetector::zernikeSubpixel(const cv::Mat& gray, const cv:
  * @return 亚像素级精度的轮廓点集
  */
 std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const cv::Mat& src, const std::vector<cv::Point>& contour) {
-std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const cv::Mat& src, const std::vector<cv::Point>& contour) {
     SCOPED_TIMER("亚像素轮廓提取");
     cv::Mat gray;
     if (src.channels() > 1) {
@@ -246,7 +243,6 @@ std::vector<cv::Point2f> CannyZernikeDetector::getSubpixelContourZernike(const c
  * @return 计算得到的Canny高阈值
  * @details 直接在灰度图上应用Otsu算法计算最佳阈值，简化计算流程
  */
-double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat& grayImage) {
 double CannyZernikeDetector::adaptiveCannyThresholdByOtsu(const cv::Mat& grayImage) {
     SCOPED_TIMER("计算自适应canny阈值");
     cv::Mat thresholdedImage;
@@ -393,9 +389,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineWithZhangSuen(const cv::Mat& 
     }
 
     int mat[8] = {1, 2, 4, 8, 16, 32, 64, 128};
-    int mat[8] = {1, 2, 4, 8, 16, 32, 64, 128};
     bool changed = true;
-    int maxIterations = 1000;  // 防止无限循环
     int maxIterations = 1000;  // 防止无限循环
     int iteration = 0;
 
@@ -410,8 +404,6 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineWithZhangSuen(const cv::Mat& 
         for (int y = 1; y < det.rows - 1; y++) {
             for (int x = 1; x < det.cols - 1; x++) {
                 if (det.at<uchar>(y, x)) {
-                    uchar p[8] = {det.at<uchar>(y - 1, x), det.at<uchar>(y - 1, x + 1), det.at<uchar>(y, x + 1), det.at<uchar>(y + 1, x + 1),
-                                  det.at<uchar>(y + 1, x), det.at<uchar>(y + 1, x - 1), det.at<uchar>(y, x - 1), det.at<uchar>(y - 1, x - 1)};
                     uchar p[8] = {det.at<uchar>(y - 1, x), det.at<uchar>(y - 1, x + 1), det.at<uchar>(y, x + 1), det.at<uchar>(y + 1, x + 1),
                                   det.at<uchar>(y + 1, x), det.at<uchar>(y + 1, x - 1), det.at<uchar>(y, x - 1), det.at<uchar>(y - 1, x - 1)};
 
@@ -431,8 +423,6 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineWithZhangSuen(const cv::Mat& 
         for (int y = 1; y < det.rows - 1; y++) {
             for (int x = 1; x < det.cols - 1; x++) {
                 if (det.at<uchar>(y, x)) {
-                    uchar p[8] = {det.at<uchar>(y - 1, x), det.at<uchar>(y - 1, x + 1), det.at<uchar>(y, x + 1), det.at<uchar>(y + 1, x + 1),
-                                  det.at<uchar>(y + 1, x), det.at<uchar>(y + 1, x - 1), det.at<uchar>(y, x - 1), det.at<uchar>(y - 1, x - 1)};
                     uchar p[8] = {det.at<uchar>(y - 1, x), det.at<uchar>(y - 1, x + 1), det.at<uchar>(y, x + 1), det.at<uchar>(y + 1, x + 1),
                                   det.at<uchar>(y + 1, x), det.at<uchar>(y + 1, x - 1), det.at<uchar>(y, x - 1), det.at<uchar>(y - 1, x - 1)};
 
@@ -581,8 +571,6 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineByScanline(const cv::Mat& gra
     }
     cv::Point2f p1(centerLine[2] - 1000 * centerLine[0] + roiX, centerLine[3] - 1000 * centerLine[1] + roiY);
     cv::Point2f p2(centerLine[2] + 1000 * centerLine[0] + roiX, centerLine[3] + 1000 * centerLine[1] + roiY);
-    cv::Point2f p1(centerLine[2] - 1000 * centerLine[0] + roiX, centerLine[3] - 1000 * centerLine[1] + roiY);
-    cv::Point2f p2(centerLine[2] + 1000 * centerLine[0] + roiX, centerLine[3] + 1000 * centerLine[1] + roiY);
     cv::line(visImg, p1, p2, cv::Scalar(255, 0, 0), 2);
 
     static std::string visDir = "E:/work/Car_door_ring_splicing/image/背面打光/260716/";
@@ -600,8 +588,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineByScanline(const cv::Mat& gra
  * @return 中心线直线方程参数（vx, vy, x0, y0），原图坐标系
  * @details 当前采用扫描线法，内部完成 ROI 提取、RANSAC 拟合、可视化保存
  */
-cv::Vec4f CannyZernikeDetector::calculateCenterLineWithoutCollision(const cv::Mat &grayImage)
-{
+cv::Vec4f CannyZernikeDetector::calculateCenterLineWithoutCollision(const cv::Mat& grayImage) {
     SCOPED_TIMER("计算中心线");
     return calculateCenterLineByScanline(grayImage);
 }
@@ -612,8 +599,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineWithoutCollision(const cv::Ma
  * @return 中心线直线方程参数（vx, vy, x0, y0），原图坐标系
  * @details 当前采用扫描线法，内部完成 ROI 提取、RANSAC 拟合、可视化保存
  */
-cv::Vec4f CannyZernikeDetector::calculateCenterLineWithCollision(const cv::Mat &grayImage)
-{
+cv::Vec4f CannyZernikeDetector::calculateCenterLineWithCollision(const cv::Mat& grayImage) {
     SCOPED_TIMER("计算中心线");
     return calculateCenterLineWithZhangSuen(grayImage);
 }
@@ -761,8 +747,6 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
 
     int rows = binary.rows;                                 // 图像高度（行数）
     int cols = binary.cols;                                 // 图像宽度（列数）
-    int rows = binary.rows;                                 // 图像高度（行数）
-    int cols = binary.cols;                                 // 图像宽度（列数）
     cv::Mat visited = cv::Mat::zeros(rows, cols, CV_8UC1);  // 标记已访问的像素（0=未访问，1=已访问）
     int componentCount = 0;                                 // 连通域数量
 
@@ -827,8 +811,7 @@ int CannyZernikeDetector::countBrightConnectedComponents(const cv::Mat& binary, 
  * @param inputImage 输入图像（彩色或灰度）
  * @return 包含左右两侧亚像素轮廓的vector，第一个元素为右侧轮廓，第二个元素为左侧轮廓
  */
-ContourDetectionResult CannyZernikeDetector::detectContours(const cv::Mat& inputImage)
-{
+ContourDetectionResult CannyZernikeDetector::detectContours(const cv::Mat& inputImage) {
     PLOG_INFO << "开始轮廓检测";
     cv::Mat grayImage;
     if (inputImage.channels() > 1) {
@@ -850,8 +833,7 @@ ContourDetectionResult CannyZernikeDetector::detectContours(const cv::Mat& input
 
     ContourDetectionResult result;
     if (brightComponentCount > 1) {
-        PLOG_INFO << "检测到 " << brightComponentCount
-                  << " 个亮区连通域，工件可能已碰撞，进入碰撞处理路径";
+        PLOG_INFO << "检测到 " << brightComponentCount << " 个亮区连通域，工件可能已碰撞，进入碰撞处理路径";
         result = detectContoursWithCollision(grayImage, binaryImage, inputImage);
     } else {
         result = detectContoursWithoutCollision(grayImage, binaryImage, inputImage);
@@ -868,9 +850,8 @@ ContourDetectionResult CannyZernikeDetector::detectContours(const cv::Mat& input
  * @param inputImage  原始输入图（亚像素提取用）
  * @return 左右两侧亚像素轮廓，[0]=右、[1]=左
  */
-ContourDetectionResult CannyZernikeDetector::detectContoursWithoutCollision(
-    const cv::Mat& grayImage, const cv::Mat& binaryImage, const cv::Mat& inputImage)
-{
+ContourDetectionResult CannyZernikeDetector::detectContoursWithoutCollision(const cv::Mat& grayImage, const cv::Mat& binaryImage,
+                                                                            const cv::Mat& inputImage) {
     ImageTools imageTools;
 
     // 边缘检测
@@ -919,8 +900,7 @@ cv::RotatedRect CannyZernikeDetector::computeWhiteMinAreaRect(const cv::Mat& bin
     if (whitePoints.empty()) {
         PLOG_WARNING << "[碰撞路径] 白色区域为空，回退到图像中心默认矩形";
         return cv::RotatedRect(cv::Point2f(binary.cols / 2.0f, binary.rows / 2.0f),
-                               cv::Size2f(static_cast<float>(binary.cols), static_cast<float>(binary.rows)),
-                               0.0f);
+                               cv::Size2f(static_cast<float>(binary.cols), static_cast<float>(binary.rows)), 0.0f);
     }
     return cv::minAreaRect(whitePoints);
 }
@@ -974,11 +954,13 @@ std::vector<float> CannyZernikeDetector::collectTransitionProjections(const cv::
     return projections;
 }
 
-std::pair<FloatRange, FloatRange> CannyZernikeDetector::findTwoDenseIntervals(
-    const std::vector<float>& projections, const RectFrame& frame) {
+std::pair<FloatRange, FloatRange> CannyZernikeDetector::findTwoDenseIntervals(const std::vector<float>& projections, const RectFrame& frame) {
     const float halfLong = frame.longLen / 2.0f;
     if (projections.size() < 2) {
-        return {FloatRange{-halfLong, 0.0f}, FloatRange{0.0f, halfLong}};
+        return {
+            FloatRange{-halfLong, 0.0f    },
+            FloatRange{0.0f,      halfLong}
+        };
     }
 
     // 兜底：把投影排序后按最大间隙二分
@@ -1025,7 +1007,11 @@ std::pair<FloatRange, FloatRange> CannyZernikeDetector::findTwoDenseIntervals(
     // 阈值 + 连续超阈值区间
     float maxVal = *std::max_element(smooth.begin(), smooth.end());
     float threshold = maxVal * 0.5f;
-    struct Interval { int loBin; int hiBin; float mass; };
+    struct Interval {
+        int loBin;
+        int hiBin;
+        float mass;
+    };
     std::vector<Interval> intervals;
     int i = 0;
     while (i < numBins) {
@@ -1041,13 +1027,10 @@ std::pair<FloatRange, FloatRange> CannyZernikeDetector::findTwoDenseIntervals(
             ++i;
         }
     }
-    auto binToRange = [&](int loBin, int hiBin) -> FloatRange {
-        return FloatRange{loBin * binWidth - halfLong, (hiBin + 1) * binWidth - halfLong};
-    };
+    auto binToRange = [&](int loBin, int hiBin) -> FloatRange { return FloatRange{loBin * binWidth - halfLong, (hiBin + 1) * binWidth - halfLong}; };
     if (intervals.size() >= 2) {
         // 取质量最大的两段，再按位置（左、右）排序返回
-        std::sort(intervals.begin(), intervals.end(),
-                  [](const Interval& a, const Interval& b) { return a.mass > b.mass; });
+        std::sort(intervals.begin(), intervals.end(), [](const Interval& a, const Interval& b) { return a.mass > b.mass; });
         FloatRange a = binToRange(intervals[0].loBin, intervals[0].hiBin);
         FloatRange b = binToRange(intervals[1].loBin, intervals[1].hiBin);
         if (a.lo > b.lo) {
@@ -1058,9 +1041,8 @@ std::pair<FloatRange, FloatRange> CannyZernikeDetector::findTwoDenseIntervals(
     return splitByMaxGap(projections);
 }
 
-std::vector<cv::RotatedRect> CannyZernikeDetector::splitMinAreaRect(
-    const cv::RotatedRect& parent, const RectFrame& frame,
-    const std::pair<FloatRange, FloatRange>& intervals) {
+std::vector<cv::RotatedRect> CannyZernikeDetector::splitMinAreaRect(const cv::RotatedRect& parent, const RectFrame& frame,
+                                                                    const std::pair<FloatRange, FloatRange>& intervals) {
     // 子矩形长轴沿 frame.longDir；据父矩形长短边归属设置 size，使子矩形长轴方向与父矩形一致
     const bool longIsWidth = parent.size.width >= parent.size.height;
     std::vector<cv::RotatedRect> subRects;
@@ -1070,8 +1052,7 @@ std::vector<cv::RotatedRect> CannyZernikeDetector::splitMinAreaRect(
         cv::RotatedRect sub;
         sub.center = frame.center + frame.longDir * mid;
         sub.angle = parent.angle;
-        sub.size = longIsWidth ? cv::Size2f(longExtent, frame.shortLen)
-                               : cv::Size2f(frame.shortLen, longExtent);
+        sub.size = longIsWidth ? cv::Size2f(longExtent, frame.shortLen) : cv::Size2f(frame.shortLen, longExtent);
         return sub;
     };
     subRects.push_back(build(intervals.first));
@@ -1079,8 +1060,7 @@ std::vector<cv::RotatedRect> CannyZernikeDetector::splitMinAreaRect(
     return subRects;
 }
 
-void CannyZernikeDetector::collectEdgePointsInRect(const cv::Mat& edgeMap, const cv::RotatedRect& subRect,
-                                                   std::vector<cv::Point2f>& outEdgePoints) {
+void CannyZernikeDetector::collectEdgePointsInRect(const cv::Mat& edgeMap, const cv::RotatedRect& subRect, std::vector<cv::Point2f>& outEdgePoints) {
     outEdgePoints.clear();
     std::vector<cv::Point> edgePx;
     cv::findNonZero(edgeMap, edgePx);
@@ -1100,9 +1080,8 @@ cv::Vec4f CannyZernikeDetector::centerLineFromFrame(const RectFrame& frame) {
     return cv::Vec4f(frame.longDir.x, frame.longDir.y, frame.center.x, frame.center.y);
 }
 
-cv::Vec4f CannyZernikeDetector::calculateCenterLineInGap(
-    const cv::Mat& binary, const RectFrame& frame,
-    const std::pair<FloatRange, FloatRange>& intervals) {
+cv::Vec4f CannyZernikeDetector::calculateCenterLineInGap(const cv::Mat& binary, const RectFrame& frame,
+                                                         const std::pair<FloatRange, FloatRange>& intervals) {
     // 扫描范围 = 两子矩形在长轴上夹着的中间区域 [first.hi, second.lo]（first/second 已按 lo 升序）
     float tLo = std::min(intervals.first.hi, intervals.second.lo);
     float tHi = std::max(intervals.first.hi, intervals.second.lo);
@@ -1144,8 +1123,7 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineInGap(
         GeometryUtils::lineRansac(centerLinePoints, centerLine, inliers, 3.0, 100);
     } else {
         centerLine = centerLineFromFrame(frame);  // 显式退回最小外接矩形中心线
-        PLOG_WARNING << "[碰撞路径] 中间区域扫描中点 " << centerLinePoints.size()
-                     << " < " << kMinScanPoints << "，退回最小外接矩形中心线";
+        PLOG_WARNING << "[碰撞路径] 中间区域扫描中点 " << centerLinePoints.size() << " < " << kMinScanPoints << "，退回最小外接矩形中心线";
     }
 
     // [DEBUG] 可视化：扫描中点(绿) + 拟合中心线(蓝)，叠在二值化白色区域上
@@ -1167,9 +1145,10 @@ cv::Vec4f CannyZernikeDetector::calculateCenterLineInGap(
     return centerLine;
 }
 
-std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::buildRightLeftContours(
-    const std::vector<std::vector<cv::Point2f>>& edgePointSets, const cv::Vec4f& centerLine,
-    const std::vector<cv::Point2f>& subRectCenters, const cv::Mat& inputImage) {
+std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::buildRightLeftContours(const std::vector<std::vector<cv::Point2f>>& edgePointSets,
+                                                                                   const cv::Vec4f& centerLine,
+                                                                                   const std::vector<cv::Point2f>& subRectCenters,
+                                                                                   const cv::Mat& inputImage) {
     // 中心线法向，用于把边缘点分到 [右,左]
     float vx = centerLine[0];
     float vy = centerLine[1];
@@ -1237,9 +1216,8 @@ std::vector<std::vector<cv::Point2f>> CannyZernikeDetector::buildRightLeftContou
  *          → 切成两个子矩形 → 整图一次 Canny 后按子矩形取边缘并拟合直线 → 与长轴中线求交
  *          → 边缘点按中心线法向分成 [右,左] 并亚像素化。输出契约与无碰撞路径一致。
  */
-ContourDetectionResult CannyZernikeDetector::detectContoursWithCollision(
-    const cv::Mat& grayImage, const cv::Mat& binaryImage, const cv::Mat& inputImage)
-{
+ContourDetectionResult CannyZernikeDetector::detectContoursWithCollision(const cv::Mat& grayImage, const cv::Mat& binaryImage,
+                                                                         const cv::Mat& inputImage) {
     SCOPED_TIMER("碰撞路径轮廓检测");
 
     // 1-2. 白色区域最小外接矩形 + 长/短轴坐标系
@@ -1264,8 +1242,7 @@ ContourDetectionResult CannyZernikeDetector::detectContoursWithCollision(
         ++subRectSaveCounter;
         cv::Mat subRectVis;
         cv::cvtColor(binaryImage, subRectVis, cv::COLOR_GRAY2BGR);
-        auto drawRotatedRect = [](cv::Mat& img, const cv::RotatedRect& r,
-                                  const cv::Scalar& color, const std::string& tag) {
+        auto drawRotatedRect = [](cv::Mat& img, const cv::RotatedRect& r, const cv::Scalar& color, const std::string& tag) {
             cv::Point2f pts2f[4];
             r.points(pts2f);
             std::vector<cv::Point> poly(4);
@@ -1273,12 +1250,11 @@ ContourDetectionResult CannyZernikeDetector::detectContoursWithCollision(
                 poly[i] = cv::Point(cvRound(pts2f[i].x), cvRound(pts2f[i].y));
             }
             cv::polylines(img, poly, true, color, 2);
-            cv::putText(img, tag, cv::Point(cvRound(r.center.x), cvRound(r.center.y)),
-                        cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 1);
+            cv::putText(img, tag, cv::Point(cvRound(r.center.x), cvRound(r.center.y)), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 1);
         };
-        drawRotatedRect(subRectVis, rect, cv::Scalar(0, 255, 255), "parent");    // 黄色：父最小外接矩形
-        drawRotatedRect(subRectVis, subRects[0], cv::Scalar(0, 0, 255), "sub0"); // 红色：子矩形0
-        drawRotatedRect(subRectVis, subRects[1], cv::Scalar(255, 0, 0), "sub1"); // 蓝色：子矩形1
+        drawRotatedRect(subRectVis, rect, cv::Scalar(0, 255, 255), "parent");     // 黄色：父最小外接矩形
+        drawRotatedRect(subRectVis, subRects[0], cv::Scalar(0, 0, 255), "sub0");  // 红色：子矩形0
+        drawRotatedRect(subRectVis, subRects[1], cv::Scalar(255, 0, 0), "sub1");  // 蓝色：子矩形1
         static std::string visDir = "E:/work/Car_door_ring_splicing/image/背面打光/260716/";
         cv::imwrite(visDir + "collision_subRects_" + std::to_string(subRectSaveCounter) + ".bmp", subRectVis);
     }

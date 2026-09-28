@@ -2,6 +2,7 @@
 
 #include <QGraphicsLineItem>
 #include <QGraphicsScene>
+#include <QProcess>
 #include <fstream>
 #include <sstream>
 
@@ -120,7 +121,6 @@ void CISWidget::initCamera() {
 }
 
 void CISWidget::initCamera2UIConnections() {
-    connect(slaveCISCamera.get(), &AbstractCamera::sendNewImageReady, this, &CISWidget::whenGetNewImage, Qt::QueuedConnection);
 #ifdef ENABLE_SLAVE_CAMERA
     connect(
         masterCISCamera.get(), &AbstractCamera::sendNewImageReady, this,
@@ -164,7 +164,6 @@ void CISWidget::initCameraImageProcessor() {
     connect(imageProcessor.get(), &CameraImageProcessor::platformCalibDone, this, &CISWidget::whenDrawDetectCircles, Qt::QueuedConnection);
     QMetaObject::invokeMethod(imageProcessor.get(), [=]() { imageProcessor->initCameraCalibrator(); }, Qt::QueuedConnection);
 }
-void CISWidget::whenGetNewImage(std::shared_ptr<cv::Mat> matPt) { ui->imgLive->setOpenCVImage(*matPt); }
 // 在信息框推送信息
 void CISWidget::whenAppendMessageLog(const QString& message) { ui->textEdit->append(message); }
 
@@ -365,18 +364,15 @@ void CISWidget::on_ckbSplice_toggled(bool checked) {
     }
 }
 
-// void CISWidget::on_btnCISConfig_clicked() {
-//     if (!configCISCamera) return;
-//     QMetaObject::invokeMethod(
-//         configCISCamera.get(),
-//         [this]() {
-//             configCISCamera->addDllDirToPath("./data/CISConfig/externExE");
-
-//             configCISCamera->startEmbedded("./data/CISConfig/externExE/ConfigCIS.exe", {"--help"}, ui->cisConfigHost->winId());
-//             configCISCamera->writeInput("some command");
-//         },
-//         Qt::QueuedConnection);
-// }
+void CISWidget::on_btnCISConfig_clicked() {
+    const QString configDir = QStringLiteral("D:/Code/CISCamera_DALSA/data/CISConfig/externExE");
+    QProcess process;
+    process.setProgram(configDir + QStringLiteral("/ConfigCIS.exe"));
+    process.setWorkingDirectory(configDir);
+    if (!process.startDetached()) {
+        whenAppendMessageLog(QString::fromUtf8("CIS相机设置程序启动失败：%1").arg(process.errorString()));
+    }
+}
 
 void CISWidget::on_btn_ChessboardDetector_clicked() {
     QMetaObject::invokeMethod(imageProcessor.get(), &CameraImageProcessor::whenDetectChessboard, Qt::QueuedConnection);

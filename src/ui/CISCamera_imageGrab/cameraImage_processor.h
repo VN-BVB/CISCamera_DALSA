@@ -32,9 +32,8 @@ public:
     std::vector<Eigen::Vector2d> convertToWorld(const std::vector<Eigen::Vector2d>& pix_pts);
     std::vector<Eigen::Vector2d> convertToPix(const std::vector<Eigen::Vector2d>& world_pts);
     void debugProjectionDistancesFromFixedPixels();
-    std::vector<Eigen::Vector2d> applyWorldOffsetToPixel(
-        const std::vector<Eigen::Vector2d>& world_pts,
-        double translateX_mm, double translateY_mm, double rotateDeg);
+    std::vector<Eigen::Vector2d> applyWorldOffsetToPixel(const std::vector<Eigen::Vector2d>& world_pts, double translateX_mm, double translateY_mm,
+                                                         double rotateDeg);
     void setWorldPose(const Eigen::Vector3d& r, const Eigen::Vector3d& t) {
         allRotVecs_.back() = r;
         allTransVecs_.back() = t;

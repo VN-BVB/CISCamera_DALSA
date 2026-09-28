@@ -19,12 +19,13 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <src/ui/utils/display/frm_display.h>
-#include <src/ui/utils/display/openGLImageWidget.h>
 #include "src/motion/motion_widget.h"
 
 QT_BEGIN_NAMESPACE
@@ -34,12 +35,12 @@ class Ui_CISWidget
 public:
     QGridLayout *gridLayout_14;
     QGridLayout *gridLayout_4;
-    openGLImageWidget *imgLive;
     QTextEdit *textEdit;
     FrmVisionDisplay *imgSplice;
     QTabWidget *tabWidget;
     QWidget *tab;
     QGridLayout *gridLayout_5;
+    QWidget *cameraActionPanel;
     QGridLayout *gridLayout;
     QPushButton *btnSoftWareTrigger;
     QPushButton *btnStopTrigger;
@@ -48,6 +49,7 @@ public:
     QPushButton *btnCISConfig;
     QPushButton *btnSave;
     QPushButton *btnStart;
+    QWidget *cameraParamPanel;
     QGridLayout *gridLayout_8;
     QPushButton *btn_ChessboardDetector;
     QPushButton *btnCameraCalibrate;
@@ -63,6 +65,7 @@ public:
     QLineEdit *end_lineEdit;
     QWidget *tab_2;
     QGridLayout *gridLayout_3;
+    QScrollArea *motionScrollArea;
     MotionWidget *motionWidget;
     QWidget *tab_4;
     QGridLayout *gridLayout_2;
@@ -81,248 +84,340 @@ public:
     QHBoxLayout *horizontalLayout_2;
     QLabel *label_4;
     QComboBox *cbxPlatform;
+    QSpacerItem *calibrationControlsSpacer;
 
     void setupUi(QWidget *CISWidget)
     {
         if (CISWidget->objectName().isEmpty())
             CISWidget->setObjectName(QString::fromUtf8("CISWidget"));
-        CISWidget->resize(893, 857);
+        CISWidget->resize(880, 480);
         CISWidget->setBaseSize(QSize(0, 0));
+        QFont font;
+        font.setPointSize(10);
+        CISWidget->setFont(font);
         gridLayout_14 = new QGridLayout(CISWidget);
+        gridLayout_14->setSpacing(6);
         gridLayout_14->setObjectName(QString::fromUtf8("gridLayout_14"));
+        gridLayout_14->setContentsMargins(6, 6, 6, 6);
         gridLayout_4 = new QGridLayout();
+        gridLayout_4->setSpacing(6);
         gridLayout_4->setObjectName(QString::fromUtf8("gridLayout_4"));
-        imgLive = new openGLImageWidget(CISWidget);
-        imgLive->setObjectName(QString::fromUtf8("imgLive"));
-        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        sizePolicy.setHorizontalStretch(0);
-        sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(imgLive->sizePolicy().hasHeightForWidth());
-        imgLive->setSizePolicy(sizePolicy);
-        imgLive->setMinimumSize(QSize(200, 0));
-        imgLive->setMaximumSize(QSize(16777215, 16777215));
-        imgLive->setSizeIncrement(QSize(0, 0));
-        imgLive->setBaseSize(QSize(0, 0));
-
-        gridLayout_4->addWidget(imgLive, 0, 0, 1, 1);
-
+        gridLayout_4->setContentsMargins(6, 6, 6, 6);
         textEdit = new QTextEdit(CISWidget);
         textEdit->setObjectName(QString::fromUtf8("textEdit"));
-        QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
-        sizePolicy1.setHorizontalStretch(0);
-        sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(textEdit->sizePolicy().hasHeightForWidth());
-        textEdit->setSizePolicy(sizePolicy1);
+        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(textEdit->sizePolicy().hasHeightForWidth());
+        textEdit->setSizePolicy(sizePolicy);
+        textEdit->setMinimumSize(QSize(0, 110));
+        textEdit->setMaximumSize(QSize(16777215, 110));
 
-        gridLayout_4->addWidget(textEdit, 0, 3, 1, 1);
+        gridLayout_4->addWidget(textEdit, 1, 0, 1, 2);
 
         imgSplice = new FrmVisionDisplay(CISWidget);
         imgSplice->setObjectName(QString::fromUtf8("imgSplice"));
+        QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
         sizePolicy1.setHeightForWidth(imgSplice->sizePolicy().hasHeightForWidth());
         imgSplice->setSizePolicy(sizePolicy1);
-        imgSplice->setMinimumSize(QSize(0, 410));
+        imgSplice->setMinimumSize(QSize(280, 240));
 
-        gridLayout_4->addWidget(imgSplice, 1, 0, 1, 4);
+        gridLayout_4->addWidget(imgSplice, 0, 1, 1, 1);
 
         tabWidget = new QTabWidget(CISWidget);
         tabWidget->setObjectName(QString::fromUtf8("tabWidget"));
-        sizePolicy1.setHeightForWidth(tabWidget->sizePolicy().hasHeightForWidth());
-        tabWidget->setSizePolicy(sizePolicy1);
-        tabWidget->setMaximumSize(QSize(16777215, 16777215));
+        QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        sizePolicy2.setHorizontalStretch(0);
+        sizePolicy2.setVerticalStretch(0);
+        sizePolicy2.setHeightForWidth(tabWidget->sizePolicy().hasHeightForWidth());
+        tabWidget->setSizePolicy(sizePolicy2);
+        tabWidget->setMinimumSize(QSize(550, 0));
+        tabWidget->setMaximumSize(QSize(550, 16777215));
         tabWidget->setMouseTracking(true);
         tab = new QWidget();
         tab->setObjectName(QString::fromUtf8("tab"));
+        tab->setStyleSheet(QString::fromUtf8("QPushButton {\n"
+"    font-size: 12pt;\n"
+"}"));
         gridLayout_5 = new QGridLayout(tab);
+        gridLayout_5->setSpacing(4);
         gridLayout_5->setObjectName(QString::fromUtf8("gridLayout_5"));
-        gridLayout = new QGridLayout();
+        gridLayout_5->setContentsMargins(4, 4, 4, 4);
+        cameraActionPanel = new QWidget(tab);
+        cameraActionPanel->setObjectName(QString::fromUtf8("cameraActionPanel"));
+        cameraActionPanel->setMinimumSize(QSize(250, 0));
+        cameraActionPanel->setMaximumSize(QSize(250, 16777215));
+        gridLayout = new QGridLayout(cameraActionPanel);
+        gridLayout->setSpacing(6);
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
-        btnSoftWareTrigger = new QPushButton(tab);
+        gridLayout->setContentsMargins(6, 6, 6, 6);
+        btnSoftWareTrigger = new QPushButton(cameraActionPanel);
         btnSoftWareTrigger->setObjectName(QString::fromUtf8("btnSoftWareTrigger"));
-        sizePolicy1.setHeightForWidth(btnSoftWareTrigger->sizePolicy().hasHeightForWidth());
-        btnSoftWareTrigger->setSizePolicy(sizePolicy1);
-        QFont font;
-        font.setPointSize(20);
-        btnSoftWareTrigger->setFont(font);
+        QSizePolicy sizePolicy3(QSizePolicy::Minimum, QSizePolicy::Fixed);
+        sizePolicy3.setHorizontalStretch(0);
+        sizePolicy3.setVerticalStretch(0);
+        sizePolicy3.setHeightForWidth(btnSoftWareTrigger->sizePolicy().hasHeightForWidth());
+        btnSoftWareTrigger->setSizePolicy(sizePolicy3);
+        btnSoftWareTrigger->setMinimumSize(QSize(0, 44));
+        btnSoftWareTrigger->setMaximumSize(QSize(16777215, 46));
+        QFont font1;
+        font1.setPointSize(12);
+        btnSoftWareTrigger->setFont(font1);
 
         gridLayout->addWidget(btnSoftWareTrigger, 2, 0, 1, 2);
 
-        btnStopTrigger = new QPushButton(tab);
+        btnStopTrigger = new QPushButton(cameraActionPanel);
         btnStopTrigger->setObjectName(QString::fromUtf8("btnStopTrigger"));
-        sizePolicy1.setHeightForWidth(btnStopTrigger->sizePolicy().hasHeightForWidth());
-        btnStopTrigger->setSizePolicy(sizePolicy1);
-        btnStopTrigger->setFont(font);
+        sizePolicy3.setHeightForWidth(btnStopTrigger->sizePolicy().hasHeightForWidth());
+        btnStopTrigger->setSizePolicy(sizePolicy3);
+        btnStopTrigger->setMinimumSize(QSize(0, 44));
+        btnStopTrigger->setMaximumSize(QSize(16777215, 46));
+        btnStopTrigger->setFont(font1);
 
         gridLayout->addWidget(btnStopTrigger, 3, 0, 1, 2);
 
-        btnStop = new QPushButton(tab);
+        btnStop = new QPushButton(cameraActionPanel);
         btnStop->setObjectName(QString::fromUtf8("btnStop"));
-        sizePolicy1.setHeightForWidth(btnStop->sizePolicy().hasHeightForWidth());
-        btnStop->setSizePolicy(sizePolicy1);
-        btnStop->setFont(font);
+        sizePolicy3.setHeightForWidth(btnStop->sizePolicy().hasHeightForWidth());
+        btnStop->setSizePolicy(sizePolicy3);
+        btnStop->setMinimumSize(QSize(0, 44));
+        btnStop->setMaximumSize(QSize(16777215, 46));
+        btnStop->setFont(font1);
 
         gridLayout->addWidget(btnStop, 0, 1, 1, 1);
 
-        ckbSplice = new QCheckBox(tab);
+        ckbSplice = new QCheckBox(cameraActionPanel);
         ckbSplice->setObjectName(QString::fromUtf8("ckbSplice"));
-        sizePolicy1.setHeightForWidth(ckbSplice->sizePolicy().hasHeightForWidth());
-        ckbSplice->setSizePolicy(sizePolicy1);
+        sizePolicy3.setHeightForWidth(ckbSplice->sizePolicy().hasHeightForWidth());
+        ckbSplice->setSizePolicy(sizePolicy3);
         ckbSplice->setFont(font);
 
-        gridLayout->addWidget(ckbSplice, 5, 0, 1, 1);
+        gridLayout->addWidget(ckbSplice, 4, 0, 1, 1);
 
-        btnCISConfig = new QPushButton(tab);
+        btnCISConfig = new QPushButton(cameraActionPanel);
         btnCISConfig->setObjectName(QString::fromUtf8("btnCISConfig"));
-        sizePolicy1.setHeightForWidth(btnCISConfig->sizePolicy().hasHeightForWidth());
-        btnCISConfig->setSizePolicy(sizePolicy1);
-        btnCISConfig->setFont(font);
+        sizePolicy3.setHeightForWidth(btnCISConfig->sizePolicy().hasHeightForWidth());
+        btnCISConfig->setSizePolicy(sizePolicy3);
+        btnCISConfig->setMinimumSize(QSize(0, 44));
+        btnCISConfig->setMaximumSize(QSize(16777215, 46));
+        btnCISConfig->setFont(font1);
 
         gridLayout->addWidget(btnCISConfig, 1, 0, 1, 2);
 
-        btnSave = new QPushButton(tab);
+        btnSave = new QPushButton(cameraActionPanel);
         btnSave->setObjectName(QString::fromUtf8("btnSave"));
-        sizePolicy1.setHeightForWidth(btnSave->sizePolicy().hasHeightForWidth());
-        btnSave->setSizePolicy(sizePolicy1);
-        btnSave->setFont(font);
+        sizePolicy3.setHeightForWidth(btnSave->sizePolicy().hasHeightForWidth());
+        btnSave->setSizePolicy(sizePolicy3);
+        btnSave->setMinimumSize(QSize(0, 44));
+        btnSave->setMaximumSize(QSize(16777215, 46));
+        btnSave->setFont(font1);
 
-        gridLayout->addWidget(btnSave, 5, 1, 1, 1);
+        gridLayout->addWidget(btnSave, 4, 1, 1, 1);
 
-        btnStart = new QPushButton(tab);
+        btnStart = new QPushButton(cameraActionPanel);
         btnStart->setObjectName(QString::fromUtf8("btnStart"));
-        sizePolicy1.setHeightForWidth(btnStart->sizePolicy().hasHeightForWidth());
-        btnStart->setSizePolicy(sizePolicy1);
-        btnStart->setFont(font);
+        sizePolicy3.setHeightForWidth(btnStart->sizePolicy().hasHeightForWidth());
+        btnStart->setSizePolicy(sizePolicy3);
+        btnStart->setMinimumSize(QSize(0, 44));
+        btnStart->setMaximumSize(QSize(16777215, 46));
+        btnStart->setFont(font1);
 
         gridLayout->addWidget(btnStart, 0, 0, 1, 1);
 
+        gridLayout->setRowStretch(5, 1);
 
-        gridLayout_5->addLayout(gridLayout, 0, 0, 1, 1);
+        gridLayout_5->addWidget(cameraActionPanel, 0, 0, 1, 1);
 
-        gridLayout_8 = new QGridLayout();
+        cameraParamPanel = new QWidget(tab);
+        cameraParamPanel->setObjectName(QString::fromUtf8("cameraParamPanel"));
+        cameraParamPanel->setMinimumSize(QSize(238, 0));
+        cameraParamPanel->setMaximumSize(QSize(238, 16777215));
+        gridLayout_8 = new QGridLayout(cameraParamPanel);
+        gridLayout_8->setSpacing(6);
         gridLayout_8->setObjectName(QString::fromUtf8("gridLayout_8"));
-        btn_ChessboardDetector = new QPushButton(tab);
+        gridLayout_8->setContentsMargins(6, 6, 6, 6);
+        btn_ChessboardDetector = new QPushButton(cameraParamPanel);
         btn_ChessboardDetector->setObjectName(QString::fromUtf8("btn_ChessboardDetector"));
-        QFont font1;
-        font1.setPointSize(15);
+        sizePolicy3.setHeightForWidth(btn_ChessboardDetector->sizePolicy().hasHeightForWidth());
+        btn_ChessboardDetector->setSizePolicy(sizePolicy3);
+        btn_ChessboardDetector->setMinimumSize(QSize(0, 44));
+        btn_ChessboardDetector->setMaximumSize(QSize(16777215, 46));
         btn_ChessboardDetector->setFont(font1);
 
         gridLayout_8->addWidget(btn_ChessboardDetector, 1, 0, 1, 1);
 
-        btnCameraCalibrate = new QPushButton(tab);
+        btnCameraCalibrate = new QPushButton(cameraParamPanel);
         btnCameraCalibrate->setObjectName(QString::fromUtf8("btnCameraCalibrate"));
+        sizePolicy3.setHeightForWidth(btnCameraCalibrate->sizePolicy().hasHeightForWidth());
+        btnCameraCalibrate->setSizePolicy(sizePolicy3);
+        btnCameraCalibrate->setMinimumSize(QSize(0, 44));
+        btnCameraCalibrate->setMaximumSize(QSize(16777215, 46));
         btnCameraCalibrate->setFont(font1);
 
         gridLayout_8->addWidget(btnCameraCalibrate, 2, 0, 1, 1);
 
-        groupBox = new QGroupBox(tab);
+        groupBox = new QGroupBox(cameraParamPanel);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
-        groupBox->setFont(font1);
+        groupBox->setMinimumSize(QSize(226, 0));
+        groupBox->setMaximumSize(QSize(226, 16777215));
+        groupBox->setFont(font);
         groupBox->setTabletTracking(false);
         groupBox->setLayoutDirection(Qt::LeftToRight);
         gridLayout_6 = new QGridLayout(groupBox);
+        gridLayout_6->setSpacing(6);
         gridLayout_6->setObjectName(QString::fromUtf8("gridLayout_6"));
+        gridLayout_6->setContentsMargins(6, 6, 6, 6);
         label = new QLabel(groupBox);
         label->setObjectName(QString::fromUtf8("label"));
-        QFont font2;
-        font2.setPointSize(12);
-        label->setFont(font2);
+        label->setMinimumSize(QSize(82, 0));
+        label->setMaximumSize(QSize(82, 16777215));
+        label->setFont(font);
+        label->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
 
         gridLayout_6->addWidget(label, 0, 0, 1, 1);
 
         speed_lineEdit = new QLineEdit(groupBox);
         speed_lineEdit->setObjectName(QString::fromUtf8("speed_lineEdit"));
-        speed_lineEdit->setFont(font1);
+        QSizePolicy sizePolicy4(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        sizePolicy4.setHorizontalStretch(0);
+        sizePolicy4.setVerticalStretch(0);
+        sizePolicy4.setHeightForWidth(speed_lineEdit->sizePolicy().hasHeightForWidth());
+        speed_lineEdit->setSizePolicy(sizePolicy4);
+        speed_lineEdit->setMinimumSize(QSize(108, 0));
+        speed_lineEdit->setMaximumSize(QSize(108, 16777215));
+        speed_lineEdit->setFont(font);
 
         gridLayout_6->addWidget(speed_lineEdit, 0, 1, 1, 1);
 
         label_5 = new QLabel(groupBox);
         label_5->setObjectName(QString::fromUtf8("label_5"));
-        label_5->setFont(font2);
+        label_5->setMinimumSize(QSize(82, 0));
+        label_5->setMaximumSize(QSize(82, 16777215));
+        label_5->setFont(font);
+        label_5->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
 
         gridLayout_6->addWidget(label_5, 1, 0, 1, 1);
 
         lead_lineEdit = new QLineEdit(groupBox);
         lead_lineEdit->setObjectName(QString::fromUtf8("lead_lineEdit"));
-        lead_lineEdit->setFont(font1);
+        sizePolicy4.setHeightForWidth(lead_lineEdit->sizePolicy().hasHeightForWidth());
+        lead_lineEdit->setSizePolicy(sizePolicy4);
+        lead_lineEdit->setMinimumSize(QSize(108, 0));
+        lead_lineEdit->setMaximumSize(QSize(108, 16777215));
+        lead_lineEdit->setFont(font);
 
         gridLayout_6->addWidget(lead_lineEdit, 1, 1, 1, 1);
 
         label_2 = new QLabel(groupBox);
         label_2->setObjectName(QString::fromUtf8("label_2"));
-        label_2->setFont(font2);
+        label_2->setMinimumSize(QSize(82, 0));
+        label_2->setMaximumSize(QSize(82, 16777215));
+        label_2->setFont(font);
+        label_2->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
 
         gridLayout_6->addWidget(label_2, 2, 0, 1, 1);
 
         start_lineEdit = new QLineEdit(groupBox);
         start_lineEdit->setObjectName(QString::fromUtf8("start_lineEdit"));
-        start_lineEdit->setFont(font1);
+        sizePolicy4.setHeightForWidth(start_lineEdit->sizePolicy().hasHeightForWidth());
+        start_lineEdit->setSizePolicy(sizePolicy4);
+        start_lineEdit->setMinimumSize(QSize(108, 0));
+        start_lineEdit->setMaximumSize(QSize(108, 16777215));
+        start_lineEdit->setFont(font);
 
         gridLayout_6->addWidget(start_lineEdit, 2, 1, 1, 1);
 
         label_3 = new QLabel(groupBox);
         label_3->setObjectName(QString::fromUtf8("label_3"));
-        label_3->setFont(font2);
+        label_3->setMinimumSize(QSize(82, 0));
+        label_3->setMaximumSize(QSize(82, 16777215));
+        label_3->setFont(font);
+        label_3->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
 
         gridLayout_6->addWidget(label_3, 3, 0, 1, 1);
 
         end_lineEdit = new QLineEdit(groupBox);
         end_lineEdit->setObjectName(QString::fromUtf8("end_lineEdit"));
-        end_lineEdit->setFont(font1);
+        sizePolicy4.setHeightForWidth(end_lineEdit->sizePolicy().hasHeightForWidth());
+        end_lineEdit->setSizePolicy(sizePolicy4);
+        end_lineEdit->setMinimumSize(QSize(108, 0));
+        end_lineEdit->setMaximumSize(QSize(108, 16777215));
+        end_lineEdit->setFont(font);
 
         gridLayout_6->addWidget(end_lineEdit, 3, 1, 1, 1);
 
+        gridLayout_6->setColumnStretch(1, 1);
 
         gridLayout_8->addWidget(groupBox, 0, 0, 1, 1);
 
+        gridLayout_8->setRowStretch(3, 1);
 
-        gridLayout_5->addLayout(gridLayout_8, 0, 2, 1, 1);
+        gridLayout_5->addWidget(cameraParamPanel, 0, 2, 1, 1);
 
+        gridLayout_5->setColumnStretch(0, 1);
+        gridLayout_5->setColumnStretch(2, 1);
         tabWidget->addTab(tab, QString());
         tab_2 = new QWidget();
         tab_2->setObjectName(QString::fromUtf8("tab_2"));
         gridLayout_3 = new QGridLayout(tab_2);
+        gridLayout_3->setSpacing(6);
         gridLayout_3->setObjectName(QString::fromUtf8("gridLayout_3"));
-        motionWidget = new MotionWidget(tab_2);
+        gridLayout_3->setContentsMargins(6, 6, 6, 6);
+        motionScrollArea = new QScrollArea(tab_2);
+        motionScrollArea->setObjectName(QString::fromUtf8("motionScrollArea"));
+        motionScrollArea->setFrameShape(QFrame::NoFrame);
+        motionScrollArea->setWidgetResizable(true);
+        motionWidget = new MotionWidget();
         motionWidget->setObjectName(QString::fromUtf8("motionWidget"));
+        motionWidget->setGeometry(QRect(0, 0, 484, 288));
+        motionScrollArea->setWidget(motionWidget);
 
-        gridLayout_3->addWidget(motionWidget, 0, 0, 1, 1);
+        gridLayout_3->addWidget(motionScrollArea, 0, 0, 1, 1);
 
         tabWidget->addTab(tab_2, QString());
         tab_4 = new QWidget();
         tab_4->setObjectName(QString::fromUtf8("tab_4"));
         gridLayout_2 = new QGridLayout(tab_4);
+        gridLayout_2->setSpacing(6);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
+        gridLayout_2->setContentsMargins(6, 6, 6, 6);
         graphicsView_5 = new FrmVisionDisplay(tab_4);
         graphicsView_5->setObjectName(QString::fromUtf8("graphicsView_5"));
-        QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Expanding);
-        sizePolicy2.setHorizontalStretch(0);
-        sizePolicy2.setVerticalStretch(0);
-        sizePolicy2.setHeightForWidth(graphicsView_5->sizePolicy().hasHeightForWidth());
-        graphicsView_5->setSizePolicy(sizePolicy2);
+        QSizePolicy sizePolicy5(QSizePolicy::Preferred, QSizePolicy::Expanding);
+        sizePolicy5.setHorizontalStretch(0);
+        sizePolicy5.setVerticalStretch(0);
+        sizePolicy5.setHeightForWidth(graphicsView_5->sizePolicy().hasHeightForWidth());
+        graphicsView_5->setSizePolicy(sizePolicy5);
 
         gridLayout_2->addWidget(graphicsView_5, 0, 1, 1, 1);
 
         verticalLayout_3 = new QVBoxLayout();
+        verticalLayout_3->setSpacing(6);
         verticalLayout_3->setObjectName(QString::fromUtf8("verticalLayout_3"));
+        verticalLayout_3->setContentsMargins(6, 6, 6, 6);
         horizontalLayout_3 = new QHBoxLayout();
+        horizontalLayout_3->setSpacing(6);
         horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
+        horizontalLayout_3->setContentsMargins(6, 6, 6, 6);
         verticalLayout_2 = new QVBoxLayout();
+        verticalLayout_2->setSpacing(6);
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
+        verticalLayout_2->setContentsMargins(6, 6, 6, 6);
         ckbShowPLlatImg = new QCheckBox(tab_4);
         ckbShowPLlatImg->setObjectName(QString::fromUtf8("ckbShowPLlatImg"));
-        QSizePolicy sizePolicy3(QSizePolicy::Minimum, QSizePolicy::Expanding);
-        sizePolicy3.setHorizontalStretch(0);
-        sizePolicy3.setVerticalStretch(0);
         sizePolicy3.setHeightForWidth(ckbShowPLlatImg->sizePolicy().hasHeightForWidth());
         ckbShowPLlatImg->setSizePolicy(sizePolicy3);
-        QFont font3;
-        font3.setPointSize(16);
-        ckbShowPLlatImg->setFont(font3);
+        ckbShowPLlatImg->setFont(font);
 
         verticalLayout_2->addWidget(ckbShowPLlatImg);
 
         btnReadLocalImg = new QPushButton(tab_4);
         btnReadLocalImg->setObjectName(QString::fromUtf8("btnReadLocalImg"));
-        btnReadLocalImg->setFont(font3);
+        sizePolicy3.setHeightForWidth(btnReadLocalImg->sizePolicy().hasHeightForWidth());
+        btnReadLocalImg->setSizePolicy(sizePolicy3);
+        btnReadLocalImg->setFont(font);
 
         verticalLayout_2->addWidget(btnReadLocalImg);
 
@@ -330,16 +425,22 @@ public:
         horizontalLayout_3->addLayout(verticalLayout_2);
 
         verticalLayout = new QVBoxLayout();
+        verticalLayout->setSpacing(6);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
+        verticalLayout->setContentsMargins(6, 6, 6, 6);
         btnClearCPImg = new QPushButton(tab_4);
         btnClearCPImg->setObjectName(QString::fromUtf8("btnClearCPImg"));
-        btnClearCPImg->setFont(font2);
+        sizePolicy3.setHeightForWidth(btnClearCPImg->sizePolicy().hasHeightForWidth());
+        btnClearCPImg->setSizePolicy(sizePolicy3);
+        btnClearCPImg->setFont(font);
 
         verticalLayout->addWidget(btnClearCPImg);
 
         btnClearCPDetectResult = new QPushButton(tab_4);
         btnClearCPDetectResult->setObjectName(QString::fromUtf8("btnClearCPDetectResult"));
-        btnClearCPDetectResult->setFont(font2);
+        sizePolicy3.setHeightForWidth(btnClearCPDetectResult->sizePolicy().hasHeightForWidth());
+        btnClearCPDetectResult->setSizePolicy(sizePolicy3);
+        btnClearCPDetectResult->setFont(font);
 
         verticalLayout->addWidget(btnClearCPDetectResult);
 
@@ -350,13 +451,14 @@ public:
         verticalLayout_3->addLayout(horizontalLayout_3);
 
         gridLayout_9 = new QGridLayout();
+        gridLayout_9->setSpacing(6);
         gridLayout_9->setObjectName(QString::fromUtf8("gridLayout_9"));
-        gridLayout_9->setHorizontalSpacing(0);
+        gridLayout_9->setContentsMargins(6, 6, 6, 6);
         btnSaveAligenmentPlatImg = new QPushButton(tab_4);
         btnSaveAligenmentPlatImg->setObjectName(QString::fromUtf8("btnSaveAligenmentPlatImg"));
         sizePolicy3.setHeightForWidth(btnSaveAligenmentPlatImg->sizePolicy().hasHeightForWidth());
         btnSaveAligenmentPlatImg->setSizePolicy(sizePolicy3);
-        btnSaveAligenmentPlatImg->setFont(font3);
+        btnSaveAligenmentPlatImg->setFont(font);
 
         gridLayout_9->addWidget(btnSaveAligenmentPlatImg, 1, 0, 1, 1);
 
@@ -364,15 +466,17 @@ public:
         btnCalibratePlat->setObjectName(QString::fromUtf8("btnCalibratePlat"));
         sizePolicy3.setHeightForWidth(btnCalibratePlat->sizePolicy().hasHeightForWidth());
         btnCalibratePlat->setSizePolicy(sizePolicy3);
-        btnCalibratePlat->setFont(font3);
+        btnCalibratePlat->setFont(font);
 
         gridLayout_9->addWidget(btnCalibratePlat, 2, 0, 1, 1);
 
         horizontalLayout_2 = new QHBoxLayout();
+        horizontalLayout_2->setSpacing(6);
         horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        horizontalLayout_2->setContentsMargins(6, 6, 6, 6);
         label_4 = new QLabel(tab_4);
         label_4->setObjectName(QString::fromUtf8("label_4"));
-        label_4->setFont(font3);
+        label_4->setFont(font);
 
         horizontalLayout_2->addWidget(label_4);
 
@@ -387,33 +491,39 @@ public:
         cbxPlatform->addItem(QString());
         cbxPlatform->addItem(QString());
         cbxPlatform->setObjectName(QString::fromUtf8("cbxPlatform"));
-        cbxPlatform->setFont(font3);
+        sizePolicy3.setHeightForWidth(cbxPlatform->sizePolicy().hasHeightForWidth());
+        cbxPlatform->setSizePolicy(sizePolicy3);
+        cbxPlatform->setFont(font);
 
         horizontalLayout_2->addWidget(cbxPlatform);
 
 
         gridLayout_9->addLayout(horizontalLayout_2, 0, 0, 1, 1);
 
-        gridLayout_9->setRowStretch(0, 4);
 
         verticalLayout_3->addLayout(gridLayout_9);
 
+        calibrationControlsSpacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        verticalLayout_3->addItem(calibrationControlsSpacer);
+
+        verticalLayout_3->setStretch(2, 1);
 
         gridLayout_2->addLayout(verticalLayout_3, 0, 0, 1, 1);
 
         tabWidget->addTab(tab_4, QString());
 
-        gridLayout_4->addWidget(tabWidget, 0, 1, 1, 1);
+        gridLayout_4->addWidget(tabWidget, 0, 0, 1, 1);
 
         gridLayout_4->setRowStretch(0, 1);
-        gridLayout_4->setColumnStretch(0, 6);
+        gridLayout_4->setColumnStretch(1, 1);
 
         gridLayout_14->addLayout(gridLayout_4, 0, 0, 1, 1);
 
 
         retranslateUi(CISWidget);
 
-        tabWidget->setCurrentIndex(2);
+        tabWidget->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(CISWidget);
@@ -422,13 +532,13 @@ public:
     void retranslateUi(QWidget *CISWidget)
     {
         CISWidget->setWindowTitle(QCoreApplication::translate("CISWidget", "Widget", nullptr));
-        btnSoftWareTrigger->setText(QCoreApplication::translate("CISWidget", "\350\275\257\344\273\266\350\247\246\345\217\221", nullptr));
-        btnStopTrigger->setText(QCoreApplication::translate("CISWidget", "\345\201\234\346\255\242\350\247\246\345\217\221", nullptr));
-        btnStop->setText(QCoreApplication::translate("CISWidget", "\347\273\223\346\235\237\351\207\207\351\233\206", nullptr));
+        btnSoftWareTrigger->setText(QCoreApplication::translate("CISWidget", "\345\274\200\345\247\213\350\207\252\345\212\250\346\211\253\346\217\217", nullptr));
+        btnStopTrigger->setText(QCoreApplication::translate("CISWidget", "\347\273\223\346\235\237\350\207\252\345\212\250\346\211\253\346\217\217", nullptr));
+        btnStop->setText(QCoreApplication::translate("CISWidget", "\347\273\223\346\235\237\347\233\270\346\234\272\351\207\207\351\233\206", nullptr));
         ckbSplice->setText(QCoreApplication::translate("CISWidget", "\346\213\274\346\216\245\345\233\276\345\203\217", nullptr));
         btnCISConfig->setText(QCoreApplication::translate("CISWidget", "CIS\347\233\270\346\234\272\345\206\205\351\203\250\350\256\276\347\275\256", nullptr));
         btnSave->setText(QCoreApplication::translate("CISWidget", "\344\277\235\345\255\230\345\233\276\345\203\217", nullptr));
-        btnStart->setText(QCoreApplication::translate("CISWidget", "\345\274\200\345\247\213\351\207\207\351\233\206", nullptr));
+        btnStart->setText(QCoreApplication::translate("CISWidget", "\345\220\257\345\212\250\347\233\270\346\234\272\351\207\207\351\233\206", nullptr));
         btn_ChessboardDetector->setText(QCoreApplication::translate("CISWidget", "\346\243\213\347\233\230\346\240\274\350\247\222\347\202\271\346\243\200\346\265\213", nullptr));
         btnCameraCalibrate->setText(QCoreApplication::translate("CISWidget", "\347\233\270\346\234\272\345\206\205\345\217\202\346\240\207\345\256\232", nullptr));
         groupBox->setTitle(QCoreApplication::translate("CISWidget", "\350\275\257\344\273\266\350\247\246\345\217\221\350\275\250\351\201\223\350\256\276\347\275\256", nullptr));

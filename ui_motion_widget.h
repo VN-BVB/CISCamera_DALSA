@@ -20,6 +20,7 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
@@ -58,6 +59,15 @@ public:
     QPushButton *rail_btn_disconnect;
     QPushButton *rail_btn_absLocate;
     QPushButton *rail_btn_stop;
+    QGroupBox *groupBox_4;
+    QGridLayout *gridLayout_2;
+    QPushButton *plt_btn_resetAll;
+    QPushButton *plt_btn_enableAll;
+    QPushButton *plt_btn_homeAll;
+    QPushButton *plt_btn_disenableAll;
+    QPushButton *plt_btn_locateAll;
+    QPushButton *plt_btn_stopAll;
+    QSpacerItem *railControlsSpacer;
     QWidget *widget_platform;
     QVBoxLayout *verticalLayout_5;
     QGroupBox *groupBox_3;
@@ -73,14 +83,6 @@ public:
     QComboBox *combo_singleaxispltchoose;
     QComboBox *combo_singleaxischoose;
     QLineEdit *plt_edit_singleaxismoverpos;
-    QGroupBox *groupBox_4;
-    QGridLayout *gridLayout_2;
-    QPushButton *plt_btn_resetAll;
-    QPushButton *plt_btn_enableAll;
-    QPushButton *plt_btn_homeAll;
-    QPushButton *plt_btn_disenableAll;
-    QPushButton *plt_btn_locateAll;
-    QPushButton *plt_btn_stopAll;
     QWidget *widget_8;
     QGridLayout *gridLayout_3;
     QFrame *card_rail;
@@ -182,34 +184,46 @@ public:
     {
         if (MotionWidget->objectName().isEmpty())
             MotionWidget->setObjectName(QString::fromUtf8("MotionWidget"));
-        MotionWidget->resize(1107, 870);
+        MotionWidget->resize(522, 703);
         QFont font;
-        font.setPointSize(12);
+        font.setPointSize(10);
         MotionWidget->setFont(font);
         verticalLayout_6 = new QVBoxLayout(MotionWidget);
+        verticalLayout_6->setSpacing(4);
         verticalLayout_6->setObjectName(QString::fromUtf8("verticalLayout_6"));
+        verticalLayout_6->setSizeConstraint(QLayout::SetMinimumSize);
+        verticalLayout_6->setContentsMargins(2, 2, 2, 2);
         widget_7 = new QWidget(MotionWidget);
         widget_7->setObjectName(QString::fromUtf8("widget_7"));
         horizontalLayout_8 = new QHBoxLayout(widget_7);
+        horizontalLayout_8->setSpacing(4);
         horizontalLayout_8->setObjectName(QString::fromUtf8("horizontalLayout_8"));
+        horizontalLayout_8->setSizeConstraint(QLayout::SetMinimumSize);
+        horizontalLayout_8->setContentsMargins(4, 4, 4, 4);
         widget_rail = new QWidget(widget_7);
         widget_rail->setObjectName(QString::fromUtf8("widget_rail"));
         verticalLayout_4 = new QVBoxLayout(widget_rail);
+        verticalLayout_4->setSpacing(4);
         verticalLayout_4->setObjectName(QString::fromUtf8("verticalLayout_4"));
+        verticalLayout_4->setContentsMargins(4, 4, 4, 4);
         groupBox = new QGroupBox(widget_rail);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
-        QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        groupBox->setMinimumSize(QSize(0, 0));
+        QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(groupBox->sizePolicy().hasHeightForWidth());
         groupBox->setSizePolicy(sizePolicy);
-        groupBox->setMinimumSize(QSize(0, 150));
         verticalLayout_2 = new QVBoxLayout(groupBox);
+        verticalLayout_2->setSpacing(6);
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
+        verticalLayout_2->setContentsMargins(6, 6, 6, 6);
         widget = new QWidget(groupBox);
         widget->setObjectName(QString::fromUtf8("widget"));
         horizontalLayout_2 = new QHBoxLayout(widget);
+        horizontalLayout_2->setSpacing(6);
         horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        horizontalLayout_2->setContentsMargins(0, 0, 0, 0);
         label = new QLabel(widget);
         label->setObjectName(QString::fromUtf8("label"));
 
@@ -217,6 +231,12 @@ public:
 
         rail_edit_targetPos = new QLineEdit(widget);
         rail_edit_targetPos->setObjectName(QString::fromUtf8("rail_edit_targetPos"));
+        QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Fixed);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(rail_edit_targetPos->sizePolicy().hasHeightForWidth());
+        rail_edit_targetPos->setSizePolicy(sizePolicy1);
+        rail_edit_targetPos->setMaximumSize(QSize(90, 16777215));
 
         horizontalLayout_2->addWidget(rail_edit_targetPos);
 
@@ -226,7 +246,9 @@ public:
         widget_2 = new QWidget(groupBox);
         widget_2->setObjectName(QString::fromUtf8("widget_2"));
         horizontalLayout_3 = new QHBoxLayout(widget_2);
+        horizontalLayout_3->setSpacing(6);
         horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
+        horizontalLayout_3->setContentsMargins(0, 0, 0, 0);
         label_2 = new QLabel(widget_2);
         label_2->setObjectName(QString::fromUtf8("label_2"));
 
@@ -234,6 +256,9 @@ public:
 
         rail_edit_targetVel = new QLineEdit(widget_2);
         rail_edit_targetVel->setObjectName(QString::fromUtf8("rail_edit_targetVel"));
+        sizePolicy1.setHeightForWidth(rail_edit_targetVel->sizePolicy().hasHeightForWidth());
+        rail_edit_targetVel->setSizePolicy(sizePolicy1);
+        rail_edit_targetVel->setMaximumSize(QSize(90, 16777215));
 
         horizontalLayout_3->addWidget(rail_edit_targetVel);
 
@@ -243,7 +268,9 @@ public:
         widget_3 = new QWidget(groupBox);
         widget_3->setObjectName(QString::fromUtf8("widget_3"));
         horizontalLayout_4 = new QHBoxLayout(widget_3);
+        horizontalLayout_4->setSpacing(6);
         horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
+        horizontalLayout_4->setContentsMargins(0, 0, 0, 0);
         label_3 = new QLabel(widget_3);
         label_3->setObjectName(QString::fromUtf8("label_3"));
 
@@ -251,6 +278,9 @@ public:
 
         rail_edit_curPos = new QLineEdit(widget_3);
         rail_edit_curPos->setObjectName(QString::fromUtf8("rail_edit_curPos"));
+        sizePolicy1.setHeightForWidth(rail_edit_curPos->sizePolicy().hasHeightForWidth());
+        rail_edit_curPos->setSizePolicy(sizePolicy1);
+        rail_edit_curPos->setMaximumSize(QSize(90, 16777215));
 
         horizontalLayout_4->addWidget(rail_edit_curPos);
 
@@ -260,7 +290,9 @@ public:
         widget_4 = new QWidget(groupBox);
         widget_4->setObjectName(QString::fromUtf8("widget_4"));
         horizontalLayout_5 = new QHBoxLayout(widget_4);
+        horizontalLayout_5->setSpacing(6);
         horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
+        horizontalLayout_5->setContentsMargins(0, 0, 0, 0);
         label_4 = new QLabel(widget_4);
         label_4->setObjectName(QString::fromUtf8("label_4"));
 
@@ -268,6 +300,9 @@ public:
 
         rail_edit_curVel = new QLineEdit(widget_4);
         rail_edit_curVel->setObjectName(QString::fromUtf8("rail_edit_curVel"));
+        sizePolicy1.setHeightForWidth(rail_edit_curVel->sizePolicy().hasHeightForWidth());
+        rail_edit_curVel->setSizePolicy(sizePolicy1);
+        rail_edit_curVel->setMaximumSize(QSize(90, 16777215));
 
         horizontalLayout_5->addWidget(rail_edit_curVel);
 
@@ -279,42 +314,119 @@ public:
 
         groupbox = new QGroupBox(widget_rail);
         groupbox->setObjectName(QString::fromUtf8("groupbox"));
+        sizePolicy.setHeightForWidth(groupbox->sizePolicy().hasHeightForWidth());
+        groupbox->setSizePolicy(sizePolicy);
         gridLayout = new QGridLayout(groupbox);
+        gridLayout->setSpacing(6);
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
+        gridLayout->setContentsMargins(6, 6, 6, 6);
         rail_btn_connect = new QPushButton(groupbox);
         rail_btn_connect->setObjectName(QString::fromUtf8("rail_btn_connect"));
+        sizePolicy1.setHeightForWidth(rail_btn_connect->sizePolicy().hasHeightForWidth());
+        rail_btn_connect->setSizePolicy(sizePolicy1);
 
         gridLayout->addWidget(rail_btn_connect, 0, 0, 1, 1);
 
         rail_btn_disconnect = new QPushButton(groupbox);
         rail_btn_disconnect->setObjectName(QString::fromUtf8("rail_btn_disconnect"));
+        sizePolicy1.setHeightForWidth(rail_btn_disconnect->sizePolicy().hasHeightForWidth());
+        rail_btn_disconnect->setSizePolicy(sizePolicy1);
 
         gridLayout->addWidget(rail_btn_disconnect, 0, 1, 1, 1);
 
         rail_btn_absLocate = new QPushButton(groupbox);
         rail_btn_absLocate->setObjectName(QString::fromUtf8("rail_btn_absLocate"));
+        sizePolicy1.setHeightForWidth(rail_btn_absLocate->sizePolicy().hasHeightForWidth());
+        rail_btn_absLocate->setSizePolicy(sizePolicy1);
 
         gridLayout->addWidget(rail_btn_absLocate, 1, 0, 1, 1);
 
         rail_btn_stop = new QPushButton(groupbox);
         rail_btn_stop->setObjectName(QString::fromUtf8("rail_btn_stop"));
+        sizePolicy1.setHeightForWidth(rail_btn_stop->sizePolicy().hasHeightForWidth());
+        rail_btn_stop->setSizePolicy(sizePolicy1);
 
         gridLayout->addWidget(rail_btn_stop, 1, 1, 1, 1);
 
 
         verticalLayout_4->addWidget(groupbox);
 
+        groupBox_4 = new QGroupBox(widget_rail);
+        groupBox_4->setObjectName(QString::fromUtf8("groupBox_4"));
+        sizePolicy.setHeightForWidth(groupBox_4->sizePolicy().hasHeightForWidth());
+        groupBox_4->setSizePolicy(sizePolicy);
+        gridLayout_2 = new QGridLayout(groupBox_4);
+        gridLayout_2->setSpacing(6);
+        gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
+        gridLayout_2->setContentsMargins(6, 6, 6, 6);
+        plt_btn_resetAll = new QPushButton(groupBox_4);
+        plt_btn_resetAll->setObjectName(QString::fromUtf8("plt_btn_resetAll"));
+        sizePolicy1.setHeightForWidth(plt_btn_resetAll->sizePolicy().hasHeightForWidth());
+        plt_btn_resetAll->setSizePolicy(sizePolicy1);
+
+        gridLayout_2->addWidget(plt_btn_resetAll, 2, 0, 1, 1);
+
+        plt_btn_enableAll = new QPushButton(groupBox_4);
+        plt_btn_enableAll->setObjectName(QString::fromUtf8("plt_btn_enableAll"));
+        sizePolicy1.setHeightForWidth(plt_btn_enableAll->sizePolicy().hasHeightForWidth());
+        plt_btn_enableAll->setSizePolicy(sizePolicy1);
+
+        gridLayout_2->addWidget(plt_btn_enableAll, 0, 0, 1, 1);
+
+        plt_btn_homeAll = new QPushButton(groupBox_4);
+        plt_btn_homeAll->setObjectName(QString::fromUtf8("plt_btn_homeAll"));
+        sizePolicy1.setHeightForWidth(plt_btn_homeAll->sizePolicy().hasHeightForWidth());
+        plt_btn_homeAll->setSizePolicy(sizePolicy1);
+
+        gridLayout_2->addWidget(plt_btn_homeAll, 1, 0, 1, 1);
+
+        plt_btn_disenableAll = new QPushButton(groupBox_4);
+        plt_btn_disenableAll->setObjectName(QString::fromUtf8("plt_btn_disenableAll"));
+        sizePolicy1.setHeightForWidth(plt_btn_disenableAll->sizePolicy().hasHeightForWidth());
+        plt_btn_disenableAll->setSizePolicy(sizePolicy1);
+
+        gridLayout_2->addWidget(plt_btn_disenableAll, 0, 1, 1, 1);
+
+        plt_btn_locateAll = new QPushButton(groupBox_4);
+        plt_btn_locateAll->setObjectName(QString::fromUtf8("plt_btn_locateAll"));
+        sizePolicy1.setHeightForWidth(plt_btn_locateAll->sizePolicy().hasHeightForWidth());
+        plt_btn_locateAll->setSizePolicy(sizePolicy1);
+
+        gridLayout_2->addWidget(plt_btn_locateAll, 1, 1, 1, 1);
+
+        plt_btn_stopAll = new QPushButton(groupBox_4);
+        plt_btn_stopAll->setObjectName(QString::fromUtf8("plt_btn_stopAll"));
+        sizePolicy1.setHeightForWidth(plt_btn_stopAll->sizePolicy().hasHeightForWidth());
+        plt_btn_stopAll->setSizePolicy(sizePolicy1);
+
+        gridLayout_2->addWidget(plt_btn_stopAll, 2, 1, 1, 1);
+
+
+        verticalLayout_4->addWidget(groupBox_4);
+
+        railControlsSpacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        verticalLayout_4->addItem(railControlsSpacer);
+
+        verticalLayout_4->setStretch(3, 1);
 
         horizontalLayout_8->addWidget(widget_rail);
 
         widget_platform = new QWidget(widget_7);
         widget_platform->setObjectName(QString::fromUtf8("widget_platform"));
         verticalLayout_5 = new QVBoxLayout(widget_platform);
+        verticalLayout_5->setSpacing(4);
         verticalLayout_5->setObjectName(QString::fromUtf8("verticalLayout_5"));
+        verticalLayout_5->setSizeConstraint(QLayout::SetMinimumSize);
+        verticalLayout_5->setContentsMargins(4, 4, 4, 4);
         groupBox_3 = new QGroupBox(widget_platform);
         groupBox_3->setObjectName(QString::fromUtf8("groupBox_3"));
+        groupBox_3->setMaximumSize(QSize(16777215, 295));
         verticalLayout_3 = new QVBoxLayout(groupBox_3);
+        verticalLayout_3->setSpacing(6);
         verticalLayout_3->setObjectName(QString::fromUtf8("verticalLayout_3"));
+        verticalLayout_3->setSizeConstraint(QLayout::SetMinimumSize);
+        verticalLayout_3->setContentsMargins(6, 6, 6, 6);
         table_axispos = new QTableWidget(groupBox_3);
         if (table_axispos->columnCount() < 3)
             table_axispos->setColumnCount(3);
@@ -341,16 +453,28 @@ public:
         QTableWidgetItem *__qtablewidgetitem9 = new QTableWidgetItem();
         table_axispos->setVerticalHeaderItem(6, __qtablewidgetitem9);
         table_axispos->setObjectName(QString::fromUtf8("table_axispos"));
-        table_axispos->setMinimumSize(QSize(250, 250));
+        table_axispos->setMinimumSize(QSize(260, 200));
+        QSizePolicy sizePolicy2(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        sizePolicy2.setHorizontalStretch(0);
+        sizePolicy2.setVerticalStretch(0);
+        sizePolicy2.setHeightForWidth(table_axispos->sizePolicy().hasHeightForWidth());
+        table_axispos->setSizePolicy(sizePolicy2);
 
         verticalLayout_3->addWidget(table_axispos);
 
         widget_6 = new QWidget(groupBox_3);
         widget_6->setObjectName(QString::fromUtf8("widget_6"));
+        sizePolicy.setHeightForWidth(widget_6->sizePolicy().hasHeightForWidth());
+        widget_6->setSizePolicy(sizePolicy);
         horizontalLayout_7 = new QHBoxLayout(widget_6);
+        horizontalLayout_7->setSpacing(6);
         horizontalLayout_7->setObjectName(QString::fromUtf8("horizontalLayout_7"));
+        horizontalLayout_7->setContentsMargins(0, 0, 0, 0);
         plt_btn_singlepltmover = new QPushButton(widget_6);
         plt_btn_singlepltmover->setObjectName(QString::fromUtf8("plt_btn_singlepltmover"));
+        sizePolicy1.setHeightForWidth(plt_btn_singlepltmover->sizePolicy().hasHeightForWidth());
+        plt_btn_singlepltmover->setSizePolicy(sizePolicy1);
+        plt_btn_singlepltmover->setMaximumSize(QSize(120, 16777215));
 
         horizontalLayout_7->addWidget(plt_btn_singlepltmover);
 
@@ -363,6 +487,9 @@ public:
         combo_singlepltchoose->addItem(QString());
         combo_singlepltchoose->addItem(QString());
         combo_singlepltchoose->setObjectName(QString::fromUtf8("combo_singlepltchoose"));
+        sizePolicy1.setHeightForWidth(combo_singlepltchoose->sizePolicy().hasHeightForWidth());
+        combo_singlepltchoose->setSizePolicy(sizePolicy1);
+        combo_singlepltchoose->setMaximumSize(QSize(90, 16777215));
 
         horizontalLayout_7->addWidget(combo_singlepltchoose);
 
@@ -371,10 +498,17 @@ public:
 
         widget_5 = new QWidget(groupBox_3);
         widget_5->setObjectName(QString::fromUtf8("widget_5"));
+        sizePolicy.setHeightForWidth(widget_5->sizePolicy().hasHeightForWidth());
+        widget_5->setSizePolicy(sizePolicy);
         horizontalLayout_6 = new QHBoxLayout(widget_5);
+        horizontalLayout_6->setSpacing(6);
         horizontalLayout_6->setObjectName(QString::fromUtf8("horizontalLayout_6"));
+        horizontalLayout_6->setContentsMargins(0, 0, 0, 0);
         plt_btn_singleaxismover = new QPushButton(widget_5);
         plt_btn_singleaxismover->setObjectName(QString::fromUtf8("plt_btn_singleaxismover"));
+        sizePolicy1.setHeightForWidth(plt_btn_singleaxismover->sizePolicy().hasHeightForWidth());
+        plt_btn_singleaxismover->setSizePolicy(sizePolicy1);
+        plt_btn_singleaxismover->setMaximumSize(QSize(75, 16777215));
 
         horizontalLayout_6->addWidget(plt_btn_singleaxismover);
 
@@ -387,6 +521,9 @@ public:
         combo_singleaxispltchoose->addItem(QString());
         combo_singleaxispltchoose->addItem(QString());
         combo_singleaxispltchoose->setObjectName(QString::fromUtf8("combo_singleaxispltchoose"));
+        sizePolicy1.setHeightForWidth(combo_singleaxispltchoose->sizePolicy().hasHeightForWidth());
+        combo_singleaxispltchoose->setSizePolicy(sizePolicy1);
+        combo_singleaxispltchoose->setMaximumSize(QSize(85, 16777215));
 
         horizontalLayout_6->addWidget(combo_singleaxispltchoose);
 
@@ -395,67 +532,44 @@ public:
         combo_singleaxischoose->addItem(QString());
         combo_singleaxischoose->addItem(QString());
         combo_singleaxischoose->setObjectName(QString::fromUtf8("combo_singleaxischoose"));
+        sizePolicy1.setHeightForWidth(combo_singleaxischoose->sizePolicy().hasHeightForWidth());
+        combo_singleaxischoose->setSizePolicy(sizePolicy1);
+        combo_singleaxischoose->setMaximumSize(QSize(45, 16777215));
 
         horizontalLayout_6->addWidget(combo_singleaxischoose);
 
         plt_edit_singleaxismoverpos = new QLineEdit(widget_5);
         plt_edit_singleaxismoverpos->setObjectName(QString::fromUtf8("plt_edit_singleaxismoverpos"));
+        sizePolicy1.setHeightForWidth(plt_edit_singleaxismoverpos->sizePolicy().hasHeightForWidth());
+        plt_edit_singleaxismoverpos->setSizePolicy(sizePolicy1);
+        plt_edit_singleaxismoverpos->setMaximumSize(QSize(60, 16777215));
 
         horizontalLayout_6->addWidget(plt_edit_singleaxismoverpos);
 
 
         verticalLayout_3->addWidget(widget_5);
 
+        verticalLayout_3->setStretch(0, 1);
 
-        verticalLayout_5->addWidget(groupBox_3);
+        verticalLayout_5->addWidget(groupBox_3, 0, Qt::AlignTop);
 
-        groupBox_4 = new QGroupBox(widget_platform);
-        groupBox_4->setObjectName(QString::fromUtf8("groupBox_4"));
-        gridLayout_2 = new QGridLayout(groupBox_4);
-        gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
-        plt_btn_resetAll = new QPushButton(groupBox_4);
-        plt_btn_resetAll->setObjectName(QString::fromUtf8("plt_btn_resetAll"));
-
-        gridLayout_2->addWidget(plt_btn_resetAll, 2, 0, 1, 1);
-
-        plt_btn_enableAll = new QPushButton(groupBox_4);
-        plt_btn_enableAll->setObjectName(QString::fromUtf8("plt_btn_enableAll"));
-
-        gridLayout_2->addWidget(plt_btn_enableAll, 0, 0, 1, 1);
-
-        plt_btn_homeAll = new QPushButton(groupBox_4);
-        plt_btn_homeAll->setObjectName(QString::fromUtf8("plt_btn_homeAll"));
-
-        gridLayout_2->addWidget(plt_btn_homeAll, 1, 0, 1, 1);
-
-        plt_btn_disenableAll = new QPushButton(groupBox_4);
-        plt_btn_disenableAll->setObjectName(QString::fromUtf8("plt_btn_disenableAll"));
-
-        gridLayout_2->addWidget(plt_btn_disenableAll, 0, 1, 1, 1);
-
-        plt_btn_locateAll = new QPushButton(groupBox_4);
-        plt_btn_locateAll->setObjectName(QString::fromUtf8("plt_btn_locateAll"));
-
-        gridLayout_2->addWidget(plt_btn_locateAll, 1, 1, 1, 1);
-
-        plt_btn_stopAll = new QPushButton(groupBox_4);
-        plt_btn_stopAll->setObjectName(QString::fromUtf8("plt_btn_stopAll"));
-
-        gridLayout_2->addWidget(plt_btn_stopAll, 2, 1, 1, 1);
-
-
-        verticalLayout_5->addWidget(groupBox_4);
-
+        verticalLayout_5->setStretch(0, 1);
 
         horizontalLayout_8->addWidget(widget_platform);
 
+        horizontalLayout_8->setStretch(0, 2);
+        horizontalLayout_8->setStretch(1, 3);
 
         verticalLayout_6->addWidget(widget_7);
 
         widget_8 = new QWidget(MotionWidget);
         widget_8->setObjectName(QString::fromUtf8("widget_8"));
+        sizePolicy.setHeightForWidth(widget_8->sizePolicy().hasHeightForWidth());
+        widget_8->setSizePolicy(sizePolicy);
         gridLayout_3 = new QGridLayout(widget_8);
+        gridLayout_3->setSpacing(4);
         gridLayout_3->setObjectName(QString::fromUtf8("gridLayout_3"));
+        gridLayout_3->setContentsMargins(4, 4, 4, 4);
         card_rail = new QFrame(widget_8);
         card_rail->setObjectName(QString::fromUtf8("card_rail"));
         card_rail->setStyleSheet(QString::fromUtf8("QFrame#card_rail, QFrame#card_plt0, QFrame#card_plt1, QFrame#card_plt2,\n"
@@ -467,11 +581,15 @@ public:
         card_rail->setFrameShape(QFrame::StyledPanel);
         card_rail->setFrameShadow(QFrame::Raised);
         verticalLayout_7 = new QVBoxLayout(card_rail);
+        verticalLayout_7->setSpacing(6);
         verticalLayout_7->setObjectName(QString::fromUtf8("verticalLayout_7"));
+        verticalLayout_7->setContentsMargins(6, 6, 6, 6);
         widget_11 = new QWidget(card_rail);
         widget_11->setObjectName(QString::fromUtf8("widget_11"));
         horizontalLayout = new QHBoxLayout(widget_11);
+        horizontalLayout->setSpacing(6);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+        horizontalLayout->setContentsMargins(6, 6, 6, 6);
         label_5 = new QLabel(widget_11);
         label_5->setObjectName(QString::fromUtf8("label_5"));
 
@@ -493,7 +611,9 @@ public:
         widget_12 = new QWidget(card_rail);
         widget_12->setObjectName(QString::fromUtf8("widget_12"));
         horizontalLayout_11 = new QHBoxLayout(widget_12);
+        horizontalLayout_11->setSpacing(6);
         horizontalLayout_11->setObjectName(QString::fromUtf8("horizontalLayout_11"));
+        horizontalLayout_11->setContentsMargins(6, 6, 6, 6);
         label_11 = new QLabel(widget_12);
         label_11->setObjectName(QString::fromUtf8("label_11"));
 
@@ -521,11 +641,15 @@ public:
         card_plt0->setFrameShape(QFrame::StyledPanel);
         card_plt0->setFrameShadow(QFrame::Raised);
         verticalLayout_8 = new QVBoxLayout(card_plt0);
+        verticalLayout_8->setSpacing(6);
         verticalLayout_8->setObjectName(QString::fromUtf8("verticalLayout_8"));
+        verticalLayout_8->setContentsMargins(6, 6, 6, 6);
         widget_13 = new QWidget(card_plt0);
         widget_13->setObjectName(QString::fromUtf8("widget_13"));
         horizontalLayout_9 = new QHBoxLayout(widget_13);
+        horizontalLayout_9->setSpacing(6);
         horizontalLayout_9->setObjectName(QString::fromUtf8("horizontalLayout_9"));
+        horizontalLayout_9->setContentsMargins(6, 6, 6, 6);
         label_13 = new QLabel(widget_13);
         label_13->setObjectName(QString::fromUtf8("label_13"));
 
@@ -567,7 +691,9 @@ public:
         widget_16 = new QWidget(card_plt0);
         widget_16->setObjectName(QString::fromUtf8("widget_16"));
         horizontalLayout_15 = new QHBoxLayout(widget_16);
+        horizontalLayout_15->setSpacing(6);
         horizontalLayout_15->setObjectName(QString::fromUtf8("horizontalLayout_15"));
+        horizontalLayout_15->setContentsMargins(6, 6, 6, 6);
         label_19 = new QLabel(widget_16);
         label_19->setObjectName(QString::fromUtf8("label_19"));
 
@@ -595,11 +721,15 @@ public:
         card_plt1->setFrameShape(QFrame::StyledPanel);
         card_plt1->setFrameShadow(QFrame::Raised);
         verticalLayout_9 = new QVBoxLayout(card_plt1);
+        verticalLayout_9->setSpacing(6);
         verticalLayout_9->setObjectName(QString::fromUtf8("verticalLayout_9"));
+        verticalLayout_9->setContentsMargins(6, 6, 6, 6);
         widget_17 = new QWidget(card_plt1);
         widget_17->setObjectName(QString::fromUtf8("widget_17"));
         horizontalLayout_10 = new QHBoxLayout(widget_17);
+        horizontalLayout_10->setSpacing(6);
         horizontalLayout_10->setObjectName(QString::fromUtf8("horizontalLayout_10"));
+        horizontalLayout_10->setContentsMargins(6, 6, 6, 6);
         label_21 = new QLabel(widget_17);
         label_21->setObjectName(QString::fromUtf8("label_21"));
 
@@ -641,7 +771,9 @@ public:
         widget_20 = new QWidget(card_plt1);
         widget_20->setObjectName(QString::fromUtf8("widget_20"));
         horizontalLayout_19 = new QHBoxLayout(widget_20);
+        horizontalLayout_19->setSpacing(6);
         horizontalLayout_19->setObjectName(QString::fromUtf8("horizontalLayout_19"));
+        horizontalLayout_19->setContentsMargins(6, 6, 6, 6);
         label_27 = new QLabel(widget_20);
         label_27->setObjectName(QString::fromUtf8("label_27"));
 
@@ -656,7 +788,7 @@ public:
         verticalLayout_9->addWidget(widget_20);
 
 
-        gridLayout_3->addWidget(card_plt1, 0, 2, 1, 1);
+        gridLayout_3->addWidget(card_plt1, 1, 0, 1, 1);
 
         card_plt2 = new QFrame(widget_8);
         card_plt2->setObjectName(QString::fromUtf8("card_plt2"));
@@ -669,11 +801,15 @@ public:
         card_plt2->setFrameShape(QFrame::StyledPanel);
         card_plt2->setFrameShadow(QFrame::Raised);
         verticalLayout_10 = new QVBoxLayout(card_plt2);
+        verticalLayout_10->setSpacing(6);
         verticalLayout_10->setObjectName(QString::fromUtf8("verticalLayout_10"));
+        verticalLayout_10->setContentsMargins(6, 6, 6, 6);
         widget_21 = new QWidget(card_plt2);
         widget_21->setObjectName(QString::fromUtf8("widget_21"));
         horizontalLayout_12 = new QHBoxLayout(widget_21);
+        horizontalLayout_12->setSpacing(6);
         horizontalLayout_12->setObjectName(QString::fromUtf8("horizontalLayout_12"));
+        horizontalLayout_12->setContentsMargins(6, 6, 6, 6);
         label_29 = new QLabel(widget_21);
         label_29->setObjectName(QString::fromUtf8("label_29"));
 
@@ -715,7 +851,9 @@ public:
         widget_24 = new QWidget(card_plt2);
         widget_24->setObjectName(QString::fromUtf8("widget_24"));
         horizontalLayout_23 = new QHBoxLayout(widget_24);
+        horizontalLayout_23->setSpacing(6);
         horizontalLayout_23->setObjectName(QString::fromUtf8("horizontalLayout_23"));
+        horizontalLayout_23->setContentsMargins(6, 6, 6, 6);
         label_35 = new QLabel(widget_24);
         label_35->setObjectName(QString::fromUtf8("label_35"));
 
@@ -730,7 +868,7 @@ public:
         verticalLayout_10->addWidget(widget_24);
 
 
-        gridLayout_3->addWidget(card_plt2, 0, 3, 1, 1);
+        gridLayout_3->addWidget(card_plt2, 1, 1, 1, 1);
 
         card_plt3 = new QFrame(widget_8);
         card_plt3->setObjectName(QString::fromUtf8("card_plt3"));
@@ -743,11 +881,15 @@ public:
         card_plt3->setFrameShape(QFrame::StyledPanel);
         card_plt3->setFrameShadow(QFrame::Raised);
         verticalLayout_11 = new QVBoxLayout(card_plt3);
+        verticalLayout_11->setSpacing(6);
         verticalLayout_11->setObjectName(QString::fromUtf8("verticalLayout_11"));
+        verticalLayout_11->setContentsMargins(6, 6, 6, 6);
         widget_25 = new QWidget(card_plt3);
         widget_25->setObjectName(QString::fromUtf8("widget_25"));
         horizontalLayout_13 = new QHBoxLayout(widget_25);
+        horizontalLayout_13->setSpacing(6);
         horizontalLayout_13->setObjectName(QString::fromUtf8("horizontalLayout_13"));
+        horizontalLayout_13->setContentsMargins(6, 6, 6, 6);
         label_37 = new QLabel(widget_25);
         label_37->setObjectName(QString::fromUtf8("label_37"));
 
@@ -789,7 +931,9 @@ public:
         widget_28 = new QWidget(card_plt3);
         widget_28->setObjectName(QString::fromUtf8("widget_28"));
         horizontalLayout_27 = new QHBoxLayout(widget_28);
+        horizontalLayout_27->setSpacing(6);
         horizontalLayout_27->setObjectName(QString::fromUtf8("horizontalLayout_27"));
+        horizontalLayout_27->setContentsMargins(6, 6, 6, 6);
         label_43 = new QLabel(widget_28);
         label_43->setObjectName(QString::fromUtf8("label_43"));
 
@@ -804,7 +948,7 @@ public:
         verticalLayout_11->addWidget(widget_28);
 
 
-        gridLayout_3->addWidget(card_plt3, 1, 0, 1, 1);
+        gridLayout_3->addWidget(card_plt3, 2, 0, 1, 1);
 
         card_plt4 = new QFrame(widget_8);
         card_plt4->setObjectName(QString::fromUtf8("card_plt4"));
@@ -817,11 +961,15 @@ public:
         card_plt4->setFrameShape(QFrame::StyledPanel);
         card_plt4->setFrameShadow(QFrame::Raised);
         verticalLayout_12 = new QVBoxLayout(card_plt4);
+        verticalLayout_12->setSpacing(6);
         verticalLayout_12->setObjectName(QString::fromUtf8("verticalLayout_12"));
+        verticalLayout_12->setContentsMargins(6, 6, 6, 6);
         widget_29 = new QWidget(card_plt4);
         widget_29->setObjectName(QString::fromUtf8("widget_29"));
         horizontalLayout_14 = new QHBoxLayout(widget_29);
+        horizontalLayout_14->setSpacing(6);
         horizontalLayout_14->setObjectName(QString::fromUtf8("horizontalLayout_14"));
+        horizontalLayout_14->setContentsMargins(6, 6, 6, 6);
         label_45 = new QLabel(widget_29);
         label_45->setObjectName(QString::fromUtf8("label_45"));
 
@@ -863,7 +1011,9 @@ public:
         widget_32 = new QWidget(card_plt4);
         widget_32->setObjectName(QString::fromUtf8("widget_32"));
         horizontalLayout_31 = new QHBoxLayout(widget_32);
+        horizontalLayout_31->setSpacing(6);
         horizontalLayout_31->setObjectName(QString::fromUtf8("horizontalLayout_31"));
+        horizontalLayout_31->setContentsMargins(6, 6, 6, 6);
         label_51 = new QLabel(widget_32);
         label_51->setObjectName(QString::fromUtf8("label_51"));
 
@@ -878,7 +1028,7 @@ public:
         verticalLayout_12->addWidget(widget_32);
 
 
-        gridLayout_3->addWidget(card_plt4, 1, 1, 1, 1);
+        gridLayout_3->addWidget(card_plt4, 2, 1, 1, 1);
 
         card_plt5 = new QFrame(widget_8);
         card_plt5->setObjectName(QString::fromUtf8("card_plt5"));
@@ -891,11 +1041,15 @@ public:
         card_plt5->setFrameShape(QFrame::StyledPanel);
         card_plt5->setFrameShadow(QFrame::Raised);
         verticalLayout_15 = new QVBoxLayout(card_plt5);
+        verticalLayout_15->setSpacing(6);
         verticalLayout_15->setObjectName(QString::fromUtf8("verticalLayout_15"));
+        verticalLayout_15->setContentsMargins(6, 6, 6, 6);
         widget_41 = new QWidget(card_plt5);
         widget_41->setObjectName(QString::fromUtf8("widget_41"));
         horizontalLayout_16 = new QHBoxLayout(widget_41);
+        horizontalLayout_16->setSpacing(6);
         horizontalLayout_16->setObjectName(QString::fromUtf8("horizontalLayout_16"));
+        horizontalLayout_16->setContentsMargins(6, 6, 6, 6);
         label_69 = new QLabel(widget_41);
         label_69->setObjectName(QString::fromUtf8("label_69"));
 
@@ -937,7 +1091,9 @@ public:
         widget_44 = new QWidget(card_plt5);
         widget_44->setObjectName(QString::fromUtf8("widget_44"));
         horizontalLayout_43 = new QHBoxLayout(widget_44);
+        horizontalLayout_43->setSpacing(6);
         horizontalLayout_43->setObjectName(QString::fromUtf8("horizontalLayout_43"));
+        horizontalLayout_43->setContentsMargins(6, 6, 6, 6);
         label_75 = new QLabel(widget_44);
         label_75->setObjectName(QString::fromUtf8("label_75"));
 
@@ -952,7 +1108,7 @@ public:
         verticalLayout_15->addWidget(widget_44);
 
 
-        gridLayout_3->addWidget(card_plt5, 1, 2, 1, 1);
+        gridLayout_3->addWidget(card_plt5, 3, 0, 1, 1);
 
         card_plt6 = new QFrame(widget_8);
         card_plt6->setObjectName(QString::fromUtf8("card_plt6"));
@@ -965,11 +1121,15 @@ public:
         card_plt6->setFrameShape(QFrame::StyledPanel);
         card_plt6->setFrameShadow(QFrame::Raised);
         verticalLayout_16 = new QVBoxLayout(card_plt6);
+        verticalLayout_16->setSpacing(6);
         verticalLayout_16->setObjectName(QString::fromUtf8("verticalLayout_16"));
+        verticalLayout_16->setContentsMargins(6, 6, 6, 6);
         widget_45 = new QWidget(card_plt6);
         widget_45->setObjectName(QString::fromUtf8("widget_45"));
         horizontalLayout_17 = new QHBoxLayout(widget_45);
+        horizontalLayout_17->setSpacing(6);
         horizontalLayout_17->setObjectName(QString::fromUtf8("horizontalLayout_17"));
+        horizontalLayout_17->setContentsMargins(6, 6, 6, 6);
         label_77 = new QLabel(widget_45);
         label_77->setObjectName(QString::fromUtf8("label_77"));
 
@@ -1011,7 +1171,9 @@ public:
         widget_48 = new QWidget(card_plt6);
         widget_48->setObjectName(QString::fromUtf8("widget_48"));
         horizontalLayout_47 = new QHBoxLayout(widget_48);
+        horizontalLayout_47->setSpacing(6);
         horizontalLayout_47->setObjectName(QString::fromUtf8("horizontalLayout_47"));
+        horizontalLayout_47->setContentsMargins(6, 6, 6, 6);
         label_83 = new QLabel(widget_48);
         label_83->setObjectName(QString::fromUtf8("label_83"));
 
@@ -1026,7 +1188,7 @@ public:
         verticalLayout_16->addWidget(widget_48);
 
 
-        gridLayout_3->addWidget(card_plt6, 1, 3, 1, 1);
+        gridLayout_3->addWidget(card_plt6, 3, 1, 1, 1);
 
 
         verticalLayout_6->addWidget(widget_8);
@@ -1050,6 +1212,13 @@ public:
         rail_btn_disconnect->setText(QCoreApplication::translate("MotionWidget", "\346\226\255\345\274\200\345\234\260\350\275\250", nullptr));
         rail_btn_absLocate->setText(QCoreApplication::translate("MotionWidget", "\347\273\235\345\257\271\345\256\232\344\275\215", nullptr));
         rail_btn_stop->setText(QCoreApplication::translate("MotionWidget", "\345\201\234\346\255\242\350\277\220\345\212\250", nullptr));
+        groupBox_4->setTitle(QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\260\350\201\224\346\216\247", nullptr));
+        plt_btn_resetAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\244\215\344\275\215", nullptr));
+        plt_btn_enableAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\344\275\277\350\203\275", nullptr));
+        plt_btn_homeAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\233\236\345\217\202", nullptr));
+        plt_btn_disenableAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\216\273\344\275\277\350\203\275", nullptr));
+        plt_btn_locateAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\256\232\344\275\215", nullptr));
+        plt_btn_stopAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\201\234\346\255\242", nullptr));
         groupBox_3->setTitle(QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\260\350\277\220\345\212\250\344\275\215\347\275\256\350\256\276\347\275\256", nullptr));
         QTableWidgetItem *___qtablewidgetitem = table_axispos->horizontalHeaderItem(0);
         ___qtablewidgetitem->setText(QCoreApplication::translate("MotionWidget", "X", nullptr));
@@ -1093,13 +1262,6 @@ public:
         combo_singleaxischoose->setItemText(1, QCoreApplication::translate("MotionWidget", "Y", nullptr));
         combo_singleaxischoose->setItemText(2, QCoreApplication::translate("MotionWidget", "Z", nullptr));
 
-        groupBox_4->setTitle(QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\260\350\201\224\346\216\247", nullptr));
-        plt_btn_resetAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\244\215\344\275\215", nullptr));
-        plt_btn_enableAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\344\275\277\350\203\275", nullptr));
-        plt_btn_homeAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\233\236\345\217\202", nullptr));
-        plt_btn_disenableAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\216\273\344\275\277\350\203\275", nullptr));
-        plt_btn_locateAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\256\232\344\275\215", nullptr));
-        plt_btn_stopAll->setText(QCoreApplication::translate("MotionWidget", "\344\270\200\351\224\256\345\201\234\346\255\242", nullptr));
         label_5->setText(QCoreApplication::translate("MotionWidget", "\345\234\260\350\275\250", nullptr));
         rail_label_status->setText(QString());
         label_11->setText(QCoreApplication::translate("MotionWidget", "\345\267\245\344\275\234\347\212\266\346\200\201", nullptr));
