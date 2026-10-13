@@ -17,9 +17,14 @@ MotionController::MotionController(QObject *parent) : QObject(parent) {
     playbackTimer_ = new QTimer(this);
     playbackTimer_->setInterval(5);
     connect(playbackTimer_, &QTimer::timeout, this, &MotionController::onPlaybackTick);
+
+    homeTimer_ = new QTimer(this);
+    homeTimer_->setInterval(100);
+    connect(homeTimer_, &QTimer::timeout, this, &MotionController::onHomeTick);
 }
 
 MotionController::~MotionController() {
+    cancelHome(u8"控制器退出");
     if (plc_) {
         plc_->plcDisconnect();
         delete plc_;
@@ -36,6 +41,8 @@ MotionController::~MotionController() {
 // ============================================================
 
 void MotionController::connectPlc(const QString &ip, int port) {
+    cancelHome(u8"重新连接 PLC");
+    connected_ = false;
     plcIp_ = ip;
     plcPort_ = port;
 
@@ -94,6 +101,7 @@ void MotionController::connectPlc(const QString &ip, int port) {
 }
 
 void MotionController::disconnectPlc() {
+    cancelHome(u8"断开 PLC");
     // 先关闭使能
     if (plc_ && connected_) {
         plc_->writeHdLowBit(HD_ExAxis1Enable, false);
@@ -175,17 +183,92 @@ void MotionController::pltHomeAll() {
         emit logMessage(u8"[错误] PLC 未连接，无法执行一键回参");
         return;
     }
-    emit logMessage(u8"一键回参: 开始");
+    if (homeRunning_ || playbackRunning_) {
+        emit logMessage(u8"[错误] 回参或轨迹播放正在执行，无法重复启动回参");
+        return;
+    }
+    emit logMessage(u8"一键回参: 按顺序执行平台 0~5，等待各平台 X/Y 相对运动完成");
+    homePlatformIdx_ = 0;
+    homeRunning_ = true;
+    startHomePlatform();
+}
 
-    for (int i = 0; i < 7; ++i) {
-        if (plc_->pltHome(i))
-            emit logMessage(QString(u8"  平台 %1 回参指令已发送").arg(i));
-        else
-            emit logMessage(QString(u8"  [错误] 平台 %1 回参发送失败").arg(i));
+void MotionController::startHomePlatform() {
+    for (int axis = 0; axis < 2; ++axis) {
+        homeSeenNotDone_[axis] = false;
+        homeAxisDone_[axis] = false;
+    }
+    // 清除旧的回参命令，确保本次触发；不改写 PLC 的完成反馈位。
+    if (!plc_->pltClearHome(homePlatformIdx_) || !plc_->pltHome(homePlatformIdx_)) {
+        cancelHome(QString(u8"[错误] 平台 %1 回参发送失败").arg(homePlatformIdx_));
+        return;
+    }
+    homeElapsed_.restart();
+    homeTimer_->start();
+    emit logMessage(QString(u8"  平台 %1 回参指令已发送，等待 X/Y 相对运动完成").arg(homePlatformIdx_));
+}
+
+void MotionController::onHomeTick() {
+    if (!homeRunning_) {
+        homeTimer_->stop();
+        return;
+    }
+    if (!plc_ || !connected_) {
+        cancelHome(u8"[错误] PLC 未连接");
+        return;
+    }
+    if (homeElapsed_.elapsed() >= homeTimeoutMs_) {
+        cancelHome(QString(u8"[错误] 平台 %1 等待本次 X/Y 相对运动完成超时（60 秒），请检查 PLC 完成信号")
+                       .arg(homePlatformIdx_));
+        return;
+    }
+
+    for (int axis = 0; axis < 2; ++axis) {
+        const int done = plc_->readAxisMoverDone(homePlatformIdx_, axis);
+        if (done < 0) {
+            cancelHome(QString(u8"[错误] 平台 %1 %2 轴完成信号读取失败")
+                           .arg(homePlatformIdx_).arg(axis == 0 ? "X" : "Y"));
+            return;
+        }
+        // 本次指令发出后必须观察到 0→1，避免上次残留的 Done=1 导致提前启动下一平台。
+        if (done == 0) homeSeenNotDone_[axis] = true;
+        if (done == 1 && homeSeenNotDone_[axis]) homeAxisDone_[axis] = true;
+    }
+    if (!homeAxisDone_[0] || !homeAxisDone_[1]) return;
+
+    if (!plc_->pltClearHome(homePlatformIdx_)) {
+        cancelHome(QString(u8"[错误] 平台 %1 回参触发位清除失败").arg(homePlatformIdx_));
+        return;
+    }
+    emit logMessage(QString(u8"  平台 %1 X/Y 相对运动完成").arg(homePlatformIdx_));
+    ++homePlatformIdx_;
+    if (homePlatformIdx_ >= homePlatformCount_) {
+        homeRunning_ = false;
+        homeTimer_->stop();
+        emit logMessage(u8"一键回参: 平台 0~5 全部完成");
+        return;
+    }
+    startHomePlatform();
+}
+
+void MotionController::cancelHome(const QString &reason) {
+    if (!homeRunning_) return;
+    homeRunning_ = false;
+    homeTimer_->stop();
+    emit logMessage(QString(u8"一键回参中止: %1").arg(reason));
+    if (plc_ && connected_) {
+        if (!plc_->pltStop(homePlatformIdx_))
+            emit logMessage(QString(u8"[错误] 平台 %1 停止指令发送失败").arg(homePlatformIdx_));
+        if (!plc_->pltClearHome(homePlatformIdx_))
+            emit logMessage(QString(u8"[错误] 平台 %1 回参触发位清除失败").arg(homePlatformIdx_));
     }
 }
 
 void MotionController::pltSingleMove(int pltIdx, double x, double y, double r, double vel) {
+    if (homeRunning_) {
+        emit logMessage(u8"[错误] 一键回参正在执行，无法启动单平台运动");
+        return;
+    }
     if (!plc_ || !connected_) {
         emit logMessage(u8"[错误] PLC 未连接，无法运动");
         return;
@@ -196,6 +279,10 @@ void MotionController::pltSingleMove(int pltIdx, double x, double y, double r, d
 }
 
 void MotionController::axisSingleMoveR(int pltIdx, int axis, double pos, double vel) {
+    if (homeRunning_) {
+        emit logMessage(u8"[错误] 一键回参正在执行，无法启动单轴运动");
+        return;
+    }
     if (!plc_ || !connected_) {
         emit logMessage(u8"[错误] PLC 未连接，无法运动");
         return;
@@ -213,24 +300,31 @@ void MotionController::pltEnableAll() {
 }
 
 void MotionController::pltDisableAll() {
+    cancelHome(u8"一键去使能");
     if (!plc_ || !connected_) return;
     plc_->pltDisableAll();
     emit logMessage(u8"一键去使能: 7 个平台指令已发送");
 }
 
 void MotionController::pltStopAll() {
+    cancelHome(u8"一键停止");
     if (!plc_ || !connected_) return;
     plc_->pltStopAll();
     emit logMessage(u8"一键停止: 7 个平台指令已发送");
 }
 
 void MotionController::pltResetAll() {
+    cancelHome(u8"一键复位");
     if (!plc_ || !connected_) return;
     for (int i = 0; i < 7; ++i) plc_->pltReset(i);
     emit logMessage(u8"一键复位: 7 个平台指令已发送");
 }
 
 void MotionController::pltLocateAll() {
+    if (homeRunning_) {
+        emit logMessage(u8"[错误] 一键回参正在执行，无法启动一键定位");
+        return;
+    }
     if (!plc_ || !connected_) {
         emit logMessage(u8"[错误] PLC 未连接，无法一键定位");
         return;

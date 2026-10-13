@@ -208,17 +208,23 @@ bool PlcCommunication::pltHome(int pltIdx) {
     const auto &y = allAxisAddrs[pltIdx][1];
 
     // X 轴
-    writeRegisters(HDAddr + x.moveaVel, 4, velMinus1);  // 速度运动 = -1
-    writeRegisters(HDAddr + x.moverPos, 4, val10);      // 相对位置 = 10
-    writeRegisters(HDAddr + x.moverVel, 4, vel5);       // 相对速度 = 5
+    if (writeRegisters(HDAddr + x.moveaVel, 4, velMinus1) != 0) return false;
+    if (writeRegisters(HDAddr + x.moverPos, 4, val10) != 0) return false;
+    if (writeRegisters(HDAddr + x.moverVel, 4, vel5) != 0) return false;
 
     // Y 轴
-    writeRegisters(HDAddr + y.moveaVel, 4, velMinus1);
-    writeRegisters(HDAddr + y.moverPos, 4, val10);
-    writeRegisters(HDAddr + y.moverVel, 4, vel5);
+    if (writeRegisters(HDAddr + y.moveaVel, 4, velMinus1) != 0) return false;
+    if (writeRegisters(HDAddr + y.moverPos, 4, val10) != 0) return false;
+    if (writeRegisters(HDAddr + y.moverVel, 4, vel5) != 0) return false;
 
     // 触发回参考点（PLC 程序内部已包含使能）
     return writeHdHighBit(pltAddrs[pltIdx].back, true) == 0;  // 位8: 回参考点
+}
+
+bool PlcCommunication::pltClearHome(int pltIdx) {
+    if (!modbusTcp_ || !connectStatus_) return false;
+    if (pltIdx < 0 || pltIdx > 6) return false;
+    return writeHdHighBit(pltAddrs[pltIdx].back, false) == 0;
 }
 
 bool PlcCommunication::pltLocate(int pltIdx, double x, double y, double r, double vel, double acc, double jerk) {
@@ -311,12 +317,16 @@ bool PlcCommunication::pltStepAxis(int pltIdx, int axis, double pos, double vel)
 }
 
 bool PlcCommunication::pltIsMoverDone(int pltIdx, int axis) {
-    if (!modbusTcp_ || !connectStatus_) return false;
-    if (pltIdx < 0 || pltIdx > 6 || axis < 0 || axis > 2) return false;
+    return readAxisMoverDone(pltIdx, axis) == 1;
+}
+
+int PlcCommunication::readAxisMoverDone(int pltIdx, int axis) {
+    if (!modbusTcp_ || !connectStatus_) return -1;
+    if (pltIdx < 0 || pltIdx > 6 || axis < 0 || axis > 2) return -1;
 
     const auto &a = allAxisAddrs[pltIdx][axis];
     // moverDone 低位 = 1 表示完成
-    return readHdLowBit(a.moverDone) == 1;
+    return readHdLowBit(a.moverDone);
 }
 
 bool PlcCommunication::pltClearMover(int pltIdx, int axis) {

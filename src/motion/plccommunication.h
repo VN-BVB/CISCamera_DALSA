@@ -36,6 +36,7 @@ public:
     bool pltEnable(int pltIdx);
     bool pltDisable(int pltIdx);
     bool pltHome(int pltIdx);
+    bool pltClearHome(int pltIdx);
     bool pltLocate(int pltIdx, double x, double y, double r,
                    double vel, double acc, double jerk);
     bool pltLocatePos(int pltIdx, double x, double y, double r, double vel = 5.0);
@@ -54,6 +55,8 @@ public:
     // pltIdx: 0~6, axis: 0~2, pos: 绝对目标位置
     bool pltStepAxis(int pltIdx, int axis, double pos, double vel = 5.0);
     bool pltIsMoverDone(int pltIdx, int axis);
+    // 0=未完成，1=完成，-1=读取失败（或参数无效）。
+    int readAxisMoverDone(int pltIdx, int axis);
     bool pltClearMover(int pltIdx, int axis);
 
     // ======================== 状态查询 ========================

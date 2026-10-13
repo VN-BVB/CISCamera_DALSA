@@ -2,6 +2,7 @@
 #define MOTION_CONTROLLER_H
 
 #include <QObject>
+#include <QElapsedTimer>
 #include <QTimer>
 
 #include "plccommunication.h"
@@ -48,6 +49,7 @@ public slots:
     void onStateTimeout();
     void onRealTimeout();
     void onPlaybackTick();
+    void onHomeTick();
 
 signals:
     // 地轨位置/速度更新
@@ -64,6 +66,8 @@ signals:
     void pltAxisEnableStatus(const QVector<QVector<bool>> &status);
 
 private:
+    void startHomePlatform();
+    void cancelHome(const QString &reason);
     void setRailVelPosDouble(double pos, double vel, double acc, double jerk, int addr);
     void setRailVelDouble(double vel, int addr);
     void dataTransDouble_UInt16(double dataIn, uint16_t *dataOut);
@@ -78,6 +82,16 @@ private:
     QTimer           *stateTimer_ = nullptr;
     QTimer           *realTimer_  = nullptr;
     QTimer           *playbackTimer_ = nullptr;
+    QTimer           *homeTimer_ = nullptr;
+
+    // 用户指定平台 0~5；等待 PLC 本次 X/Y 相对运动完成再启动下一平台。
+    static constexpr int homePlatformCount_ = 6;
+    static constexpr int homeTimeoutMs_ = 60000;
+    bool homeRunning_ = false;
+    int homePlatformIdx_ = 0;
+    bool homeSeenNotDone_[2] = {false, false};
+    bool homeAxisDone_[2] = {false, false};
+    QElapsedTimer homeElapsed_;
 
     QString plcIp_;
     int    plcPort_ = 502;
