@@ -208,12 +208,12 @@ public:
         verticalLayout_4->setContentsMargins(4, 4, 4, 4);
         groupBox = new QGroupBox(widget_rail);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
-        groupBox->setMinimumSize(QSize(0, 0));
         QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(groupBox->sizePolicy().hasHeightForWidth());
         groupBox->setSizePolicy(sizePolicy);
+        groupBox->setMinimumSize(QSize(0, 0));
         verticalLayout_2 = new QVBoxLayout(groupBox);
         verticalLayout_2->setSpacing(6);
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
@@ -453,12 +453,12 @@ public:
         QTableWidgetItem *__qtablewidgetitem9 = new QTableWidgetItem();
         table_axispos->setVerticalHeaderItem(6, __qtablewidgetitem9);
         table_axispos->setObjectName(QString::fromUtf8("table_axispos"));
-        table_axispos->setMinimumSize(QSize(260, 200));
         QSizePolicy sizePolicy2(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy2.setHorizontalStretch(0);
         sizePolicy2.setVerticalStretch(0);
         sizePolicy2.setHeightForWidth(table_axispos->sizePolicy().hasHeightForWidth());
         table_axispos->setSizePolicy(sizePolicy2);
+        table_axispos->setMinimumSize(QSize(260, 200));
 
         verticalLayout_3->addWidget(table_axispos);
 
@@ -479,6 +479,7 @@ public:
         horizontalLayout_7->addWidget(plt_btn_singlepltmover);
 
         combo_singlepltchoose = new QComboBox(widget_6);
+        combo_singlepltchoose->addItem(QString());
         combo_singlepltchoose->addItem(QString());
         combo_singlepltchoose->addItem(QString());
         combo_singlepltchoose->addItem(QString());
@@ -1240,14 +1241,15 @@ public:
         ___qtablewidgetitem8->setText(QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2605", nullptr));
         QTableWidgetItem *___qtablewidgetitem9 = table_axispos->verticalHeaderItem(6);
         ___qtablewidgetitem9->setText(QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2606", nullptr));
-        plt_btn_singlepltmover->setText(QCoreApplication::translate("MotionWidget", "\345\215\225\345\257\271\344\275\215\345\271\263\345\217\260\350\277\220\345\212\250", nullptr));
-        combo_singlepltchoose->setItemText(0, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2600", nullptr));
-        combo_singlepltchoose->setItemText(1, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2601", nullptr));
-        combo_singlepltchoose->setItemText(2, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2602", nullptr));
-        combo_singlepltchoose->setItemText(3, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2603", nullptr));
-        combo_singlepltchoose->setItemText(4, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2604", nullptr));
-        combo_singlepltchoose->setItemText(5, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2605", nullptr));
-        combo_singlepltchoose->setItemText(6, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2606", nullptr));
+        plt_btn_singlepltmover->setText(QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\260\350\277\220\345\212\250", nullptr));
+        combo_singlepltchoose->setItemText(0, QCoreApplication::translate("MotionWidget", "\345\205\250\351\203\250\345\257\271\344\275\215\345\271\263\345\217\260", nullptr));
+        combo_singlepltchoose->setItemText(1, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2600", nullptr));
+        combo_singlepltchoose->setItemText(2, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2601", nullptr));
+        combo_singlepltchoose->setItemText(3, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2602", nullptr));
+        combo_singlepltchoose->setItemText(4, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2603", nullptr));
+        combo_singlepltchoose->setItemText(5, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2604", nullptr));
+        combo_singlepltchoose->setItemText(6, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2605", nullptr));
+        combo_singlepltchoose->setItemText(7, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2606", nullptr));
 
         plt_btn_singleaxismover->setText(QCoreApplication::translate("MotionWidget", "\345\215\225\350\275\264\350\277\220\345\212\250", nullptr));
         combo_singleaxispltchoose->setItemText(0, QCoreApplication::translate("MotionWidget", "\345\257\271\344\275\215\345\271\263\345\217\2600", nullptr));
