@@ -29,8 +29,8 @@ static constexpr std::int32_t HD_ExAxis1Stop = 2254;            // 地轨停止�
 static constexpr std::int32_t HD_ExAxis1Rst = 2252;             // 地轨复位（低位）
 static constexpr std::int32_t D_ExAxis1Stop = 2254;             // 地轨运动停止(低位)
 static constexpr std::int32_t D_ExAxis1StopDone = 2254;         // 地轨运动停止完成(高位)
-static constexpr std::int32_t D_ExAxis1Pos = 20044;             // 地轨实际运动位置
-static constexpr std::int32_t D_ExAxis1Vel = 20048;             // 地轨实际运动速度
+static constexpr std::int32_t D_ExAxis1Pos = 2050;              // 地轨实际运动位置
+static constexpr std::int32_t D_ExAxis1Vel = 2055;              // 地轨实际运动速度
 
 // 对位平台总控（7个），对位平台0
 static constexpr std::int32_t HD_Plt_0_Enable = 100;        // 平台一键使能（低位）

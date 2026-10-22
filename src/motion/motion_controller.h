@@ -1,8 +1,8 @@
 ﻿#ifndef MOTION_CONTROLLER_H
 #define MOTION_CONTROLLER_H
 
-#include <QObject>
 #include <QElapsedTimer>
+#include <QObject>
 #include <QTimer>
 
 #include "plccommunication.h"
@@ -78,14 +78,14 @@ private:
     int writeRegistersRaw(int addr, int num, uint16_t *data);
 
     PlcCommunication *plc_ = nullptr;
-    plcCtrlParams    *params_ = nullptr;
-    QTimer           *stateTimer_ = nullptr;
-    QTimer           *realTimer_  = nullptr;
-    QTimer           *playbackTimer_ = nullptr;
-    QTimer           *homeTimer_ = nullptr;
+    plcCtrlParams *params_ = nullptr;
+    QTimer *stateTimer_ = nullptr;
+    QTimer *realTimer_ = nullptr;
+    QTimer *playbackTimer_ = nullptr;
+    QTimer *homeTimer_ = nullptr;
 
-    // 用户指定平台 0~5；等待 PLC 本次 X/Y 相对运动完成再启动下一平台。
-    static constexpr int homePlatformCount_ = 6;
+    // 用户指定平台 0~6；等待 PLC 本次 X/Y 相对运动完成再启动下一平台。
+    static constexpr int homePlatformCount_ = 7;
     static constexpr int homeTimeoutMs_ = 60000;
     bool homeRunning_ = false;
     int homePlatformIdx_ = 0;
@@ -94,14 +94,14 @@ private:
     QElapsedTimer homeElapsed_;
 
     QString plcIp_;
-    int    plcPort_ = 502;
-    bool   connected_ = false;
+    int plcPort_ = 502;
+    bool connected_ = false;
 
     // 地轨运动状态
-    bool   absMoveStarted_ = false;
-    bool   absMoveDone_    = true;
-    double targetAbsPos_   = 0.0;
-    double absFinishTol_   = 0.5;
+    bool absMoveStarted_ = false;
+    bool absMoveDone_ = true;
+    double targetAbsPos_ = 0.0;
+    double absFinishTol_ = 0.5;
 
     QVector<bool> prevCoilStatuses_;
 
@@ -110,9 +110,9 @@ private:
         double tx[7], ty[7], rz[7];
     };
     QVector<PlaybackStep> playbackSteps_;
-    int     playbackIdx_ = 0;
-    int     playbackLastStep_ = 0;
-    bool    playbackRunning_ = false;
-    bool    playbackWaitingDone_ = false;
+    int playbackIdx_ = 0;
+    int playbackLastStep_ = 0;
+    bool playbackRunning_ = false;
+    bool playbackWaitingDone_ = false;
 };
 #endif  // MOTION_CONTROLLER_H

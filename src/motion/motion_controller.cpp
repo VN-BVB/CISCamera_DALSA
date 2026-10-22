@@ -187,7 +187,7 @@ void MotionController::pltHomeAll() {
         emit logMessage(u8"[错误] 回参或轨迹播放正在执行，无法重复启动回参");
         return;
     }
-    emit logMessage(u8"一键回参: 按顺序执行平台 0~5，等待各平台 X/Y 相对运动完成");
+    emit logMessage(u8"一键回参: 按顺序执行平台 0~6，等待各平台 X/Y 相对运动完成");
     homePlatformIdx_ = 0;
     homeRunning_ = true;
     startHomePlatform();
@@ -218,16 +218,14 @@ void MotionController::onHomeTick() {
         return;
     }
     if (homeElapsed_.elapsed() >= homeTimeoutMs_) {
-        cancelHome(QString(u8"[错误] 平台 %1 等待本次 X/Y 相对运动完成超时（60 秒），请检查 PLC 完成信号")
-                       .arg(homePlatformIdx_));
+        cancelHome(QString(u8"[错误] 平台 %1 等待本次 X/Y 相对运动完成超时（60 秒），请检查 PLC 完成信号").arg(homePlatformIdx_));
         return;
     }
 
     for (int axis = 0; axis < 2; ++axis) {
         const int done = plc_->readAxisMoverDone(homePlatformIdx_, axis);
         if (done < 0) {
-            cancelHome(QString(u8"[错误] 平台 %1 %2 轴完成信号读取失败")
-                           .arg(homePlatformIdx_).arg(axis == 0 ? "X" : "Y"));
+            cancelHome(QString(u8"[错误] 平台 %1 %2 轴完成信号读取失败").arg(homePlatformIdx_).arg(axis == 0 ? "X" : "Y"));
             return;
         }
         // 本次指令发出后必须观察到 0→1，避免上次残留的 Done=1 导致提前启动下一平台。
@@ -245,7 +243,7 @@ void MotionController::onHomeTick() {
     if (homePlatformIdx_ >= homePlatformCount_) {
         homeRunning_ = false;
         homeTimer_->stop();
-        emit logMessage(u8"一键回参: 平台 0~5 全部完成");
+        emit logMessage(u8"一键回参: 平台 0~6 全部完成");
         return;
     }
     startHomePlatform();
@@ -257,10 +255,8 @@ void MotionController::cancelHome(const QString &reason) {
     homeTimer_->stop();
     emit logMessage(QString(u8"一键回参中止: %1").arg(reason));
     if (plc_ && connected_) {
-        if (!plc_->pltStop(homePlatformIdx_))
-            emit logMessage(QString(u8"[错误] 平台 %1 停止指令发送失败").arg(homePlatformIdx_));
-        if (!plc_->pltClearHome(homePlatformIdx_))
-            emit logMessage(QString(u8"[错误] 平台 %1 回参触发位清除失败").arg(homePlatformIdx_));
+        if (!plc_->pltStop(homePlatformIdx_)) emit logMessage(QString(u8"[错误] 平台 %1 停止指令发送失败").arg(homePlatformIdx_));
+        if (!plc_->pltClearHome(homePlatformIdx_)) emit logMessage(QString(u8"[错误] 平台 %1 回参触发位清除失败").arg(homePlatformIdx_));
     }
 }
 
