@@ -2,7 +2,9 @@
 
 #include <QGraphicsItem>
 #include <QKeyEvent>
+#include <QResizeEvent>
 #include <QScrollBar>
+#include <QShowEvent>
 #include <QWheelEvent>
 
 #include "display_image_item.h"
@@ -17,7 +19,7 @@ class DisplayViewPrivate {
 
 public:
     DisplayViewPrivate(DisplayView *q) : q_ptr(q) {
-        resizeToFif = true;
+        autoFitEnabled = false;
         doubleClickToFit = true;
 
         maxZoomCoeff = ViewMaxZoomCoeff_Default;
@@ -32,7 +34,7 @@ public:
 public:
     DisplayView *const q_ptr;
 
-    bool resizeToFif;       // 是否重置尺寸缩放至合适大小
+    bool autoFitEnabled;   // 是否随窗口尺寸自动适配图像
     bool doubleClickToFit;  // 是否双击缩放至合适大小
 
     double maxZoomCoeff;  // 最大缩放系数
@@ -60,8 +62,8 @@ DisplayView::DisplayView(QWidget *parent)
     // 去掉滚动条
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    // 不需要设置标准光标，我们将自定义绘制十字线
-    setCursor(Qt::BlankCursor);             // 隐藏系统光标
+    // 使用系统标准十字光标，避免隐藏光标在部分显示环境下出现白色方块。
+    setCursor(Qt::CrossCursor);
     setRenderHint(QPainter::Antialiasing);  // 启用抗锯齿渲染
 
     setSceneRect(INT_MIN / 2, INT_MIN / 2, INT_MAX, INT_MAX);  // 设置场景矩形
@@ -71,7 +73,7 @@ DisplayView::DisplayView(QWidget *parent)
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);                  // 设置窗口更新模式为完全更新
     setDragMode(QGraphicsView::NoDrag);                                        // 平移使用自定义鼠标逻辑，禁用拖拽模式
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);                  // 缩放以光标处为锚点
-    setResizeAnchor(QGraphicsView::AnchorUnderMouse);                          // 窗口尺寸变化时以光标处为锚点
+    setResizeAnchor(QGraphicsView::AnchorViewCenter);                          // 窗口尺寸变化时保持视图中心
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);  // 设置渲染提示的组合
     setMouseTracking(true);                                                    // 启用鼠标跟踪
     setCacheMode(QGraphicsView::CacheBackground);  // 设置缓存模式为背景缓存，缓存视图的背景，提高重绘性能（在设置视图背景时有效，此项目没有设置黑白格等背景）
@@ -116,6 +118,7 @@ qreal DisplayView::translateSpeed() const { return m_translateSpeed; }
 
 // 上/下/左/右键向各个方向移动、加/减键进行缩放、空格/回车键旋转
 void DisplayView::keyPressEvent(QKeyEvent *event) {
+    Q_D(DisplayView);
     switch (event->key()) {
     case Qt::Key_Up:
         translate(QPointF(0, -2));  // 上移
@@ -136,10 +139,12 @@ void DisplayView::keyPressEvent(QKeyEvent *event) {
         zoomDown();
         break;
     case Qt::Key_Space:  // 逆时针旋转
+        d->autoFitEnabled = false;
         rotate(-5);
         break;
     case Qt::Key_Enter:  // 顺时针旋转
     case Qt::Key_Return:
+        d->autoFitEnabled = false;
         rotate(5);
         break;
     default:
@@ -152,6 +157,7 @@ void DisplayView::mouseMoveEvent(QMouseEvent *event) {
     if (m_bMouseTranslate) {
         // 按视图像素增量滚动，与当前缩放级别无关，实现 1:1 跟手
         QPoint delta = event->pos() - m_lastMousePos;
+        if (!delta.isNull()) setAutoFitEnabled(false);
         horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
         verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
     }
@@ -171,7 +177,6 @@ void DisplayView::mousePressEvent(QMouseEvent *event) {
     if (event->button() == m_translateButton) {
         m_bMouseTranslate = true;
         m_lastMousePos = event->pos();
-        // 不需要改变光标样式，保持隐藏状态
     }
 
     QGraphicsView::mousePressEvent(event);
@@ -181,10 +186,27 @@ void DisplayView::mousePressEvent(QMouseEvent *event) {
 void DisplayView::mouseReleaseEvent(QMouseEvent *event) {
     if (event->button() == m_translateButton) {
         m_bMouseTranslate = false;
-        // 不需要改变光标样式，保持隐藏状态
     }
 
     QGraphicsView::mouseReleaseEvent(event);
+}
+
+void DisplayView::resizeEvent(QResizeEvent *event) {
+    QGraphicsView::resizeEvent(event);
+    Q_D(DisplayView);
+    if (d->autoFitEnabled) whenZoomToDisplayFit();
+}
+
+void DisplayView::showEvent(QShowEvent *event) {
+    QGraphicsView::showEvent(event);
+    Q_D(DisplayView);
+    if (d->autoFitEnabled) whenZoomToDisplayFit();
+}
+
+void DisplayView::leaveEvent(QEvent *event) {
+    m_currentMousePos = QPoint(-1, -1);
+    viewport()->update();
+    QGraphicsView::leaveEvent(event);
 }
 
 // 添加paintEvent方法绘制贯穿窗口的黑色十字线
@@ -265,61 +287,41 @@ void DisplayView::zoomDown() {
 
 // 平移
 void DisplayView::translate(QPointF delta) {
+    setAutoFitEnabled(false);
     // 按视图像素增量滚动，与缩放级别无关；键盘方向键也走此路径
     horizontalScrollBar()->setValue(horizontalScrollBar()->value() - static_cast<int>(delta.x()));
     verticalScrollBar()->setValue(verticalScrollBar()->value() - static_cast<int>(delta.y()));
 }
 
 void DisplayView::whenUpdateDisplayFit() {
-    // 获取场景中所有图元的外接矩形
-    QRectF sceneBoundingRect = m_scene->itemsBoundingRect();
+    whenZoomToDisplayFit();
+}
 
-    if (sceneBoundingRect.isEmpty() || this->width() < 1) {
-        return;
-    }
-
-    // 计算缩放比例，确保所有图元都能显示在视图中
-    double winWidth = this->width() - 20;  // 减去边距
-    double winHeight = this->height() - 20;
-
-    double scaleWidth = sceneBoundingRect.width() / winWidth;
-    double scaleHeight = sceneBoundingRect.height() / winHeight;
-
-    // 取较大的缩放比例，确保所有内容都能显示
-    double scale = std::max(scaleWidth, scaleHeight);
-    double s = (scale > 0) ? 1 / scale : 1.0;
-
-    // 计算中心点位置
-    double centerX = sceneBoundingRect.center().x();
-    double centerY = sceneBoundingRect.center().y();
-
-    // 更新缩放和位置信息
-    if (m_rZoomFit != s || m_rFitPixX != centerX * s || m_rFitPixY != centerY * s) {
-        m_rZoomFit = s;
-        m_rFitPixX = centerX * s;
-        m_rFitPixY = centerY * s;
-        whenZoomToDisplayFit();
-    }
+void DisplayView::setAutoFitEnabled(bool enabled) {
+    Q_D(DisplayView);
+    d->autoFitEnabled = enabled;
+    if (enabled) whenZoomToDisplayFit();
 }
 
 /*
  将图像缩放到合适视图的大小，并调整显示位置
 */
 void DisplayView::whenZoomToDisplayFit() {
+    Q_D(DisplayView);
+    d->autoFitEnabled = true;
     // 基于当前视口和场景重新计算 fit 参数，避免使用过期缓存（窗口尺寸变化、图像更换等）
-    QRectF sceneBoundingRect = m_scene->itemsBoundingRect();
-    if (!sceneBoundingRect.isEmpty() && viewport()->width() > 0) {
-        double winWidth = viewport()->width() - 20.0;   // 留少量边距
-        double winHeight = viewport()->height() - 20.0;
-        double scale = std::max(sceneBoundingRect.width() / winWidth,
-                                sceneBoundingRect.height() / winHeight);
-        m_rZoomFit = (scale > 0) ? 1.0 / scale : 1.0;
-        m_rFitPixX = sceneBoundingRect.center().x() * m_rZoomFit;
-        m_rFitPixY = sceneBoundingRect.center().y() * m_rZoomFit;
-    }
+    const QRectF sceneBoundingRect = m_scene->itemsBoundingRect();
+    if (sceneBoundingRect.isEmpty() || viewport()->width() <= 20 || viewport()->height() <= 20) return;
 
-    // fit 是居中显示，临时切回中心锚点，避免受 AnchorUnderMouse 影响
-    setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+    const double winWidth = viewport()->width() - 20.0;
+    const double winHeight = viewport()->height() - 20.0;
+    m_rZoomFit = std::min(winWidth / sceneBoundingRect.width(), winHeight / sceneBoundingRect.height());
+    m_rFitPixX = sceneBoundingRect.center().x() * m_rZoomFit;
+    m_rFitPixY = sceneBoundingRect.center().y() * m_rZoomFit;
+
+    // 适配时由 centerOn 明确定位，临时关闭变换锚点，避免受鼠标位置影响。
+    const auto previousAnchor = transformationAnchor();
+    setTransformationAnchor(QGraphicsView::NoAnchor);
 
     // 先重置缩放
     this->resetTransform();
@@ -330,17 +332,17 @@ void DisplayView::whenZoomToDisplayFit() {
     // 滚动到中心位置
     this->centerOn(m_rFitPixX / m_rZoomFit, m_rFitPixY / m_rZoomFit);
 
-    // 确保所有内容都在视图内
-    this->ensureVisible(m_scene->itemsBoundingRect());
+    // 不再调用 ensureVisible：其默认 50 像素边距会再次滚动，破坏上面的居中位置。
 
     // 同步当前缩放值，避免后续 wheel/+/- 的钳制与比例计算失真
     m_rZoomValue = m_rZoomFit;
 
     // 恢复光标锚点，便于后续缩放
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    setTransformationAnchor(previousAnchor);
 }
 
 void DisplayView::zoomByValue(const double &val) {
+    setAutoFitEnabled(false);
     double tmp = val / m_rZoomValue;
     // 绝对缩放
     m_rZoomValue *= tmp;

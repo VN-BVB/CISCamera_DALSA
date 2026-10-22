@@ -50,6 +50,9 @@ protected:  // 视窗事件
     void mouseReleaseEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
     void mouseDoubleClickEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
     void wheelEvent(QWheelEvent *event) Q_DECL_OVERRIDE;
+    void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    void leaveEvent(QEvent *event) override;
     // 重写paintEvent绘制十字线
     void paintEvent(QPaintEvent *event) override;
 
@@ -61,6 +64,8 @@ public slots:
     void whenUpdateDisplayFit();
     // 缩放到自适应显示
     void whenZoomToDisplayFit();
+    // 自动适配期间，窗口显示和尺寸变化时重新居中；手动缩放/平移会退出该模式。
+    void setAutoFitEnabled(bool enabled);
 
 signals:
     // 鼠标移动时发出，携带场景坐标系下的位置

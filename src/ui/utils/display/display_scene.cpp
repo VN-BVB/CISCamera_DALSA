@@ -61,10 +61,7 @@ DisplayImageItem* DisplayScene::whenAddDisplayImage(const QImage &image, const Q
         this->addItem(newImageItem);
         m_displayImageItems.append(newImageItem);
         
-        if (bAutoFit)
-        {
-            m_parentView->whenZoomToDisplayFit();
-        }
+        m_parentView->setAutoFitEnabled(bAutoFit);
     }
     else
     {
