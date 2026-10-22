@@ -1,10 +1,13 @@
 ﻿#include "motion_widget.h"
 
+#include "motion_controller.h"
+
 #include <QLabel>
+#include <QMessageBox>
 #include <QThread>
+#include <cmath>
 #include <cstdio>
 
-#include "motion_controller.h"
 #include "ui_motion_widget.h"
 
 MotionWidget::MotionWidget(QWidget *parent) : QWidget(parent), ui(new Ui::MotionWidget) {
@@ -17,6 +20,11 @@ MotionWidget::MotionWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Motion
     // 初始化 21 个位置单元格
     for (int r = 0; r < 7; ++r)
         for (int c = 0; c < 3; ++c) ui->table_axispos->setItem(r, c, new QTableWidgetItem("0"));
+
+    // 第一项代表全部平台，后续条目保存各自的实际平台编号。
+    ui->combo_singlepltchoose->setItemData(0, -1);
+    for (int plt = 0; plt < ui->table_axispos->rowCount(); ++plt)
+        ui->combo_singlepltchoose->setItemData(plt + 1, plt);
 
     controller_ = new MotionController();
     ctrlThread_ = new QThread(this);
@@ -88,13 +96,43 @@ void MotionWidget::on_chk_Stop_toggled(bool checked) {
 // ============================================================
 
 void MotionWidget::on_plt_single_move_clicked() {
-    int pltIdx = ui->combo_singlepltchoose->currentIndex();
-    double x = ui->table_axispos->item(pltIdx, 0) ? ui->table_axispos->item(pltIdx, 0)->text().toDouble() : 0;
-    double y = ui->table_axispos->item(pltIdx, 1) ? ui->table_axispos->item(pltIdx, 1)->text().toDouble() : 0;
-    double r = ui->table_axispos->item(pltIdx, 2) ? ui->table_axispos->item(pltIdx, 2)->text().toDouble() : 0;
+    bool selectionOk = false;
+    const int selectedPlatform = ui->combo_singlepltchoose->currentData().toInt(&selectionOk);
+    const int platformCount = ui->table_axispos->rowCount();
+    if (!selectionOk || selectedPlatform < -1 || selectedPlatform >= platformCount) return;
 
-    QMetaObject::invokeMethod(controller_, "pltSingleMove", Q_ARG(int, pltIdx), Q_ARG(double, x), Q_ARG(double, y), Q_ARG(double, r),
-                              Q_ARG(double, 5.0));
+    struct PlatformMove {
+        int platform;
+        double position[3];
+    };
+    QVector<PlatformMove> moves;
+    const int firstPlatform = selectedPlatform == -1 ? 0 : selectedPlatform;
+    const int endPlatform = selectedPlatform == -1 ? platformCount : selectedPlatform + 1;
+
+    // 全部校验成功后再下发，避免部分平台已经运动才发现后续输入有误。
+    for (int plt = firstPlatform; plt < endPlatform; ++plt) {
+        PlatformMove move{plt, {0.0, 0.0, 0.0}};
+        for (int axis = 0; axis < 3; ++axis) {
+            const auto *item = ui->table_axispos->item(plt, axis);
+            bool valueOk = false;
+            const double value = item ? item->text().toDouble(&valueOk) : 0.0;
+            if (!valueOk || !std::isfinite(value)) {
+                ui->table_axispos->setCurrentCell(plt, axis);
+                QMessageBox::warning(this, u8"位置输入错误",
+                                     QString(u8"请为对位平台 %1 的 %2 轴输入有效的相对位移。")
+                                         .arg(plt)
+                                         .arg(ui->table_axispos->horizontalHeaderItem(axis)->text()));
+                return;
+            }
+            move.position[axis] = value;
+        }
+        moves.append(move);
+    }
+
+    for (const auto &move : moves) {
+        QMetaObject::invokeMethod(controller_, "pltSingleMove", Q_ARG(int, move.platform), Q_ARG(double, move.position[0]),
+                                  Q_ARG(double, move.position[1]), Q_ARG(double, move.position[2]), Q_ARG(double, 5.0));
+    }
 }
 
 void MotionWidget::on_plt_single_axis_move_clicked() {
